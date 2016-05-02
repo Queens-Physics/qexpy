@@ -99,8 +99,7 @@ class Measurement:
             std = mean*(self.std/self.mean + other.std/other.mean)
             name = self.name+'/'+other.name
             result = Measurement(name,mean,std)
-            result.setCorrelation(self,0.5)
-            result.setCorrelation(other,0.5)
+            #Must set correlation
             result.info += "Errors propgated by derrivitive method"
         elif isinstance(other,int) or isinstance(other,float):
             mean = self.mean/other
@@ -121,8 +120,7 @@ class Measurement:
                 + (self.mean**other.mean*math.log(self.mean)*other.std)**2)
             name=self.name+'**'+other.name
             result = Measurement(name,mean,std)
-            result.setCorrelation(self,123)
-            result.setCorrelation(other,123)
+            #Must set correlation
             result.info+="Errors propgated by derrivitive method"
         elif isinstance(other,int) or isinstance(other,float):
             mean = self.mean**other
@@ -131,6 +129,15 @@ class Measurement:
             result = Measurement(name,mean,std)
             result.setCorrelation(self,1)
         return result;
+
+    def sin(mValue):
+        from math import sin
+        from math import cos
+        mean=sin(mValue.mean)
+        std=abs(cos(mValue.mean)*mValue.std)
+        name="cos("+mValue.name+")"
+        result=Measurement(name,mean,std)
+        #Must set correlation
 
 
 
