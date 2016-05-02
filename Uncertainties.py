@@ -1,34 +1,35 @@
 class Measurement:
-    method="Derivative"
-    def __init__(self,name,data,error='null',correlation=1):
+    method="Derivative" #Default error propogation method
+    
+    def __init__(self,name,*args):
         '''
         Creates a variable that contains a mean, standard deviation, and name
         for any value.
         '''
         import numpy
-        if error!='null':
-            self.mean=data
-            self.std=error
+        if len(args)==2:
+            self.mean=args[0]
+            self.std=args[1]
             
-        elif type(data)==list:
-            self.mean = numpy.mean(data)
-            self.std = numpy.std(data,ddof=1)
+        elif len(args)>2:
+            self.mean = numpy.mean(args)
+            self.std = numpy.std(args,ddof=1)
         self.name=name
         self.correlation={'Name': [name], 
-            'Correlation Factor': [correlation]}
+            'Correlation Factor': [1]}
         self.info=""
     
-    def setMethod(method):
-        if method=="Derivative":
-            global Method
-            Method=method
-        elif method=="MinMax":
-            global Method
-            Method=method
+    def setMethod(aMethod):
+        '''
+        Function to change default error propogation method used in Measurement
+        functions.
+        '''
+        if aMethod=="Monte Carlo":
+            Measurement.method="MonteCarlo"
+        elif aMethod=="Min Max":
+            Measurement.method="MinMax"
         else:
-            global Method
-            Method="MonteCarlo"
-    setMethod("Derivative")
+            Measurement.method="Derivative"
         
     def __str__(self):
         return "{:.1f}+/-{:.1f}".format(self.mean,self.std);
@@ -49,7 +50,7 @@ class Measurement:
     
     def __add__(self,other):
         #Addition by error propogation formula
-        if Method=="Derivative":
+        if Measurement.method=="Derivative":
             if isinstance(other,self.__class__):
                 mean = self.mean+other.mean
                 std = self.std+other.std
@@ -68,7 +69,7 @@ class Measurement:
             result.info+="Errors propgated by Derivative method"
             
         #Addition by Min-Max method
-        elif Method=="MinMax":
+        elif Measurement.method=="MinMax":
             print("Coming Soon")
             result=self
             result.info+="Errors propogated by Min-Max method."
@@ -206,22 +207,21 @@ class Measurement:
         #Must set correlation
         return result;
     
-    def MonteCarlo(function,*argument):
+    def MonteCarlo(function,*args):
         #2D array
         import numpy as np
-        N=np.size(argument)
-        n=10000
-        value=np.zeros(N)
+        N=len(args)
+        n=10000 #Access property from class
+        value=np.zeros((N,n))
         result=np.zeros(n)
-        for i in range(n):
-            for j in range(N):
-                value[j]=np.random.normal(argument[j].mean,argument[j].std)
-            result[i]=function(value)
+        for i in range(N):
+            value[i]=np.random.normal(args[i].mean,args[i].std,n)
+        result=function(value)
         data=np.mean(result)
         error=np.std(result)
         argName=""
         for i in range(N):
-            argName+=argument[i].name
+            argName+=','+args[i].name
         name=function.__name__+"("+argName+")"
         return Measurement(name,data,error)
 
@@ -229,5 +229,3 @@ class Measurement:
 #Test Code
 x=Measurement('x',10,1)
 y=Measurement('y',[10,15,20])
-def f(x):
-    return x[0]*x[1];
