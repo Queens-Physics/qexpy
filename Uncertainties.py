@@ -1,5 +1,6 @@
 class Measurement:
     method="Derivative" #Default error propogation method
+    mcTrials=10000 #option for number of trial in Monte Carlo simulation
     
     def __init__(self,name,*args):
         '''
@@ -42,8 +43,8 @@ class Measurement:
         self.correlation['Name'].append(variable.name)
         self.correlation['Correlation Factor'].append(correlation)
         
-        y.correlation['Name'].append(self.name)
-        y.correlation['Correlation Factor'].append(correlation)
+        variable.correlation['Name'].append(self.name)
+        variable.correlation['Correlation Factor'].append(correlation)
     
     def rename(self,newName):
         self.name=newName
@@ -87,43 +88,88 @@ class Measurement:
             result.info+="Errors propogated by Monte Carlo method"
         return result;
         
-    def __sub__(self,other):
-        if isinstance(other,self.__class__):
-            mean = self.mean-other.mean
-            std = self.std+other.std
-            name=self.name+'-'+other.name
-            result = Measurement(name,mean,std)
-            result.setCorrelation(self,1)
-            result.setCorrelation(other,-1)
-            result.info+="Errors propgated by Derivative method"
-        elif isinstance(other,int) or isinstance(other,float):
-            mean = self.mean-other
-            std = self.std
-            name=self.name+'- constant'
-            result = Measurement(name,mean,std)
-            result.setCorrelation(self,1)
-            result.info+="Errors propgated by Derivative method"
+    '''
+      def __sub__(self,other):
+        if Measurement.method=="Derivative":           
+            if isinstance(other,self.__class__):
+                mean = self.mean-other.mean
+                std = self.std+other.std
+                name=self.name+'-'+other.name
+                result = Measurement(name,mean,std)
+                result.setCorrelation(self,1)
+                result.setCorrelation(other,-1)
+                result.info+="Errors propgated by Derivative method"
+            elif isinstance(other,int) or isinstance(other,float):
+                mean = self.mean-other
+                std = self.std
+                name=self.name+'- constant'
+                result = Measurement(name,mean,std)
+                result.setCorrelation(self,1)
+                result.info+="Errors propgated by Derivative method"
+            else:
+                raise TypeError("unsupported operand type(s) for +: '{}' and '{}'"
+                ).format(self.__class__, type(other))
+            
+        #Addition by Min-Max method
+        elif Measurement.method=="MinMax":
+            print("Coming Soon")
+            result=self
+            result.info+="Errors propogated by Min-Max method."
+            
+        #If method specification is bad, MC method is used
         else:
-            raise TypeError("unsupported operand type(s) for +: '{}' and '{}'"
-            ).format(self.__class__, type(other))
+            if isinstance(other,self.__class__):
+                plus=lambda V: V[0]-V[1]
+                result=Measurement.MonteCarlo(plus,[self,other])
+                result.rename(self.name+'+'+other.name)
+            elif isinstance(other,int) or isinstance(other,float):
+                plus=lambda V: V[0]-other
+                result=Measurement.MonteCarlo(plus,[self])
+                result.rename(self.name+'+ {:.2f}'.format(float(other)))
+            result.info+="Errors propogated by Monte Carlo method"
+        
         return result;
+    '''
 
     def __mul__(self,other):
-        if isinstance(other,self.__class__):
-            mean = self.mean*other.mean
-            std = mean*(self.std/self.mean + other.std/other.mean)
-            name=self.name+'*'+other.name
-            result = Measurement(name,mean,std)
-            result.setCorrelation(self,0.5)
-            result.setCorrelation(other,0.5)
-            result.info+="Errors propgated by Derivative method"
-        elif isinstance(other,int) or isinstance(other,float):
-            mean = self.mean*other
-            std = mean*self.std/self.mean
-            name = self.name+"+ {:.1f}".format(float(other))
-            result = Measurement(name,mean,std)
-            result.setCorrelation(self,1)
+        if Measurement.method=="Derivative":          
+            if isinstance(other,self.__class__):
+                mean = self.mean*other.mean
+                std = mean*(self.std/self.mean + other.std/other.mean)
+                name=self.name+'*'+other.name
+                result = Measurement(name,mean,std)
+                result.setCorrelation(self,0.5)
+                result.setCorrelation(other,0.5)
+                result.info+="Errors propgated by Derivative method"
+            elif isinstance(other,int) or isinstance(other,float):
+                mean = self.mean*other
+                std = abs(mean*self.std/self.mean)
+                name = self.name+"+ {:.1f}".format(float(other))
+                result = Measurement(name,mean,std)
+                result.setCorrelation(self,1)
+         #Addition by Min-Max method
+        elif Measurement.method=="MinMax":
+            print("Coming Soon")
+            result=self
+            result.info+="Errors propogated by Min-Max method."
+            
+        #If method specification is bad, MC method is used
+        else:
+            if isinstance(other,self.__class__):
+                plus=lambda V: V[0]*V[1]
+                result=Measurement.MonteCarlo(plus,[self,other])
+                result.rename(self.name+'+'+other.name)
+            elif isinstance(other,int) or isinstance(other,float):
+                plus=lambda V: V[0]*other
+                result=Measurement.MonteCarlo(plus,[self])
+                result.rename(self.name+'+ {:.2f}'.format(float(other)))
+            result.info+="Errors propogated by Monte Carlo method"
         return result;
+        
+    def __sub__(self,other):
+        result=self+(other*-1)
+        #rename
+        return result
         
     def __truediv__(self,other):
         if isinstance(other,self.__class__):
@@ -135,7 +181,7 @@ class Measurement:
             result.info += "Errors propgated by Derivative method"
         elif isinstance(other,int) or isinstance(other,float):
             mean = self.mean/other
-            std = mean*self.std/self.mean
+            std = abs(mean*self.std/self.mean)
             name = self.name+"+ {:.1f}".format(float(other))
             result = Measurement(name,mean,std)
             result.setCorrelation(self,1)
@@ -156,7 +202,7 @@ class Measurement:
             result.info+="Errors propgated by Derivative method"
         elif isinstance(other,int) or isinstance(other,float):
             mean = self.mean**other
-            std = mean*other*self.std/self.mean
+            std = abs(mean*other*self.std/self.mean)
             name = self.name+"+ {:.1f}".format(float(other))
             result = Measurement(name,mean,std)
             result.setCorrelation(self,1)
@@ -200,7 +246,7 @@ class Measurement:
     def log(value):
         from math import log
         mean=log(value.mean)
-        std=value.std/value.mean
+        std=abs(value.std/value.mean)
         name="log("+value.name+")"
         result=Measurement(name,mean,std)
         result.info += "Errors propgated by Derivative method"
@@ -211,7 +257,7 @@ class Measurement:
         #2D array
         import numpy as np
         N=len(args)
-        n=10000 #Access property from class
+        n=Measurement.mcTrials #Can be adjusted by editing Measurement.mcTrials
         value=np.zeros((N,n))
         result=np.zeros(n)
         for i in range(N):
@@ -224,8 +270,3 @@ class Measurement:
             argName+=','+args[i].name
         name=function.__name__+"("+argName+")"
         return Measurement(name,data,error)
-
-
-#Test Code
-x=Measurement('x',10,1)
-y=Measurement('y',[10,15,20])
