@@ -1,2 +1,3 @@
 *.spyderworkspace
-Test.pyTest.py
+Test.py
+*.pyc
