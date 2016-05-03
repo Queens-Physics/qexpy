@@ -4,21 +4,32 @@ class measurement:
     id_number=1    
     
     #Defining common types under single array
-    CONSTANT = (int,float)
+    CONSTANT = (int,float,)
+    ARRAY = (list,)
+    try:
+        import numpy
+    except ImportError:
+        pass
+    else:
+        ARRAY+=(numpy.ndarray,)
     
     def __init__(self,name,*args):
         '''
         Creates a variable that contains a mean, standard deviation, and name
-        for any value.
+        for inputted data.
         '''
         import numpy
-        if len(args)==2:
+        if len(args)==2 and type(args)==measurement.CONSTANT:
             self.mean=args[0]
             self.std=args[1]
             
-        elif len(args)>2:
+        elif len(args)>2 or type(args[0])==measurement.ARRAY and len(args)==1:
             self.mean = numpy.mean(args)
             self.std = numpy.std(args,ddof=1)
+        else:
+            raise ValueError('''Input arguments must be one of: a mean and 
+            standard deviation, an array of values, or the individual values
+            themselves.''')
         self.name=name
         self.correlation={'Name': [name], 
             'Correlation Factor': [1]}
@@ -54,6 +65,9 @@ class measurement:
     
     def rename(self,newName):
         self.name=newName
+    
+###########################################################################
+#Operations on measurement objects    
     
     def __add__(self,other):
         #Addition by error propogation formula
@@ -214,6 +228,8 @@ class measurement:
         result.info += "Errors propgated by Derivative method"
         #Must set correlation
         return result;
+
+##############################################################################
     
     def monte_carlo(function,*args):
         #2D array
