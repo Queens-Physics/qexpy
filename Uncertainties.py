@@ -9,7 +9,7 @@ class measurement:
     try:
         import numpy
     except ImportError:
-        pass
+        print("Please install numpy for full features."
     else:
         ARRAY+=(numpy.ndarray,)
     
@@ -18,7 +18,7 @@ class measurement:
         Creates a variable that contains a mean, standard deviation, and name
         for inputted data.
         '''
-        import numpy
+        
         if len(args)==2 and all(isinstance(n,measurement.CONSTANT) for n in args):
             self.mean=args[0]
             self.std=args[1]
@@ -27,6 +27,7 @@ class measurement:
                                             ) and len(args)==1:
             self.mean = numpy.mean(args)
             self.std = numpy.std(args,ddof=1)
+            data=list(args)
         else:
             raise ValueError('''Input arguments must be one of: a mean and 
             standard deviation, an array of values, or the individual values
@@ -34,8 +35,9 @@ class measurement:
         self.name=name
         self.correlation={'Name': [name], 
             'Correlation Factor': [1]}
-        self.info=""
-        self.ID="var%d"%(measurement.id_number)
+        self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': '', 'Method': ''
+                       , 'Raw Data': data}
+        #self.ID="var%d"%(measurement.id_number)
         self.type="Uncertaintiy"
         measurement.id_number+=1
     
@@ -54,6 +56,9 @@ class measurement:
     def __str__(self):
         return "{:.1f}+/-{:.1f}".format(self.mean,self.std);
 
+    def set_covariance(data1,data2):
+        
+    
     def set_correlation(self,variable,correlation):
         '''
         Adds a correlation factor between the variable being acted on and 
@@ -88,7 +93,6 @@ class measurement:
     def __sub__(self,other):
         from operations import sub
         return sub(self,other);
-        
     def __rsub__(self,other):
         from operations import sub
         return sub(other,self);
@@ -101,17 +105,11 @@ class measurement:
         return div(other,self);
         
     def __pow__(self,other):
-        from math import log
-        norm_other=norm_check(self,other)
-        
-        mean = self.mean**norm_other.mean
-        std = ((norm_other.mean*self.mean**(norm_other.mean-1)*self.std)**2 
-            + (self.mean**norm_other.mean*log(self.mean)*norm_other.std)**2)
-        name=self.name+'**'+norm_other.name
-        result = measurement(name,mean,std)
-        #Must set correlation
-        result.info+="Errors propgated by Derivative method"
-        return result;
+        from operations import power
+        return power(self,other)
+    def __rpow__(self,other):
+        from operations import power
+        return power(other,self)
 
 ##############################################################################
     
