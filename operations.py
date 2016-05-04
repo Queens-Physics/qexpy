@@ -1,6 +1,8 @@
 from Uncertainties import measurement
 from Uncertainties import normalize
+from math import pi
 CONSTANT = (int,float,)
+
 
 def check_values(a,b):
     if isinstance(a,measurement.CONSTANT):
@@ -143,47 +145,69 @@ def power(a,b):
     return result;
         
         
-def sin(value):
+def sin(x):
     from math import sin
     from math import cos
-    mean=sin(value.mean)
-    std=abs(cos(value.mean)*value.std)
-    name="cos("+value.name+")"
-    result=measurement(name,mean,std)
-    result.info += "Errors propagated by Derivative method.\n"
-    #Must set correlation
+    if measurement.method=='Derivative':
+        mean=sin(x.mean)
+        std=abs(cos(x.mean)*x.std)
+        name="cos("+x.name+")"
+        result=measurement(name,mean,std)
+        result.info["Method"]+="Errors propagated by Derivative method.\n"
+    else:
+        sine=lambda x: sin(x)
+        result=measurement.monte_carlo(sine,x)
+        result.rename('sin(x.name)')
+        result.info['Method']+="Error propagated by Monte Carlo method.\n"
+    
     return result;
     
-def cos(value):
+def cos(x):
     from math import sin
     from math import cos
-    mean=cos(value.mean)
-    std=abs(sin(value.mean)*value.std)
-    name="sin("+value.name+")"
-    result=measurement(name,mean,std)
-    result.info += "Errors propagated by Derivative method.\n"
-    #Must set correlation
+    if measurement.method=='Derivative':        
+        mean=cos(x.mean)
+        std=abs(sin(x.mean)*x.std)
+        name="cos("+x.name+")"
+        result=measurement(name,mean,std)
+        result.info["Method"]+="Errors propagated by Derivative method.\n"
+    else:
+        cosine=lambda x: cos(x)
+        result=measurement.monte_carlo(cosine,x)
+        result.rename('sin('+x.name+')')
+        result.info['Method']+="Error proagated by Monte Carlo mehtod.\n"
+       
     return result;
     
-def exp(value):
+def exp(x):
     from math import exp
-    mean=exp(value.mean)
-    std=abs(value.mean*mean*value.std)
-    name="exp("+value.name+")"
-    result=measurement(name,mean,std)
-    result.info += "Errors propagated by Derivative method.\n"
-    #Must set correlation
+    if measurement.method=='Derivative':
+        mean=exp(x.mean)
+        std=abs(x.mean*mean*x.std)
+        name="exp("+x.name+")"
+        result=measurement(name,mean,std)
+        result.info["Method"]+="Errors propagated by Derivative method.\n"
+    else:
+        euler=lambda x: exp(x)
+        result=measurement.monte_carlo(euler,x)
+        result.rename('exp('+x.name+')')
+        result.info['Method']+="Error propagated by Monte Carlo method.\n"
     return result;
 
 def e(value):
     measurement.exp(value)
     
-def log(value):
+def log(x):
     from math import log
-    mean=log(value.mean)
-    std=abs(value.std/value.mean)
-    name="log("+value.name+")"
-    result=measurement(name,mean,std)
-    result.info += "Errors propagated by Derivative method.\n"
-    #Must set correlation
+    if measurement.method=='Derivative':
+        mean=log(x.mean)
+        std=abs(x.std/x.mean)
+        name="log("+x.name+")"
+        result=measurement(name,mean,std)
+        result.info["Method"]+="Errors propagated by Derivative method.\n"
+    else:
+        nat_log=lambda x: log(x)
+        result=measurement.monte_carlo(nat_log,x)
+        result.rename('log('+x.name+')')
+        result.info['Method']+="Error propagated by Monte Carlo mehtod.\n"
     return result;

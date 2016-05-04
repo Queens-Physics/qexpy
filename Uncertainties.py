@@ -9,9 +9,11 @@ class measurement:
     try:
         import numpy
     except ImportError:
-        print("Please install numpy for full features."
+        print("Please install numpy for full features.")
+        numpy_installed=False
     else:
         ARRAY+=(numpy.ndarray,)
+        numpy_installed=True
     
     def __init__(self,name,*args):
         '''
@@ -22,21 +24,21 @@ class measurement:
         if len(args)==2 and all(isinstance(n,measurement.CONSTANT) for n in args):
             self.mean=args[0]
             self.std=args[1]
+            data=None
             
-        elif len(args)>2 or all(isinstance(n,measurement.ARRAY) for n in args
-                                            ) and len(args)==1:
-            self.mean = numpy.mean(args)
-            self.std = numpy.std(args,ddof=1)
+        elif len(args)>2 or all(isinstance(n,measurement.ARRAY) for n in args) and len(args)==1:
+            self.mean = mean(args)
+            self.std = std(args,ddof=1)
             data=list(args)
         else:
             raise ValueError('''Input arguments must be one of: a mean and 
             standard deviation, an array of values, or the individual values
             themselves.''')
         self.name=name
-        self.correlation={'Name': [name], 
-            'Correlation Factor': [1]}
+        self.correlation={'Variable': [name], 
+            'Correlation Factor': [1], 'Covariance': [self.std**2]}
         self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': '', 'Method': ''
-                       , 'Raw Data': data}
+                       , 'Data': data}
         #self.ID="var%d"%(measurement.id_number)
         self.type="Uncertaintiy"
         measurement.id_number+=1
@@ -47,7 +49,12 @@ class measurement:
         functions.
         '''
         if aMethod=="Monte Carlo":
-            measurement.method="Monte Carlo"
+            if measurement.numpy_installed:
+                measurement.method="Monte Carlo"
+            else:
+                print('Numpy package must be installed to use Monte Carlo propagation, '
+                      +'using the derivative method instead.')
+                measurement.method="Derivative"
         elif aMethod=="Min Max":
             measurement.method="MinMax"
         else:
@@ -56,20 +63,36 @@ class measurement:
     def __str__(self):
         return "{:.1f}+/-{:.1f}".format(self.mean,self.std);
 
-    def set_covariance(data1,data2):
-        
-    
-    def set_correlation(self,variable,correlation):
-        '''
-        Adds a correlation factor between the variable being acted on and 
-        any specified variable. Correlation factor must be specified.
-        '''
-        self.correlation['Name'].append(variable.name)
-        self.correlation['Correlation Factor'].append(correlation)
-        
-        variable.correlation['Name'].append(self.name)
-        variable.correlation['Correlation Factor'].append(correlation)
-    
+    def find_covariance(x,y):
+        data_x=x.info["Data"]
+        data_y=y.info["Data"]
+              
+        if len(data_x)!=len(data_y):
+              print('Lengths of data arrays must be equal to define a covariance')
+        sigma_xy=0
+        for i in range(len(data_x)):
+              sigma_xy+=(data_x[i]-x.mean)*(data_y[i]-y.mean)
+        sigma_xy/=(len(data_x)-1)
+        ro_xy=sigma_xy/x.std/y.std
+
+        x.correlation['Variable'].append(y.name)
+        x.correlation['Covariance'].append(sigma_xy)
+        x.correlation['Correlation Factor'].append(ro_xy)
+        y.correlation['Variable'].append(x.name)
+        y.correlation['Covariance'].append(sigma_xy)
+        y.correlation['Covariance Factor'].append(ro_xy)
+
+    def set_correlation(x,y,factor):
+        ro_xy=factor
+        sigma_xy=ro_xy*x.std*y.std
+
+        x.correlation['Variable'].append(y.name)
+        x.correlation['Covariance'].append(sigma_xy)
+        x.correlation['Correlation Factor'].append(ro_xy)
+        y.correlation['Variable'].append(x.name)
+        y.correlation['Covariance'].append(sigma_xy)
+        y.correlation['Covariance Factor'].append(ro_xy)
+
     def rename(self,newName):
         self.name=newName
     
@@ -176,4 +199,26 @@ def norm_check(arg1,arg2):
         raise TypeError(
         "unsupported operand type(s) for -: '{}' and '{}'".format(
         type(arg1), type(arg2)))
-    return norm_arg2
+    return norm_arg2;
+
+def mean(*args):
+    '''
+    Returns the mean of an inputted array, numpy array or series of values
+    '''
+    args=args[0]
+    print(len(args))
+    return sum(args)/len(args);
+
+def std(*args,ddof=0):
+    '''
+    Returns the standard deviation of an inputted array, numpy array or series of values.
+    These values can have limited degrees of freedom, inputted using ddof.
+    '''
+    val=0
+    args=args[0]
+    mean=sum(args)/len(args)
+    for i in range(len(args)):
+        val+=(args[i]-mean)**2
+    val/=(len(args)-ddof)
+    return val;
+    
