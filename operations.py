@@ -15,8 +15,8 @@ def add(a,b):
     [a,b]=check_values(a,b)
     #Addition by error propogation formula
     if measurement.method=="Derivative":  
-        mean = a.mean+b.mean
-        std = a.std+b.std
+        mean=a.mean+b.mean
+        std=(a.std**2+b.std**2+a.get_correlation(b)+b.get_correlation(a))**(1/2)
         name=a.name+'+'+b.name
         result = measurement(name,mean,std)
         result.info['Method']+="Errors propagated by Derivative method.\n"
@@ -35,15 +35,17 @@ def add(a,b):
         result=measurement.monte_carlo(plus,a,b)
         result.rename(a.name+'+'+b.name)
         result.info['Method']+="Errors propagated by Monte Carlo method.\n"
+    
     return result;
 
 def sub(a,b):
     [a,b]=check_values(a,b)    
     #Addition by error propogation formula
     if measurement.method=="Derivative":
-        b=mul(b,-1)
-        result=add(a,b)
-        result.rename(a.name+'-'+b.name)
+        mean=a.mean-b.mean
+        std=(a.std**2+b.std**2-a.get_correlation(b)-b.get_correlation(a))**(1/2)
+        name=a.name+'-'+b.name
+        result = measurement(name,mean,std)
         result.info['Method']+="Errors propagated by Derivative method.\n"
     
     #Addition by Min-Max method
@@ -56,6 +58,7 @@ def sub(a,b):
         minus=lambda V: V[0]-V[1]
         result=measurement.monte_carlo(minus,a,b)
         result.rename(a.name+'+'+b.name)
+    
     return result
 
 def mul(a,b):
@@ -83,6 +86,7 @@ def mul(a,b):
         result=measurement.monte_carlo(plus,a,b)
         result.rename(a.name+'*'+b.name)
         result.info['Method']+="Errors propagated by Monte Carlo method.\n"
+    
     return result;
     
 def div(a,b):
@@ -112,6 +116,7 @@ def div(a,b):
         result=measurement.monte_carlo(divide,a,b)
         result.rename(a.name+'+'+b.name)
         result.info['Method']+="Errors propagated by Monte Carlo method\n"
+    
     return result;
 
 def power(a,b):
@@ -142,6 +147,7 @@ def power(a,b):
         result=measurement.monte_carlo(exponent,a,b)
         result.rename(a.name+'**'+b.name)
         result.info['Method']+="Errors propagated by Monte Carlo method\n"
+    
     return result;
         
         
@@ -176,7 +182,7 @@ def cos(x):
         result=measurement.monte_carlo(cosine,x)
         result.rename('sin('+x.name+')')
         result.info['Method']+="Error proagated by Monte Carlo mehtod.\n"
-       
+          
     return result;
     
 def exp(x):
@@ -192,6 +198,7 @@ def exp(x):
         result=measurement.monte_carlo(euler,x)
         result.rename('exp('+x.name+')')
         result.info['Method']+="Error propagated by Monte Carlo method.\n"
+    
     return result;
 
 def e(value):
@@ -210,4 +217,5 @@ def log(x):
         result=measurement.monte_carlo(nat_log,x)
         result.rename('log('+x.name+')')
         result.info['Method']+="Error propagated by Monte Carlo mehtod.\n"
+    
     return result;

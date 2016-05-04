@@ -27,8 +27,8 @@ class measurement:
             data=None
             
         elif len(args)>2 or all(isinstance(n,measurement.ARRAY) for n in args) and len(args)==1:
-            self.mean = mean(args)
-            self.std = std(args,ddof=1)
+            self.mean=mean(args)
+            self.std=std(args,ddof=1)
             data=list(args)
         else:
             raise ValueError('''Input arguments must be one of: a mean and 
@@ -36,10 +36,11 @@ class measurement:
             themselves.''')
         self.name=name
         self.correlation={'Variable': [name], 
-            'Correlation Factor': [1], 'Covariance': [self.std**2]}
+            'Correlation Factor': [1], 'Covariance': [self.std]}
         self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': '', 'Method': ''
                        , 'Data': data}
-        #self.ID="var%d"%(measurement.id_number)
+        self.first_der={self:1}
+        self.second_der={self:0}
         self.type="Uncertaintiy"
         measurement.id_number+=1
     
@@ -80,7 +81,7 @@ class measurement:
         x.correlation['Correlation Factor'].append(ro_xy)
         y.correlation['Variable'].append(x.name)
         y.correlation['Covariance'].append(sigma_xy)
-        y.correlation['Covariance Factor'].append(ro_xy)
+        y.correlation['Correlation Factor'].append(ro_xy)
 
     def set_correlation(x,y,factor):
         ro_xy=factor
@@ -93,6 +94,19 @@ class measurement:
         y.correlation['Covariance'].append(sigma_xy)
         y.correlation['Covariance Factor'].append(ro_xy)
 
+    def get_correlation(self,variable):
+        #Duplicating Correlation
+        if self.info['Data'] is not None and variable.info['Data'] is not None:
+            measurement.find_covariance(self,variable)
+        if any(self.correlation['Variable'][i]==variable.name
+                   for i in range(len(self.correlation['Variable']))):
+            for j in range(len(self.correlation["Variable"])):
+                if self.correlation["Variable"][j]==variable.name:
+                    index=j
+                    return self.correlation["Covariance"][index]
+        else:
+            return 0;
+        
     def rename(self,newName):
         self.name=newName
     
@@ -118,7 +132,8 @@ class measurement:
         return sub(self,other);
     def __rsub__(self,other):
         from operations import sub
-        return sub(other,self);
+        result=sub(other,self)
+        result.rename(other.name+'-'+self.name)
         
     def __truediv__(self,other):
         from operations import div
@@ -206,7 +221,6 @@ def mean(*args):
     Returns the mean of an inputted array, numpy array or series of values
     '''
     args=args[0]
-    print(len(args))
     return sum(args)/len(args);
 
 def std(*args,ddof=0):
@@ -219,6 +233,6 @@ def std(*args,ddof=0):
     mean=sum(args)/len(args)
     for i in range(len(args)):
         val+=(args[i]-mean)**2
-    val/=(len(args)-ddof)
-    return val;
+    std=(val/(len(args)-1))**(1/2)
+    return std;
     
