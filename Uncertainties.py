@@ -1,7 +1,7 @@
 class measurement:
     method="Derivative" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
-    id_number=1    
+    id_number=1
     
     #Defining common types under single array
     CONSTANT = (int,float,)
@@ -15,18 +15,25 @@ class measurement:
         ARRAY+=(numpy.ndarray,)
         numpy_installed=True
     
-    def __init__(self,name,*args):
+    def __init__(self,*args,name=None):
         '''
         Creates a variable that contains a mean, standard deviation, and name
         for inputted data.
         '''
         
-        if len(args)==2 and all(isinstance(n,measurement.CONSTANT) for n in args):
+        if len(args)==2 and all(isinstance(n,measurement.CONSTANT)\
+                for n in args):
             self.mean=args[0]
             self.std=args[1]
             data=None
             
-        elif len(args)>2 or all(isinstance(n,measurement.ARRAY) for n in args) and len(args)==1:
+        elif all(isinstance(n,measurement.ARRAY) for n in args) and \
+                len(args)==1:
+            args=args[0]
+            self.mean = mean(args)
+            self.std = std(args,ddof=1)
+            data=list(args)
+        elif len(args)>2:
             self.mean = mean(args)
             self.std = std(args,ddof=1)
             data=list(args)
@@ -34,26 +41,29 @@ class measurement:
             raise ValueError('''Input arguments must be one of: a mean and 
             standard deviation, an array of values, or the individual values
             themselves.''')
-        self.name=name
+        if name is not None:
+            self.name=name
+        else:
+            self.name='var%d'%(measurement.id_number)
         self.correlation={'Variable': [name], 
             'Correlation Factor': [1], 'Covariance': [self.std**2]}
-        self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': '', 'Method': ''
-                       , 'Data': data}
+        self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': '',
+                   'Method': '', 'Data': data}
         #self.ID="var%d"%(measurement.id_number)
         self.type="Uncertaintiy"
         measurement.id_number+=1
     
     def set_method(aMethod):
         '''
-        Function to change default error propogation method used in measurement
-        functions.
+        Function to change default error propogation method used in 
+        measurement functions.
         '''
         if aMethod=="Monte Carlo":
             if measurement.numpy_installed:
                 measurement.method="Monte Carlo"
             else:
-                print('Numpy package must be installed to use Monte Carlo propagation, '
-                      +'using the derivative method instead.')
+                print('Numpy package must be installed to use Monte Carlo \
+                        propagation, using the derivative method instead.')
                 measurement.method="Derivative"
         elif aMethod=="Min Max":
             measurement.method="MinMax"
@@ -68,7 +78,8 @@ class measurement:
         data_y=y.info["Data"]
               
         if len(data_x)!=len(data_y):
-              print('Lengths of data arrays must be equal to define a covariance')
+              print('Lengths of data arrays must be equal to\
+                      define a covariance')
         sigma_xy=0
         for i in range(len(data_x)):
               sigma_xy+=(data_x[i]-x.mean)*(data_y[i]-y.mean)
@@ -96,6 +107,24 @@ class measurement:
     def rename(self,newName):
         self.name=newName
     
+    def update_info(self, var1, var2, operation, func_flag=None):
+        '''
+        Function to update the name, formula and method of a value created
+        by a measurement operation. The name is updated by combining the names
+        of the object acted on with another name using whatever operation is
+        being performed. The function flag is to change syntax for functions
+        like sine and cosine. Method is updated by acessing the class 
+        property.
+        '''
+        if func_flag is None:
+            self.rename(var1.name+operation+var2.name)
+            self.info['Formula']=var1.info['Formula']+operation+\
+                    var2.info['Formula']
+            self.info['Method']+="Errors propagated by "+measurement.method+\
+                    " method.\n"
+            
+            
+        
 ###########################################################################
 #Operations on measurement objects
     
@@ -140,7 +169,7 @@ class measurement:
         #2D array
         import numpy as np
         N=len(args)
-        n=measurement.mcTrials #Can be adjusted by editing measurement.mcTrials
+        n=measurement.mcTrials #Can be adjusted in measurement.mcTrials
         value=np.zeros((N,n))
         result=np.zeros(n)
         for i in range(N):
@@ -206,13 +235,13 @@ def mean(*args):
     Returns the mean of an inputted array, numpy array or series of values
     '''
     args=args[0]
-    print(len(args))
     return sum(args)/len(args);
 
 def std(*args,ddof=0):
     '''
-    Returns the standard deviation of an inputted array, numpy array or series of values.
-    These values can have limited degrees of freedom, inputted using ddof.
+    Returns the standard deviation of an inputted array, numpy array or 
+    series of values. These values can have limited degrees of freedom, 
+    inputted using ddof.
     '''
     val=0
     args=args[0]
