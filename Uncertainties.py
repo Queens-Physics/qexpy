@@ -122,7 +122,7 @@ class measurement:
     def rename(self,newName):
         self.name=newName
     
-    def update_info(self, var1, var2, operation, func_flag=None):
+    def update_info(self, operation, var1, var2=None, func_flag=None):
         '''
         Function to update the name, formula and method of a value created
         by a measurement operation. The name is updated by combining the names
@@ -131,14 +131,17 @@ class measurement:
         like sine and cosine. Method is updated by acessing the class 
         property.
         '''
-        if func_flag is None:
+        if func_flag is None and var2 is not None:
             self.rename(var1.name+operation+var2.name)
             self.info['Formula']=var1.info['Formula']+operation+\
                     var2.info['Formula']
+        elif func_flag is not None:
+            self.rename(operation+'('+var1.name+')')
+            self.info['Formula']=operation+'('+var1.info['Formula']+')'
             self.info['Method']+="Errors propagated by "+measurement.method+\
-                    " method.\n"
-            
-            
+                    ' method.\n'
+        else:
+            print('Something went wrong in update_info')
         
 ###########################################################################
 #Operations on measurement objects
