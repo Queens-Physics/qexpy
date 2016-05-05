@@ -4,6 +4,7 @@ class measurement:
     id_number=1    
     
     #Defining common types under single array
+    #Testing GitHub
     CONSTANT = (int,float,)
     ARRAY = (list,)
     try:
