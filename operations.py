@@ -13,85 +13,105 @@ def check_values(a,b):
 
 def add(a,b):
     [a,b]=check_values(a,b)
+    #Propagating derivative of arguments    
+    first_der={}
+    a.check_der(b)
+    b.check_der(a)
+    for key in a.first_der:
+        first_der[key]=a.first_der[key]+b.first_der[key]
+        
     #Addition by error propogation formula
     if measurement.method=="Derivative":  
-        mean=a.mean+b.mean
-        
-        first_der={}
-        a.check_der(b)
-        b.check_der(a)
-        
-        for key in a.first_der:
-            first_der[key]=a.first_der[key]+b.first_der[key]
-        
+        mean=a.mean+b.mean     
         std=(a.std**2+b.std**2+a.get_correlation(b)\
                 +b.get_correlation(a))**(1/2)
         result=measurement(mean,std)
-        result.update_info('+',a,b)
-        result.first_der.update(first_der)
         
     #Addition by Min-Max method
     elif measurement.method=="MinMax":
         mean=a.mean+b.mean
         std=a.std+b.std
         result=measurement(mean,std)
-        result.update_info('+',a,b)
         
     #If method specification is bad, MC method is used
     else:
         plus=lambda V: V[0]+V[1]
         result=measurement.monte_carlo(plus,a,b)
-        result.update_info('+',a,b)
+    
+    result.first_der.update(first_der)
+    result.update_info('+',a,b)
     return result;
 
 def sub(a,b):
-    [a,b]=check_values(a,b)    
+    [a,b]=check_values(a,b)
+    #Propagating derivative of arguments    
+    first_der={}
+    a.check_der(b)
+    b.check_der(a)
+    for key in a.first_der:
+        first_der[key]=a.first_der[key]-b.first_der[key] 
+    
     #Addition by error propogation formula
     if measurement.method=="Derivative":
         mean=a.mean-b.mean
-        std=(a.std**2+b.std**2-a.get_correlation(b)-b.get_correlation(a))**(1/2)
+        std=(a.std**2+b.std**2-a.get_correlation(b)-\
+                b.get_correlation(a))**(1/2)
         result=measurement(mean,std)
-        result.update_info('-',a,b)
     
     #Addition by Min-Max method
     elif measurement.method=="MinMax":
         result=add(a,mul(b,-1))
-        result.update_info('-',a,b)
         
     #Monte Carlo method
     else:
         minus=lambda V: V[0]-V[1]
         result=measurement.monte_carlo(minus,a,b)
-        result.update_info('-',a,b)
+    
+    result.first_der.update(first_der)
+    result.update_info('-',a,b)
     return result
 
 def mul(a,b):
     [a,b]=check_values(a,b)
+    #Propagating derivative of arguments    
+    first_der={}
+    a.check_der(b)
+    b.check_der(a)
+    for key in a.first_der:
+        first_der[key]=a.mean*b.first_der[key]+b.mean*a.first_der[key]
+    
     #By error propogation formula    
     if measurement.method=="Derivative":          
         mean=a.mean*b.mean
         std=(a.std**2*b.mean**2 +
             b.std**2*a.mean**2)**(1/2)
         result=measurement(mean,std)
-        result.update_info('*',a,b)
         
     #Addition by Min-Max method
     elif measurement.method=="MinMax":
         mean=a.mean*b.mean+a.std*b.std
         std=a.mean*b.std+b.mean*a.std
         result=measurement(mean,std)
-        result.update_info('*',a,b)
             
     #If method specification is bad, MC method is used
     else:
         plus=lambda a,b: a*b
         result=measurement.monte_carlo(plus,a,b)
-        result.update_info('*',a,b)
     
+    result.first_der.update(first_der)
+    result.update_info('*',a,b)
     return result;
     
 def div(a,b):
     [a,b]=check_values(a,b)
+    #Propagating derivative of arguments    
+    first_der={}
+    a.check_der(b)
+    b.check_der(a)
+    for key in a.first_der:
+        first_der[key]=(a.first_der[key]*b.mean-b.first_der[key]*a.mean)\
+                / b.mean**2
+        
     #By error propgation
     if measurement.method=="Derivative": 
         from math import log
@@ -100,25 +120,31 @@ def div(a,b):
         std=(a.std**2/b.mean**2+
             b.std**2*(a.mean*log(b.mean))**2)**(1/2)
         result=measurement(mean,std)
-        result.update_info('/',a,b)
             
     #Addition by Min-Max method
     elif measurement.method=="MinMax":
         mean=(b.mean*a.std+a.mean*b.std)/(b.mean**2*b.std**2)
         std=(a.mean*b.mean+a.std*b.std+2*a.mean*b.std+2*b.mean*a.std)
         result=measurement(mean,std)
-        result.update_info('/',a,b)
         
     #If method specification is bad, MC method is used
     else:
         divide=lambda a,b: a/b
         result=measurement.monte_carlo(divide,a,b)
-        result.update_info('/',a,b)
     
+    result.first_der.update(first_der)
+    result.update_info('/',a,b)
     return result;
 
 def power(a,b):
     [a,b]=check_values(a,b)
+    #Propagating derivative of arguments    
+    first_der={}
+    a.check_der(b)
+    b.check_der(a)
+    for key in a.first_der:
+        first_der[key]=
+                
     #By error propagation
     if measurement.method=='Derivative':
         from math import log

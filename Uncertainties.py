@@ -157,12 +157,12 @@ class measurement:
         dictionary and returning the value stored there under the specific
         variable inputted (ie. deriving with respect to variable=???)
         '''
-        if not hasattr(variable,'type'):
+        if variable is not None \
+                and not hasattr(variable,'type'):
             return 'Only measurement objects can be derived.'
-        
-        if variable is None:
-            variable=self.info['ID']
-        elif variable.info['ID'] not in self.first_der:
+        elif variable is None:
+            return self.first_der
+        if variable.info['ID'] not in self.first_der:
             self.first_der[variable.info['ID']]=0
         derivative=self.first_der[variable.info["ID"]]
         return derivative
@@ -202,7 +202,8 @@ class measurement:
     def __rsub__(self,other):
         from operations import sub
         result=sub(other,self)
-        result.rename(other.name+'-'+self.name)
+        result.rename("Need to fix naming")
+        return result
         
     def __truediv__(self,other):
         from operations import div
