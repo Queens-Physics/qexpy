@@ -142,8 +142,8 @@ def power(a,b):
     first_der={}
     a.check_der(b)
     b.check_der(a)
-    for key in a.first_der:
-        first_der[key]=
+    #for key in a.first_der:
+        #first_der[key]=
                 
     #By error propagation
     if measurement.method=='Derivative':
@@ -152,7 +152,6 @@ def power(a,b):
         std=((b.mean*a.mean**(b.mean-1)*a.std)**2+
                  (a.mean*b.mean*log(a.mean)*b.std)**2)**(1/2)
         result=measurement(mean,std)
-        result.update_info('**',a,b)
         
     elif measurement.method=='MinMax':
         if (b<0):
@@ -164,62 +163,82 @@ def power(a,b):
         mid_val=(max_val+min_val)/2
         error=(max_val-min_val)/2
         result=measurement(mid_val,error)
-        result.update_info('**',a,b)
         
     else:
         exponent=lambda a,b: a**b
         result=measurement.monte_carlo(exponent,a,b)
-        result.update_info('**',a,b)
-    
+
+    result.first_der.update(first_der)   
+    result.update_info('**',a,b)
     return result;
         
         
 def sin(x):
     from math import sin
     from math import cos
+    
+    first_der={}
+    for key in x.first_der:
+        first_der[key]=cos(x.mean)*x.first_der[key]
+    
     if measurement.method=='Derivative':
         mean=sin(x.mean)
         std=abs(cos(x.mean)*x.std)
         result=measurement(mean,std)
-        result.update_info('sin',x,func_flag=1)
+        
     else:
         sine=lambda x: sin(x)
         result=measurement.monte_carlo(sine,x)
-        result.update_info('sin',x,func_flag=1)    
+
+    result.first_der.update(first_der)
+    result.update_info('sin',x,func_flag=1)    
     return result;
     
 def cos(x):
     from math import sin
     from math import cos
+
+    first_der={}
+    for key in x.first_der:
+        first_der[key]=-sin(x.mean)*x.first_der[key]    
+    
     if measurement.method=='Derivative':        
         mean=cos(x.mean)
         std=abs(sin(x.mean)*x.std)
         result=measurement(mean,std)
-        result.update_info('cos',x,func_flag=1)
     else:
         cosine=lambda x: cos(x)
         result=measurement.monte_carlo(cosine,x)
-        result.update_info('cos',x,func_flag=1)
+    
+    result.first_der.update(first_der)
+    result.update_info('cos',x,func_flag=1)
     return result;
     
 def exp(x):
     from math import exp
+    
+    first_der={}
+    for key in x.first_der:
+        first_der[key]=exp(x.mean)*x.first_der[key]        
+    
     if measurement.method=='Derivative':
         mean=exp(x.mean)
         std=abs(x.mean*mean*x.std)
         result=measurement(mean,std)
-        result.update_info('exp',x,func_flag=1)
+        
     elif measurement.method=='MinMax':
         min_val=exp(x.mean-x.std)
         max_val=exp(x.mean+x.std)
         mid_val=(max_val+min_val)/x
         error=(max_val-min_val)/2
         result=measurement(mid_val,error)
-        result.update_info('exp',x,func_flag=1)
+
     else:
         euler=lambda x: exp(x)
         result=measurement.monte_carlo(euler,x)
-        result.update_info('exp',x,func_flag=1)    
+
+    result.first_der.update(first_der)
+    result.update_info('exp',x,func_flag=1)
     return result;
 
 def e(value):
