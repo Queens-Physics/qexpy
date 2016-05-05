@@ -16,7 +16,8 @@ def add(a,b):
     #Addition by error propogation formula
     if measurement.method=="Derivative":  
         mean=a.mean+b.mean
-        std=(a.std**2+b.std**2+a.get_correlation(b)+b.get_correlation(a))**(1/2)
+        std=(a.std**2+b.std**2+a.get_correlation(b)\
+                +b.get_correlation(a))**(1/2)
         result=measurement(mean,std)
         result.update_info('+',a,b)
         
@@ -201,5 +202,3 @@ def log(x):
         result=measurement.monte_carlo(nat_log,x)
         result.update_info('log',x,func_flag=1)    
     return result;
-
-

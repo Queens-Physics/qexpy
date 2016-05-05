@@ -48,10 +48,10 @@ class measurement:
             self.name='var%d'%(measurement.id_number)
         self.correlation={'Variable': [name], 
             'Correlation Factor': [1], 'Covariance': [self.std]}
-        self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': '', 'Method': ''
-                       , 'Data': data}
-        self.first_der={self:1}
-        self.second_der={self:0}
+        self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': '',\
+                'Method': '', 'Data': data}
+        self.first_der={self.info['ID']:1}
+        self.second_der={self.info['ID']:0}
         self.type="Uncertaintiy"
         measurement.id_number+=1
     
@@ -60,14 +60,18 @@ class measurement:
         Function to change default error propogation method used in 
         measurement functions.
         '''
-        if aMethod=="Monte Carlo":
+        mc_list=('MC','mc','montecarlo','Monte Carlo','MonteCarlo',\
+                'monte carlo',)
+        min_max=('Min Max','MinMax','minmax','min max')
+        
+        if aMethod in mc_list:
             if measurement.numpy_installed:
                 measurement.method="Monte Carlo"
             else:
                 print('Numpy package must be installed to use Monte Carlo \
                         propagation, using the derivative method instead.')
                 measurement.method="Derivative"
-        elif aMethod=="Min Max":
+        elif aMethod in min_max:
             measurement.method="MinMax"
         else:
             measurement.method="Derivative"
@@ -108,7 +112,10 @@ class measurement:
 
     def get_correlation(self,variable):
         #Duplicating Correlation
-        if self.info['Data'] is not None and variable.info['Data'] is not None:
+        if self.info['Data'] is not None \
+                and variable.info['Data'] is not None \
+                and all(self.correlation['Variable'][i]!=variable.name \
+                for i in range(len(self.correlation['Variable']))):
             measurement.find_covariance(self,variable)
         if any(self.correlation['Variable'][i]==variable.name
                    for i in range(len(self.correlation['Variable']))):
@@ -142,8 +149,27 @@ class measurement:
                     ' method.\n'
         else:
             print('Something went wrong in update_info')
+            
+    def d(self,variable=None):
+        '''
+        Function to find the derivative of a measurement or measurement like
+        object. By default, derivative is with respect to itself, which will
+        always yeild 1. Operator acts by acessing the self.first_der 
+        dictionary and returning the value stored there under the specific
+        variable inputted (ie. deriving with respect to variable=???)
+        '''
+        if not hasattr(variable,'type'):
+            return 'Only measurement objects can be derived.'
         
-###########################################################################
+        if variable is None:
+            variable=self.info['ID']
+        elif variable.info['ID'] not in self.first_der:
+            self.first_der[variable.info['ID']]=0
+        derivative=self.first_der[variable.info["ID"]]
+        return derivative
+         
+        
+#######################################################################
 #Operations on measurement objects
     
     def __add__(self,other):
@@ -182,7 +208,7 @@ class measurement:
         from operations import power
         return power(other,self)
 
-##############################################################################
+#######################################################################
     
     def monte_carlo(function,*args):
         #2D array
@@ -206,8 +232,10 @@ class measurement:
         return measurement(name,data,error)
 
 def normalize(value):
-    value=measurement('%d'%value,value,0)
-    value.ID='N/A'
+    value=measurement(value,0,name='%d'%value)
+    value.info['ID']='Constant'
+    value.first_der={value.info['ID']:0}
+    value.second_der={value.info['ID']:0}
     measurement.id_number-=1
     return value;
    
