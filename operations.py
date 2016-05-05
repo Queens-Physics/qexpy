@@ -16,10 +16,19 @@ def add(a,b):
     #Addition by error propogation formula
     if measurement.method=="Derivative":  
         mean=a.mean+b.mean
+        
+        first_der={}
+        a.check_der(b)
+        b.check_der(a)
+        
+        for key in a.first_der:
+            first_der[key]=a.first_der[key]+b.first_der[key]
+        
         std=(a.std**2+b.std**2+a.get_correlation(b)\
                 +b.get_correlation(a))**(1/2)
         result=measurement(mean,std)
         result.update_info('+',a,b)
+        result.first_der.update(first_der)
         
     #Addition by Min-Max method
     elif measurement.method=="MinMax":

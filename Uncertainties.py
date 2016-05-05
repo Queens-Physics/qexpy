@@ -48,10 +48,9 @@ class measurement:
             self.name='var%d'%(measurement.id_number)
         self.correlation={'Variable': [name], 
             'Correlation Factor': [1], 'Covariance': [self.std]}
-        self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': '',\
-                'Method': '', 'Data': data}
+        self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': \
+        'var%d'%(measurement.id_number) ,'Method': '', 'Data': data}
         self.first_der={self.info['ID']:1}
-        self.second_der={self.info['ID']:0}
         self.type="Uncertaintiy"
         measurement.id_number+=1
     
@@ -167,7 +166,18 @@ class measurement:
             self.first_der[variable.info['ID']]=0
         derivative=self.first_der[variable.info["ID"]]
         return derivative
-         
+    
+    def check_der(self,b):
+        '''
+        Checks the existance of the derivative of an object in the 
+        dictionary of said object with respect to another variable, given
+        the ID key of the other variable.
+        '''
+        for key in b.first_der:
+            if key in self.first_der:
+                pass;
+            else:
+                self.first_der[key]=0
         
 #######################################################################
 #Operations on measurement objects
@@ -235,7 +245,6 @@ def normalize(value):
     value=measurement(value,0,name='%d'%value)
     value.info['ID']='Constant'
     value.first_der={value.info['ID']:0}
-    value.second_der={value.info['ID']:0}
     measurement.id_number-=1
     return value;
    
