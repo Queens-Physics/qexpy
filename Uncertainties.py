@@ -1,7 +1,7 @@
 class measurement:
     method="Derivative" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
-    id_number=1
+    id_number=1 #Instances var0
     
     #Defining common types under single array
     #Testing GitHub
@@ -46,39 +46,53 @@ class measurement:
             self.name=name
         else:
             self.name='var%d'%(measurement.id_number)
-        self.correlation={'Variable': [name], 
-            'Correlation Factor': [1], 'Covariance': [self.std]}
+        self.covariance={'Name': [self.name], 'Covariance': [self.std**2]}
         self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': \
         'var%d'%(measurement.id_number) ,'Method': '', 'Data': data}
         self.first_der={self.info['ID']:1}
-        self.type="Uncertaintiy"
+        self.type="measurement"
         measurement.id_number+=1
     
-    def set_method(aMethod):
+    def set_method(chosen_method):
         '''
+        Choose the method of error propagation to be used. Enter a string.        
+        
         Function to change default error propogation method used in 
         measurement functions.
         '''
         mc_list=('MC','mc','montecarlo','Monte Carlo','MonteCarlo',\
                 'monte carlo',)
-        min_max=('Min Max','MinMax','minmax','min max')
+        min_max_list=('Min Max','MinMax','minmax','min max',)
+        derr_list=('Derivative', 'derivative','diff','der',)
+        default = 'Derivative'        
         
-        if aMethod in mc_list:
+        if chosen_method in mc_list:
             if measurement.numpy_installed:
                 measurement.method="Monte Carlo"
             else:
                 print('Numpy package must be installed to use Monte Carlo \
                         propagation, using the derivative method instead.')
                 measurement.method="Derivative"
-        elif aMethod in min_max:
-            measurement.method="MinMax"
+        elif chosen_method in min_max_list:
+            measurement.method="Min Max"
+        elif chosen_method in derr_list:
+            measurement.method="Derivative"
         else:
+            print("Method not recognized, using"+default+"method.")
             measurement.method="Derivative"
         
     def __str__(self):
         return "{:.1f}+/-{:.1f}".format(self.mean,self.std);
 
     def find_covariance(x,y):
+        '''
+        Uses the data from which x and y were generated to calculate
+        covariance and add this informaiton to x and y.
+        
+        Requires data arrays to be stored in the .info of both objects
+        and that these arrays are of the same length, as the covariance is
+        only defined in these cases.
+        '''
         data_x=x.info["Data"]
         data_y=y.info["Data"]
               
@@ -89,47 +103,77 @@ class measurement:
         for i in range(len(data_x)):
               sigma_xy+=(data_x[i]-x.mean)*(data_y[i]-y.mean)
         sigma_xy/=(len(data_x)-1)
-        ro_xy=sigma_xy/x.std/y.std
 
-        x.correlation['Variable'].append(y.name)
-        x.correlation['Covariance'].append(sigma_xy)
-        x.correlation['Correlation Factor'].append(ro_xy)
-        y.correlation['Variable'].append(x.name)
-        y.correlation['Covariance'].append(sigma_xy)
-        y.correlation['Correlation Factor'].append(ro_xy)
+        x.covariance['Name'].append(y.name)
+        x.covariance['Covariance'].append(sigma_xy)
+        y.covariance['Name'].append(x.name)
+        y.covariance['Covariance'].append(sigma_xy)
 
     def set_correlation(x,y,factor):
+        '''
+        Manually set the correlation between two quantities
+        
+        Given a correlation factor, the covariance and correlation
+        between two variables is added to both objects.
+        '''
         ro_xy=factor
         sigma_xy=ro_xy*x.std*y.std
 
-        x.correlation['Variable'].append(y.name)
-        x.correlation['Covariance'].append(sigma_xy)
-        x.correlation['Correlation Factor'].append(ro_xy)
-        y.correlation['Variable'].append(x.name)
-        y.correlation['Covariance'].append(sigma_xy)
-        y.correlation['Covariance Factor'].append(ro_xy)
+        x.covariance['Name'].append(y.name)
+        x.covariance['Covariance'].append(sigma_xy)
+        y.covariance['Name'].append(x.name)
+        y.covariance['Covariance'].append(sigma_xy)
 
-    def get_correlation(self,variable):
-        #Duplicating Correlation
+    def get_covariance(self,variable):
+        '''
+        Returns the covariance of the object and a specified variable.
+        
+        This funciton checks for the existance of a data array in each 
+        object and that the covariance of the two objects is not already
+        specified. In each case, the covariance is returned, unless
+        the data arrays are of different lengths or do not exist, in that
+        case a covariance of zero is returned.        
+        '''
         if self.info['Data'] is not None \
                 and variable.info['Data'] is not None \
-                and all(self.correlation['Variable'][i]!=variable.name \
-                for i in range(len(self.correlation['Variable']))):
+                and all(self.covariance['Name'][i]!=variable.name \
+                for i in range(len(self.covariance['Name']))):
             measurement.find_covariance(self,variable)
-        if any(self.correlation['Variable'][i]==variable.name
-                   for i in range(len(self.correlation['Variable']))):
-            for j in range(len(self.correlation["Variable"])):
-                if self.correlation["Variable"][j]==variable.name:
+        if any(self.covariance['Name'][i]==variable.name
+                   for i in range(len(self.covariance['Name']))):
+            for j in range(len(self.covariance["Name"])):
+                if self.covariance["Name"][j]==variable.name:
                     index=j
-                    return self.correlation["Covariance"][index]
+                    return self.covariance["Covariance"][index]
         else:
             return 0;
+    
+    def get_correlation(x,y):
+        '''
+        Returns the correlation factor of two measurements.
+        
+        Using the covariance, or finding the covariance if not defined,
+        the correlation factor of two measurements is returned.        
+        '''
+        if y.name in x.covariance['Name']:
+            pass
+        else:
+            measurement.find_covariance(x,y)
+        sigma_xy=x.covariance[y.name]
+        sigma_x=x.covariance[x.name]
+        sigma_y=y.covariance[y.name]
+        return sigma_xy/sigma_x/sigma_y    
         
     def rename(self,newName):
+        '''
+        Renames an object, requires a string.
+        '''
         self.name=newName
     
-    def update_info(self, operation, var1, var2=None, func_flag=None):
+    def _update_info(self, operation, var1, var2=None, func_flag=None):
         '''
+        Update the formula, name and method of an object.        
+        
         Function to update the name, formula and method of a value created
         by a measurement operation. The name is updated by combining the names
         of the object acted on with another name using whatever operation is
@@ -151,6 +195,9 @@ class measurement:
             
     def d(self,variable=None):
         '''
+        Returns the numerical value of the derivative with respect to an 
+        inputed variable.        
+        
         Function to find the derivative of a measurement or measurement like
         object. By default, derivative is with respect to itself, which will
         always yeild 1. Operator acts by acessing the self.first_der 
@@ -169,9 +216,14 @@ class measurement:
     
     def check_der(self,b):
         '''
+        Checks for a derivative with respect to b, else zero is defined as
+        the derivative.        
+        
         Checks the existance of the derivative of an object in the 
         dictionary of said object with respect to another variable, given
-        the ID key of the other variable.
+        the variable itself, then checking for the ID of said variable
+        in the .first_der dictionary. If non exists, the deriviative is 
+        assumed to be zero.
         '''
         for key in b.first_der:
             if key in self.first_der:
@@ -218,10 +270,21 @@ class measurement:
     def __rpow__(self,other):
         from operations import power
         return power(other,self)
+        
+    def __neg__(self):
+        return measurement(-self.mean,self.std,name='-'+self.name)
 
 #######################################################################
     
     def monte_carlo(function,*args):
+        '''
+        Uses a Monte Carlo simulation to determine the mean and standard 
+        deviation of a function.
+        
+        Inputted arguments must be measurement type. Constants can be used
+        as 'normalized' quantities which produce a constant row in the 
+        matrix of normally randomized values.
+        '''
         #2D array
         import numpy as np
         N=len(args)
@@ -243,6 +306,13 @@ class measurement:
         return measurement(name,data,error)
 
 def normalize(value):
+    '''
+    Returns a measurement object that is constant with no deviation.
+    
+    Object can be acted on like a measurement but does not increase the 
+    ID counter and is labelled as a constant. The derivative of this
+    object with respect to anything is zero.
+    '''
     value=measurement(value,0,name='%d'%value)
     value.info['ID']='Constant'
     value.first_der={value.info['ID']:0}
@@ -265,7 +335,11 @@ def f(function,*args):
       
 def partial_derivative(func,var,*args):
     '''
-    Expected input is normalized arguments
+    Returns the parital derivative of a dunction with respect to var.
+    
+    This function wraps the inputted function to become a function
+    of only one variable, the derivative is taken with respect to said
+    variable.
     '''    
     def restrict_dimension(x):
         partial_args=list(args)
@@ -274,18 +348,10 @@ def partial_derivative(func,var,*args):
     return derivative(restrict_dimension,args[var])
 
 def derivative(function,point,dx=1e-10):
+    '''
+    Returns the first order derivative of a function.
+    '''
     return (function(point+dx)-function(point))/dx
-
-def norm_check(arg1,arg2):
-    if isinstance(arg2,arg1.__class__):
-        norm_arg2=arg2
-    elif isinstance(arg2, measurement.CONSTANT):
-        norm_arg2=normalize(arg2)
-    else:
-        raise TypeError(
-        "unsupported operand type(s) for -: '{}' and '{}'".format(
-        type(arg1), type(arg2)))
-    return norm_arg2;
 
 def mean(*args):
     '''
@@ -296,7 +362,9 @@ def mean(*args):
 
 def std(*args,ddof=0):
     '''
-    Returns the standard deviation of an inputted array, numpy array or 
+    Returns the standard deviation of an inputted array.
+    
+    Array types include a list, numpy array or 
     series of values. These values can have limited degrees of freedom, 
     inputted using ddof.
     '''

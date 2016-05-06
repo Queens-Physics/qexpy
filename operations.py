@@ -3,15 +3,40 @@ from Uncertainties import normalize
 #from math import pi
 CONSTANT = (int,float,)
 
-
+'''
 def check_values(a,b):
     if isinstance(a,measurement.CONSTANT):
         a=normalize(a)
     if isinstance(b,measurement.CONSTANT):
         b=normalize(b)
     return [a,b]
+'''
+def check_values(*args):
+    '''
+    Checks that the arguments are measurement type, otherwise a measurement
+    is returned.
+    
+    All returned values are of measurement type, if values need to be 
+    converted, this is done by calling the normalize function, which
+    outputs a measurement object with no standard deviation.
+    '''
+    val=[None]*len(args)
+    for i in range(len(args)):
+        if type(args[i]).__name__ is not 'measurement':
+            val[i]=normalize(args[i])
+        else:
+            val[i]=args[i]
+    return val
 
 def add(a,b):
+    '''
+    Returns a measurement object that is the sum of two other measurements.
+    
+    The sum can be taken by multiple methods, specified by the measurement
+    class variable measurement.method. The derivative of this new object is
+    also specifed by applying the chain rule to the input and the 
+    derivative of the inputs.
+    '''
     [a,b]=check_values(a,b)
     #Propagating derivative of arguments    
     first_der={}
@@ -23,12 +48,12 @@ def add(a,b):
     #Addition by error propogation formula
     if measurement.method=="Derivative":  
         mean=a.mean+b.mean     
-        std=(a.std**2+b.std**2+a.get_correlation(b)\
-                +b.get_correlation(a))**(1/2)
+        std=(a.std**2+b.std**2+a.get_covariance(b)\
+                +b.get_covariance(a))**(1/2)
         result=measurement(mean,std)
         
     #Addition by Min-Max method
-    elif measurement.method=="MinMax":
+    elif measurement.method=="Min Max":
         mean=a.mean+b.mean
         std=a.std+b.std
         result=measurement(mean,std)
@@ -39,10 +64,13 @@ def add(a,b):
         result=measurement.monte_carlo(plus,a,b)
     
     result.first_der.update(first_der)
-    result.update_info('+',a,b)
+    result._update_info('+',a,b)
     return result;
 
 def sub(a,b):
+    '''
+    Returns a measurement object that is the subtraction of two measurements.
+    '''
     [a,b]=check_values(a,b)
     #Propagating derivative of arguments    
     first_der={}
@@ -54,12 +82,12 @@ def sub(a,b):
     #Addition by error propogation formula
     if measurement.method=="Derivative":
         mean=a.mean-b.mean
-        std=(a.std**2+b.std**2-a.get_correlation(b)-\
-                b.get_correlation(a))**(1/2)
+        std=(a.std**2+b.std**2-a.get_covariance(b)-\
+                b.get_covariance(a))**(1/2)
         result=measurement(mean,std)
     
     #Addition by Min-Max method
-    elif measurement.method=="MinMax":
+    elif measurement.method=="Min Max":
         result=add(a,mul(b,-1))
         
     #Monte Carlo method
@@ -68,7 +96,7 @@ def sub(a,b):
         result=measurement.monte_carlo(minus,a,b)
     
     result.first_der.update(first_der)
-    result.update_info('-',a,b)
+    result._update_info('-',a,b)
     return result
 
 def mul(a,b):
@@ -88,7 +116,7 @@ def mul(a,b):
         result=measurement(mean,std)
         
     #Addition by Min-Max method
-    elif measurement.method=="MinMax":
+    elif measurement.method=="Min Max":
         mean=a.mean*b.mean+a.std*b.std
         std=a.mean*b.std+b.mean*a.std
         result=measurement(mean,std)
@@ -99,7 +127,7 @@ def mul(a,b):
         result=measurement.monte_carlo(plus,a,b)
     
     result.first_der.update(first_der)
-    result.update_info('*',a,b)
+    result._update_info('*',a,b)
     return result;
     
 def div(a,b):
@@ -122,7 +150,7 @@ def div(a,b):
         result=measurement(mean,std)
             
     #Addition by Min-Max method
-    elif measurement.method=="MinMax":
+    elif measurement.method=="Min Max":
         mean=(b.mean*a.std+a.mean*b.std)/(b.mean**2*b.std**2)
         std=(a.mean*b.mean+a.std*b.std+2*a.mean*b.std+2*b.mean*a.std)
         result=measurement(mean,std)
@@ -133,7 +161,7 @@ def div(a,b):
         result=measurement.monte_carlo(divide,a,b)
     
     result.first_der.update(first_der)
-    result.update_info('/',a,b)
+    result._update_info('/',a,b)
     return result;
 
 def power(a,b):
@@ -154,7 +182,7 @@ def power(a,b):
         std=((b.mean*a.mean**(b.mean-1)*a.std)**2
                 + (a.mean*b.mean*log(a.mean)*b.std)**2)**(1/2)
         result=measurement(mean,std)
-    elif measurement.method=='MinMax':
+    elif measurement.method=='Min Max':
         if (b<0):
             max_val=(a.mean+a.std)**(b.mean-b.std)
             min_val=(a.mean-a.std)**(b.mean+b.std)
@@ -169,7 +197,7 @@ def power(a,b):
         result=measurement.monte_carlo(exponent,a,b)
 
     result.first_der.update(first_der)   
-    result.update_info('**',a,b)
+    result._update_info('**',a,b)
     return result;
         
         
@@ -191,7 +219,7 @@ def sin(x):
         result=measurement.monte_carlo(sine,x)
 
     result.first_der.update(first_der)
-    result.update_info('sin',x,func_flag=1)    
+    result._update_info('sin',x,func_flag=1)    
     return result;
     
 def cos(x):
@@ -211,7 +239,7 @@ def cos(x):
         result=measurement.monte_carlo(cosine,x)
     
     result.first_der.update(first_der)
-    result.update_info('cos',x,func_flag=1)
+    result._update_info('cos',x,func_flag=1)
     return result;
     
 def exp(x):
@@ -227,7 +255,7 @@ def exp(x):
         std=abs(first_der[xvar]*x.std)
         result=measurement(mean,std)
         
-    elif measurement.method=='MinMax':
+    elif measurement.method=='Min Max':
         min_val=exp(x.mean-x.std)
         max_val=exp(x.mean+x.std)
         mid_val=(max_val+min_val)/x
@@ -239,7 +267,7 @@ def exp(x):
         result=measurement.monte_carlo(euler,x)
 
     result.first_der.update(first_der)
-    result.update_info('exp',x,func_flag=1)
+    result._update_info('exp',x,func_flag=1)
     return result;
 
 def e(value):
@@ -261,5 +289,5 @@ def log(x):
         nat_log=lambda x: log(x)
         result=measurement.monte_carlo(nat_log,x)
     result.first_der.update(first_der)
-    result.update_info('log',x,func_flag=1)    
+    result._update_info('log',x,func_flag=1)    
     return result;
