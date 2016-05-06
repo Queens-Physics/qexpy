@@ -137,22 +137,23 @@ def div(a,b):
     return result;
 
 def power(a,b):
+    #from math import log
     [a,b]=check_values(a,b)
-    #Propagating derivative of arguments    
+    #Propagating derivative of arguments
+    from math import log  
     first_der={}
     a.check_der(b)
     b.check_der(a)
-    #for key in a.first_der:
-        #first_der[key]=
-                
-    #By error propagation
-    if measurement.method=='Derivative':
-        from math import log
+    for key in a.first_der:
+        first_der[key]=a.mean**b.mean*(b.first_der[key]*log(a.mean)
+                + b.mean/a.mean*a.first_der[key])             
+    
+   #By error propagation
+    if measurement.method=="Derivative":
         mean=a.mean**b.mean
-        std=((b.mean*a.mean**(b.mean-1)*a.std)**2+
-                 (a.mean*b.mean*log(a.mean)*b.std)**2)**(1/2)
+        std=((b.mean*a.mean**(b.mean-1)*a.std)**2
+                + (a.mean*b.mean*log(a.mean)*b.std)**2)**(1/2)
         result=measurement(mean,std)
-        
     elif measurement.method=='MinMax':
         if (b<0):
             max_val=(a.mean+a.std)**(b.mean-b.std)
@@ -163,7 +164,6 @@ def power(a,b):
         mid_val=(max_val+min_val)/2
         error=(max_val-min_val)/2
         result=measurement(mid_val,error)
-        
     else:
         exponent=lambda a,b: a**b
         result=measurement.monte_carlo(exponent,a,b)
@@ -220,10 +220,11 @@ def exp(x):
     first_der={}
     for key in x.first_der:
         first_der[key]=exp(x.mean)*x.first_der[key]        
+    xvar=x.info["ID"]
     
     if measurement.method=='Derivative':
         mean=exp(x.mean)
-        std=abs(x.mean*mean*x.std)
+        std=abs(first_der[xvar]*x.std)
         result=measurement(mean,std)
         
     elif measurement.method=='MinMax':
@@ -246,13 +247,19 @@ def e(value):
     
 def log(x):
     from math import log
+    
+    first_der={}
+    for key in x.first_der:
+        first_der[key]=1/x.mean*x.first_der[key]         
+    
     if measurement.method=='Derivative':
         mean=log(x.mean)
         std=abs(x.std/x.mean)
         result=measurement(mean,std)
-        result.update_info('log',x,func_flag=1)
+
     else:
         nat_log=lambda x: log(x)
         result=measurement.monte_carlo(nat_log,x)
-        result.update_info('log',x,func_flag=1)    
+    result.first_der.update(first_der)
+    result.update_info('log',x,func_flag=1)    
     return result;
