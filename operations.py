@@ -142,11 +142,9 @@ def div(a,b):
         
     #By error propgation
     if measurement.method=="Derivative": 
-        from math import log
-        
         mean=a.mean/b.mean
         std=(a.std**2/b.mean**2+
-            b.std**2*(a.mean*log(b.mean))**2)**(1/2)
+            b.std**2*(a.mean/b.mean)**2)**(1/2)
         result=measurement(mean,std)
             
     #Addition by Min-Max method
@@ -174,13 +172,14 @@ def power(a,b):
     b.check_der(a)
     for key in a.first_der:
         first_der[key]=a.mean**b.mean*(b.first_der[key]*log(a.mean)
-                + b.mean/a.mean*a.first_der[key])             
+                + b.mean/a.mean*a.first_der[key])     
+    fd=first_der
     
    #By error propagation
     if measurement.method=="Derivative":
         mean=a.mean**b.mean
-        std=((b.mean*a.mean**(b.mean-1)*a.std)**2
-                + (a.mean*b.mean*log(a.mean)*b.std)**2)**(1/2)
+        std=((fd[b.info['ID']]*a.std)**2
+                + (fd[b.info['ID']]*b.std)**2)**(1/2)
         result=measurement(mean,std)
     elif measurement.method=='Min Max':
         if (b<0):

@@ -1,10 +1,11 @@
 class measurement:
     method="Derivative" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
-    id_number=1 #Instances var0
+    id_number=0
+    register={}
+    
     
     #Defining common types under single array
-    #Testing GitHub
     CONSTANT = (int,float,)
     ARRAY = (list,)
     try:
@@ -50,7 +51,7 @@ class measurement:
         self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': \
         'var%d'%(measurement.id_number) ,'Method': '', 'Data': data}
         self.first_der={self.info['ID']:1}
-        self.type="measurement"
+        measurement.register.update({self.info["ID"]:self.name})
         measurement.id_number+=1
     
     def set_method(chosen_method):
