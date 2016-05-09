@@ -3,14 +3,6 @@ from Uncertainties import normalize
 #from math import pi
 CONSTANT = (int,float,)
 
-'''
-def check_values(a,b):
-    if isinstance(a,measurement.CONSTANT):
-        a=normalize(a)
-    if isinstance(b,measurement.CONSTANT):
-        b=normalize(b)
-    return [a,b]
-'''
 def check_values(*args):
     '''
     Checks that the arguments are measurement type, otherwise a measurement
@@ -60,9 +52,11 @@ def add(a,b):
         
     #If method specification is bad, MC method is used
     else:
-        plus=lambda V: V[0]+V[1]
+        plus=lambda x,y: x+y
         result=measurement.monte_carlo(plus,a,b)
-    
+    if a.info["Data"] is not None and b.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.add(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)
     result._update_info('+',a,b)
     return result;
@@ -82,8 +76,8 @@ def sub(a,b):
     #Addition by error propogation formula
     if measurement.method=="Derivative":
         mean=a.mean-b.mean
-        std=(a.std**2+b.std**2-a.get_covariance(b)-\
-                b.get_covariance(a))**(1/2)
+        std=(abs(a.std**2+b.std**2-a.get_covariance(b)-\
+                b.get_covariance(a)))**(1/2)
         result=measurement(mean,std)
     
     #Addition by Min-Max method
@@ -92,9 +86,11 @@ def sub(a,b):
         
     #Monte Carlo method
     else:
-        minus=lambda V: V[0]-V[1]
+        minus=lambda x,y: x-y
         result=measurement.monte_carlo(minus,a,b)
-    
+    if a.info["Data"] is not None and b.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.subtract(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)
     result._update_info('-',a,b)
     return result
@@ -111,8 +107,9 @@ def mul(a,b):
     #By error propogation formula    
     if measurement.method=="Derivative":          
         mean=a.mean*b.mean
-        std=(a.std**2*b.mean**2 +
-            b.std**2*a.mean**2)**(1/2)
+        std=(a.std**2*b.mean**2
+                +  b.std**2*a.mean**2 
+                + 2*b.mean*a.mean*a.get_covariance(b))**(1/2)
         result=measurement(mean,std)
         
     #Addition by Min-Max method
@@ -125,7 +122,9 @@ def mul(a,b):
     else:
         plus=lambda a,b: a*b
         result=measurement.monte_carlo(plus,a,b)
-    
+    if a.info["Data"] is not None and b.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.multiply(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)
     result._update_info('*',a,b)
     return result;
@@ -139,12 +138,14 @@ def div(a,b):
     for key in a.first_der:
         first_der[key]=(a.first_der[key]*b.mean-b.first_der[key]*a.mean)\
                 / b.mean**2
+    fd=first_der
+    A=a.info["ID"]
+    B=b.info["ID"]
         
     #By error propgation
     if measurement.method=="Derivative": 
         mean=a.mean/b.mean
-        std=(a.std**2/b.mean**2+
-            b.std**2*(a.mean/b.mean)**2)**(1/2)
+        std=((a.std*fd[A])**2 + (b.std*fd[B])**2 + 2*fd[B]*fd[A])**(1/2)
         result=measurement(mean,std)
             
     #Addition by Min-Max method
@@ -157,7 +158,9 @@ def div(a,b):
     else:
         divide=lambda a,b: a/b
         result=measurement.monte_carlo(divide,a,b)
-    
+    if a.info["Data"] is not None and b.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.divide(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)
     result._update_info('/',a,b)
     return result;
@@ -174,12 +177,13 @@ def power(a,b):
         first_der[key]=a.mean**b.mean*(b.first_der[key]*log(a.mean)
                 + b.mean/a.mean*a.first_der[key])     
     fd=first_der
+    A=a.info["ID"]
+    B=b.info["ID"]
     
    #By error propagation
     if measurement.method=="Derivative":
         mean=a.mean**b.mean
-        std=((fd[b.info['ID']]*a.std)**2
-                + (fd[b.info['ID']]*b.std)**2)**(1/2)
+        std=((a.std*fd[A])**2 + (b.std*fd[B])**2 + 2*fd[B]*fd[A])**(1/2)
         result=measurement(mean,std)
     elif measurement.method=='Min Max':
         if (b<0):
@@ -194,7 +198,9 @@ def power(a,b):
     else:
         exponent=lambda a,b: a**b
         result=measurement.monte_carlo(exponent,a,b)
-
+    if a.info["Data"] is not None and b.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.power(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)   
     result._update_info('**',a,b)
     return result;
@@ -212,11 +218,13 @@ def sin(x):
         mean=sin(x.mean)
         std=abs(cos(x.mean)*x.std)
         result=measurement(mean,std)
-        
     else:
-        sine=lambda x: sin(x)
+        import numpy as np
+        sine=lambda x: np.sin(x)
         result=measurement.monte_carlo(sine,x)
-
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.sin(x.info["Data"])
     result.first_der.update(first_der)
     result._update_info('sin',x,func_flag=1)    
     return result;
@@ -234,9 +242,12 @@ def cos(x):
         std=abs(sin(x.mean)*x.std)
         result=measurement(mean,std)
     else:
-        cosine=lambda x: cos(x)
+        import numpy as np
+        cosine=lambda x: np.cos(x)
         result=measurement.monte_carlo(cosine,x)
-    
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.cos(x.info["Data"])
     result.first_der.update(first_der)
     result._update_info('cos',x,func_flag=1)
     return result;
@@ -262,9 +273,12 @@ def exp(x):
         result=measurement(mid_val,error)
 
     else:
-        euler=lambda x: exp(x)
+        import numpy as np
+        euler=lambda x: np.exp(x)
         result=measurement.monte_carlo(euler,x)
-
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.exp(x.info["Data"]) 
     result.first_der.update(first_der)
     result._update_info('exp',x,func_flag=1)
     return result;
@@ -285,8 +299,12 @@ def log(x):
         result=measurement(mean,std)
 
     else:
-        nat_log=lambda x: log(x)
+        import numpy as np
+        nat_log=lambda x: np.log(x)
         result=measurement.monte_carlo(nat_log,x)
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.log(x.info["Data"])
     result.first_der.update(first_der)
     result._update_info('log',x,func_flag=1)    
     return result;

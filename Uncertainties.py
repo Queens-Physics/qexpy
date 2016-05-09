@@ -52,6 +52,8 @@ class measurement:
         'var%d'%(measurement.id_number) ,'Method': '', 'Data': data}
         self.first_der={self.info['ID']:1}
         measurement.register.update({self.info["ID"]:self.name})
+        self.MC_list=None
+        self.type="measurement"
         measurement.id_number+=1
     
     def set_method(chosen_method):
@@ -83,7 +85,7 @@ class measurement:
             measurement.method="Derivative"
         
     def __str__(self):
-        return "{:.1f}+/-{:.1f}".format(self.mean,self.std);
+        return "{:.2f}+/-{:.2f}".format(self.mean,self.std);
 
     def find_covariance(x,y):
         '''
@@ -96,9 +98,14 @@ class measurement:
         '''
         data_x=x.info["Data"]
         data_y=y.info["Data"]
-              
+        
+        if data_x is None or data_y is None:
+            raise TypeError("Data arrays must exist for both quantities to define"
+                    +" covariance.")
+        #elif len(data_x)==1 or len(data_y)==1:
+            
         if len(data_x)!=len(data_y):
-              print('Lengths of data arrays must be equal to\
+            raise TypeError('Lengths of data arrays must be equal to\
                       define a covariance')
         sigma_xy=0
         for i in range(len(data_x)):
@@ -140,6 +147,7 @@ class measurement:
                 and all(self.covariance['Name'][i]!=variable.name \
                 for i in range(len(self.covariance['Name']))):
             measurement.find_covariance(self,variable)
+            
         if any(self.covariance['Name'][i]==variable.name
                    for i in range(len(self.covariance['Name']))):
             for j in range(len(self.covariance["Name"])):
@@ -293,10 +301,15 @@ class measurement:
         value=np.zeros((N,n))
         result=np.zeros(n)
         for i in range(N):
-            if args[i].std==0:
+            if args[i].MC_list is not None:
+                value[i]=args[i].MC_list
+            elif args[i].std==0:
                 value[i]=args[i].mean
+                args[i].MC_list=value[i]
             else:
                 value[i]=np.random.normal(args[i].mean,args[i].std,n)
+                args[i].MC_list=value[i]
+                
         result=function(*value)
         data=np.mean(result)
         error=np.std(result)
@@ -304,9 +317,9 @@ class measurement:
         for i in range(N):
             argName+=','+args[i].name
         name=function.__name__+"("+argName+")"
-        return measurement(name,data,error)
+        return measurement(data,error,name=name)
 
-def normalize(value):
+def normalize(Value):
     '''
     Returns a measurement object that is constant with no deviation.
     
@@ -314,9 +327,11 @@ def normalize(value):
     ID counter and is labelled as a constant. The derivative of this
     object with respect to anything is zero.
     '''
-    value=measurement(value,0,name='%d'%value)
+    value=measurement(Value,0,name='%d'%Value)
     value.info['ID']='Constant'
     value.first_der={value.info['ID']:0}
+    value.info["Data"]=[Value]
+    value.type="Constant"
     measurement.id_number-=1
     return value;
    
@@ -332,7 +347,7 @@ def f(function,*args):
     for i in range(N):
         argName+=','+args[i].name
     name=function.__name__+"("+argName+")"
-    return measurement(name,mean,std);
+    return measurement(mean,std,name=name);
       
 def partial_derivative(func,var,*args):
     '''
