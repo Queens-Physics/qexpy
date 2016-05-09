@@ -3,7 +3,7 @@ class measurement:
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
     id_number=0
     register={}
-    
+    formula_register={}
     
     #Defining common types under single array
     CONSTANT = (int,float,)
@@ -49,9 +49,9 @@ class measurement:
             self.name='var%d'%(measurement.id_number)
         self.covariance={'Name': [self.name], 'Covariance': [self.std**2]}
         self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': \
-        'var%d'%(measurement.id_number) ,'Method': '', 'Data': data}
+                'var%d'%(measurement.id_number) ,'Method': '', 'Data': data}
         self.first_der={self.info['ID']:1}
-        measurement.register.update({self.info["ID"]:self.name})
+        measurement.register.update({self.info["ID"]:self})
         self.MC_list=None
         self.type="measurement"
         measurement.id_number+=1
@@ -194,11 +194,15 @@ class measurement:
             self.rename(var1.name+operation+var2.name)
             self.info['Formula']=var1.info['Formula']+operation+\
                     var2.info['Formula']
+            measurement.formula_register.update({self.info["Formula"]\
+                    :self.info["ID"]})
         elif func_flag is not None:
             self.rename(operation+'('+var1.name+')')
             self.info['Formula']=operation+'('+var1.info['Formula']+')'
             self.info['Method']+="Errors propagated by "+measurement.method+\
                     ' method.\n'
+            measurement.formula_register.update({self.info["Formula"]\
+                    :self.info["ID"]})
         else:
             print('Something went wrong in update_info')
             
@@ -263,7 +267,7 @@ class measurement:
     def __rsub__(self,other):
         from operations import sub
         result=sub(other,self)
-        result.rename("Need to fix naming")
+        #result._update_info('-',other,self)
         return result
         
     def __truediv__(self,other):
@@ -329,6 +333,7 @@ def normalize(Value):
     '''
     value=measurement(Value,0,name='%d'%Value)
     value.info['ID']='Constant'
+    value.info["Formula"]='%d'%Value
     value.first_der={value.info['ID']:0}
     value.info["Data"]=[Value]
     value.type="Constant"

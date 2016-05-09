@@ -20,6 +20,26 @@ def check_values(*args):
             val[i]=args[i]
     return val
 
+def check_formula(operation,a,b=None,func_flag=False):
+    '''
+    Checks if quantity being calculated is already in memory
+    
+    Using the formula string created for each operation as a key, the
+    register of previously calculated operations is checked. If the
+    quantity does exist, the previously calculated object is returned.
+    '''
+    if func_flag is False:
+        if a.info["Formula"]+operation+b.info["Formula"] in \
+                measurement.formula_register:
+            ID = measurement.formula_register[a.info["Formula"]+operation\
+                    + b.info["Formula"]]
+            return measurement.register[ID]
+    else:
+        if operation+'('+a.info["Formula"]+')' in measurement.formula_register:
+            ID = measurement.formula_register[operation+'('+a.info["Formula"]\
+                    + ')']
+            return measurement.register[ID]
+
 def add(a,b):
     '''
     Returns a measurement object that is the sum of two other measurements.
@@ -36,6 +56,8 @@ def add(a,b):
     b.check_der(a)
     for key in a.first_der:
         first_der[key]=a.first_der[key]+b.first_der[key]
+    if check_formula('+',a,b) is not None:
+        return check_formula('+',a,b)
         
     #Addition by error propogation formula
     if measurement.method=="Derivative":  
@@ -72,7 +94,9 @@ def sub(a,b):
     b.check_der(a)
     for key in a.first_der:
         first_der[key]=a.first_der[key]-b.first_der[key] 
-    
+    if check_formula('-',a,b) is not None:
+        return check_formula('-',a,b)
+        
     #Addition by error propogation formula
     if measurement.method=="Derivative":
         mean=a.mean-b.mean
@@ -103,7 +127,9 @@ def mul(a,b):
     b.check_der(a)
     for key in a.first_der:
         first_der[key]=a.mean*b.first_der[key]+b.mean*a.first_der[key]
-    
+    if check_formula('*',a,b) is not None:
+        return check_formula('*',a,b)
+        
     #By error propogation formula    
     if measurement.method=="Derivative":          
         mean=a.mean*b.mean
@@ -138,6 +164,9 @@ def div(a,b):
     for key in a.first_der:
         first_der[key]=(a.first_der[key]*b.mean-b.first_der[key]*a.mean)\
                 / b.mean**2
+    if check_formula('/',a,b) is not None:
+        return check_formula('/',a,b)
+        
     fd=first_der
     A=a.info["ID"]
     B=b.info["ID"]
@@ -175,7 +204,10 @@ def power(a,b):
     b.check_der(a)
     for key in a.first_der:
         first_der[key]=a.mean**b.mean*(b.first_der[key]*log(a.mean)
-                + b.mean/a.mean*a.first_der[key])     
+                + b.mean/a.mean*a.first_der[key])  
+    if check_formula('**',a,b) is not None:
+        return check_formula('**',a,b)
+        
     fd=first_der
     A=a.info["ID"]
     B=b.info["ID"]
@@ -213,7 +245,8 @@ def sin(x):
     first_der={}
     for key in x.first_der:
         first_der[key]=cos(x.mean)*x.first_der[key]
-    
+    if check_formula('sin',x,func_flag=True) is not None:
+        return check_formula('sin',x,func_flag=True)
     if measurement.method=='Derivative':
         mean=sin(x.mean)
         std=abs(cos(x.mean)*x.std)
@@ -236,7 +269,9 @@ def cos(x):
     first_der={}
     for key in x.first_der:
         first_der[key]=-sin(x.mean)*x.first_der[key]    
-    
+    if check_formula('cos',x,func_flag=True) is not None:
+        return check_formula('cos',x,func_flag=True)
+        
     if measurement.method=='Derivative':        
         mean=cos(x.mean)
         std=abs(sin(x.mean)*x.std)
@@ -257,7 +292,9 @@ def exp(x):
     
     first_der={}
     for key in x.first_der:
-        first_der[key]=exp(x.mean)*x.first_der[key]        
+        first_der[key]=exp(x.mean)*x.first_der[key]     
+    if check_formula('exp',x,func_flag=True) is not None:
+        return check_formula('exp',x,func_flag=True)
     xvar=x.info["ID"]
     
     if measurement.method=='Derivative':
@@ -292,7 +329,8 @@ def log(x):
     first_der={}
     for key in x.first_der:
         first_der[key]=1/x.mean*x.first_der[key]         
-    
+    if check_formula('log',x,func_flag=True) is not None:
+        return check_formula('log',x,func_flag=True)
     if measurement.method=='Derivative':
         mean=log(x.mean)
         std=abs(x.std/x.mean)
