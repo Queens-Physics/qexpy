@@ -1,8 +1,26 @@
 from Uncertainties import measurement
-from Uncertainties import normalize
+from Uncertainties import function
+from Uncertainties import constant
 #from math import pi
 CONSTANT = (int,float,)
 
+def error(*args,der=None):
+    std=0
+    roots=()
+    for arg in args:
+        for i in range(len(arg.root)):
+            if arg.root[i] not in roots:
+                roots+=(arg.root[i],)
+    for root in roots:
+        std+=(der[root]*measurement.register[root].std)**2
+    for i in range(len(roots)):
+        for j in range(len(roots)-i-1):
+            cov=measurement.register[roots[i]]\
+                    .get_covariance(measurement.register[roots[j+1+i]])
+            std+=2*der[roots[i]]*der[roots[j+1+i]]*cov
+    std=std**(1/2)
+    return std;
+    
 def check_values(*args):
     '''
     Checks that the arguments are measurement type, otherwise a measurement
@@ -12,12 +30,12 @@ def check_values(*args):
     converted, this is done by calling the normalize function, which
     outputs a measurement object with no standard deviation.
     '''
-    val=[None]*len(args)
-    for i in range(len(args)):
-        if type(args[i]).__name__ is not 'measurement':
-            val[i]=normalize(args[i])
+    val=[]
+    for arg in args:
+        if type(arg) in CONSTANT:
+            val.append(constant(arg))
         else:
-            val[i]=args[i]
+            val.append(arg)
     return val
 
 def check_formula(operation,a,b=None,func_flag=False):
@@ -58,19 +76,17 @@ def add(a,b):
         first_der[key]=a.first_der[key]+b.first_der[key]
     if check_formula('+',a,b) is not None:
         return check_formula('+',a,b)
-        
     #Addition by error propogation formula
     if measurement.method=="Derivative":  
         mean=a.mean+b.mean     
-        std=(a.std**2+b.std**2+a.get_covariance(b)\
-                +b.get_covariance(a))**(1/2)
-        result=measurement(mean,std)
+        std=error(a,b,der=first_der)
+        result=function(mean,std)
         
     #Addition by Min-Max method
     elif measurement.method=="Min Max":
         mean=a.mean+b.mean
         std=a.std+b.std
-        result=measurement(mean,std)
+        result=function(mean,std)
         
     #If method specification is bad, MC method is used
     else:
@@ -100,9 +116,8 @@ def sub(a,b):
     #Addition by error propogation formula
     if measurement.method=="Derivative":
         mean=a.mean-b.mean
-        std=(abs(a.std**2+b.std**2-a.get_covariance(b)-\
-                b.get_covariance(a)))**(1/2)
-        result=measurement(mean,std)
+        std=error(a,b,der=first_der)
+        result=function(mean,std)
     
     #Addition by Min-Max method
     elif measurement.method=="Min Max":
@@ -133,16 +148,14 @@ def mul(a,b):
     #By error propogation formula    
     if measurement.method=="Derivative":          
         mean=a.mean*b.mean
-        std=(a.std**2*b.mean**2
-                +  b.std**2*a.mean**2 
-                + 2*b.mean*a.mean*a.get_covariance(b))**(1/2)
-        result=measurement(mean,std)
+        std=error(a,b,der=first_der)
+        result=function(mean,std)
         
     #Addition by Min-Max method
     elif measurement.method=="Min Max":
         mean=a.mean*b.mean+a.std*b.std
         std=a.mean*b.std+b.mean*a.std
-        result=measurement(mean,std)
+        result=function(mean,std)
             
     #If method specification is bad, MC method is used
     else:
@@ -167,21 +180,17 @@ def div(a,b):
     if check_formula('/',a,b) is not None:
         return check_formula('/',a,b)
         
-    fd=first_der
-    A=a.info["ID"]
-    B=b.info["ID"]
-        
     #By error propgation
     if measurement.method=="Derivative": 
         mean=a.mean/b.mean
-        std=((a.std*fd[A])**2 + (b.std*fd[B])**2 + 2*fd[B]*fd[A])**(1/2)
-        result=measurement(mean,std)
+        std=error(a,b,der=first_der)
+        result=function(mean,std)
             
     #Addition by Min-Max method
     elif measurement.method=="Min Max":
         mean=(b.mean*a.std+a.mean*b.std)/(b.mean**2*b.std**2)
         std=(a.mean*b.mean+a.std*b.std+2*a.mean*b.std+2*b.mean*a.std)
-        result=measurement(mean,std)
+        result=function(mean,std)
         
     #If method specification is bad, MC method is used
     else:
@@ -208,15 +217,12 @@ def power(a,b):
     if check_formula('**',a,b) is not None:
         return check_formula('**',a,b)
         
-    fd=first_der
-    A=a.info["ID"]
-    B=b.info["ID"]
     
    #By error propagation
     if measurement.method=="Derivative":
         mean=a.mean**b.mean
-        std=((a.std*fd[A])**2 + (b.std*fd[B])**2 + 2*fd[B]*fd[A])**(1/2)
-        result=measurement(mean,std)
+        std=error(a,b,der=first_der)
+        result=function(mean,std)
     elif measurement.method=='Min Max':
         if (b<0):
             max_val=(a.mean+a.std)**(b.mean-b.std)
@@ -225,8 +231,8 @@ def power(a,b):
             max_val=(a.mean+a.std)**(b.mean+b.std)
             min_val=(a.mean-a.std)**(b.mean-b.std)
         mid_val=(max_val+min_val)/2
-        error=(max_val-min_val)/2
-        result=measurement(mid_val,error)
+        err=(max_val-min_val)/2
+        result=function(mid_val,err)
     else:
         exponent=lambda a,b: a**b
         result=measurement.monte_carlo(exponent,a,b)
@@ -249,8 +255,8 @@ def sin(x):
         return check_formula('sin',x,func_flag=True)
     if measurement.method=='Derivative':
         mean=sin(x.mean)
-        std=abs(cos(x.mean)*x.std)
-        result=measurement(mean,std)
+        std=error(x,der=first_der)
+        result=function(mean,std)
     else:
         import numpy as np
         sine=lambda x: np.sin(x)
@@ -274,8 +280,8 @@ def cos(x):
         
     if measurement.method=='Derivative':        
         mean=cos(x.mean)
-        std=abs(sin(x.mean)*x.std)
-        result=measurement(mean,std)
+        std=error(x,der=first_der)
+        result=function(mean,std)
     else:
         import numpy as np
         cosine=lambda x: np.cos(x)
@@ -295,19 +301,18 @@ def exp(x):
         first_der[key]=exp(x.mean)*x.first_der[key]     
     if check_formula('exp',x,func_flag=True) is not None:
         return check_formula('exp',x,func_flag=True)
-    xvar=x.info["ID"]
     
     if measurement.method=='Derivative':
         mean=exp(x.mean)
-        std=abs(first_der[xvar]*x.std)
-        result=measurement(mean,std)
+        std=error(x,der=first_der)
+        result=function(mean,std)
         
     elif measurement.method=='Min Max':
         min_val=exp(x.mean-x.std)
         max_val=exp(x.mean+x.std)
         mid_val=(max_val+min_val)/x
-        error=(max_val-min_val)/2
-        result=measurement(mid_val,error)
+        err=(max_val-min_val)/2
+        result=function(mid_val,err)
 
     else:
         import numpy as np
@@ -333,8 +338,8 @@ def log(x):
         return check_formula('log',x,func_flag=True)
     if measurement.method=='Derivative':
         mean=log(x.mean)
-        std=abs(x.std/x.mean)
-        result=measurement(mean,std)
+        std=error(x,der=first_der)
+        result=function(mean,std)
 
     else:
         import numpy as np
@@ -346,3 +351,19 @@ def log(x):
     result.first_der.update(first_der)
     result._update_info('log',x,func_flag=1)    
     return result;
+'''
+def operator_wrap(operation,*args,func_flag=False):
+    if func_flag is not False:
+        from math import *
+    if b is not None:
+        [a,b]=check_values(a,b)
+        a.check_der(b)
+        b.check_der(a)
+    df={}
+    
+    mean=operation(args)
+    std=error(args,der=df)
+    result=measurement(mean,std)
+    result.first_der.update(df)
+    result._update_info(op_string,*args,func_flag)
+'''

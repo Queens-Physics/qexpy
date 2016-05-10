@@ -1,13 +1,13 @@
 class measurement:
     method="Derivative" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
-    id_number=0
+    style=""
     register={}
     formula_register={}
     
     #Defining common types under single array
     CONSTANT = (int,float,)
-    ARRAY = (list,)
+    ARRAY = (list,tuple)
     try:
         import numpy
     except ImportError:
@@ -43,22 +43,12 @@ class measurement:
             raise ValueError('''Input arguments must be one of: a mean and 
             standard deviation, an array of values, or the individual values
             themselves.''')
-        if name is not None:
-            self.name=name
-        else:
-            self.name='var%d'%(measurement.id_number)
-        self.covariance={'Name': [self.name], 'Covariance': [self.std**2]}
-        self.info={'ID': 'var%d'%(measurement.id_number), 'Formula': \
-                'var%d'%(measurement.id_number) ,'Method': '', 'Data': data}
-        self.first_der={self.info['ID']:1}
-        measurement.register.update({self.info["ID"]:self})
+        self.info={'ID': '', 'Formula': '' ,'Method': '', 'Data': data}
         self.MC_list=None
-        self.type="measurement"
-        measurement.id_number+=1
-    
+
     def set_method(chosen_method):
         '''
-        Choose the method of error propagation to be used. Enter a string.        
+        Choose the method of error propagation to be used. Enter a string.       
         
         Function to change default error propogation method used in 
         measurement functions.
@@ -85,8 +75,12 @@ class measurement:
             measurement.method="Derivative"
         
     def __str__(self):
-        return "{:.2f}+/-{:.2f}".format(self.mean,self.std);
-
+        if measurement.style=="Latex":
+            string = tex_print(self)
+        else:
+            string = "{:.2f}+/-{:.2f}".format(self.mean,self.std)
+        return string
+        
     def find_covariance(x,y):
         '''
         Uses the data from which x and y were generated to calculate
@@ -117,13 +111,14 @@ class measurement:
         y.covariance['Name'].append(x.name)
         y.covariance['Covariance'].append(sigma_xy)
 
-    def set_correlation(x,y,factor):
+    def set_correlation(self,y,factor):
         '''
         Manually set the correlation between two quantities
         
         Given a correlation factor, the covariance and correlation
         between two variables is added to both objects.
         '''
+        x=self
         ro_xy=factor
         sigma_xy=ro_xy*x.std*y.std
 
@@ -196,6 +191,7 @@ class measurement:
                     var2.info['Formula']
             measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
+            self.root+=var1.root+var2.root
         elif func_flag is not None:
             self.rename(operation+'('+var1.name+')')
             self.info['Formula']=operation+'('+var1.info['Formula']+')'
@@ -203,8 +199,10 @@ class measurement:
                     ' method.\n'
             measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
+            self.root+=var1.root
         else:
             print('Something went wrong in update_info')
+            
             
     def d(self,variable=None):
         '''
@@ -243,7 +241,7 @@ class measurement:
                 pass;
             else:
                 self.first_der[key]=0
-        
+
 #######################################################################
 #Operations on measurement objects
     
@@ -285,7 +283,7 @@ class measurement:
         return power(other,self)
         
     def __neg__(self):
-        return measurement(-self.mean,self.std,name='-'+self.name)
+        return function(-self.mean,self.std,name='-'+self.name)
 
 #######################################################################
     
@@ -322,7 +320,57 @@ class measurement:
             argName+=','+args[i].name
         name=function.__name__+"("+argName+")"
         return measurement(data,error,name=name)
+        
+class function(measurement):
+    id_number=0    
+    
+    def __init__(self,*args,name=None):    
+        super().__init__(*args)
+        if name is not None:
+            self.name=name
+        else:
+            self.name='obj%d'%(function.id_number)
+        self.info['ID']='obj%d'%(function.id_number)
+        self.type="function"
+        function.id_number+=1
+        self.first_der={self.info['ID']:1}
+        measurement.register.update({self.info["ID"]:self})
+        self.covariance={'Name': [self.name], 'Covariance': [self.std**2]}
+        self.root=()
+            
+class measured(measurement):
+    id_number=0    
+    
+    def __init__(self,*args,name=None):
+        super().__init__(*args)
+        if name is not None:
+            self.name=name
+        else:
+            self.name='var%d'%(measured.id_number)
+        self.type="measurement"
+        self.info['ID']='var%d'%(measured.id_number)
+        self.info['Formula']='var%d'%(measured.id_number)
+        measured.id_number+=1
+        self.first_der={self.info['ID']:1}
+        self.covariance={'Name': [self.name], 'Covariance': [self.std**2]}
+        measurement.register.update({self.info["ID"]:self})
+        self.root=(self.info["ID"] ,)
 
+class constant(measurement):
+    def __init__(self,arg,name=None):
+        super().__init__(arg,0)
+        if name is not None:
+            self.name=name
+        else:
+            self.name='%d'%(arg)
+        self.info['ID']='Constant'
+        self.info["Formula"]='%d'%arg
+        self.first_der={self.info['ID']:0}
+        self.info["Data"]=[arg]
+        self.type="Constant"
+        self.covariance={'Name': [self.name], 'Covariance': [0]}
+        self.root=()
+        
 def normalize(Value):
     '''
     Returns a measurement object that is constant with no deviation.
@@ -397,3 +445,19 @@ def std(*args,ddof=0):
     std=(val/(len(args)-1))**(1/2)
     return std;
     
+def tex_print(self):
+    flag=True
+    i=0
+    value=self.std
+    while(flag):
+        if value<1:
+            value*=10
+            i-=1
+        elif value>10:
+            value/=10
+            i+=1
+        elif value>=1 and value<=10:
+            flag=False
+    std=int(self.std/10**i//1)
+    mean=int(self.mean/10**i//1)
+    return "(%d +/- %d)\e%d"%(mean,std,i)
