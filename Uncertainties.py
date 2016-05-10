@@ -19,8 +19,8 @@ class measurement:
     
     def __init__(self,*args,name=None):
         '''
-        Creates a variable that contains a mean, standard deviation, and name
-        for inputted data.
+        Creates a variable that contains a mean, standard deviation, 
+        and name for inputted data.
         '''
         
         if len(args)==2 and all(isinstance(n,measurement.CONSTANT)\
@@ -108,8 +108,8 @@ class measurement:
         data_y=y.info["Data"]
         
         if data_x is None or data_y is None:
-            raise TypeError("Data arrays must exist for both quantities to define"
-                    +" covariance.")
+            raise TypeError("Data arrays must exist for both quantities " 
+            +"to define covariance.")
         #elif len(data_x)==1 or len(data_y)==1:
             
         if len(data_x)!=len(data_y):
@@ -193,11 +193,11 @@ class measurement:
         Update the formula, name and method of an object.        
         
         Function to update the name, formula and method of a value created
-        by a measurement operation. The name is updated by combining the names
-        of the object acted on with another name using whatever operation is
-        being performed. The function flag is to change syntax for functions
-        like sine and cosine. Method is updated by acessing the class 
-        property.
+        by a measurement operation. The name is updated by combining the 
+        names of the object acted on with another name using whatever 
+        operation is being performed. The function flag is to change syntax 
+        for functions like sine and cosine. Method is updated by acessing 
+        the class property.
         '''
         if func_flag is None and var2 is not None:
             self.rename(var1.name+operation+var2.name)
@@ -304,7 +304,10 @@ class measurement:
         return power(other,self)
         
     def __neg__(self):
-        return function(-self.mean,self.std,name='-'+self.name)
+        if self.type=="Constant":
+            return constant(-self.mean,self.std,name='-'+self.name)
+        else:
+            return function(-self.mean,self.std,name='-'+self.name)
 
 #######################################################################
     
@@ -454,6 +457,9 @@ def tex_print(self):
     i=0
     value=self.std
     while(flag):
+        if value==0:
+            flag=False
+            print("Need to add int print for this case")
         if value<1:
             value*=10
             i-=1

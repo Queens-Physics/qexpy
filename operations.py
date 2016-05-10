@@ -121,7 +121,7 @@ def sub(a,b):
     
     #Addition by Min-Max method
     elif measurement.method=="Min Max":
-        result=add(a,mul(b,-1))
+        result=add(a,-b)
         
     #Monte Carlo method
     else:
