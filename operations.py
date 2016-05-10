@@ -216,13 +216,14 @@ def power(a,b):
                 + b.mean/a.mean*a.first_der[key])  
     if check_formula('**',a,b) is not None:
         return check_formula('**',a,b)
-        
     
-   #By error propagation
+    #By derivative method
     if measurement.method=="Derivative":
         mean=a.mean**b.mean
         std=error(a,b,der=first_der)
         result=function(mean,std)
+        
+    #By min-max method
     elif measurement.method=='Min Max':
         if (b<0):
             max_val=(a.mean+a.std)**(b.mean-b.std)
@@ -233,6 +234,8 @@ def power(a,b):
         mid_val=(max_val+min_val)/2
         err=(max_val-min_val)/2
         result=function(mid_val,err)
+    
+    #By Monte Carlo method
     else:
         exponent=lambda a,b: a**b
         result=measurement.monte_carlo(exponent,a,b)
@@ -253,10 +256,14 @@ def sin(x):
         first_der[key]=cos(x.mean)*x.first_der[key]
     if check_formula('sin',x,func_flag=True) is not None:
         return check_formula('sin',x,func_flag=True)
+        
+    #By derivative method
     if measurement.method=='Derivative':
         mean=sin(x.mean)
         std=error(x,der=first_der)
         result=function(mean,std)
+        
+    #By Monte Carlo method
     else:
         import numpy as np
         sine=lambda x: np.sin(x)
@@ -277,11 +284,14 @@ def cos(x):
         first_der[key]=-sin(x.mean)*x.first_der[key]    
     if check_formula('cos',x,func_flag=True) is not None:
         return check_formula('cos',x,func_flag=True)
-        
+    
+    #By derivative method
     if measurement.method=='Derivative':        
         mean=cos(x.mean)
         std=error(x,der=first_der)
         result=function(mean,std)
+    
+    #By Monte Carlo method
     else:
         import numpy as np
         cosine=lambda x: np.cos(x)
@@ -302,18 +312,21 @@ def exp(x):
     if check_formula('exp',x,func_flag=True) is not None:
         return check_formula('exp',x,func_flag=True)
     
+    #By derivative method
     if measurement.method=='Derivative':
         mean=exp(x.mean)
         std=error(x,der=first_der)
         result=function(mean,std)
-        
+    
+    #By min-max method
     elif measurement.method=='Min Max':
         min_val=exp(x.mean-x.std)
         max_val=exp(x.mean+x.std)
         mid_val=(max_val+min_val)/x
         err=(max_val-min_val)/2
         result=function(mid_val,err)
-
+        
+    #By Monte Carlo method
     else:
         import numpy as np
         euler=lambda x: np.exp(x)
@@ -336,11 +349,14 @@ def log(x):
         first_der[key]=1/x.mean*x.first_der[key]         
     if check_formula('log',x,func_flag=True) is not None:
         return check_formula('log',x,func_flag=True)
+        
+    #By derivative method
     if measurement.method=='Derivative':
         mean=log(x.mean)
         std=error(x,der=first_der)
         result=function(mean,std)
-
+    
+    #By Monte Carlo method
     else:
         import numpy as np
         nat_log=lambda x: np.log(x)
@@ -351,6 +367,7 @@ def log(x):
     result.first_der.update(first_der)
     result._update_info('log',x,func_flag=1)    
     return result;
+    
 '''
 def operator_wrap(operation,*args,func_flag=False):
     if func_flag is not False:

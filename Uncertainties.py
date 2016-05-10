@@ -1,7 +1,7 @@
 class measurement:
     method="Derivative" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
-    style=""
+    style="Default"
     register={}
     formula_register={}
     
@@ -77,9 +77,23 @@ class measurement:
     def __str__(self):
         if measurement.style=="Latex":
             string = tex_print(self)
+        if measurement.style=="Default":
+            string = def_print(self)
         else:
             string = "{:.2f}+/-{:.2f}".format(self.mean,self.std)
         return string
+        
+    def print_style(style):
+        latex=("Latex","latex",'Tex','tex',)
+        Sigfigs=("SigFigs","sigfigs",'figs','Figs',\
+                "Significant figures","significant figures",)
+        if style in latex:
+            measurement.style="Latex"
+        elif style in Sigfigs:
+            measurement.style="Sigfigs"
+        else:
+            measurement.style="Default"
+            
         
     def find_covariance(x,y):
         '''
@@ -191,7 +205,12 @@ class measurement:
                     var2.info['Formula']
             measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
-            self.root+=var1.root+var2.root
+            for root in var1.root:
+                if root not in self.root:
+                    self.root+=var1.root
+            for root in var2.root:
+                if root not in self.root:
+                    self.root+=var2.root
         elif func_flag is not None:
             self.rename(operation+'('+var1.name+')')
             self.info['Formula']=operation+'('+var1.info['Formula']+')'
@@ -199,7 +218,9 @@ class measurement:
                     ' method.\n'
             measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
-            self.root+=var1.root
+            for root in var1.root:
+                if root not in self.root:
+                    self.root+=var1.root
         else:
             print('Something went wrong in update_info')
             
@@ -370,23 +391,6 @@ class constant(measurement):
         self.type="Constant"
         self.covariance={'Name': [self.name], 'Covariance': [0]}
         self.root=()
-        
-def normalize(Value):
-    '''
-    Returns a measurement object that is constant with no deviation.
-    
-    Object can be acted on like a measurement but does not increase the 
-    ID counter and is labelled as a constant. The derivative of this
-    object with respect to anything is zero.
-    '''
-    value=measurement(Value,0,name='%d'%Value)
-    value.info['ID']='Constant'
-    value.info["Formula"]='%d'%Value
-    value.first_der={value.info['ID']:0}
-    value.info["Data"]=[Value]
-    value.type="Constant"
-    measurement.id_number-=1
-    return value;
    
 def f(function,*args):
     N=len(args)
@@ -460,4 +464,28 @@ def tex_print(self):
             flag=False
     std=int(self.std/10**i//1)
     mean=int(self.mean/10**i//1)
-    return "(%d +/- %d)\e%d"%(mean,std,i)
+    return "(%d \pm %d)\e%d"%(mean,std,i)
+    
+def def_print(self):
+    flag=True
+    i=0
+    value=self.std
+    while(flag):
+        if value==0:
+            flag=False
+        elif value<1:
+            value*=10
+            i+=1
+        elif value>10:
+            value/=10
+            i-=1
+        elif value>=1 and value<=10:
+            flag=False
+    if i>0:
+        n='%d'%(i)
+        n="%."+n+"f"
+    else:
+        n='%.0f'
+    std=float(round(self.std,i))
+    mean=float(round(self.mean,i))
+    return n%(mean)+" +/- "+n%(std)
