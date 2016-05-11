@@ -44,7 +44,7 @@ class measurement:
             raise ValueError('''Input arguments must be one of: a mean and 
             standard deviation, an array of values, or the individual values
             themselves.''')
-        self.info={'ID': '', 'Formula': '' ,'Method': 'Empty', 'Data': data}
+        self.info={'ID': '', 'Formula': '' ,'Method': '', 'Data': data}
         self.MC_list=None
 
     def set_method(chosen_method):
