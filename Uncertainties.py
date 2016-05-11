@@ -44,7 +44,7 @@ class measurement:
             raise ValueError('''Input arguments must be one of: a mean and 
             standard deviation, an array of values, or the individual values
             themselves.''')
-        self.info={'ID': '', 'Formula': '' ,'Method': '', 'Data': data}
+        self.info={'ID': '', 'Formula': '' ,'Method': 'Empty', 'Data': data}
         self.MC_list=None
 
     def set_method(chosen_method):
@@ -64,9 +64,10 @@ class measurement:
             if measurement.numpy_installed:
                 measurement.method="Monte Carlo"
             else:
-                print('Numpy package must be installed to use Monte Carlo \
-                        propagation, using the derivative method instead.')
-                measurement.method="Derivative"
+                #print('Numpy package must be installed to use Monte Carlo \
+                #        propagation, using the derivative method instead.')
+                #measurement.method="Derivative"
+                measurement.method="Monte Carlo"
         elif chosen_method in min_max_list:
             measurement.method="Min Max"
         elif chosen_method in derr_list:
@@ -207,6 +208,8 @@ class measurement:
                     var2.info['Formula']
             measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
+            self.info['Method']+="Errors propagated by "+measurement.method+\
+                    ' method.\n'
             for root in var1.root:
                 if root not in self.root:
                     self.root+=var1.root
@@ -313,7 +316,7 @@ class measurement:
 
 #######################################################################
     
-    def monte_carlo(function,*args):
+    def monte_carlo(func,*args):
         '''
         Uses a Monte Carlo simulation to determine the mean and standard 
         deviation of a function.
@@ -338,14 +341,14 @@ class measurement:
                 value[i]=np.random.normal(args[i].mean,args[i].std,n)
                 args[i].MC_list=value[i]
                 
-        result=function(*value)
+        result=func(*value)
         data=np.mean(result)
-        error=np.std(result)
+        error=np.std(result,ddof=1)
         argName=""
         for i in range(N):
             argName+=','+args[i].name
-        name=function.__name__+"("+argName+")"
-        return measurement(data,error,name=name)
+        name=func.__name__+"("+argName+")"
+        return function(data,error,name=name)
         
 class function(measurement):
     id_number=0    
