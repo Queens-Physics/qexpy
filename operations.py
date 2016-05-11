@@ -30,12 +30,12 @@ def check_values(*args):
     converted, this is done by calling the normalize function, which
     outputs a measurement object with no standard deviation.
     '''
-    val=[]
+    val=()
     for arg in args:
         if type(arg) in CONSTANT:
-            val.append(constant(arg))
+            val+=(constant(arg),)
         else:
-            val.append(arg)
+            val+=(arg,)
     return val
 
 def check_formula(operation,a,b=None,func_flag=False):
@@ -67,7 +67,7 @@ def add(a,b):
     also specifed by applying the chain rule to the input and the 
     derivative of the inputs.
     '''
-    [a,b]=check_values(a,b)
+    a,b=check_values(a,b)
     #Propagating derivative of arguments    
     first_der={}
     a.check_der(b)
@@ -103,7 +103,7 @@ def sub(a,b):
     '''
     Returns a measurement object that is the subtraction of two measurements.
     '''
-    [a,b]=check_values(a,b)
+    a,b=check_values(a,b)
     #Propagating derivative of arguments    
     first_der={}
     a.check_der(b)
@@ -135,7 +135,7 @@ def sub(a,b):
     return result
 
 def mul(a,b):
-    [a,b]=check_values(a,b)
+    a,b=check_values(a,b)
     #Propagating derivative of arguments    
     first_der={}
     a.check_der(b)
@@ -169,7 +169,7 @@ def mul(a,b):
     return result;
     
 def div(a,b):
-    [a,b]=check_values(a,b)
+    a,b=check_values(a,b)
     #Propagating derivative of arguments    
     first_der={}
     a.check_der(b)
@@ -205,7 +205,7 @@ def div(a,b):
 
 def power(a,b):
     #from math import log
-    [a,b]=check_values(a,b)
+    a,b=check_values(a,b)
     #Propagating derivative of arguments
     from math import log  
     first_der={}
@@ -250,7 +250,7 @@ def power(a,b):
 def sin(x):
     from math import sin
     from math import cos
-    
+    x=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=cos(x.mean)*x.first_der[key]
@@ -279,6 +279,7 @@ def cos(x):
     from math import sin
     from math import cos
 
+    x=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=-sin(x.mean)*x.first_der[key]    
@@ -305,7 +306,8 @@ def cos(x):
     
 def exp(x):
     from math import exp
-    
+
+    x=check_values(x)    
     first_der={}
     for key in x.first_der:
         first_der[key]=exp(x.mean)*x.first_der[key]     
@@ -343,7 +345,8 @@ def e(value):
     
 def log(x):
     from math import log
-    
+
+    x=check_values(x)    
     first_der={}
     for key in x.first_der:
         first_der[key]=1/x.mean*x.first_der[key]         
@@ -373,7 +376,7 @@ def operator_wrap(operation,*args,func_flag=False):
     if func_flag is not False:
         from math import *
     if b is not None:
-        [a,b]=check_values(a,b)
+        a,b=check_values(a,b)
         a.check_der(b)
         b.check_der(a)
     df={}
