@@ -250,7 +250,8 @@ def power(a,b):
 def sin(x):
     from math import sin
     from math import cos
-    x=check_values(x)
+    
+    x=check_values(x)[0]
     first_der={}
     for key in x.first_der:
         first_der[key]=cos(x.mean)*x.first_der[key]
@@ -279,7 +280,7 @@ def cos(x):
     from math import sin
     from math import cos
 
-    x=check_values(x)
+    x=check_values(x)[0]
     first_der={}
     for key in x.first_der:
         first_der[key]=-sin(x.mean)*x.first_der[key]    
@@ -307,7 +308,7 @@ def cos(x):
 def exp(x):
     from math import exp
 
-    x=check_values(x)    
+    x=check_values(x)[0]
     first_der={}
     for key in x.first_der:
         first_der[key]=exp(x.mean)*x.first_der[key]     
@@ -346,7 +347,7 @@ def e(value):
 def log(x):
     from math import log
 
-    x=check_values(x)    
+    x=check_values(x)[0]    
     first_der={}
     for key in x.first_der:
         first_der[key]=1/x.mean*x.first_der[key]         
