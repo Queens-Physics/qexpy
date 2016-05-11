@@ -8,7 +8,7 @@ class measurement:
     
     #Defining common types under single array
     CONSTANT = (int,float,)
-    ARRAY = (list,tuple)
+    ARRAY = (list,tuple,)
     try:
         import numpy
     except ImportError:
@@ -123,10 +123,8 @@ class measurement:
               sigma_xy+=(data_x[i]-x.mean)*(data_y[i]-y.mean)
         sigma_xy/=(len(data_x)-1)
 
-        x.covariance['Name'].append(y.name)
-        x.covariance['Covariance'].append(sigma_xy)
-        y.covariance['Name'].append(x.name)
-        y.covariance['Covariance'].append(sigma_xy)
+        x.covariance[y.name]=sigma_xy
+        y.covariance[x.name]=sigma_xy
 
     def set_correlation(self,y,factor):
         '''
@@ -139,10 +137,8 @@ class measurement:
         ro_xy=factor
         sigma_xy=ro_xy*x.std*y.std
 
-        x.covariance['Name'].append(y.name)
-        x.covariance['Covariance'].append(sigma_xy)
-        y.covariance['Name'].append(x.name)
-        y.covariance['Covariance'].append(sigma_xy)
+        x.covariance[y.name]=sigma_xy
+        y.covariance[x.name]=sigma_xy
 
     def get_covariance(self,variable):
         '''
@@ -154,20 +150,14 @@ class measurement:
         the data arrays are of different lengths or do not exist, in that
         case a covariance of zero is returned.        
         '''
-        if self.info['Data'] is not None \
-                and variable.info['Data'] is not None \
-                and all(self.covariance['Name'][i]!=variable.name \
-                for i in range(len(self.covariance['Name']))):
-            measurement.find_covariance(self,variable)
-            
-        if any(self.covariance['Name'][i]==variable.name
-                   for i in range(len(self.covariance['Name']))):
-            for j in range(len(self.covariance["Name"])):
-                if self.covariance["Name"][j]==variable.name:
-                    index=j
-                    return self.covariance["Covariance"][index]
-        else:
+        if self.info["Data"] is None or variable.info["Data"] is None\
+                or len(self.info["Data"])!=len(variable.info["Data"]):
             return 0;
+            
+        if self.name not in variable.covariance:
+            measurement.find_covariance(self,variable)
+            var=self.covariance[variable.name]
+            return var;
     
     def get_correlation(x,y):
         '''
@@ -176,13 +166,13 @@ class measurement:
         Using the covariance, or finding the covariance if not defined,
         the correlation factor of two measurements is returned.        
         '''
-        if y.name in x.covariance['Name']:
+        if y.name in x.covariance:
             pass
         else:
             measurement.find_covariance(x,y)
         sigma_xy=x.covariance[y.name]
-        sigma_x=x.covariance[x.name]
-        sigma_y=y.covariance[y.name]
+        sigma_x=x.std
+        sigma_y=y.std
         return sigma_xy/sigma_x/sigma_y    
         
     def rename(self,newName):
@@ -364,7 +354,7 @@ class function(measurement):
         function.id_number+=1
         self.first_der={self.info['ID']:1}
         measurement.register.update({self.info["ID"]:self})
-        self.covariance={'Name': [self.name], 'Covariance': [self.std**2]}
+        self.covariance={self.name: self.std**2}
         self.root=()
             
 class measured(measurement):
@@ -381,7 +371,7 @@ class measured(measurement):
         self.info['Formula']='var%d'%(measured.id_number)
         measured.id_number+=1
         self.first_der={self.info['ID']:1}
-        self.covariance={'Name': [self.name], 'Covariance': [self.std**2]}
+        self.covariance={self.name: self.std**2}
         measurement.register.update({self.info["ID"]:self})
         self.root=(self.info["ID"] ,)
 
@@ -397,7 +387,7 @@ class constant(measurement):
         self.first_der={self.info['ID']:0}
         self.info["Data"]=[arg]
         self.type="Constant"
-        self.covariance={'Name': [self.name], 'Covariance': [0]}
+        self.covariance={self.name: 0}
         self.root=()
    
 def f(function,*args):
