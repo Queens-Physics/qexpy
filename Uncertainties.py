@@ -2,6 +2,7 @@ class measurement:
     method="Derivative" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
     style="Default"
+    figs=3
     register={}
     formula_register={}
     
@@ -32,12 +33,12 @@ class measurement:
         elif all(isinstance(n,measurement.ARRAY) for n in args) and \
                 len(args)==1:
             args=args[0]
-            self.mean = mean(args)
-            self.std = std(args,ddof=1)
+            (self.mean, self.std) = variance(args)
+            #self.std = std(args,ddof=1)
             data=list(args)
         elif len(args)>2:
-            self.mean = mean(args)
-            self.std = std(args,ddof=1)
+            (self.mean, self.std) = variance(args)
+            #self.std = std(args,ddof=1)
             data=list(args)
         else:
             raise ValueError('''Input arguments must be one of: a mean and 
@@ -77,20 +78,21 @@ class measurement:
     def __str__(self):
         if measurement.style=="Latex":
             string = tex_print(self)
-        if measurement.style=="Default":
+        elif measurement.style=="Default":
             string = def_print(self)
-        else:
-            string = "{:.2f}+/-{:.2f}".format(self.mean,self.std)
+        elif measurement.style=="SigFigs":
+            string = sigfigs_print(self,measurement.figs)
         return string
         
-    def print_style(style):
+    def print_style(style,figs=3):
         latex=("Latex","latex",'Tex','tex',)
         Sigfigs=("SigFigs","sigfigs",'figs','Figs',\
                 "Significant figures","significant figures",)
         if style in latex:
             measurement.style="Latex"
         elif style in Sigfigs:
-            measurement.style="Sigfigs"
+            measurement.style="SigFigs"
+            measurement.figs=figs
         else:
             measurement.style="Default"
             
@@ -428,29 +430,24 @@ def derivative(function,point,dx=1e-10):
     Returns the first order derivative of a function.
     '''
     return (function(point+dx)-function(point))/dx
-
-def mean(*args):
-    '''
-    Returns the mean of an inputted array, numpy array or series of values
-    '''
-    args=args[0]
-    return sum(args)/len(args);
-
-def std(*args,ddof=0):
-    '''
-    Returns the standard deviation of an inputted array.
     
-    Array types include a list, numpy array or 
-    series of values. These values can have limited degrees of freedom, 
-    inputted using ddof.
+def variance(*args,ddof=1):
     '''
-    val=0
+    Returns a tuple of the mean and standard deviation of a data array.
+    
+    Uses a more sophisticated variance calculation to speed up calculation of
+    mean and standard deviation.
+    '''
     args=args[0]
+    Sum=0
+    SumSq=0
+    N=len(args)
     mean=sum(args)/len(args)
-    for i in range(len(args)):
-        val+=(args[i]-mean)**2
-    std=(val/(len(args)-1))**(1/2)
-    return std;
+    for i in range(N):
+        Sum+=args[i]
+        SumSq+=args[i]*args[i]        
+    std=((SumSq-Sum**2/N)/(N-1))**(1/2)
+    return (mean,std);
     
 def tex_print(self):
     flag=True
@@ -458,8 +455,9 @@ def tex_print(self):
     value=self.std
     while(flag):
         if value==0:
-            flag=False
-            print("Need to add int print for this case")
+            std=int(self.std/10**i//1)
+            mean=int(self.mean/10**i//1)
+            return "(%d \pm %d)\e%d"%(mean,std,i)
         if value<1:
             value*=10
             i-=1
@@ -495,3 +493,8 @@ def def_print(self):
     std=float(round(self.std,i))
     mean=float(round(self.mean,i))
     return n%(mean)+" +/- "+n%(std)
+
+def sigfigs_print(self,figs):
+    n=figs-1
+    n='{:.'+'%d'%(n)+'e}'
+    return n.format(self.mean)+'+/-'+n.format(self.std)
