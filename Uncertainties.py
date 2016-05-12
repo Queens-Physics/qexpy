@@ -5,6 +5,8 @@ class measurement:
     figs=3
     register={}
     formula_register={}
+    id_register={}
+    log={}
     
     #Defining common types under single array
     CONSTANT = (int,float,)
@@ -46,6 +48,7 @@ class measurement:
             themselves.''')
         self.info={'ID': '', 'Formula': '' ,'Method': '', 'Data': data}
         self.MC_list=None
+        measurement.id_register[id(self)]=self
 
     def set_method(chosen_method):
         '''
@@ -362,18 +365,29 @@ class measured(measurement):
     
     def __init__(self,*args,name=None):
         super().__init__(*args)
-        if name is not None:
-            self.name=name
-        else:
-            self.name='var%d'%(measured.id_number)
-        self.type="measurement"
-        self.info['ID']='var%d'%(measured.id_number)
-        self.info['Formula']='var%d'%(measured.id_number)
-        measured.id_number+=1
-        self.first_der={self.info['ID']:1}
-        self.covariance={self.name: self.std**2}
-        measurement.register.update({self.info["ID"]:self})
-        self.root=(self.info["ID"] ,)
+        
+        if (self.mean,self.std,name) in measurement.log:
+            key=(self.mean,self.std,name)
+            self.name=measurement.log[key].name
+            self.type=measurement.log[key].type
+            self.info=measurement.log[key].info
+            self.first_der=measurement.log[key].first_der
+            self.covariance=measurement.log[key].covariance
+            self.root=measurement.log[key].root
+        else:    
+            if name is not None:
+                self.name=name
+            else:
+                self.name='var%d'%(measured.id_number)
+            self.type="measurement"
+            self.info['ID']='var%d'%(measured.id_number)
+            self.info['Formula']='var%d'%(measured.id_number)
+            measured.id_number+=1
+            self.first_der={self.info['ID']:1}
+            self.covariance={self.name: self.std**2}
+            measurement.register.update({self.info["ID"]:self})
+            self.root=(self.info["ID"] ,)
+            measurement.log[(self.mean,self.std,name)]=self
 
 class constant(measurement):
     def __init__(self,arg,name=None):
@@ -491,3 +505,13 @@ def sigfigs_print(self,figs):
     n=figs-1
     n='{:.'+'%d'%(n)+'e}'
     return n.format(self.mean)+'+/-'+n.format(self.std)
+    
+def reset_variables():
+    measured.id_number=0
+    function.id_number=0
+    measurement.register={}
+    measurement.formula_register={}
+    measurement.method="Derivative" #Default error propogation method
+    measurement.mcTrials=10000 #option for number of trial in Monte Carlo simulation
+    measurement.style="Default"
+    measurement.figs=3
