@@ -32,16 +32,33 @@ class measurement:
             self.std=args[1]
             data=None
             
-        elif all(isinstance(n,measurement.ARRAY) for n in args) and \
-                len(args)==1:
-            args=args[0]
-            (self.mean, self.std) = variance(args)
-            #self.std = std(args,ddof=1)
-            data=list(args)
+        elif all(isinstance(n,measurement.ARRAY) for n in args):
+            if len(args)==1 and \
+                    all(isinstance(n,measurement.CONSTANT) for n in args[0]):
+                args=args[0]
+                (self.mean, self.std) = variance(args)
+                data=list(args)
+            elif len(args)==1 and \
+                    all(isinstance(n,measurement) for n in args[0]):
+                pass
+                #Treat each element as measurement type
+            elif len(args)==2 and \
+                    all(isinstance(n,measurement.CONSTANT) 
+                                                    for n in args[0]) and \
+                    all(isinstance(n,measurement.CONSTANT) 
+                                                    for n in args[1]):
+                pass
+                #Treat zeroth as mean, first as std for n measurements
+            
         elif len(args)>2:
-            (self.mean, self.std) = variance(args)
-            #self.std = std(args,ddof=1)
-            data=list(args)
+            if all(isinstance(n,measurement.CONSTANT) for n in args):
+                (self.mean, self.std) = variance(args)
+                data=list(args)
+                
+            elif all(isinstance(n,measurement) for n in args):
+                pass
+                #Take mean and std of each element, get weighted mean and std
+            
         else:
             raise ValueError('''Input arguments must be one of: a mean and 
             standard deviation, an array of values, or the individual values
@@ -126,8 +143,8 @@ class measurement:
               sigma_xy+=(data_x[i]-x.mean)*(data_y[i]-y.mean)
         sigma_xy/=(len(data_x)-1)
 
-        x.covariance[y.name]=sigma_xy
-        y.covariance[x.name]=sigma_xy
+        x.covariance[y.info['ID']]=sigma_xy
+        y.covariance[x.info['ID']]=sigma_xy
 
     def set_correlation(self,y,factor):
         '''
@@ -140,8 +157,8 @@ class measurement:
         ro_xy=factor
         sigma_xy=ro_xy*x.std*y.std
 
-        x.covariance[y.name]=sigma_xy
-        y.covariance[x.name]=sigma_xy
+        x.covariance[y.info['ID']]=sigma_xy
+        y.covariance[x.info['ID']]=sigma_xy
 
     def get_covariance(self,variable):
         '''
@@ -157,9 +174,9 @@ class measurement:
                 or len(self.info["Data"])!=len(variable.info["Data"]):
             return 0;
             
-        if self.name not in variable.covariance:
+        if self.info['ID'] not in variable.covariance:
             measurement.find_covariance(self,variable)
-            var=self.covariance[variable.name]
+            var=self.covariance[variable.info['ID']]
             return var;
     
     def get_correlation(x,y):
@@ -173,7 +190,7 @@ class measurement:
             pass
         else:
             measurement.find_covariance(x,y)
-        sigma_xy=x.covariance[y.name]
+        sigma_xy=x.covariance[y.info['ID']]
         sigma_x=x.std
         sigma_y=y.std
         return sigma_xy/sigma_x/sigma_y    
@@ -365,7 +382,7 @@ class measured(measurement):
     
     def __init__(self,*args,name=None):
         super().__init__(*args)
-        
+        '''
         if (self.mean,self.std,name) in measurement.log:
             key=(self.mean,self.std,name)
             self.name=measurement.log[key].name
@@ -374,21 +391,21 @@ class measured(measurement):
             self.first_der=measurement.log[key].first_der
             self.covariance=measurement.log[key].covariance
             self.root=measurement.log[key].root
-        else:    
-            if name is not None:
-                self.name=name
-            else:
-                self.name='var%d'%(measured.id_number)
-            self.type="measurement"
-            self.info['ID']='var%d'%(measured.id_number)
-            self.info['Formula']='var%d'%(measured.id_number)
-            measured.id_number+=1
-            self.first_der={self.info['ID']:1}
-            self.covariance={self.name: self.std**2}
-            measurement.register.update({self.info["ID"]:self})
-            self.root=(self.info["ID"] ,)
-            measurement.log[(self.mean,self.std,name)]=self
-
+        '''
+        if name is not None:
+            self.name=name
+        else:
+            self.name='unnamed_var%d'%(measured.id_number)
+        self.type="measurement"
+        self.info['ID']='var%d'%(measured.id_number)
+        self.info['Formula']='var%d'%(measured.id_number)
+        measured.id_number+=1
+        self.first_der={self.info['ID']:1}
+        self.covariance={self.name: self.std**2}
+        measurement.register.update({self.info["ID"]:self})
+        self.root=(self.info["ID"] ,)
+        measurement.log[(self.mean,self.std,name)]=self
+        
 class constant(measurement):
     def __init__(self,arg,name=None):
         super().__init__(arg,0)
@@ -511,6 +528,7 @@ def reset_variables():
     function.id_number=0
     measurement.register={}
     measurement.formula_register={}
+    measurement.log={}
     measurement.method="Derivative" #Default error propogation method
     measurement.mcTrials=10000 #option for number of trial in Monte Carlo simulation
     measurement.style="Default"

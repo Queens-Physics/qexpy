@@ -212,7 +212,7 @@ def power(a,b):
     a.check_der(b)
     b.check_der(a)
     for key in a.first_der:
-        first_der[key]=a.mean**b.mean*(b.first_der[key]*log(a.mean)
+        first_der[key]=a.mean**b.mean*(b.first_der[key]*log(abs(a.mean))
                 + b.mean/a.mean*a.first_der[key])  
     if check_formula('**',a,b) is not None:
         return check_formula('**',a,b)
@@ -251,7 +251,7 @@ def sin(x):
     from math import sin
     from math import cos
     
-    x=check_values(x)[0]
+    x,=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=cos(x.mean)*x.first_der[key]
@@ -280,7 +280,7 @@ def cos(x):
     from math import sin
     from math import cos
 
-    x=check_values(x)[0]
+    x,=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=-sin(x.mean)*x.first_der[key]    
@@ -304,11 +304,139 @@ def cos(x):
     result.first_der.update(first_der)
     result._update_info('cos',x,func_flag=1)
     return result;
+
+def tan(x):
+    from math import tan, sec
+    
+    x,=check_values(x)
+    first_der={}
+    for key in x.first_der:
+        first_der[key]=sec(x.mean)**2*x.first_der[key]
+    if check_formula('tan',x,func_flag=True) is not None:
+        return check_formula('tan',x,func_flag=True)
+    
+    #Derivative method
+    elif measurement.method=='Derivative':  
+        mean=tan(x.mean)
+        std=error(x,der=first_der)
+        result=function(mean,std)
+    
+    #Min-Max method
+    elif measurement.method=='MinMax':  
+        pass
+
+    #Monte Carlo method
+    elif measurement.method=='Monte Carlo':  
+        import numpy as np
+        tangent=lambda x: np.tan(x)
+        result=measurement.monte_carlo(tangent,x)
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.tan(x.info["Data"]) 
+    result.first_der.update(first_der)
+    result._update_info('tan',x,func_flag=1)
+    return result;
+    
+def sec(x):
+    from math import sec, tan
+    
+    x,=check_values(x)
+    first_der={}
+    for key in x.first_der:
+        first_der[key]=sec(x.mean)*tan(x.mean)*x.first_der[key]
+    if check_formula('sec',x,func_flag=True) is not None:
+        return check_formula('sec',x,func_flag=True)
+    
+    #Derivative method
+    elif measurement.method=='Derivative':  
+        mean=sec(x.mean)
+        std=error(x,der=first_der)
+        result=function(mean,std)
+    
+    #Min-Max method
+    elif measurement.method=='MinMax':  
+        pass
+
+    #Monte Carlo method
+    elif measurement.method=='Monte Carlo':  
+        import numpy as np
+        secant=lambda x: np.sec(x)
+        result=measurement.monte_carlo(secant,x)
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.sec(x.info["Data"]) 
+    result.first_der.update(first_der)
+    result._update_info('sec',x,func_flag=1)
+    return result;
+
+def csc(x):
+    from math import csc, cot
+    
+    x,=check_values(x)
+    first_der={}
+    for key in x.first_der:
+        first_der[key]=-cot(x.mean)*csc(x.mean)*x.first_der[key]
+    if check_formula('csc',x,func_flag=True) is not None:
+        return check_formula('csc',x,func_flag=True)
+    
+    #Derivative method
+    elif measurement.method=='Derivative':  
+        mean=csc(x.mean)
+        std=error(x,der=first_der)
+        result=function(mean,std)
+    
+    #Min-Max method
+    elif measurement.method=='MinMax':  
+        pass
+
+    #Monte Carlo method
+    elif measurement.method=='Monte Carlo':  
+        import numpy as np
+        cosecant=lambda x: np.csc(x)
+        result=measurement.monte_carlo(cosecant,x)
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.csc(x.info["Data"]) 
+    result.first_der.update(first_der)
+    result._update_info('csc',x,func_flag=1)
+    return result;
+
+def cot(x):
+    from math import csc, cot
+    
+    x,=check_values(x)
+    first_der={}
+    for key in x.first_der:
+        first_der[key]=-csc(x.mean)**2*x.first_der[key]
+    if check_formula('cot',x,func_flag=True) is not None:
+        return check_formula('cot',x,func_flag=True)
+    
+    #Derivative method
+    elif measurement.method=='Derivative':  
+        mean=cot(x.mean)
+        std=error(x,der=first_der)
+        result=function(mean,std)
+    
+    #Min-Max method
+    elif measurement.method=='MinMax':  
+        pass
+
+    #Monte Carlo method
+    elif measurement.method=='Monte Carlo':  
+        import numpy as np
+        cotan=lambda x: np.cot(x)
+        result=measurement.monte_carlo(cotan,x)
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.cot(x.info["Data"]) 
+    result.first_der.update(first_der)
+    result._update_info('cot',x,func_flag=1)
+    return result;
     
 def exp(x):
     from math import exp
 
-    x=check_values(x)[0]
+    x,=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=exp(x.mean)*x.first_der[key]     
@@ -347,7 +475,7 @@ def e(value):
 def log(x):
     from math import log
 
-    x=check_values(x)[0]    
+    x,=check_values(x) 
     first_der={}
     for key in x.first_der:
         first_der[key]=1/x.mean*x.first_der[key]         
@@ -371,20 +499,55 @@ def log(x):
     result.first_der.update(first_der)
     result._update_info('log',x,func_flag=1)    
     return result;
-    
-'''
-def operator_wrap(operation,*args,func_flag=False):
-    if func_flag is not False:
-        from math import *
-    if b is not None:
-        a,b=check_values(a,b)
-        a.check_der(b)
-        b.check_der(a)
+  
+
+def operation_wrap(operation,*args,func_flag=False):
+    #if func_flag is not False:
+    #    from math import sin,cos,tan,exp,log,cot,csc,sec
+    args=check_values(args)
+    if args[1] is not None:
+        args[0].check_der(args[1])
+        args[1].check_der(args[0])
     df={}
-    
-    mean=operation(args)
-    std=error(args,der=df)
-    result=measurement(mean,std)
+    for key in args[0].first_der:
+        df[key]=diff[operation]*measurement.register[key].first_der
+    if check_formula(op_string[operation],args,func_flag) is not None:
+        return check_formula(op_string[operation],args,func_flag)   
+
+    #Derivative Method
+    if measurement.method=="Derivative":
+        mean=operation(args)
+        std=error(args,der=df)
+        result=measurement(mean,std)
+        
+    #Min Max Method
+        
+    #Monte Carlo Method
+    else:
+        result=measurement.monte_carlo(operation,args)
+    if args[0].info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.operation(args[0].info["Data"])   
     result.first_der.update(df)
-    result._update_info(op_string,*args,func_flag)
-'''
+    result._update_info(op_string[operation],*args,func_flag)
+
+diff={sin:lambda x,key: cos(x.mean)*x.first_der[key],         
+    cos:lambda x,key: -sin(x.mean)*x.first_der[key],
+    tan:lambda x,key: sec(x.mean)**2*x.first_der[key],        
+    sec:lambda x,key: tan(x)*sec(x)*x.first_der[key],
+    csc:lambda x,key: -cot(x)*csc(x)*x.first_der[key],   
+    cot:lambda x,key: -csc(x)**2*x.first_der[key], 
+    exp:lambda x,key: exp(x)*x.first_der[key],           
+    log:lambda x,key: 1/x*x.first_der[key],
+    add:lambda a,b,key: a.first_der[key]+b.first_der[key],
+    sub:lambda a,b,key: a.first_der[key]-b.first_der[key],
+    mul:lambda a,b,key: a.first_der[key]*b.mean + b.first_der[key]*a.mean,
+    div:lambda a,b,key: (a.first_der[key]*b.mean-b.first_der[key]*a.mean) \
+                                                                / b.mean**2,
+    power:lambda a,b,key: a.mean**b.mean*(b.first_der[key]*log(abs(a.mean))
+                                            + b.mean/a.mean*a.first_der[key],)
+
+}
+      
+op_string={sin:'sin',cos:'cos',tan:'tan',csc:'csc',sec:'sec',cot:'cot',
+           exp:'exp',log:'log',add:'+',sub:'-',mul:'*',div:'/',power:'**',}
