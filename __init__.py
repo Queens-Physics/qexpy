@@ -1,3 +1,3 @@
-from Uncertainties import measurement as M
-from Fitting import Fitting
-import Uncertainties
+from uncertainties import Measured as M
+import fitting
+import uncertainties

@@ -1,10 +1,9 @@
-from Uncertainties import measurement
-from Uncertainties import function
-from Uncertainties import constant
-#from math import pi
+from uncertainties import Measurement
+from uncertainties import Function
+from uncertainties import Constant
 CONSTANT = (int,float,)
 
-def error(*args,der=None):
+def dev(*args,der=None):
     std=0
     roots=()
     for arg in args:
@@ -12,11 +11,11 @@ def error(*args,der=None):
             if arg.root[i] not in roots:
                 roots+=(arg.root[i],)
     for root in roots:
-        std+=(der[root]*measurement.register[root].std)**2
+        std+=(der[root]*Measurement.register[root].std)**2
     for i in range(len(roots)):
         for j in range(len(roots)-i-1):
-            cov=measurement.register[roots[i]]\
-                    .get_covariance(measurement.register[roots[j+1+i]])
+            cov=Measurement.register[roots[i]]\
+                    .get_covariance(Measurement.register[roots[j+1+i]])
             std+=2*der[roots[i]]*der[roots[j+1+i]]*cov
     std=std**(1/2)
     return std;
@@ -33,7 +32,7 @@ def check_values(*args):
     val=()
     for arg in args:
         if type(arg) in CONSTANT:
-            val+=(constant(arg),)
+            val+=(Constant(arg),)
         else:
             val+=(arg,)
     return val
@@ -48,15 +47,15 @@ def check_formula(operation,a,b=None,func_flag=False):
     '''
     if func_flag is False:
         if a.info["Formula"]+operation+b.info["Formula"] in \
-                measurement.formula_register:
-            ID = measurement.formula_register[a.info["Formula"]+operation\
+                Measurement.formula_register:
+            ID = Measurement.formula_register[a.info["Formula"]+operation\
                     + b.info["Formula"]]
-            return measurement.register[ID]
+            return Measurement.register[ID]
     else:
-        if operation+'('+a.info["Formula"]+')' in measurement.formula_register:
-            ID = measurement.formula_register[operation+'('+a.info["Formula"]\
+        if operation+'('+a.info["Formula"]+')' in Measurement.formula_register:
+            ID = Measurement.formula_register[operation+'('+a.info["Formula"]\
                     + ')']
-            return measurement.register[ID]
+            return Measurement.register[ID]
 
 def add(a,b):
     '''
@@ -77,21 +76,21 @@ def add(a,b):
     if check_formula('+',a,b) is not None:
         return check_formula('+',a,b)
     #Addition by error propogation formula
-    if measurement.method=="Derivative":  
+    if Measurement.method=="Derivative":  
         mean=a.mean+b.mean     
-        std=error(a,b,der=first_der)
-        result=function(mean,std)
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
         
     #Addition by Min-Max method
-    elif measurement.method=="Min Max":
+    elif Measurement.method=="Min Max":
         mean=a.mean+b.mean
         std=a.std+b.std
-        result=function(mean,std)
+        result=Function(mean,std)
         
     #If method specification is bad, MC method is used
     else:
         plus=lambda x,y: x+y
-        result=measurement.monte_carlo(plus,a,b)
+        result=Measurement.monte_carlo(plus,a,b)
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.add(a.info["Data"],b.info["Data"])
@@ -114,19 +113,19 @@ def sub(a,b):
         return check_formula('-',a,b)
         
     #Addition by error propogation formula
-    if measurement.method=="Derivative":
+    if Measurement.method=="Derivative":
         mean=a.mean-b.mean
-        std=error(a,b,der=first_der)
-        result=function(mean,std)
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
     
     #Addition by Min-Max method
-    elif measurement.method=="Min Max":
+    elif Measurement.method=="Min Max":
         result=add(a,-b)
         
     #Monte Carlo method
     else:
         minus=lambda x,y: x-y
-        result=measurement.monte_carlo(minus,a,b)
+        result=Measurement.monte_carlo(minus,a,b)
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.subtract(a.info["Data"],b.info["Data"])
@@ -146,21 +145,21 @@ def mul(a,b):
         return check_formula('*',a,b)
         
     #By error propogation formula    
-    if measurement.method=="Derivative":          
+    if Measurement.method=="Derivative":          
         mean=a.mean*b.mean
-        std=error(a,b,der=first_der)
-        result=function(mean,std)
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
         
     #Addition by Min-Max method
-    elif measurement.method=="Min Max":
+    elif Measurement.method=="Min Max":
         mean=a.mean*b.mean+a.std*b.std
         std=a.mean*b.std+b.mean*a.std
-        result=function(mean,std)
+        result=Function(mean,std)
             
     #If method specification is bad, MC method is used
     else:
         plus=lambda a,b: a*b
-        result=measurement.monte_carlo(plus,a,b)
+        result=Measurement.monte_carlo(plus,a,b)
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.multiply(a.info["Data"],b.info["Data"])
@@ -181,21 +180,21 @@ def div(a,b):
         return check_formula('/',a,b)
         
     #By error propgation
-    if measurement.method=="Derivative": 
+    if Measurement.method=="Derivative": 
         mean=a.mean/b.mean
-        std=error(a,b,der=first_der)
-        result=function(mean,std)
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
             
     #Addition by Min-Max method
-    elif measurement.method=="Min Max":
+    elif Measurement.method=="Min Max":
         mean=(b.mean*a.std+a.mean*b.std)/(b.mean**2*b.std**2)
         std=(a.mean*b.mean+a.std*b.std+2*a.mean*b.std+2*b.mean*a.std)
-        result=function(mean,std)
+        result=Function(mean,std)
         
     #If method specification is bad, MC method is used
     else:
         divide=lambda a,b: a/b
-        result=measurement.monte_carlo(divide,a,b)
+        result=Measurement.monte_carlo(divide,a,b)
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.divide(a.info["Data"],b.info["Data"])
@@ -204,10 +203,10 @@ def div(a,b):
     return result;
 
 def power(a,b):
-    #from math import log
+    from math import log
+    
     a,b=check_values(a,b)
     #Propagating derivative of arguments
-    from math import log  
     first_der={}
     a.check_der(b)
     b.check_der(a)
@@ -218,13 +217,13 @@ def power(a,b):
         return check_formula('**',a,b)
     
     #By derivative method
-    if measurement.method=="Derivative":
+    if Measurement.method=="Derivative":
         mean=a.mean**b.mean
-        std=error(a,b,der=first_der)
-        result=function(mean,std)
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
         
     #By min-max method
-    elif measurement.method=='Min Max':
+    elif Measurement.method=='Min Max':
         if (b<0):
             max_val=(a.mean+a.std)**(b.mean-b.std)
             min_val=(a.mean-a.std)**(b.mean+b.std)
@@ -233,12 +232,12 @@ def power(a,b):
             min_val=(a.mean-a.std)**(b.mean-b.std)
         mid_val=(max_val+min_val)/2
         err=(max_val-min_val)/2
-        result=function(mid_val,err)
+        result=Function(mid_val,err)
     
     #By Monte Carlo method
     else:
         exponent=lambda a,b: a**b
-        result=measurement.monte_carlo(exponent,a,b)
+        result=Measurement.monte_carlo(exponent,a,b)
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.power(a.info["Data"],b.info["Data"])
@@ -248,8 +247,7 @@ def power(a,b):
         
         
 def sin(x):
-    from math import sin
-    from math import cos
+    from math import sin, cos
     
     x,=check_values(x)
     first_der={}
@@ -259,16 +257,16 @@ def sin(x):
         return check_formula('sin',x,func_flag=True)
         
     #By derivative method
-    if measurement.method=='Derivative':
+    if Measurement.method=='Derivative':
         mean=sin(x.mean)
-        std=error(x,der=first_der)
-        result=function(mean,std)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
         
     #By Monte Carlo method
     else:
         import numpy as np
         sine=lambda x: np.sin(x)
-        result=measurement.monte_carlo(sine,x)
+        result=Measurement.monte_carlo(sine,x)
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.sin(x.info["Data"])
@@ -277,8 +275,7 @@ def sin(x):
     return result;
     
 def cos(x):
-    from math import sin
-    from math import cos
+    from math import sin, cos
 
     x,=check_values(x)
     first_der={}
@@ -288,16 +285,16 @@ def cos(x):
         return check_formula('cos',x,func_flag=True)
     
     #By derivative method
-    if measurement.method=='Derivative':        
+    if Measurement.method=='Derivative':        
         mean=cos(x.mean)
-        std=error(x,der=first_der)
-        result=function(mean,std)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
     
     #By Monte Carlo method
     else:
         import numpy as np
         cosine=lambda x: np.cos(x)
-        result=measurement.monte_carlo(cosine,x)
+        result=Measurement.monte_carlo(cosine,x)
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.cos(x.info["Data"])
@@ -316,20 +313,20 @@ def tan(x):
         return check_formula('tan',x,func_flag=True)
     
     #Derivative method
-    elif measurement.method=='Derivative':  
+    elif Measurement.method=='Derivative':  
         mean=tan(x.mean)
-        std=error(x,der=first_der)
-        result=function(mean,std)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
     
     #Min-Max method
-    elif measurement.method=='MinMax':  
+    elif Measurement.method=='MinMax':  
         pass
 
     #Monte Carlo method
-    elif measurement.method=='Monte Carlo':  
+    elif Measurement.method=='Monte Carlo':  
         import numpy as np
         tangent=lambda x: np.tan(x)
-        result=measurement.monte_carlo(tangent,x)
+        result=Measurement.monte_carlo(tangent,x)
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.tan(x.info["Data"]) 
@@ -348,20 +345,20 @@ def sec(x):
         return check_formula('sec',x,func_flag=True)
     
     #Derivative method
-    elif measurement.method=='Derivative':  
+    elif Measurement.method=='Derivative':  
         mean=sec(x.mean)
-        std=error(x,der=first_der)
-        result=function(mean,std)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
     
     #Min-Max method
-    elif measurement.method=='MinMax':  
+    elif Measurement.method=='MinMax':  
         pass
 
     #Monte Carlo method
-    elif measurement.method=='Monte Carlo':  
+    elif Measurement.method=='Monte Carlo':  
         import numpy as np
         secant=lambda x: np.sec(x)
-        result=measurement.monte_carlo(secant,x)
+        result=Measurement.monte_carlo(secant,x)
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.sec(x.info["Data"]) 
@@ -380,20 +377,20 @@ def csc(x):
         return check_formula('csc',x,func_flag=True)
     
     #Derivative method
-    elif measurement.method=='Derivative':  
+    elif Measurement.method=='Derivative':  
         mean=csc(x.mean)
-        std=error(x,der=first_der)
-        result=function(mean,std)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
     
     #Min-Max method
-    elif measurement.method=='MinMax':  
+    elif Measurement.method=='MinMax':  
         pass
 
     #Monte Carlo method
-    elif measurement.method=='Monte Carlo':  
+    elif Measurement.method=='Monte Carlo':  
         import numpy as np
         cosecant=lambda x: np.csc(x)
-        result=measurement.monte_carlo(cosecant,x)
+        result=Measurement.monte_carlo(cosecant,x)
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.csc(x.info["Data"]) 
@@ -412,20 +409,20 @@ def cot(x):
         return check_formula('cot',x,func_flag=True)
     
     #Derivative method
-    elif measurement.method=='Derivative':  
+    elif Measurement.method=='Derivative':  
         mean=cot(x.mean)
-        std=error(x,der=first_der)
-        result=function(mean,std)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
     
     #Min-Max method
-    elif measurement.method=='MinMax':  
+    elif Measurement.method=='MinMax':  
         pass
 
     #Monte Carlo method
-    elif measurement.method=='Monte Carlo':  
+    elif Measurement.method=='Monte Carlo':  
         import numpy as np
         cotan=lambda x: np.cot(x)
-        result=measurement.monte_carlo(cotan,x)
+        result=Measurement.monte_carlo(cotan,x)
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.cot(x.info["Data"]) 
@@ -444,24 +441,24 @@ def exp(x):
         return check_formula('exp',x,func_flag=True)
     
     #By derivative method
-    if measurement.method=='Derivative':
+    if Measurement.method=='Derivative':
         mean=exp(x.mean)
-        std=error(x,der=first_der)
-        result=function(mean,std)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
     
     #By min-max method
-    elif measurement.method=='Min Max':
+    elif Measurement.method=='Min Max':
         min_val=exp(x.mean-x.std)
         max_val=exp(x.mean+x.std)
         mid_val=(max_val+min_val)/x
         err=(max_val-min_val)/2
-        result=function(mid_val,err)
+        result=Function(mid_val,err)
         
     #By Monte Carlo method
     else:
         import numpy as np
         euler=lambda x: np.exp(x)
-        result=measurement.monte_carlo(euler,x)
+        result=Measurement.monte_carlo(euler,x)
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.exp(x.info["Data"]) 
@@ -470,7 +467,7 @@ def exp(x):
     return result;
 
 def e(value):
-    measurement.exp(value)
+    Measurement.exp(value)
     
 def log(x):
     from math import log
@@ -483,16 +480,16 @@ def log(x):
         return check_formula('log',x,func_flag=True)
         
     #By derivative method
-    if measurement.method=='Derivative':
+    if Measurement.method=='Derivative':
         mean=log(x.mean)
-        std=error(x,der=first_der)
-        result=function(mean,std)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
     
     #By Monte Carlo method
     else:
         import numpy as np
         nat_log=lambda x: np.log(x)
-        result=measurement.monte_carlo(nat_log,x)
+        result=Measurement.monte_carlo(nat_log,x)
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.log(x.info["Data"])
@@ -510,21 +507,21 @@ def operation_wrap(operation,*args,func_flag=False):
         args[1].check_der(args[0])
     df={}
     for key in args[0].first_der:
-        df[key]=diff[operation]*measurement.register[key].first_der
+        df[key]=diff[operation]*Measurement.register[key].first_der
     if check_formula(op_string[operation],args,func_flag) is not None:
         return check_formula(op_string[operation],args,func_flag)   
 
     #Derivative Method
-    if measurement.method=="Derivative":
+    if Measurement.method=="Derivative":
         mean=operation(args)
-        std=error(args,der=df)
-        result=measurement(mean,std)
+        std=dev(args,der=df)
+        result=Measurement(mean,std)
         
     #Min Max Method
         
     #Monte Carlo Method
     else:
-        result=measurement.monte_carlo(operation,args)
+        result=Measurement.monte_carlo(operation,args)
     if args[0].info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.operation(args[0].info["Data"])   

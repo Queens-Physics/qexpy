@@ -1,4 +1,4 @@
-class measurement:
+class Measurement:
     method="Derivative" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
     style="Default"
@@ -6,7 +6,6 @@ class measurement:
     register={}
     formula_register={}
     id_register={}
-    log={}
     
     #Defining common types under single array
     CONSTANT = (int,float,)
@@ -26,36 +25,36 @@ class measurement:
         and name for inputted data.
         '''
         
-        if len(args)==2 and all(isinstance(n,measurement.CONSTANT)\
+        if len(args)==2 and all(isinstance(n,Measurement.CONSTANT)\
                 for n in args):
             self.mean=args[0]
             self.std=args[1]
             data=None
             
-        elif all(isinstance(n,measurement.ARRAY) for n in args):
+        elif all(isinstance(n,Measurement.ARRAY) for n in args):
             if len(args)==1 and \
-                    all(isinstance(n,measurement.CONSTANT) for n in args[0]):
+                    all(isinstance(n,Measurement.CONSTANT) for n in args[0]):
                 args=args[0]
                 (self.mean, self.std) = variance(args)
                 data=list(args)
             elif len(args)==1 and \
-                    all(isinstance(n,measurement) for n in args[0]):
+                    all(isinstance(n,Measurement) for n in args[0]):
                 pass
                 #Treat each element as measurement type
             elif len(args)==2 and \
-                    all(isinstance(n,measurement.CONSTANT) 
+                    all(isinstance(n,Measurement.CONSTANT) 
                                                     for n in args[0]) and \
-                    all(isinstance(n,measurement.CONSTANT) 
+                    all(isinstance(n,Measurement.CONSTANT) 
                                                     for n in args[1]):
                 pass
                 #Treat zeroth as mean, first as std for n measurements
             
         elif len(args)>2:
-            if all(isinstance(n,measurement.CONSTANT) for n in args):
+            if all(isinstance(n,Measurement.CONSTANT) for n in args):
                 (self.mean, self.std) = variance(args)
                 data=list(args)
                 
-            elif all(isinstance(n,measurement) for n in args):
+            elif all(isinstance(n,Measurement) for n in args):
                 pass
                 #Take mean and std of each element, get weighted mean and std
             
@@ -65,7 +64,7 @@ class measurement:
             themselves.''')
         self.info={'ID': '', 'Formula': '' ,'Method': '', 'Data': data}
         self.MC_list=None
-        measurement.id_register[id(self)]=self
+        Measurement.id_register[id(self)]=self
 
     def set_method(chosen_method):
         '''
@@ -81,28 +80,28 @@ class measurement:
         default = 'Derivative'        
         
         if chosen_method in mc_list:
-            if measurement.numpy_installed:
-                measurement.method="Monte Carlo"
+            if Measurement.numpy_installed:
+                Measurement.method="Monte Carlo"
             else:
                 #print('Numpy package must be installed to use Monte Carlo \
                 #        propagation, using the derivative method instead.')
-                #measurement.method="Derivative"
-                measurement.method="Monte Carlo"
+                #Measurement.method="Derivative"
+                Measurement.method="Monte Carlo"
         elif chosen_method in min_max_list:
-            measurement.method="Min Max"
+            Measurement.method="Min Max"
         elif chosen_method in derr_list:
-            measurement.method="Derivative"
+            Measurement.method="Derivative"
         else:
             print("Method not recognized, using"+default+"method.")
-            measurement.method="Derivative"
+            Measurement.method="Derivative"
         
     def __str__(self):
-        if measurement.style=="Latex":
+        if Measurement.style=="Latex":
             string = tex_print(self)
-        elif measurement.style=="Default":
+        elif Measurement.style=="Default":
             string = def_print(self)
-        elif measurement.style=="SigFigs":
-            string = sigfigs_print(self,measurement.figs)
+        elif Measurement.style=="SigFigs":
+            string = sigfigs_print(self,Measurement.figs)
         return string
         
     def print_style(style,figs=3):
@@ -110,12 +109,12 @@ class measurement:
         Sigfigs=("SigFigs","sigfigs",'figs','Figs',\
                 "Significant figures","significant figures",)
         if style in latex:
-            measurement.style="Latex"
+            Measurement.style="Latex"
         elif style in Sigfigs:
-            measurement.style="SigFigs"
-            measurement.figs=figs
+            Measurement.style="SigFigs"
+            Measurement.figs=figs
         else:
-            measurement.style="Default"
+            Measurement.style="Default"
             
         
     def find_covariance(x,y):
@@ -175,7 +174,7 @@ class measurement:
             return 0;
             
         if self.info['ID'] not in variable.covariance:
-            measurement.find_covariance(self,variable)
+            Measurement.find_covariance(self,variable)
             var=self.covariance[variable.info['ID']]
             return var;
     
@@ -189,7 +188,7 @@ class measurement:
         if y.name in x.covariance:
             pass
         else:
-            measurement.find_covariance(x,y)
+            Measurement.find_covariance(x,y)
         sigma_xy=x.covariance[y.info['ID']]
         sigma_x=x.std
         sigma_y=y.std
@@ -216,9 +215,9 @@ class measurement:
             self.rename(var1.name+operation+var2.name)
             self.info['Formula']=var1.info['Formula']+operation+\
                     var2.info['Formula']
-            measurement.formula_register.update({self.info["Formula"]\
+            Measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
-            self.info['Method']+="Errors propagated by "+measurement.method+\
+            self.info['Method']+="Errors propagated by "+Measurement.method+\
                     ' method.\n'
             for root in var1.root:
                 if root not in self.root:
@@ -229,9 +228,9 @@ class measurement:
         elif func_flag is not None:
             self.rename(operation+'('+var1.name+')')
             self.info['Formula']=operation+'('+var1.info['Formula']+')'
-            self.info['Method']+="Errors propagated by "+measurement.method+\
+            self.info['Method']+="Errors propagated by "+Measurement.method+\
                     ' method.\n'
-            measurement.formula_register.update({self.info["Formula"]\
+            Measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
             for root in var1.root:
                 if root not in self.root:
@@ -240,7 +239,7 @@ class measurement:
             print('Something went wrong in update_info')
             
             
-    def d(self,variable=None):
+    def derivative(self,variable=None):
         '''
         Returns the numerical value of the derivative with respect to an 
         inputed variable.        
@@ -320,9 +319,9 @@ class measurement:
         
     def __neg__(self):
         if self.type=="Constant":
-            return constant(-self.mean,self.std,name='-'+self.name)
+            return Constant(-self.mean,self.std,name='-'+self.name)
         else:
-            return function(-self.mean,self.std,name='-'+self.name)
+            return Function(-self.mean,self.std,name='-'+self.name)
 
 #######################################################################
     
@@ -338,7 +337,7 @@ class measurement:
         #2D array
         import numpy as np
         N=len(args)
-        n=measurement.mcTrials #Can be adjusted in measurement.mcTrials
+        n=Measurement.mcTrials #Can be adjusted in measurement.mcTrials
         value=np.zeros((N,n))
         result=np.zeros(n)
         for i in range(N):
@@ -358,9 +357,9 @@ class measurement:
         for i in range(N):
             argName+=','+args[i].name
         name=func.__name__+"("+argName+")"
-        return function(data,error,name=name)
+        return Function(data,error,name=name)
         
-class function(measurement):
+class Function(Measurement):
     id_number=0    
     
     def __init__(self,*args,name=None):    
@@ -368,45 +367,34 @@ class function(measurement):
         if name is not None:
             self.name=name
         else:
-            self.name='obj%d'%(function.id_number)
-        self.info['ID']='obj%d'%(function.id_number)
-        self.type="function"
-        function.id_number+=1
+            self.name='obj%d'%(Function.id_number)
+        self.info['ID']='obj%d'%(Function.id_number)
+        self.type="Function"
+        Function.id_number+=1
         self.first_der={self.info['ID']:1}
-        measurement.register.update({self.info["ID"]:self})
+        Measurement.register.update({self.info["ID"]:self})
         self.covariance={self.name: self.std**2}
         self.root=()
             
-class measured(measurement):
+class Measured(Measurement):
     id_number=0    
     
     def __init__(self,*args,name=None):
         super().__init__(*args)
-        '''
-        if (self.mean,self.std,name) in measurement.log:
-            key=(self.mean,self.std,name)
-            self.name=measurement.log[key].name
-            self.type=measurement.log[key].type
-            self.info=measurement.log[key].info
-            self.first_der=measurement.log[key].first_der
-            self.covariance=measurement.log[key].covariance
-            self.root=measurement.log[key].root
-        '''
         if name is not None:
             self.name=name
         else:
-            self.name='unnamed_var%d'%(measured.id_number)
-        self.type="measurement"
-        self.info['ID']='var%d'%(measured.id_number)
-        self.info['Formula']='var%d'%(measured.id_number)
-        measured.id_number+=1
+            self.name='unnamed_var%d'%(Measured.id_number)
+        self.type="Measurement"
+        self.info['ID']='var%d'%(Measured.id_number)
+        self.info['Formula']='var%d'%(Measured.id_number)
+        Measured.id_number+=1
         self.first_der={self.info['ID']:1}
         self.covariance={self.name: self.std**2}
-        measurement.register.update({self.info["ID"]:self})
+        Measurement.register.update({self.info["ID"]:self})
         self.root=(self.info["ID"] ,)
-        measurement.log[(self.mean,self.std,name)]=self
         
-class constant(measurement):
+class Constant(Measurement):
     def __init__(self,arg,name=None):
         super().__init__(arg,0)
         if name is not None:
@@ -427,15 +415,15 @@ def f(function,*args):
     std_squared=0
     for i in range(N):
         for arg in args:        
-            std_squared+=arg.std**2*partial_derivative(function,i,args)**2
+            std_squared+=arg.std**2*numerical_partial_derivative(function,i,args)**2
     std=(std_squared)**(1/2)
     argName=""
     for i in range(N):
         argName+=','+args[i].name
     name=function.__name__+"("+argName+")"
-    return measurement(mean,std,name=name);
+    return Measurement(mean,std,name=name);
       
-def partial_derivative(func,var,*args):
+def numerical_partial_derivative(func,var,*args):
     '''
     Returns the parital derivative of a dunction with respect to var.
     
@@ -447,9 +435,9 @@ def partial_derivative(func,var,*args):
         partial_args=list(args)
         partial_args[var]=x
         return func(*partial_args);
-    return derivative(restrict_dimension,args[var])
+    return numerical_derivative(restrict_dimension,args[var])
 
-def derivative(function,point,dx=1e-10):
+def numerical_derivative(function,point,dx=1e-10):
     '''
     Returns the first order derivative of a function.
     '''
@@ -524,12 +512,12 @@ def sigfigs_print(self,figs):
     return n.format(self.mean)+'+/-'+n.format(self.std)
     
 def reset_variables():
-    measured.id_number=0
-    function.id_number=0
-    measurement.register={}
-    measurement.formula_register={}
-    measurement.log={}
-    measurement.method="Derivative" #Default error propogation method
-    measurement.mcTrials=10000 #option for number of trial in Monte Carlo simulation
-    measurement.style="Default"
-    measurement.figs=3
+    Measured.id_number=0
+    Function.id_number=0
+    Measurement.register={}
+    Measurement.formula_register={}
+    Measurement.log={}
+    Measurement.method="Derivative" #Default error propogation method
+    Measurement.mcTrials=10000 #option for number of trial in Monte Carlo simulation
+    Measurement.style="Default"
+    Measurement.figs=3

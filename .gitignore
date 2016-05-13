@@ -1,5 +1,6 @@
 *.spyderworkspace
-Test.py
+test_*.py
+*_test.py
 *.pyc
 WorkList.txt
 ToDo*
