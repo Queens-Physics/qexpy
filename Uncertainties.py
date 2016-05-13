@@ -100,19 +100,18 @@ class Measurement:
             string = tex_print(self)
         elif Measurement.style=="Default":
             string = def_print(self)
-        elif Measurement.style=="SigFigs":
-            string = sigfigs_print(self,Measurement.figs)
+        elif Measurement.style=="Scientific":
+            string = sci_print(self,Measurement.figs)
         return string
         
-    def print_style(style,figs=3):
+    def print_style(style,figs=None):
         latex=("Latex","latex",'Tex','tex',)
-        Sigfigs=("SigFigs","sigfigs",'figs','Figs',\
-                "Significant figures","significant figures",)
+        Sci=("Scientific","Sci",'scientific','sci','sigfigs',)
+        Measurement.figs=figs
         if style in latex:
             Measurement.style="Latex"
-        elif style in Sigfigs:
-            Measurement.style="SigFigs"
-            Measurement.figs=figs
+        elif style in Sci:
+            Measurement.style="Scientific"
         else:
             Measurement.style="Default"
             
@@ -464,49 +463,96 @@ def variance(*args,ddof=1):
 def tex_print(self):
     flag=True
     i=0
-    value=self.std
-    while(flag):
-        if value==0:
-            std=int(self.std/10**i//1)
-            mean=int(self.mean/10**i//1)
-            return "(%d \pm %d)\e%d"%(mean,std,i)
-        if value<1:
-            value*=10
-            i-=1
-        elif value>10:
-            value/=10
-            i+=1
-        elif value>=1 and value<=10:
-            flag=False
-    std=int(self.std/10**i//1)
-    mean=int(self.mean/10**i//1)
-    return "(%d \pm %d)\e%d"%(mean,std,i)
+    if Measurement.figs is not None:
+        value=self.mean
+        while(flag):
+            if value==0:
+                std=int(self.std/10**i//1)
+                mean=int(self.mean/10**i//1)
+                return "(%d \pm %d)\e%d"%(mean,std,i)
+            if value<1:
+                value*=10
+                i-=1
+            elif value>10:
+                value/=10
+                i+=1
+            elif value>=1 and value<=10:
+                flag=False
+        std=int(self.std/10**i//1)*10**(Measurement.figs-1)
+        mean=int(self.mean/10**i//1)*10**(Measurement.figs-1)
+        return "(%d \pm %d)\e%d"%(mean,std,i)
+    
+    else:
+        value=self.std
+        while(flag):
+            if value==0:
+                std=int(self.std/10**i//1)
+                mean=int(self.mean/10**i//1)
+                return "(%d \pm %d)\e%d"%(mean,std,i)
+            if value<1:
+                value*=10
+                i-=1
+            elif value>=10:
+                value/=10
+                i+=1
+            elif value>=1 and value<10:
+                flag=False
+        std=int(self.std/10**(i-Measurement.figs)//1)
+        mean=int(self.mean/10**(i-Measurement.figs)//1)
+        return "(%d \pm %d)\e%d"%(mean,std,(i-Measurement.figs))
     
 def def_print(self):
     flag=True
     i=0
-    value=self.std
-    while(flag):
-        if value==0:
-            flag=False
-        elif value<1:
-            value*=10
-            i+=1
-        elif value>10:
-            value/=10
-            i-=1
-        elif value>=1 and value<=10:
-            flag=False
-    if i>0:
-        n='%d'%(i)
-        n="%."+n+"f"
+    if Measurement.figs is not None:
+        value=self.mean
+        while(flag):
+            if value==0:
+                flag=False
+            elif value<1:
+                value*=10
+                i+=1
+            elif value>=10:
+                value/=10
+                i-=1
+            elif value>=1 and value<=10:
+                flag=False
+        figs=Measurement.figs+i-1
+        if figs>0:
+            n='%d'%(figs)
+            n="%."+n+"f"
+        else:
+            n='%.0f'
+        std=float(round(self.std,i))
+        mean=float(round(self.mean,i))
+        return n%(mean)+" +/- "+n%(std)
     else:
-        n='%.0f'
-    std=float(round(self.std,i))
-    mean=float(round(self.mean,i))
-    return n%(mean)+" +/- "+n%(std)
+        value=self.std
+        while(flag):
+            if value==0:
+                flag=False
+            elif value<1:
+                value*=10
+                i+=1
+            elif value>=10:
+                value/=10
+                i-=1
+            elif value>=1 and value<10:
+                flag=False
+        if i>0:
+            n='%d'%(i)
+            n="%."+n+"f"
+        else:
+            n='%.0f'
+        std=float(round(self.std,i))
+        mean=float(round(self.mean,i))
+        return n%(mean)+" +/- "+n%(std)
 
-def sigfigs_print(self,figs):
+def sci_print(self):
+    if Measurement.figs is not None:
+        figs=Measurement.figs
+    else:
+        figs=3
     n=figs-1
     n='{:.'+'%d'%(n)+'e}'
     return n.format(self.mean)+'+/-'+n.format(self.std)
