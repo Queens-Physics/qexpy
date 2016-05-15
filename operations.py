@@ -4,6 +4,15 @@ from uncertainties import Constant
 CONSTANT = (int,float,)
 
 def dev(*args,der=None):
+    '''
+    Returns the standard deviation of a function of N arguments.
+    
+    Using the tuple of variables, passed in each operation that composes a
+    function, the standard deviation is calculated by the derivative error
+    propagation formula, including the covariance factor between each pair
+    of variables. The derivative dictionary of a funciton must be passes by
+    the der argument.
+    '''
     std=0
     roots=()
     for arg in args:
@@ -303,12 +312,15 @@ def cos(x):
     return result;
 
 def tan(x):
-    from math import tan, sec
+    from math import tan, cos
     
+    def Sec(x):
+        return 1/cos(x)
+        
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
-        first_der[key]=sec(x.mean)**2*x.first_der[key]
+        first_der[key]=Sec(x.mean)**2*x.first_der[key]
     if check_formula('tan',x,func_flag=True) is not None:
         return check_formula('tan',x,func_flag=True)
     
@@ -335,18 +347,24 @@ def tan(x):
     return result;
     
 def sec(x):
-    from math import sec, tan
+    from math import cos, tan
     
+    def Csc(x):
+        return 1/sin(x)
+        
+    def Sec(x):
+        return 1/cos(x)
+        
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
-        first_der[key]=sec(x.mean)*tan(x.mean)*x.first_der[key]
+        first_der[key]=Sec(x.mean)*tan(x.mean)*x.first_der[key]
     if check_formula('sec',x,func_flag=True) is not None:
         return check_formula('sec',x,func_flag=True)
     
     #Derivative method
     elif Measurement.method=='Derivative':  
-        mean=sec(x.mean)
+        mean=Sec(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
@@ -357,7 +375,7 @@ def sec(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        secant=lambda x: np.sec(x)
+        secant=lambda x: np.divide(np.cos(x))
         result=Measurement.monte_carlo(secant,x)
     if x.info["Data"] is not None:
         import numpy
@@ -367,18 +385,24 @@ def sec(x):
     return result;
 
 def csc(x):
-    from math import csc, cot
+    from math import sin, tan
+    
+    def Cot(x):
+        return 1/tan(x)
+        
+    def Csc(x):
+        return 1/sin(x)
     
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
-        first_der[key]=-cot(x.mean)*csc(x.mean)*x.first_der[key]
+        first_der[key]=-Cot(x.mean)*Csc(x.mean)*x.first_der[key]
     if check_formula('csc',x,func_flag=True) is not None:
         return check_formula('csc',x,func_flag=True)
     
     #Derivative method
     elif Measurement.method=='Derivative':  
-        mean=csc(x.mean)
+        mean=Csc(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
@@ -389,7 +413,7 @@ def csc(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        cosecant=lambda x: np.csc(x)
+        cosecant=lambda x: np.divide(np.sin(x))
         result=Measurement.monte_carlo(cosecant,x)
     if x.info["Data"] is not None:
         import numpy
@@ -399,18 +423,24 @@ def csc(x):
     return result;
 
 def cot(x):
-    from math import csc, cot
+    from math import sin, tan
+
+    def Cot(x):
+        return 1/tan(x)
+        
+    def Csc(x):
+        return 1/sin(x)
     
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
-        first_der[key]=-csc(x.mean)**2*x.first_der[key]
+        first_der[key]=-Csc(x.mean)**2*x.first_der[key]
     if check_formula('cot',x,func_flag=True) is not None:
         return check_formula('cot',x,func_flag=True)
     
     #Derivative method
     elif Measurement.method=='Derivative':  
-        mean=cot(x.mean)
+        mean=Cot(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
@@ -421,7 +451,7 @@ def cot(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        cotan=lambda x: np.cot(x)
+        cotan=lambda x: np.divide(np.tan(x))
         result=Measurement.monte_carlo(cotan,x)
     if x.info["Data"] is not None:
         import numpy
@@ -499,6 +529,11 @@ def log(x):
   
 
 def operation_wrap(operation,*args,func_flag=False):
+    '''
+    Function wrapper to convert existing, constant functions into functions
+    which can handle measurement objects and return an error propagated by
+    derivative, min-max, or Monte Carlo method.
+    '''
     #if func_flag is not False:
     #    from math import sin,cos,tan,exp,log,cot,csc,sec
     args=check_values(args)

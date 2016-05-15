@@ -1,8 +1,14 @@
 class Measurement:
+    '''
+    Root class of objects which containt a mean and standard deviation.
+    From this class, objects with properties pertaining to their use or
+    formulation can be instanced. (ie. the result of an operation of 
+    measured values, called Funciton and Measured respectivly)
+    '''
     method="Derivative" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
     style="Default"
-    figs=3
+    figs=None
     register={}
     formula_register={}
     id_register={}
@@ -96,15 +102,26 @@ class Measurement:
             Measurement.method="Derivative"
         
     def __str__(self):
+        '''
+        Method called when printing measurement objects.
+        '''
+        if Measurement.figs is None:
+            figs=3
+        else:
+            figs=Measurement.figs
         if Measurement.style=="Latex":
             string = tex_print(self)
         elif Measurement.style=="Default":
             string = def_print(self)
         elif Measurement.style=="Scientific":
-            string = sci_print(self,Measurement.figs)
+            string = sci_print(self,figs)
         return string
         
     def print_style(style,figs=None):
+        '''
+        Set the style of printing and number of significant figures for the
+        output of a printing a measurement object.
+        '''
         latex=("Latex","latex",'Tex','tex',)
         Sci=("Scientific","Sci",'scientific','sci','sigfigs',)
         Measurement.figs=figs
@@ -359,6 +376,10 @@ class Measurement:
         return Function(data,error,name=name)
         
 class Function(Measurement):
+    '''
+    Subclass of objects, which are measurements created by operations or 
+    functions of other measurement type objects.
+    '''
     id_number=0    
     
     def __init__(self,*args,name=None):    
@@ -376,6 +397,10 @@ class Function(Measurement):
         self.root=()
             
 class Measured(Measurement):
+    '''
+    Subclass of measurements, specified by the user and treated as variables
+    or arguments of functions when propagating error.
+    '''
     id_number=0    
     
     def __init__(self,*args,name=None):
@@ -394,6 +419,14 @@ class Measured(Measurement):
         self.root=(self.info["ID"] ,)
         
 class Constant(Measurement):
+    '''
+    Subclass of measurement objects, not neccesarily specified by the user, 
+    called when a consant (int, float, etc.) is used in operation with a
+    measurement. This class is called before calculating operations to 
+    ensure objects can be combined. The mean of a constant is the specified 
+    value, the standard deviation is zero, and the derivarive with respect
+    to anything is zero.
+    '''
     def __init__(self,arg,name=None):
         super().__init__(arg,0)
         if name is not None:
@@ -409,6 +442,11 @@ class Constant(Measurement):
         self.root=()
    
 def f(function,*args):
+    '''
+    Function wrapper for any defined function to operate with arbitrary 
+    measurement type objects arguments. Returns a Function type measurement 
+    object.
+    '''
     N=len(args)
     mean=function(args)
     std_squared=0
@@ -420,7 +458,7 @@ def f(function,*args):
     for i in range(N):
         argName+=','+args[i].name
     name=function.__name__+"("+argName+")"
-    return Measurement(mean,std,name=name);
+    return Function(mean,std,name=name);
       
 def numerical_partial_derivative(func,var,*args):
     '''
@@ -461,6 +499,12 @@ def variance(*args,ddof=1):
     return (mean,std);
     
 def tex_print(self):
+    '''
+    Creates string used by __str__ in a style useful for printing in Latex,
+    as a value with error, in brackets multiplied by a power of ten. (ie.
+    15+/-0.3 is (150 \pm 3)\e-1. Where Latex parses \pm as +\- and \e as
+    *10**-1)
+    '''
     flag=True
     i=0
     if Measurement.figs is not None:
@@ -502,6 +546,11 @@ def tex_print(self):
         return "(%d \pm %d)\e%d"%(mean,std,(i-Measurement.figs))
     
 def def_print(self):
+    '''
+    Returns string used by __str__ as two numbers representing mean and error
+    to either the first non-zero digit of error or to a specified number of
+    significant figures.
+    '''
     flag=True
     i=0
     if Measurement.figs is not None:
@@ -549,6 +598,11 @@ def def_print(self):
         return n%(mean)+" +/- "+n%(std)
 
 def sci_print(self):
+    '''
+    Returns string used by __str__ as two numbers representing mean and 
+    error, each in scientific notation to a specified numebr of significant 
+    figures, or 3 if none is given.
+    '''
     if Measurement.figs is not None:
         figs=Measurement.figs
     else:
@@ -558,11 +612,14 @@ def sci_print(self):
     return n.format(self.mean)+'+/-'+n.format(self.std)
     
 def reset_variables():
+    '''
+    Resets the ID number, directories and methods to their original values.
+    Useful in Jupyter Notebooks if variables were unintentionally repeated.
+    '''
     Measured.id_number=0
     Function.id_number=0
     Measurement.register={}
     Measurement.formula_register={}
-    Measurement.log={}
     Measurement.method="Derivative" #Default error propogation method
     Measurement.mcTrials=10000 #option for number of trial in Monte Carlo simulation
     Measurement.style="Default"
