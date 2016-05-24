@@ -49,7 +49,7 @@ class Measurement:
                 #Treat each element as measurement type
             elif len(args)==2 and \
                     all(isinstance(n,Measurement.CONSTANT) 
-                                                    for n in args[0]) and \
+                                                    for n in args[0]) and\
                     all(isinstance(n,Measurement.CONSTANT) 
                                                     for n in args[1]):
                 pass
@@ -62,13 +62,14 @@ class Measurement:
                 
             elif all(isinstance(n,Measurement) for n in args):
                 pass
-                #Take mean and std of each element, get weighted mean and std
+                #Mean and std of each element, get weighted mean and std
             
         else:
-            raise ValueError('''Input arguments must be one of: a mean and 
+            raise ValueError('''Input arguments must be one of: a mean and
             standard deviation, an array of values, or the individual values
             themselves.''')
-        self.info={'ID': '', 'Formula': '' ,'Method': '', 'Data': data}
+        self.info={'ID': '', 'Formula': '' ,'Method': '', 'Data': data,
+                       'Function': {'operation':(),'variables':()},}
         self.MC_list=None
         Measurement.id_register[id(self)]=self
 
@@ -89,7 +90,7 @@ class Measurement:
             if Measurement.numpy_installed:
                 Measurement.method="Monte Carlo"
             else:
-                #print('Numpy package must be installed to use Monte Carlo \
+                #print('Numpy package must be installed to use Monte Carlo\
                 #        propagation, using the derivative method instead.')
                 #Measurement.method="Derivative"
                 Measurement.method="Monte Carlo"
@@ -227,10 +228,17 @@ class Measurement:
         for functions like sine and cosine. Method is updated by acessing 
         the class property.
         '''
+        from operations import sin,cos,tan,csc,sec,cot,exp,log,add,sub,\
+                                                        mul,div,power
+        op_string={sin:'sin',cos:'cos',tan:'tan',csc:'csc',
+                   sec:'sec',cot:'cot',exp:'exp',log:'log',
+                   add:'+',sub:'-',mul:'*',div:'/',power:'**',}
         if func_flag is None and var2 is not None:
-            self.rename(var1.name+operation+var2.name)
-            self.info['Formula']=var1.info['Formula']+operation+\
+            self.rename(var1.name+op_string[operation]+var2.name)
+            self.info['Formula']=var1.info['Formula']+op_string[operation]+\
                     var2.info['Formula']
+            self.info['Function']['variables']+=[var1,var2],
+            self.info['Function']['operation']+=operation,
             Measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
             self.info['Method']+="Errors propagated by "+Measurement.method+\
@@ -242,8 +250,9 @@ class Measurement:
                 if root not in self.root:
                     self.root+=var2.root
         elif func_flag is not None:
-            self.rename(operation+'('+var1.name+')')
-            self.info['Formula']=operation+'('+var1.info['Formula']+')'
+            self.rename(op_string[operation]+'('+var1.name+')')
+            self.info['Formula']=op_string[operation]+'('+\
+                                    var1.info['Formula']+')'
             self.info['Method']+="Errors propagated by "+Measurement.method+\
                     ' method.\n'
             Measurement.formula_register.update({self.info["Formula"]\
@@ -444,7 +453,7 @@ class Constant(Measurement):
 def f(function,*args):
     '''
     Function wrapper for any defined function to operate with arbitrary 
-    measurement type objects arguments. Returns a Function type measurement 
+    measurement type objects arguments. Returns a Function type measurement
     object.
     '''
     N=len(args)
@@ -452,7 +461,8 @@ def f(function,*args):
     std_squared=0
     for i in range(N):
         for arg in args:        
-            std_squared+=arg.std**2*numerical_partial_derivative(function,i,args)**2
+            std_squared+=arg.std**2*numerical_partial_derivative(function,\
+                                                                i,args)**2
     std=(std_squared)**(1/2)
     argName=""
     for i in range(N):
@@ -621,6 +631,6 @@ def reset_variables():
     Measurement.register={}
     Measurement.formula_register={}
     Measurement.method="Derivative" #Default error propogation method
-    Measurement.mcTrials=10000 #option for number of trial in Monte Carlo simulation
+    Measurement.mcTrials=10000 #Number of trial in Monte Carlo simulation
     Measurement.style="Default"
     Measurement.figs=3

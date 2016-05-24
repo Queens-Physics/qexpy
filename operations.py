@@ -54,15 +54,19 @@ def check_formula(operation,a,b=None,func_flag=False):
     register of previously calculated operations is checked. If the
     quantity does exist, the previously calculated object is returned.
     '''
+    op_string={sin:'sin',cos:'cos',tan:'tan',csc:'csc',sec:'sec',cot:'cot',
+           exp:'exp',log:'log',add:'+',sub:'-',mul:'*',div:'/',power:'**',}
+    op=op_string[operation]
+    
     if func_flag is False:
-        if a.info["Formula"]+operation+b.info["Formula"] in \
+        if a.info["Formula"]+op+b.info["Formula"] in \
                 Measurement.formula_register:
-            ID = Measurement.formula_register[a.info["Formula"]+operation\
+            ID = Measurement.formula_register[a.info["Formula"]+op\
                     + b.info["Formula"]]
             return Measurement.register[ID]
     else:
-        if operation+'('+a.info["Formula"]+')' in Measurement.formula_register:
-            ID = Measurement.formula_register[operation+'('+a.info["Formula"]\
+        if op+'('+a.info["Formula"]+')' in Measurement.formula_register:
+            ID = Measurement.formula_register[op+'('+a.info["Formula"]\
                     + ')']
             return Measurement.register[ID]
 
@@ -82,8 +86,8 @@ def add(a,b):
     b.check_der(a)
     for key in a.first_der:
         first_der[key]=a.first_der[key]+b.first_der[key]
-    if check_formula('+',a,b) is not None:
-        return check_formula('+',a,b)
+    if check_formula(add,a,b) is not None:
+        return check_formula(add,a,b)
     #Addition by error propogation formula
     if Measurement.method=="Derivative":  
         mean=a.mean+b.mean     
@@ -104,7 +108,7 @@ def add(a,b):
         import numpy
         result.info["Data"]=numpy.add(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)
-    result._update_info('+',a,b)
+    result._update_info(add,a,b)
     return result;
 
 def sub(a,b):
@@ -118,8 +122,8 @@ def sub(a,b):
     b.check_der(a)
     for key in a.first_der:
         first_der[key]=a.first_der[key]-b.first_der[key] 
-    if check_formula('-',a,b) is not None:
-        return check_formula('-',a,b)
+    if check_formula(sub,a,b) is not None:
+        return check_formula(sub,a,b)
         
     #Addition by error propogation formula
     if Measurement.method=="Derivative":
@@ -139,7 +143,7 @@ def sub(a,b):
         import numpy
         result.info["Data"]=numpy.subtract(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)
-    result._update_info('-',a,b)
+    result._update_info(sub,a,b)
     return result
 
 def mul(a,b):
@@ -150,8 +154,8 @@ def mul(a,b):
     b.check_der(a)
     for key in a.first_der:
         first_der[key]=a.mean*b.first_der[key]+b.mean*a.first_der[key]
-    if check_formula('*',a,b) is not None:
-        return check_formula('*',a,b)
+    if check_formula(mul,a,b) is not None:
+        return check_formula(mul,a,b)
         
     #By error propogation formula    
     if Measurement.method=="Derivative":          
@@ -173,7 +177,7 @@ def mul(a,b):
         import numpy
         result.info["Data"]=numpy.multiply(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)
-    result._update_info('*',a,b)
+    result._update_info(mul,a,b)
     return result;
     
 def div(a,b):
@@ -185,8 +189,8 @@ def div(a,b):
     for key in a.first_der:
         first_der[key]=(a.first_der[key]*b.mean-b.first_der[key]*a.mean)\
                 / b.mean**2
-    if check_formula('/',a,b) is not None:
-        return check_formula('/',a,b)
+    if check_formula(div,a,b) is not None:
+        return check_formula(div,a,b)
         
     #By error propgation
     if Measurement.method=="Derivative": 
@@ -208,11 +212,11 @@ def div(a,b):
         import numpy
         result.info["Data"]=numpy.divide(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)
-    result._update_info('/',a,b)
+    result._update_info(div,a,b)
     return result;
 
 def power(a,b):
-    from math import log
+    import math as m    
     
     a,b=check_values(a,b)
     #Propagating derivative of arguments
@@ -220,10 +224,10 @@ def power(a,b):
     a.check_der(b)
     b.check_der(a)
     for key in a.first_der:
-        first_der[key]=a.mean**b.mean*(b.first_der[key]*log(abs(a.mean))
+        first_der[key]=a.mean**b.mean*(b.first_der[key]*m.log(abs(a.mean))
                 + b.mean/a.mean*a.first_der[key])  
-    if check_formula('**',a,b) is not None:
-        return check_formula('**',a,b)
+    if check_formula(power,a,b) is not None:
+        return check_formula(power,a,b)
     
     #By derivative method
     if Measurement.method=="Derivative":
@@ -251,23 +255,23 @@ def power(a,b):
         import numpy
         result.info["Data"]=numpy.power(a.info["Data"],b.info["Data"])
     result.first_der.update(first_der)   
-    result._update_info('**',a,b)
+    result._update_info(power,a,b)
     return result;
         
         
 def sin(x):
-    from math import sin, cos
+    import math as m
     
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
-        first_der[key]=cos(x.mean)*x.first_der[key]
-    if check_formula('sin',x,func_flag=True) is not None:
-        return check_formula('sin',x,func_flag=True)
+        first_der[key]=m.cos(x.mean)*x.first_der[key]
+    if check_formula(sin,x,func_flag=True) is not None:
+        return check_formula(sin,x,func_flag=True)
         
     #By derivative method
     if Measurement.method=='Derivative':
-        mean=sin(x.mean)
+        mean=m.sin(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
         
@@ -280,22 +284,22 @@ def sin(x):
         import numpy
         result.info["Data"]=numpy.sin(x.info["Data"])
     result.first_der.update(first_der)
-    result._update_info('sin',x,func_flag=1)    
+    result._update_info(sin,x,func_flag=1)    
     return result;
     
 def cos(x):
-    from math import sin, cos
+    import math as m
 
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
-        first_der[key]=-sin(x.mean)*x.first_der[key]    
-    if check_formula('cos',x,func_flag=True) is not None:
-        return check_formula('cos',x,func_flag=True)
+        first_der[key]=-m.sin(x.mean)*x.first_der[key]    
+    if check_formula(cos,x,func_flag=True) is not None:
+        return check_formula(cos,x,func_flag=True)
     
     #By derivative method
     if Measurement.method=='Derivative':        
-        mean=cos(x.mean)
+        mean=m.cos(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
@@ -308,25 +312,25 @@ def cos(x):
         import numpy
         result.info["Data"]=numpy.cos(x.info["Data"])
     result.first_der.update(first_der)
-    result._update_info('cos',x,func_flag=1)
+    result._update_info(cos,x,func_flag=1)
     return result;
 
 def tan(x):
-    from math import tan, cos
+    import math as m
     
     def Sec(x):
-        return 1/cos(x)
+        return 1/m.cos(x)
         
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=Sec(x.mean)**2*x.first_der[key]
-    if check_formula('tan',x,func_flag=True) is not None:
-        return check_formula('tan',x,func_flag=True)
+    if check_formula(tan,x,func_flag=True) is not None:
+        return check_formula(tan,x,func_flag=True)
     
     #Derivative method
     elif Measurement.method=='Derivative':  
-        mean=tan(x.mean)
+        mean=m.tan(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
@@ -343,24 +347,24 @@ def tan(x):
         import numpy
         result.info["Data"]=numpy.tan(x.info["Data"]) 
     result.first_der.update(first_der)
-    result._update_info('tan',x,func_flag=1)
+    result._update_info(tan,x,func_flag=1)
     return result;
     
 def sec(x):
-    from math import cos, tan
+    import math as m
     
     def Csc(x):
-        return 1/sin(x)
+        return 1/m.sin(x)
         
     def Sec(x):
-        return 1/cos(x)
+        return 1/m.cos(x)
         
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
-        first_der[key]=Sec(x.mean)*tan(x.mean)*x.first_der[key]
-    if check_formula('sec',x,func_flag=True) is not None:
-        return check_formula('sec',x,func_flag=True)
+        first_der[key]=Sec(x.mean)*m.tan(x.mean)*x.first_der[key]
+    if check_formula(sec,x,func_flag=True) is not None:
+        return check_formula(sec,x,func_flag=True)
     
     #Derivative method
     elif Measurement.method=='Derivative':  
@@ -381,24 +385,24 @@ def sec(x):
         import numpy
         result.info["Data"]=numpy.sec(x.info["Data"]) 
     result.first_der.update(first_der)
-    result._update_info('sec',x,func_flag=1)
+    result._update_info(sec,x,func_flag=1)
     return result;
 
 def csc(x):
-    from math import sin, tan
+    import math as m
     
     def Cot(x):
-        return 1/tan(x)
+        return 1/m.tan(x)
         
     def Csc(x):
-        return 1/sin(x)
+        return 1/m.sin(x)
     
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=-Cot(x.mean)*Csc(x.mean)*x.first_der[key]
-    if check_formula('csc',x,func_flag=True) is not None:
-        return check_formula('csc',x,func_flag=True)
+    if check_formula(csc,x,func_flag=True) is not None:
+        return check_formula(csc,x,func_flag=True)
     
     #Derivative method
     elif Measurement.method=='Derivative':  
@@ -419,24 +423,24 @@ def csc(x):
         import numpy
         result.info["Data"]=numpy.csc(x.info["Data"]) 
     result.first_der.update(first_der)
-    result._update_info('csc',x,func_flag=1)
+    result._update_info(csc,x,func_flag=1)
     return result;
 
 def cot(x):
-    from math import sin, tan
+    import math as m
 
     def Cot(x):
-        return 1/tan(x)
+        return 1/m.tan(x)
         
     def Csc(x):
-        return 1/sin(x)
+        return 1/m.sin(x)
     
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=-Csc(x.mean)**2*x.first_der[key]
-    if check_formula('cot',x,func_flag=True) is not None:
-        return check_formula('cot',x,func_flag=True)
+    if check_formula(cot,x,func_flag=True) is not None:
+        return check_formula(cot,x,func_flag=True)
     
     #Derivative method
     elif Measurement.method=='Derivative':  
@@ -457,22 +461,22 @@ def cot(x):
         import numpy
         result.info["Data"]=numpy.cot(x.info["Data"]) 
     result.first_der.update(first_der)
-    result._update_info('cot',x,func_flag=1)
+    result._update_info(cot,x,func_flag=1)
     return result;
     
 def exp(x):
-    from math import exp
+    import math as m
 
     x,=check_values(x)
     first_der={}
     for key in x.first_der:
-        first_der[key]=exp(x.mean)*x.first_der[key]     
-    if check_formula('exp',x,func_flag=True) is not None:
-        return check_formula('exp',x,func_flag=True)
+        first_der[key]=m.exp(x.mean)*x.first_der[key]     
+    if check_formula(exp,x,func_flag=True) is not None:
+        return check_formula(exp,x,func_flag=True)
     
     #By derivative method
     if Measurement.method=='Derivative':
-        mean=exp(x.mean)
+        mean=m.exp(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
@@ -493,25 +497,25 @@ def exp(x):
         import numpy
         result.info["Data"]=numpy.exp(x.info["Data"]) 
     result.first_der.update(first_der)
-    result._update_info('exp',x,func_flag=1)
+    result._update_info(exp,x,func_flag=1)
     return result;
 
 def e(value):
     Measurement.exp(value)
     
 def log(x):
-    from math import log
+    import math as m
 
-    x,=check_values(x) 
+    x,=check_values(x)
     first_der={}
     for key in x.first_der:
         first_der[key]=1/x.mean*x.first_der[key]         
-    if check_formula('log',x,func_flag=True) is not None:
-        return check_formula('log',x,func_flag=True)
+    if check_formula(log,x,func_flag=True) is not None:
+        return check_formula(log,x,func_flag=True)
         
     #By derivative method
     if Measurement.method=='Derivative':
-        mean=log(x.mean)
+        mean=m.log(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
@@ -524,7 +528,7 @@ def log(x):
         import numpy
         result.info["Data"]=numpy.log(x.info["Data"])
     result.first_der.update(first_der)
-    result._update_info('log',x,func_flag=1)    
+    result._update_info(log,x,func_flag=1)    
     return result;
   
 
