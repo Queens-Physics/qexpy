@@ -5,7 +5,7 @@ class Measurement:
     formulation can be instanced. (ie. the result of an operation of 
     measured values, called Funciton and Measured respectivly)
     '''
-    method="Derivative" #Default error propogation method
+    method="Default" #Default error propogation method
     mcTrials=10000 #option for number of trial in Monte Carlo simulation
     style="Default"
     figs=None
@@ -13,7 +13,7 @@ class Measurement:
     formula_register={}
     id_register={}
     
-    #Defining common types under single array
+    #Defining common types under single arrayclear
     CONSTANT = (int,float,)
     ARRAY = (list,tuple,)
     try:
@@ -84,7 +84,6 @@ class Measurement:
                 'monte carlo',)
         min_max_list=('Min Max','MinMax','minmax','min max',)
         derr_list=('Derivative', 'derivative','diff','der',)
-        default = 'Derivative'        
         
         if chosen_method in mc_list:
             if Measurement.numpy_installed:
@@ -99,7 +98,7 @@ class Measurement:
         elif chosen_method in derr_list:
             Measurement.method="Derivative"
         else:
-            print("Method not recognized, using"+default+"method.")
+            print("Method not recognized, using default method.")
             Measurement.method="Derivative"
         
     def __str__(self):
@@ -237,7 +236,7 @@ class Measurement:
             self.rename(var1.name+op_string[operation]+var2.name)
             self.info['Formula']=var1.info['Formula']+op_string[operation]+\
                     var2.info['Formula']
-            self.info['Function']['variables']+=[var1,var2],
+            self.info['Function']['variables']+=(var1,var2),
             self.info['Function']['operation']+=operation,
             Measurement.formula_register.update({self.info["Formula"]\
                     :self.info["ID"]})
@@ -253,6 +252,8 @@ class Measurement:
             self.rename(op_string[operation]+'('+var1.name+')')
             self.info['Formula']=op_string[operation]+'('+\
                                     var1.info['Formula']+')'
+            self.info['Function']['variables']+=(var1,),
+            self.info['Function']['operation']+=operation,
             self.info['Method']+="Errors propagated by "+Measurement.method+\
                     ' method.\n'
             Measurement.formula_register.update({self.info["Formula"]\
@@ -404,6 +405,8 @@ class Function(Measurement):
         Measurement.register.update({self.info["ID"]:self})
         self.covariance={self.name: self.std**2}
         self.root=()
+        self.MC=[self.mean,self.std]
+        self.MinMax=[self.mean,self.std]
             
 class Measured(Measurement):
     '''

@@ -10,7 +10,7 @@ def dev(*args,der=None):
     Using the tuple of variables, passed in each operation that composes a
     function, the standard deviation is calculated by the derivative error
     propagation formula, including the covariance factor between each pair
-    of variables. The derivative dictionary of a funciton must be passes by
+    of variables. The derivative dictionary of a function must be passes by
     the der argument.
     '''
     std=0
@@ -89,7 +89,7 @@ def add(a,b):
     if check_formula(add,a,b) is not None:
         return check_formula(add,a,b)
     #Addition by error propogation formula
-    if Measurement.method=="Derivative":  
+    if Measurement.method=="Derivative":
         mean=a.mean+b.mean     
         std=dev(a,b,der=first_der)
         result=Function(mean,std)
@@ -101,9 +101,17 @@ def add(a,b):
         result=Function(mean,std)
         
     #If method specification is bad, MC method is used
+    elif Measurement.method=="Monte Carlo":
+        result=Measurement.monte_carlo(lambda x,y: x+y,a,b)
+        
     else:
-        plus=lambda x,y: x+y
-        result=Measurement.monte_carlo(plus,a,b)
+        mean=a.mean+b.mean
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda x,y: x+y,a,b)
+        result.MC=[MC.mean,MC.std]
+        result.MinMax=[a.mean+b.mean,a.std+b.std]
+        
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.add(a.info["Data"],b.info["Data"])
@@ -136,9 +144,17 @@ def sub(a,b):
         result=add(a,-b)
         
     #Monte Carlo method
+    elif Measurement.method=='Monte Carlo':
+        result=Measurement.monte_carlo(lambda x,y: x-y,a,b)
+        
     else:
-        minus=lambda x,y: x-y
-        result=Measurement.monte_carlo(minus,a,b)
+        mean=a.mean-b.mean
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda x,y: x-y,a,b)
+        result.MC=[MC.mean,MC.std]
+        result.MinMax=[a.mean-b.mean,dev(a,b,der=first_der)]
+        
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.subtract(a.info["Data"],b.info["Data"])
@@ -170,9 +186,17 @@ def mul(a,b):
         result=Function(mean,std)
             
     #If method specification is bad, MC method is used
+    elif Measurement.method=='Monte Carlo':
+        result=Measurement.monte_carlo(lambda a,b: a*b,a,b)
+    
     else:
-        plus=lambda a,b: a*b
-        result=Measurement.monte_carlo(plus,a,b)
+        mean=a.mean*b.mean
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda a,b: a*b,a,b)
+        result.MC=[MC.mean,MC.std]
+        result.MinMax=[a.mean*b.mean+a.std*b.std,a.mean*b.std+b.mean*a.std]
+      
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.multiply(a.info["Data"],b.info["Data"])
@@ -205,9 +229,19 @@ def div(a,b):
         result=Function(mean,std)
         
     #If method specification is bad, MC method is used
+    elif Measurement.method=='Monte Carlo':
+        result=Measurement.monte_carlo(lambda a,b: a/b,a,b)
+        
     else:
-        divide=lambda a,b: a/b
-        result=Measurement.monte_carlo(divide,a,b)
+        mean=a.mean/b.mean
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda a,b: a/b,a,b)
+        result.MC=[MC.mean,MC.std]
+        mean=(b.mean*a.std+a.mean*b.std)/(b.mean**2*b.std**2)
+        std=(a.mean*b.mean+a.std*b.std+2*a.mean*b.std+2*b.mean*a.std)
+        result.MinMax=[mean,std]
+        
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.divide(a.info["Data"],b.info["Data"])
@@ -248,9 +282,16 @@ def power(a,b):
         result=Function(mid_val,err)
     
     #By Monte Carlo method
+    elif Measurement.method=='Monte Carlo':
+        result=Measurement.monte_carlo(lambda a,b: a**b,a,b)
+    
     else:
-        exponent=lambda a,b: a**b
-        result=Measurement.monte_carlo(exponent,a,b)
+        mean=a.mean**b.mean
+        std=dev(a,b,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda a,b: a**b,a,b)
+        result.MC=[MC.mean,MC.std]
+    
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.power(a.info["Data"],b.info["Data"])
@@ -276,10 +317,17 @@ def sin(x):
         result=Function(mean,std)
         
     #By Monte Carlo method
-    else:
+    elif Measurement.method=='Monte Carlo':
         import numpy as np
-        sine=lambda x: np.sin(x)
-        result=Measurement.monte_carlo(sine,x)
+        result=Measurement.monte_carlo(lambda x: np.sin(x),x)
+        
+    else:
+        mean=m.sin(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)   
+        MC=Measurement.monte_carlo(lambda x: np.sin(x),x)
+        result.MC=[MC.mean,MC.std]
+        
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.sin(x.info["Data"])
@@ -304,10 +352,18 @@ def cos(x):
         result=Function(mean,std)
     
     #By Monte Carlo method
+    elif Measurement.method=='Monte Carlo':
+        import numpy as np
+        result=Measurement.monte_carlo(lambda x: np.cos(x),x)
+        
     else:
         import numpy as np
-        cosine=lambda x: np.cos(x)
-        result=Measurement.monte_carlo(cosine,x)
+        mean=m.cos(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda x: np.cos(x),x)
+        result.MC=[MC.mean,MC.std]
+        
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.cos(x.info["Data"])
@@ -341,8 +397,17 @@ def tan(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        tangent=lambda x: np.tan(x)
-        result=Measurement.monte_carlo(tangent,x)
+        result=Measurement.monte_carlo(lambda x: np.tan(x),x)
+    
+    else:
+        import numpy as np
+        mean=m.tan(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda x: np.tan(x),x)
+        result.MC=[MC.mean,MC.std]
+
+        
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.tan(x.info["Data"]) 
@@ -379,8 +444,16 @@ def sec(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        secant=lambda x: np.divide(np.cos(x))
-        result=Measurement.monte_carlo(secant,x)
+        result=Measurement.monte_carlo(lambda x: np.divide(np.cos(x)),x)
+        
+    else:
+        import numpy as np
+        mean=Sec(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda x: np.divide(np.cos(x)),x)
+        result.MC=[MC.mean,MC.std]
+        
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.sec(x.info["Data"]) 
@@ -417,8 +490,16 @@ def csc(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        cosecant=lambda x: np.divide(np.sin(x))
-        result=Measurement.monte_carlo(cosecant,x)
+        result=Measurement.monte_carlo(lambda x: np.divide(np.sin(x)),x)
+        
+    else:
+        import numpy as np
+        mean=Csc(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda x: np.divide(np.sin(x)),x)
+        result.MC=[MC.mean,MC.std]
+        
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.csc(x.info["Data"]) 
@@ -455,8 +536,16 @@ def cot(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        cotan=lambda x: np.divide(np.tan(x))
-        result=Measurement.monte_carlo(cotan,x)
+        result=Measurement.monte_carlo(lambda x: np.divide(np.tan(x)),x)
+    
+    else:
+        import numpy as np
+        mean=Cot(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std) 
+        MC=Measurement.monte_carlo(lambda x: np.divide(np.tan(x)),x)
+        result.MC=[MC.mean,MC.std]
+    
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.cot(x.info["Data"]) 
@@ -489,10 +578,18 @@ def exp(x):
         result=Function(mid_val,err)
         
     #By Monte Carlo method
+    elif Measurement.method=='Monte Carlo':
+        import numpy as np
+        result=Measurement.monte_carlo(lambda x: np.exp(x),x)
+    
     else:
         import numpy as np
-        euler=lambda x: np.exp(x)
-        result=Measurement.monte_carlo(euler,x)
+        mean=m.exp(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda x: np.exp(x),x)
+        result.MC=[MC.mean,MC.std]
+        
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.exp(x.info["Data"]) 
@@ -520,10 +617,17 @@ def log(x):
         result=Function(mean,std)
     
     #By Monte Carlo method
+    elif Measurement.method=='Monte Carlo':
+        import numpy as np
+        result=Measurement.monte_carlo(lambda x: np.log(x),x)
+        
     else:
         import numpy as np
-        nat_log=lambda x: np.log(x)
-        result=Measurement.monte_carlo(nat_log,x)
+        mean=m.log(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)        
+        result=Measurement.monte_carlo(lambda x: np.log(x),x)
+        
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.log(x.info["Data"])
@@ -582,7 +686,6 @@ diff={sin:lambda x,key: cos(x.mean)*x.first_der[key],
                                                                 / b.mean**2,
     power:lambda a,b,key: a.mean**b.mean*(b.first_der[key]*log(abs(a.mean))
                                             + b.mean/a.mean*a.first_der[key],)
-
 }
       
 op_string={sin:'sin',cos:'cos',tan:'tan',csc:'csc',sec:'sec',cot:'cot',
