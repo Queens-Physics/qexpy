@@ -99,7 +99,7 @@ class Measurement:
             Measurement.method="Derivative"
         else:
             print("Method not recognized, using default method.")
-            Measurement.method="Derivative"
+            Measurement.method="Default"
         
     def __str__(self):
         '''
@@ -405,8 +405,8 @@ class Function(Measurement):
         Measurement.register.update({self.info["ID"]:self})
         self.covariance={self.name: self.std**2}
         self.root=()
-        self.MC=[self.mean,self.std]
-        self.MinMax=[self.mean,self.std]
+        self.MC=[]
+        self.MinMax=[]
             
 class Measured(Measurement):
     '''
