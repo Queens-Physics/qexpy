@@ -84,6 +84,7 @@ class Measurement:
                 'monte carlo',)
         min_max_list=('Min Max','MinMax','minmax','min max',)
         derr_list=('Derivative', 'derivative','diff','der',)
+        default_list=('Default','default',)
         
         if chosen_method in mc_list:
             if Measurement.numpy_installed:
@@ -97,6 +98,8 @@ class Measurement:
             Measurement.method="Min Max"
         elif chosen_method in derr_list:
             Measurement.method="Derivative"
+        elif chosen_method in default_list:
+            Measurement.method="Default"
         else:
             print("Method not recognized, using default method.")
             Measurement.method="Default"
@@ -133,7 +136,7 @@ class Measurement:
             Measurement.style="Default"
             
         
-    def find_covariance(x,y):
+    def _find_covariance(x,y):
         '''
         Uses the data from which x and y were generated to calculate
         covariance and add this informaiton to x and y.
@@ -148,7 +151,6 @@ class Measurement:
         if data_x is None or data_y is None:
             raise TypeError("Data arrays must exist for both quantities " 
             +"to define covariance.")
-        #elif len(data_x)==1 or len(data_y)==1:
             
         if len(data_x)!=len(data_y):
             raise TypeError('Lengths of data arrays must be equal to\
@@ -185,16 +187,19 @@ class Measurement:
         the data arrays are of different lengths or do not exist, in that
         case a covariance of zero is returned.        
         '''
-        if self.info["Data"] is None or variable.info["Data"] is None\
+        if self.info['ID'] in variable.covariance:
+            return self.covariance[variable.info['ID']]
+            
+        elif self.info["Data"] is None or variable.info["Data"] is None\
                 or len(self.info["Data"])!=len(variable.info["Data"]):
             return 0;
             
-        if self.info['ID'] not in variable.covariance:
-            Measurement.find_covariance(self,variable)
+        elif self.info['ID'] not in variable.covariance:
+            Measurement._find_covariance(self,variable)
             var=self.covariance[variable.info['ID']]
             return var;
     
-    def get_correlation(x,y):
+    def _get_correlation(x,y):
         '''
         Returns the correlation factor of two measurements.
         
@@ -405,8 +410,8 @@ class Function(Measurement):
         Measurement.register.update({self.info["ID"]:self})
         self.covariance={self.name: self.std**2}
         self.root=()
-        self.MC=[]
-        self.MinMax=[]
+        self.MC=None
+        self.MinMax=None
             
 class Measured(Measurement):
     '''
@@ -521,26 +526,7 @@ def tex_print(self):
     flag=True
     i=0
     if Measurement.figs is not None:
-        value=self.mean
-        while(flag):
-            if value==0:
-                std=int(self.std/10**i//1)
-                mean=int(self.mean/10**i//1)
-                return "(%d \pm %d)\e%d"%(mean,std,i)
-            if value<1:
-                value*=10
-                i-=1
-            elif value>10:
-                value/=10
-                i+=1
-            elif value>=1 and value<=10:
-                flag=False
-        std=int(self.std/10**i//1)*10**(Measurement.figs-1)
-        mean=int(self.mean/10**i//1)*10**(Measurement.figs-1)
-        return "(%d \pm %d)\e%d"%(mean,std,i)
-    
-    else:
-        value=self.std
+        value=abs(self.mean)
         while(flag):
             if value==0:
                 std=int(self.std/10**i//1)
@@ -554,9 +540,28 @@ def tex_print(self):
                 i+=1
             elif value>=1 and value<10:
                 flag=False
-        std=int(self.std/10**(i-Measurement.figs)//1)
-        mean=int(self.mean/10**(i-Measurement.figs)//1)
-        return "(%d \pm %d)\e%d"%(mean,std,(i-Measurement.figs))
+        std=self.std*10**-i*10**(Measurement.figs-1)
+        mean=self.mean*10**-i*10**(Measurement.figs-1)
+        return "(%d \pm %d)\e%d"%(mean,std,i-Measurement.figs+1)
+    
+    else:
+        value=abs(self.std)
+        while(flag):
+            if value==0:
+                std=int(self.std)
+                mean=int(self.mean)
+                return "(%d \pm %d)\e%d"%(mean,std,i)
+            elif value<1:
+                value*=10
+                i-=1
+            elif value>=10:
+                value/=10
+                i+=1
+            elif value>=1 and value<10:
+                flag=False
+        std=int(self.std/10**i)
+        mean=int(self.mean/10**i)
+        return "(%d \pm %d)\e%d"%(mean,std,(i))
     
 def def_print(self):
     '''
@@ -567,7 +572,7 @@ def def_print(self):
     flag=True
     i=0
     if Measurement.figs is not None:
-        value=self.mean
+        value=abs(self.mean)
         while(flag):
             if value==0:
                 flag=False
@@ -589,7 +594,7 @@ def def_print(self):
         mean=float(round(self.mean,i))
         return n%(mean)+" +/- "+n%(std)
     else:
-        value=self.std
+        value=abs(self.std)
         while(flag):
             if value==0:
                 flag=False

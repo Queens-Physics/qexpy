@@ -271,10 +271,10 @@ def power(a,b):
         
     #By min-max method
     elif Measurement.method=='Min Max':
-        if (b<0):
+        if (b.mean<0):
             max_val=(a.mean+a.std)**(b.mean-b.std)
             min_val=(a.mean-a.std)**(b.mean+b.std)
-        elif(b>=0):
+        elif(b.mean>=0):
             max_val=(a.mean+a.std)**(b.mean+b.std)
             min_val=(a.mean-a.std)**(b.mean-b.std)
         mid_val=(max_val+min_val)/2
@@ -289,6 +289,15 @@ def power(a,b):
         mean=a.mean**b.mean
         std=dev(a,b,der=first_der)
         result=Function(mean,std)
+        if (b.mean<0):
+            max_val=(a.mean+a.std)**(b.mean-b.std)
+            min_val=(a.mean-a.std)**(b.mean+b.std)
+        elif(b.mean>=0):
+            max_val=(a.mean+a.std)**(b.mean+b.std)
+            min_val=(a.mean-a.std)**(b.mean-b.std)
+        mid_val=(max_val+min_val)/2
+        err=(max_val-min_val)/2
+        result.MinMax=[mid_val,err]
         MC=Measurement.monte_carlo(lambda a,b: a**b,a,b)
         result.MC=[MC.mean,MC.std]
     
@@ -322,6 +331,7 @@ def sin(x):
         result=Measurement.monte_carlo(lambda x: np.sin(x),x)
         
     else:
+        import numpy as np
         mean=m.sin(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)   
