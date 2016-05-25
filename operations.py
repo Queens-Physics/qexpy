@@ -324,6 +324,10 @@ def sin(x):
         mean=m.sin(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
+
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: m.sin(x),x)
         
     #By Monte Carlo method
     elif Measurement.method=='Monte Carlo':
@@ -337,6 +341,8 @@ def sin(x):
         result=Function(mean,std)   
         MC=Measurement.monte_carlo(lambda x: np.sin(x),x)
         result.MC=[MC.mean,MC.std]
+        MM=find_minmax(lambda x: m.sin(x),x)
+        result.MinMax=[MM.mean,MM.std]
         
     if x.info["Data"] is not None:
         import numpy
@@ -360,6 +366,10 @@ def cos(x):
         mean=m.cos(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
+
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: m.cos(x),x)
     
     #By Monte Carlo method
     elif Measurement.method=='Monte Carlo':
@@ -373,6 +383,8 @@ def cos(x):
         result=Function(mean,std)
         MC=Measurement.monte_carlo(lambda x: np.cos(x),x)
         result.MC=[MC.mean,MC.std]
+        MM=find_minmax(lambda x: m.cos(x),x)
+        result.MinMax=[MM.mean,MM.std]        
         
     if x.info["Data"] is not None:
         import numpy
@@ -400,9 +412,9 @@ def tan(x):
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
-    #Min-Max method
-    elif Measurement.method=='MinMax':  
-        pass
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: m.tan(x),x)
 
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
@@ -416,7 +428,8 @@ def tan(x):
         result=Function(mean,std)
         MC=Measurement.monte_carlo(lambda x: np.tan(x),x)
         result.MC=[MC.mean,MC.std]
-
+        MM=find_minmax(lambda x: m.tan(x),x)
+        result.MinMax=[MM.mean,MM.std]
         
     if x.info["Data"] is not None:
         import numpy
@@ -447,9 +460,9 @@ def sec(x):
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
-    #Min-Max method
-    elif Measurement.method=='MinMax':  
-        pass
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: Sec(x),x)
 
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
@@ -463,6 +476,8 @@ def sec(x):
         result=Function(mean,std)
         MC=Measurement.monte_carlo(lambda x: np.divide(np.cos(x)),x)
         result.MC=[MC.mean,MC.std]
+        MM=find_minmax(lambda x: Sec(x),x)
+        result.MinMax=[MM.mean,MM.std]
         
     if x.info["Data"] is not None:
         import numpy
@@ -493,9 +508,9 @@ def csc(x):
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
-    #Min-Max method
-    elif Measurement.method=='MinMax':  
-        pass
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: Csc(x),x)
 
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
@@ -509,6 +524,8 @@ def csc(x):
         result=Function(mean,std)
         MC=Measurement.monte_carlo(lambda x: np.divide(np.sin(x)),x)
         result.MC=[MC.mean,MC.std]
+        MM=find_minmax(lambda x: Csc(x),x)
+        result.MinMax=[MM.mean,MM.std]
         
     if x.info["Data"] is not None:
         import numpy
@@ -539,9 +556,10 @@ def cot(x):
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
-    #Min-Max method
-    elif Measurement.method=='MinMax':  
-        pass
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: Cot(x),x)
+        
 
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
@@ -555,6 +573,8 @@ def cot(x):
         result=Function(mean,std) 
         MC=Measurement.monte_carlo(lambda x: np.divide(np.tan(x)),x)
         result.MC=[MC.mean,MC.std]
+        MM=find_minmax(lambda x: Cot(x),x)
+        result.MinMax=[MM.mean,MM.std]
     
     if x.info["Data"] is not None:
         import numpy
@@ -579,13 +599,9 @@ def exp(x):
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
-    #By min-max method
-    elif Measurement.method=='Min Max':
-        min_val=exp(x.mean-x.std)
-        max_val=exp(x.mean+x.std)
-        mid_val=(max_val+min_val)/x
-        err=(max_val-min_val)/2
-        result=Function(mid_val,err)
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: m.exp(x),x)
         
     #By Monte Carlo method
     elif Measurement.method=='Monte Carlo':
@@ -599,6 +615,8 @@ def exp(x):
         result=Function(mean,std)
         MC=Measurement.monte_carlo(lambda x: np.exp(x),x)
         result.MC=[MC.mean,MC.std]
+        MM=find_minmax(lambda x: m.exp(x),x)
+        result.MinMax=[MM.mean,MM.std]
         
     if x.info["Data"] is not None:
         import numpy
@@ -618,7 +636,7 @@ def log(x):
     for key in x.first_der:
         first_der[key]=1/x.mean*x.first_der[key]         
     if check_formula(log,x,func_flag=True) is not None:
-        return check_formula(log,x,func_flag=True)
+        return check_formula(m.log,x,func_flag=True)
         
     #By derivative method
     if Measurement.method=='Derivative':
@@ -626,6 +644,10 @@ def log(x):
         std=dev(x,der=first_der)
         result=Function(mean,std)
     
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: m.log(x),x)
+        
     #By Monte Carlo method
     elif Measurement.method=='Monte Carlo':
         import numpy as np
@@ -637,6 +659,8 @@ def log(x):
         std=dev(x,der=first_der)
         result=Function(mean,std)        
         result=Measurement.monte_carlo(lambda x: np.log(x),x)
+        MM=find_minmax(lambda x: m.log(x),x)
+        result.MinMax=[MM.mean,MM.std]
         
     if x.info["Data"] is not None:
         import numpy
@@ -645,6 +669,18 @@ def log(x):
     result._update_info(log,x,func_flag=1)    
     return result;
   
+def find_minmax(function,x):
+    '''
+    Function to use Min-Max method to find the best estimate value
+    and error on a given function
+    '''
+    min_val=function(x.mean-x.std)
+    max_val=function(x.mean+x.std)
+    mid_val=(max_val+min_val)/2
+    err=(max_val-min_val)/2
+    result=Function(mid_val,err)
+    return result;
+    
 
 def operation_wrap(operation,*args,func_flag=False):
     '''
