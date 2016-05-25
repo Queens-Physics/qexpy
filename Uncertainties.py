@@ -30,7 +30,6 @@ class Measurement:
         Creates a variable that contains a mean, standard deviation, 
         and name for inputted data.
         '''
-        
         if len(args)==2 and all(isinstance(n,Measurement.CONSTANT)\
                 for n in args):
             self.mean=args[0]
@@ -47,6 +46,7 @@ class Measurement:
                     all(isinstance(n,Measurement) for n in args[0]):
                 pass
                 #Treat each element as measurement type
+                
             elif len(args)==2 and \
                     all(isinstance(n,Measurement.CONSTANT) 
                                                     for n in args[0]) and\
@@ -108,17 +108,22 @@ class Measurement:
         '''
         Method called when printing measurement objects.
         '''
-        if Measurement.figs is None:
-            figs=3
-        else:
-            figs=Measurement.figs
         if Measurement.style=="Latex":
             string = tex_print(self)
         elif Measurement.style=="Default":
             string = def_print(self)
         elif Measurement.style=="Scientific":
-            string = sci_print(self,figs)
-        return string
+            string = sci_print(self)
+        try:
+            self.error_flag
+        except AttributeError:
+            return string
+        if self.error_flag is True:
+            string=string + '\nErrors may be inacurate,'\
+            +' Monte Carlo method recommended.'
+            return string
+        else:
+            return string
         
     def print_style(style,figs=None):
         '''
@@ -134,6 +139,15 @@ class Measurement:
             Measurement.style="Scientific"
         else:
             Measurement.style="Default"
+    
+    def MC_print(self):
+        if Measurement.style=="Latex":
+            string = tex_print(self,method=self.MC)
+        elif Measurement.style=="Default":
+            string = def_print(self,method=self.MC)
+        elif Measurement.style=="Scientific":
+            string = sci_print(self,method=self.MC)
+        print(string)
             
         
     def _find_covariance(x,y):
@@ -209,7 +223,7 @@ class Measurement:
         if y.name in x.covariance:
             pass
         else:
-            Measurement.find_covariance(x,y)
+            Measurement._find_covariance(x,y)
         sigma_xy=x.covariance[y.info['ID']]
         sigma_x=x.std
         sigma_y=y.std
@@ -412,6 +426,7 @@ class Function(Measurement):
         self.root=()
         self.MC=None
         self.MinMax=None
+        self.error_flag=False
             
 class Measured(Measurement):
     '''
@@ -516,21 +531,28 @@ def variance(*args,ddof=1):
     std=((SumSq-Sum**2/N)/(N-1))**(1/2)
     return (mean,std);
     
-def tex_print(self):
+def tex_print(self,method=None):
     '''
     Creates string used by __str__ in a style useful for printing in Latex,
     as a value with error, in brackets multiplied by a power of ten. (ie.
     15+/-0.3 is (150 \pm 3)\e-1. Where Latex parses \pm as +\- and \e as
     *10**-1)
     '''
+    if method is None:
+        mean=self.mean
+        std=self.std
+    elif method=='MC':
+        [mean,std]=self.MC
+    elif method=='MinMax':
+        [mean,std]=self.MinMax
     flag=True
     i=0
     if Measurement.figs is not None:
-        value=abs(self.mean)
+        value=abs(mean)
         while(flag):
             if value==0:
-                std=int(self.std/10**i//1)
-                mean=int(self.mean/10**i//1)
+                std=int(std/10**i//1)
+                mean=int(mean/10**i//1)
                 return "(%d \pm %d)\e%d"%(mean,std,i)
             if value<1:
                 value*=10
@@ -540,16 +562,16 @@ def tex_print(self):
                 i+=1
             elif value>=1 and value<10:
                 flag=False
-        std=self.std*10**-i*10**(Measurement.figs-1)
-        mean=self.mean*10**-i*10**(Measurement.figs-1)
+        std=std*10**-i*10**(Measurement.figs-1)
+        mean=mean*10**-i*10**(Measurement.figs-1)
         return "(%d \pm %d)\e%d"%(mean,std,i-Measurement.figs+1)
     
     else:
-        value=abs(self.std)
+        value=abs(std)
         while(flag):
             if value==0:
-                std=int(self.std)
-                mean=int(self.mean)
+                std=int(std)
+                mean=int(mean)
                 return "(%d \pm %d)\e%d"%(mean,std,i)
             elif value<1:
                 value*=10
@@ -559,11 +581,11 @@ def tex_print(self):
                 i+=1
             elif value>=1 and value<10:
                 flag=False
-        std=int(self.std/10**i)
-        mean=int(self.mean/10**i)
+        std=int(std/10**i)
+        mean=int(mean/10**i)
         return "(%d \pm %d)\e%d"%(mean,std,(i))
     
-def def_print(self):
+def def_print(self,method=None):
     '''
     Returns string used by __str__ as two numbers representing mean and error
     to either the first non-zero digit of error or to a specified number of
@@ -571,8 +593,16 @@ def def_print(self):
     '''
     flag=True
     i=0
+    if method is None:
+        mean=self.mean
+        std=self.std
+    elif method=='MC':
+        [mean,std]=self.MC
+    elif method=='MinMax':
+        [mean,std]=self.MinMax
+    
     if Measurement.figs is not None:
-        value=abs(self.mean)
+        value=abs(mean)
         while(flag):
             if value==0:
                 flag=False
@@ -590,11 +620,11 @@ def def_print(self):
             n="%."+n+"f"
         else:
             n='%.0f'
-        std=float(round(self.std,i))
-        mean=float(round(self.mean,i))
+        std=float(round(std,i))
+        mean=float(round(mean,i))
         return n%(mean)+" +/- "+n%(std)
     else:
-        value=abs(self.std)
+        value=abs(std)
         while(flag):
             if value==0:
                 flag=False
@@ -611,23 +641,31 @@ def def_print(self):
             n="%."+n+"f"
         else:
             n='%.0f'
-        std=float(round(self.std,i))
-        mean=float(round(self.mean,i))
+        std=float(round(std,i))
+        mean=float(round(mean,i))
         return n%(mean)+" +/- "+n%(std)
 
-def sci_print(self):
+def sci_print(self,method=None):
     '''
     Returns string used by __str__ as two numbers representing mean and 
     error, each in scientific notation to a specified numebr of significant 
     figures, or 3 if none is given.
     '''
+    if method is None:
+        mean=self.mean
+        std=self.std
+    elif method=='MC':
+        [mean,std]=self.MC
+    elif method=='MinMax':
+        [mean,std]=self.MinMax
+        
     if Measurement.figs is not None:
         figs=Measurement.figs
     else:
         figs=3
     n=figs-1
     n='{:.'+'%d'%(n)+'e}'
-    return n.format(self.mean)+'+/-'+n.format(self.std)
+    return n.format(mean)+'+/-'+n.format(std)
     
 def reset_variables():
     '''

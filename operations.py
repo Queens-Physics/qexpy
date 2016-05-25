@@ -348,7 +348,8 @@ def sin(x):
         import numpy
         result.info["Data"]=numpy.sin(x.info["Data"])
     result.first_der.update(first_der)
-    result._update_info(sin,x,func_flag=1)    
+    result._update_info(sin,x,func_flag=1)
+    result.error_flag=True
     return result;
     
 def cos(x):
@@ -391,6 +392,7 @@ def cos(x):
         result.info["Data"]=numpy.cos(x.info["Data"])
     result.first_der.update(first_der)
     result._update_info(cos,x,func_flag=1)
+    result.error_flag=True
     return result;
 
 def tan(x):
@@ -436,6 +438,7 @@ def tan(x):
         result.info["Data"]=numpy.tan(x.info["Data"]) 
     result.first_der.update(first_der)
     result._update_info(tan,x,func_flag=1)
+    result.error_flag=True
     return result;
     
 def sec(x):
@@ -467,14 +470,14 @@ def sec(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        result=Measurement.monte_carlo(lambda x: np.divide(np.cos(x)),x)
+        result=Measurement.monte_carlo(lambda x: np.divide(1,np.cos(x)),x)
         
     else:
         import numpy as np
         mean=Sec(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
-        MC=Measurement.monte_carlo(lambda x: np.divide(np.cos(x)),x)
+        MC=Measurement.monte_carlo(lambda x: np.divide(1,np.cos(x)),x)
         result.MC=[MC.mean,MC.std]
         MM=find_minmax(lambda x: Sec(x),x)
         result.MinMax=[MM.mean,MM.std]
@@ -484,6 +487,7 @@ def sec(x):
         result.info["Data"]=numpy.sec(x.info["Data"]) 
     result.first_der.update(first_der)
     result._update_info(sec,x,func_flag=1)
+    result.error_flag=True
     return result;
 
 def csc(x):
@@ -515,14 +519,14 @@ def csc(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        result=Measurement.monte_carlo(lambda x: np.divide(np.sin(x)),x)
+        result=Measurement.monte_carlo(lambda x: np.divide(1,np.sin(x)),x)
         
     else:
         import numpy as np
         mean=Csc(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)
-        MC=Measurement.monte_carlo(lambda x: np.divide(np.sin(x)),x)
+        MC=Measurement.monte_carlo(lambda x: np.divide(1,np.sin(x)),x)
         result.MC=[MC.mean,MC.std]
         MM=find_minmax(lambda x: Csc(x),x)
         result.MinMax=[MM.mean,MM.std]
@@ -532,6 +536,7 @@ def csc(x):
         result.info["Data"]=numpy.csc(x.info["Data"]) 
     result.first_der.update(first_der)
     result._update_info(csc,x,func_flag=1)
+    result.error_flag=True
     return result;
 
 def cot(x):
@@ -564,14 +569,14 @@ def cot(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        result=Measurement.monte_carlo(lambda x: np.divide(np.tan(x)),x)
+        result=Measurement.monte_carlo(lambda x: np.divide(1,np.tan(x)),x)
     
     else:
         import numpy as np
         mean=Cot(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std) 
-        MC=Measurement.monte_carlo(lambda x: np.divide(np.tan(x)),x)
+        MC=Measurement.monte_carlo(lambda x: np.divide(1,np.tan(x)),x)
         result.MC=[MC.mean,MC.std]
         MM=find_minmax(lambda x: Cot(x),x)
         result.MinMax=[MM.mean,MM.std]
@@ -581,6 +586,7 @@ def cot(x):
         result.info["Data"]=numpy.cot(x.info["Data"]) 
     result.first_der.update(first_der)
     result._update_info(cot,x,func_flag=1)
+    result.error_flag=True
     return result;
     
 def exp(x):
@@ -636,7 +642,7 @@ def log(x):
     for key in x.first_der:
         first_der[key]=1/x.mean*x.first_der[key]         
     if check_formula(log,x,func_flag=True) is not None:
-        return check_formula(m.log,x,func_flag=True)
+        return check_formula(log,x,func_flag=True)
         
     #By derivative method
     if Measurement.method=='Derivative':
@@ -658,7 +664,8 @@ def log(x):
         mean=m.log(x.mean)
         std=dev(x,der=first_der)
         result=Function(mean,std)        
-        result=Measurement.monte_carlo(lambda x: np.log(x),x)
+        MC=Measurement.monte_carlo(lambda x: np.log(x),x)
+        result.MC=[MC.mean,MC.std]
         MM=find_minmax(lambda x: m.log(x),x)
         result.MinMax=[MM.mean,MM.std]
         
@@ -666,7 +673,7 @@ def log(x):
         import numpy
         result.info["Data"]=numpy.log(x.info["Data"])
     result.first_der.update(first_der)
-    result._update_info(log,x,func_flag=1)    
+    result._update_info(log,x,func_flag=1) 
     return result;
   
 def find_minmax(function,x):
@@ -674,8 +681,13 @@ def find_minmax(function,x):
     Function to use Min-Max method to find the best estimate value
     and error on a given function
     '''
-    min_val=function(x.mean-x.std)
-    max_val=function(x.mean+x.std)
+    import numpy as np
+    vals=np.linspace(x.mean-x.std,x.mean+x.std,100)
+    results=[]
+    for i in range(100):
+        results.append(function(vals[i]))
+    min_val=min(results)
+    max_val=max(results)
     mid_val=(max_val+min_val)/2
     err=(max_val-min_val)/2
     result=Function(mid_val,err)
@@ -688,8 +700,6 @@ def operation_wrap(operation,*args,func_flag=False):
     which can handle measurement objects and return an error propagated by
     derivative, min-max, or Monte Carlo method.
     '''
-    #if func_flag is not False:
-    #    from math import sin,cos,tan,exp,log,cot,csc,sec
     args=check_values(args)
     if args[1] is not None:
         args[0].check_der(args[1])
@@ -706,16 +716,31 @@ def operation_wrap(operation,*args,func_flag=False):
         std=dev(args,der=df)
         result=Measurement(mean,std)
         
-    #Min Max Method
+    #By Min-Max method
+    elif Measurement.method=="Min Max":
+        return find_minmax(operation,args)
         
     #Monte Carlo Method
-    else:
+    elif Measurement.method=='Monte Carlo':
         result=Measurement.monte_carlo(operation,args)
+    
+    #Default method with all above method calculations
+    else:
+        mean=operation(args)
+        std=dev(args,der=df)
+        result=Measurement(mean,std)
+        MM=find_minmax(operation,args) 
+        result.MinMax=[MM.mean,MM.std]
+        MC=Measurement.monte_carlo(operation,args)
+        result.MC=[MC.mean,MC.std]
+    
     if args[0].info["Data"] is not None:
         import numpy
-        result.info["Data"]=numpy.operation(args[0].info["Data"])   
+        result.info["Data"]=numpy.operation(args[0].info["Data"])  
+        
     result.first_der.update(df)
     result._update_info(op_string[operation],*args,func_flag)
+    return result
 
 diff={sin:lambda x,key: cos(x.mean)*x.first_der[key],         
     cos:lambda x,key: -sin(x.mean)*x.first_der[key],
