@@ -159,6 +159,13 @@ class Measurement:
         and that these arrays are of the same length, as the covariance is
         only defined in these cases.
         '''
+        try:
+            x.covariance[y.info['ID']]
+            return
+        except KeyError:
+            pass
+        
+        
         data_x=x.info["Data"]
         data_y=y.info["Data"]
         
@@ -191,7 +198,7 @@ class Measurement:
         x.covariance[y.info['ID']]=sigma_xy
         y.covariance[x.info['ID']]=sigma_xy
 
-    def get_covariance(self,variable):
+    def return_covariance(self,variable):
         '''
         Returns the covariance of the object and a specified variable.
         
@@ -204,16 +211,17 @@ class Measurement:
         if self.info['ID'] in variable.covariance:
             return self.covariance[variable.info['ID']]
             
-        elif self.info["Data"] is None or variable.info["Data"] is None\
-                or len(self.info["Data"])!=len(variable.info["Data"]):
-            return 0;
-            
-        elif self.info['ID'] not in variable.covariance:
+        elif self.info["Data"] is not None \
+                    and variable.info["Data"] is not None\
+                    and len(self.info["Data"])==len(variable.info["Data"]):
             Measurement._find_covariance(self,variable)
             var=self.covariance[variable.info['ID']]
             return var;
+            
+        else:
+            return 0;
     
-    def _get_correlation(x,y):
+    def _return_correlation(x,y):
         '''
         Returns the correlation factor of two measurements.
         
@@ -345,7 +353,6 @@ class Measurement:
     def __rsub__(self,other):
         from operations import sub
         result=sub(other,self)
-        #result._update_info('-',other,self)
         return result
         
     def __truediv__(self,other):

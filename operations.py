@@ -24,7 +24,7 @@ def dev(*args,der=None):
     for i in range(len(roots)):
         for j in range(len(roots)-i-1):
             cov=Measurement.register[roots[i]]\
-                    .get_covariance(Measurement.register[roots[j+1+i]])
+                    .return_covariance(Measurement.register[roots[j+1+i]])
             std+=2*der[roots[i]]*der[roots[j+1+i]]*cov
     std=std**(1/2)
     return std;
@@ -115,6 +115,7 @@ def add(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.add(a.info["Data"],b.info["Data"])
+        
     result.first_der.update(first_der)
     result._update_info(add,a,b)
     return result;
@@ -158,6 +159,7 @@ def sub(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.subtract(a.info["Data"],b.info["Data"])
+        
     result.first_der.update(first_der)
     result._update_info(sub,a,b)
     return result
@@ -200,6 +202,7 @@ def mul(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.multiply(a.info["Data"],b.info["Data"])
+        
     result.first_der.update(first_der)
     result._update_info(mul,a,b)
     return result;
@@ -245,6 +248,7 @@ def div(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.divide(a.info["Data"],b.info["Data"])
+        
     result.first_der.update(first_der)
     result._update_info(div,a,b)
     return result;
@@ -304,10 +308,10 @@ def power(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.power(a.info["Data"],b.info["Data"])
+        
     result.first_der.update(first_der)   
     result._update_info(power,a,b)
     return result;
-        
         
 def sin(x):
     import math as m
@@ -347,6 +351,7 @@ def sin(x):
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.sin(x.info["Data"])
+        
     result.first_der.update(first_der)
     result._update_info(sin,x,func_flag=1)
     result.error_flag=True
@@ -390,6 +395,7 @@ def cos(x):
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.cos(x.info["Data"])
+        
     result.first_der.update(first_der)
     result._update_info(cos,x,func_flag=1)
     result.error_flag=True
@@ -436,6 +442,7 @@ def tan(x):
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.tan(x.info["Data"]) 
+        
     result.first_der.update(first_der)
     result._update_info(tan,x,func_flag=1)
     result.error_flag=True
@@ -484,7 +491,8 @@ def sec(x):
         
     if x.info["Data"] is not None:
         import numpy
-        result.info["Data"]=numpy.sec(x.info["Data"]) 
+        result.info["Data"]=numpy.divide(numpy.cos(x.info["Data"]))
+        
     result.first_der.update(first_der)
     result._update_info(sec,x,func_flag=1)
     result.error_flag=True
@@ -533,7 +541,8 @@ def csc(x):
         
     if x.info["Data"] is not None:
         import numpy
-        result.info["Data"]=numpy.csc(x.info["Data"]) 
+        result.info["Data"]=numpy.divide(numpy.sin(x.info["Data"]))
+        
     result.first_der.update(first_der)
     result._update_info(csc,x,func_flag=1)
     result.error_flag=True
@@ -583,7 +592,8 @@ def cot(x):
     
     if x.info["Data"] is not None:
         import numpy
-        result.info["Data"]=numpy.cot(x.info["Data"]) 
+        result.info["Data"]=numpy.divide(numpy.tan(x.info["Data"]))
+        
     result.first_der.update(first_der)
     result._update_info(cot,x,func_flag=1)
     result.error_flag=True
@@ -626,7 +636,8 @@ def exp(x):
         
     if x.info["Data"] is not None:
         import numpy
-        result.info["Data"]=numpy.exp(x.info["Data"]) 
+        result.info["Data"]=numpy.divide(numpy.exp(x.info["Data"])) 
+        
     result.first_der.update(first_der)
     result._update_info(exp,x,func_flag=1)
     return result;
@@ -672,6 +683,7 @@ def log(x):
     if x.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.log(x.info["Data"])
+        
     result.first_der.update(first_der)
     result._update_info(log,x,func_flag=1) 
     return result;
@@ -690,8 +702,7 @@ def find_minmax(function,x):
     max_val=max(results)
     mid_val=(max_val+min_val)/2
     err=(max_val-min_val)/2
-    result=Function(mid_val,err)
-    return result;
+    return Function(mid_val,err)
     
 
 def operation_wrap(operation,*args,func_flag=False):
@@ -706,56 +717,63 @@ def operation_wrap(operation,*args,func_flag=False):
         args[1].check_der(args[0])
     df={}
     for key in args[0].first_der:
-        df[key]=diff[operation]*Measurement.register[key].first_der
-    if check_formula(op_string[operation],args,func_flag) is not None:
-        return check_formula(op_string[operation],args,func_flag)   
+        df[key]=diff[operation](key,*args)
+    if check_formula(op_string[operation],*args,func_flag) is not None:
+        return check_formula(op_string[operation],*args,func_flag)   
 
     #Derivative Method
     if Measurement.method=="Derivative":
-        mean=operation(args)
-        std=dev(args,der=df)
+        mean=operation(*args)
+        std=dev(*args,der=df)
         result=Measurement(mean,std)
         
     #By Min-Max method
     elif Measurement.method=="Min Max":
-        return find_minmax(operation,args)
+        return find_minmax(operation,*args)
         
     #Monte Carlo Method
     elif Measurement.method=='Monte Carlo':
-        result=Measurement.monte_carlo(operation,args)
+        result=Measurement.monte_carlo(operation,*args)
     
     #Default method with all above method calculations
     else:
-        mean=operation(args)
-        std=dev(args,der=df)
+        mean=operation(*args)
+        std=dev(*args,der=df)
         result=Measurement(mean,std)
-        MM=find_minmax(operation,args) 
+        MM=find_minmax(operation,*args) 
         result.MinMax=[MM.mean,MM.std]
-        MC=Measurement.monte_carlo(operation,args)
+        MC=Measurement.monte_carlo(operation,*args)
         result.MC=[MC.mean,MC.std]
     
-    if args[0].info["Data"] is not None:
-        import numpy
-        result.info["Data"]=numpy.operation(args[0].info["Data"])  
+    if args[1] is not None and args[0].info["Data"] is not None\
+                    and args[1].info['Data'] is not None\
+                    and len(args[0].info["Data"])==len(args[1].info["Data"]):
+        for i in len(args[0].info["Data"]):
+            result.info["Data"].append(
+                        operation(args[0].info["Data"],args[1].info["Data"]))
+                        
+    elif args[0].info["Data"] is not None:
+        result.info["Data"].append(operation(args[0].info["Data"]))
+        
         
     result.first_der.update(df)
     result._update_info(op_string[operation],*args,func_flag)
     return result
 
-diff={sin:lambda x,key: cos(x.mean)*x.first_der[key],         
-    cos:lambda x,key: -sin(x.mean)*x.first_der[key],
-    tan:lambda x,key: sec(x.mean)**2*x.first_der[key],        
-    sec:lambda x,key: tan(x)*sec(x)*x.first_der[key],
-    csc:lambda x,key: -cot(x)*csc(x)*x.first_der[key],   
-    cot:lambda x,key: -csc(x)**2*x.first_der[key], 
-    exp:lambda x,key: exp(x)*x.first_der[key],           
-    log:lambda x,key: 1/x*x.first_der[key],
-    add:lambda a,b,key: a.first_der[key]+b.first_der[key],
-    sub:lambda a,b,key: a.first_der[key]-b.first_der[key],
-    mul:lambda a,b,key: a.first_der[key]*b.mean + b.first_der[key]*a.mean,
-    div:lambda a,b,key: (a.first_der[key]*b.mean-b.first_der[key]*a.mean) \
+diff={sin:lambda key,x: cos(x.mean)*x.first_der[key],         
+    cos:lambda key,x: -sin(x.mean)*x.first_der[key],
+    tan:lambda key,x: sec(x.mean)**2*x.first_der[key],        
+    sec:lambda key,x: tan(x)*sec(x)*x.first_der[key],
+    csc:lambda key,x: -cot(x)*csc(x)*x.first_der[key],   
+    cot:lambda key,x: -csc(x)**2*x.first_der[key], 
+    exp:lambda key,x: exp(x)*x.first_der[key],           
+    log:lambda key,x: 1/x*x.first_der[key],
+    add:lambda key,a,b: a.first_der[key]+b.first_der[key],
+    sub:lambda key,a,b: a.first_der[key]-b.first_der[key],
+    mul:lambda key,a,b: a.first_der[key]*b.mean + b.first_der[key]*a.mean,
+    div:lambda key,a,b: (a.first_der[key]*b.mean-b.first_der[key]*a.mean) \
                                                                 / b.mean**2,
-    power:lambda a,b,key: a.mean**b.mean*(b.first_der[key]*log(abs(a.mean))
+    power:lambda key,a,b: a.mean**b.mean*(b.first_der[key]*log(abs(a.mean))
                                             + b.mean/a.mean*a.first_der[key],)
 }
       
