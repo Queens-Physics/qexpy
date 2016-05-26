@@ -405,11 +405,7 @@ class Measurement:
         result=func(*value)
         data=np.mean(result)
         error=np.std(result,ddof=1)
-        argName=""
-        for i in range(N):
-            argName+=','+args[i].name
-        name=func.__name__+"("+argName+")"
-        return Function(data,error,name=name)
+        return (data,error,)
         
 class Function(Measurement):
     '''
@@ -474,7 +470,7 @@ class Constant(Measurement):
             self.name='%d'%(arg)
         self.info['ID']='Constant'
         self.info["Formula"]='%d'%arg
-        self.first_der={self.info['ID']:0}
+        self.first_der={}
         self.info["Data"]=[arg]
         self.type="Constant"
         self.covariance={self.name: 0}
