@@ -4,5 +4,5 @@ test_*.py
 *.pyc
 WorkList.txt
 ToDo*
-Run Test*
+
 *.ipynb
