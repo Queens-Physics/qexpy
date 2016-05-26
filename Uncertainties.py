@@ -72,6 +72,11 @@ class Measurement:
                        'Function': {'operation':(),'variables':()},}
         self.MC_list=None
         Measurement.id_register[id(self)]=self
+        self.units=''
+        if name is not None:
+            self.user_name=True
+        else:
+            self.user_name=False
 
     def set_method(chosen_method):
         '''
@@ -108,12 +113,17 @@ class Measurement:
         '''
         Method called when printing measurement objects.
         '''
+        if self.user_name:
+            string=self.name+' = '
+        else:
+            string=''
+            
         if Measurement.style=="Latex":
-            string = tex_print(self)
+            string += tex_print(self)
         elif Measurement.style=="Default":
-            string = def_print(self)
+            string += def_print(self)
         elif Measurement.style=="Scientific":
-            string = sci_print(self)
+            string += sci_print(self)
         try:
             self.error_flag
         except AttributeError:
@@ -242,8 +252,10 @@ class Measurement:
         Renames an object, requires a string.
         '''
         self.name=newName
+        self.user_name=True
     
-    def _update_info(self, operation, var1, var2=None, func_flag=None):
+    def _update_info(self, operation, var1, var2=None, 
+                                             func_flag=None):
         '''
         Update the formula, name and method of an object.        
         
@@ -261,6 +273,8 @@ class Measurement:
                    add:'+',sub:'-',mul:'*',div:'/',power:'**',}
         if func_flag is None and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
+            self.user_name=False
+            self.units=var1.units+op_string[operation]+var2.units
             self.info['Formula']=var1.info['Formula']+op_string[operation]+\
                     var2.info['Formula']
             self.info['Function']['variables']+=(var1,var2),
@@ -275,8 +289,10 @@ class Measurement:
             for root in var2.root:
                 if root not in self.root:
                     self.root+=var2.root
+                    
         elif func_flag is not None:
             self.rename(op_string[operation]+'('+var1.name+')')
+            self.user_name=False
             self.info['Formula']=op_string[operation]+'('+\
                                     var1.info['Formula']+')'
             self.info['Function']['variables']+=(var1,),
@@ -288,6 +304,7 @@ class Measurement:
             for root in var1.root:
                 if root not in self.root:
                     self.root+=var1.root
+                    
         else:
             print('Something went wrong in update_info')
             
@@ -374,6 +391,10 @@ class Measurement:
             return Constant(-self.mean,self.std,name='-'+self.name)
         else:
             return Function(-self.mean,self.std,name='-'+self.name)
+        
+    def sin(self):
+        from operations import sin
+        return sin(self)
 
 #######################################################################
     
@@ -415,11 +436,8 @@ class Function(Measurement):
     id_number=0    
     
     def __init__(self,*args,name=None):    
-        super().__init__(*args)
-        if name is not None:
-            self.name=name
-        else:
-            self.name='obj%d'%(Function.id_number)
+        super().__init__(*args,name=name)
+        self.name='obj%d'%(Function.id_number)
         self.info['ID']='obj%d'%(Function.id_number)
         self.type="Function"
         Function.id_number+=1
@@ -430,7 +448,7 @@ class Function(Measurement):
         self.MC=None
         self.MinMax=None
         self.error_flag=False
-            
+        
 class Measured(Measurement):
     '''
     Subclass of measurements, specified by the user and treated as variables
@@ -438,12 +456,14 @@ class Measured(Measurement):
     '''
     id_number=0    
     
-    def __init__(self,*args,name=None):
-        super().__init__(*args)
+    def __init__(self,*args,name=None,units=None):
+        super().__init__(*args,name=name)
         if name is not None:
             self.name=name
         else:
             self.name='unnamed_var%d'%(Measured.id_number)
+        if units is not None:
+            self.units=units
         self.type="Measurement"
         self.info['ID']='var%d'%(Measured.id_number)
         self.info['Formula']='var%d'%(Measured.id_number)
@@ -462,12 +482,9 @@ class Constant(Measurement):
     value, the standard deviation is zero, and the derivarive with respect
     to anything is zero.
     '''
-    def __init__(self,arg,name=None):
+    def __init__(self,arg):
         super().__init__(arg,0)
-        if name is not None:
-            self.name=name
-        else:
-            self.name='%d'%(arg)
+        self.name='%d'%(arg)
         self.info['ID']='Constant'
         self.info["Formula"]='%d'%arg
         self.first_der={}
