@@ -5,5 +5,6 @@ test_*.py
 Run Test*
 WorkList.txt
 ToDo*
-
+*.png
 *.ipynb
+*Plot*
