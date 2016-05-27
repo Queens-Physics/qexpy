@@ -683,7 +683,7 @@ def log(x):
         (mean,std,)=Measurement.monte_carlo(lambda x: np.log(x),x)
         result=Function(mean,std)
         
-    else:
+    elif Measurement.method=='Default':
         import numpy as np
         mean=m.log(x.mean)
         std=dev(x,der=first_der)
