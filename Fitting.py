@@ -9,6 +9,126 @@ from bokeh.io import output_file
 
 ARRAY = (list,tuple,)
 
+def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot', 
+                parameters=['x','y','m','b'],fit='linear'):
+    from numpy import exp
+    
+    if xerr is None:
+        xdata=x.mean*np.linspace(1,len(y.info['Data']),len(y.info['Data']))
+        xerr=x.std #*np.linspace(1,len(y),len(y))
+    else:
+        try:
+            x.type
+        except AttributeError:
+            xdata=x
+            xerr=xerr
+        else:
+            xdata=x.info['Data']
+            xerr=xerr
+        
+    if yerr is None:
+        ydata=y.mean*np.linspace(1,len(x),len(x))
+        yerr=y.std #*np.linspace(1,len(x),len(x))
+    else:
+        try:
+            y.type
+        except AttributeError:
+            ydata=y
+            yerr=yerr
+        else:
+            ydata=y.info['Data']
+            yerr=yerr
+    
+    try:
+        x.units
+    except AttributeError:
+        xunits='unitless'
+    else:
+        if x.units is not '':
+            xunits=x.units
+        else:
+            xunits='unitless'
+    
+    try:
+        y.units
+    except AttributeError:
+        yunits='unitless'
+    else:
+        if y.units is not '':
+            yunits=y.units
+        else:
+            yunits='unitless'   
+    
+    def model(x,*pars):
+        fits={'linear':pars[0]+pars[1]*x,
+              'log':exp(pars[0]+pars[1]*x),}
+        return fits[fit]
+    
+    pars_guess = [1,1]
+
+    pars_fit, pcov=curve_fit(model, xdata, ydata, sigma=yerr, p0 = pars_guess)
+    pars_err = np.sqrt(np.diag(pcov))
+    
+    slope=M(pars_fit[1],pars_err[1])
+    slope.rename('Slope')
+    intercept=M(pars_fit[0],pars_err[0])
+    intercept.rename('Intercept')
+    
+    #Create some text with the fit results to put into our plot
+    resultTxt = "Model: $"\
+        +parameters[1]+'='+parameters[2]+parameters[0]+\
+                                    '+'+parameters[3]+'$:\n'
+     
+    parNames = [parameters[3],parameters[2]]
+    for i in range(pars_fit.size):
+        resultTxt = resultTxt+"${:s}: {:.2f} +/- {:.2f}$\n".format(
+                                        parNames[i],pars_fit[i],pars_err[i])
+    
+    #########################################################    
+    #Plot the data with error bars and the result of the fit#
+    #Also include a subplot with the residuals              #
+    #########################################################
+    
+    #Generage a curve from the model and the fitted parameters
+    yfit = model(xdata,*pars_fit)
+    #Generate a set of residuals for the fit
+    yres = ydata-yfit
+    
+    # output to notebook
+    output_file('Plot')
+
+    # create a new plot
+    p = figure(
+        tools="pan,box_zoom,reset,save", width=800, height=400,
+        y_axis_type=fit, y_range=[0.1, 30], 
+        title="Theory versus Experiment",
+        x_axis_label=parameters[0]+'['+xunits+']', 
+        y_axis_label=parameters[1]+'['+yunits+']'
+    )   
+
+    # add some renderers
+    p.line(xdata, yfit, legend="theory f(x)")
+    p.circle(xdata, ydata, legend="experiment", color="black", size=2)
+
+    # create the coordinates for the errorbars
+    err_x1 = []
+    err_d1 = []
+    errb_x1=[]
+    errb_d1=[]
+
+    for xdata, ydata, yerr in zip(xdata, ydata, yerr):
+        err_x1.append((xdata, xdata))
+        err_d1.append((ydata - yerr, ydata + yerr))
+
+    # plot them
+    p.multi_line(err_x1, err_d1, color='red')
+    p.legend.location = "top_right"
+
+    # show the results
+    show(p)
+
+
+'''
 def linear_plot(x,y,xerr=None,yerr=None,title='Linear Plot', 
                 parameters=['x','y','m','b']):
     
@@ -107,37 +227,4 @@ def linear_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
     pl.savefig(title+'.png')
     pl.show()
     return (slope,intercept,)
-    
-def bokehplot(x1, y1, d1):
-    
-    # output to notebook
-    output_file('Plot')
-
-    # create a new plot
-    p = figure(
-        tools="pan,box_zoom,reset,save", width=800, height=400,
-        y_axis_type="linear", y_range=[8.0, 22], 
-        title="Theory versus Experiment",x_axis_label='X (m)', 
-        y_axis_label='Amplitude / V'
-    )   
-
-    # add some renderers
-    p.line(x1, y1, legend="theory f(x)")
-    p.circle(x1, d1, legend="experiment", fill_color="white", size=8)
-
-    # create the coordinates for the errorbars
-    err_x1 = []
-    err_d1 = []
-
-    yerrs = np.random.uniform(low = 1, high = 2.0, size = x1.shape)
-
-    for x1, d1, yerr in zip(x1, d1, yerrs):
-        err_x1.append((x1, x1))
-        err_d1.append((d1 - yerr, d1 + yerr))
-
-    # plot them
-    p.multi_line(err_x1, err_d1, color='red')
-    p.legend.location = "top_left"
-
-    # show the results
-    show(p)
+'''
