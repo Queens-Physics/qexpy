@@ -5,7 +5,7 @@ import numpy as np
 from uncertainties import Measured as M
 
 from bokeh.plotting import figure, show
-from bokeh.io import output_file,vplot
+from bokeh.io import output_file,vplot,gridplot
 
 ARRAY = (list,tuple,)
 
@@ -103,13 +103,13 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
                                                         width=800, height=400,
         y_axis_type=fit, y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)], 
-        title="Theory versus Experiment",
+        title=x.name+" versus "+y.name,
         x_axis_label=parameters[0]+'['+xunits+']', 
         y_axis_label=parameters[1]+'['+yunits+']'
     )   
 
     # add some renderers
-    p.line(xdata, yfit, legend="theory f(x)")
+    p.line(xdata, yfit, legend="fit")
     p.circle(xdata, ydata, legend="experiment", color="black", size=2) 
 
     # create the coordinates for the errorbars
@@ -156,10 +156,11 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
     # plot them
     p2.multi_line(err_x1, err_d1, color='red')
     
-    #
+    #plotting and returning slope and intercept
     gp = vplot(p,p2)
-    show(gp)
-
+    gp_alt = gridplot([[p],[p2]])
+    show(gp_alt)
+    return (slope,intercept,)
 
 
 '''

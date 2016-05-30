@@ -116,7 +116,8 @@ def add(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.add(a.info["Data"],b.info["Data"])
-        
+    
+    result.unit=a.units    
     result.first_der.update(first_der)
     result._update_info(add,a,b)
     return result;
@@ -161,7 +162,8 @@ def sub(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.subtract(a.info["Data"],b.info["Data"])
-        
+    
+    result.units=a.units    
     result.first_der.update(first_der)
     result._update_info(sub,a,b)
     return result
@@ -205,7 +207,12 @@ def mul(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.multiply(a.info["Data"],b.info["Data"])
-        
+    
+    units=a.units
+    for key in units:
+        if key in b.units:
+            units[key]+=b.units[key]
+    result.units=units
     result.first_der.update(first_der)
     result._update_info(mul,a,b)
     return result;
@@ -252,7 +259,12 @@ def div(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.divide(a.info["Data"],b.info["Data"])
+        units=a.units
         
+    for key in units:
+        if key in b.units:
+            units[key]-=b.units[key]
+    result.units=units    
     result.first_der.update(first_der)
     result._update_info(div,a,b)
     return result;
@@ -309,11 +321,15 @@ def power(a,b):
         result.MinMax=[mid_val,err]
         MC=Measurement.monte_carlo(lambda a,b: a**b,a,b)
         result.MC=[MC[0],MC[1]]
-    
+        
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.power(a.info["Data"],b.info["Data"])
-        
+     
+    units=a.units
+    for key in units:
+        units[key]*=b.mean
+    result.units=units 
     result.first_der.update(first_der)   
     result._update_info(power,a,b)
     return result;
