@@ -5,12 +5,12 @@ import numpy as np
 from uncertainties import Measured as M
 
 from bokeh.plotting import figure, show
-from bokeh.io import output_file,vplot,gridplot
+from bokeh.io import output_file,gridplot
 
 ARRAY = (list,tuple,)
 
 def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot', 
-                parameters=['x','y','m','b'],fit='linear'):
+                parameters=['x','y','m','b'],fit='linear',theoretical=None):
     from numpy import exp
     
     if xerr is None:
@@ -45,7 +45,9 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
         xunits='unitless'
     else:
         if x.units is not '':
-            xunits=x.units
+            xunits=''
+            for key in x.units:
+                xunits+=key+'^%d'%(x.units[key])
         else:
             xunits='unitless'
     
@@ -55,7 +57,9 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
         yunits='unitless'
     else:
         if y.units is not '':
-            yunits=y.units
+            yunits=''
+            for key in y.units:
+                yunits+=key+'^%d'%(y.units[key])
         else:
             yunits='unitless'   
     
@@ -99,7 +103,7 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
     
     # create a new plot
     p = figure(
-        tools="pan,box_zoom,reset,save,wheel_zoom,reset", 
+        tools="pan,box_zoom,reset,save,wheel_zoom", 
                                                         width=800, height=400,
         y_axis_type=fit, y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)], 
@@ -111,6 +115,10 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
     # add some renderers
     p.line(xdata, yfit, legend="fit")
     p.circle(xdata, ydata, legend="experiment", color="black", size=2) 
+    
+    #Plot theoretical line if applicable
+    if theoretical is not None:
+        p.line(xdata,theoretical(xdata),legend='Theoretical')
 
     # create the coordinates for the errorbars
     err_x1 = []
@@ -130,9 +138,9 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
     
     # create a new plot
     p2 = figure(
-        tools="pan,box_zoom,reset,save,wheel_zoom,reset", 
+        tools="pan,box_zoom,reset,save,wheel_zoom", 
                                                         width=800, height=200,
-        y_axis_type='linear', y_range=[min(yres)-max(yres),max(yres)+max(yres)], 
+        y_axis_type='linear', y_range=[min(yres)-max(yerr),max(yres)+max(yerr)], 
         title="Residual Plot",
         x_axis_label=parameters[0]+'['+xunits+']', 
         y_axis_label='Residuals'
@@ -157,7 +165,6 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
     p2.multi_line(err_x1, err_d1, color='red')
     
     #plotting and returning slope and intercept
-    gp = vplot(p,p2)
     gp_alt = gridplot([[p],[p2]])
     show(gp_alt)
     return (slope,intercept,)

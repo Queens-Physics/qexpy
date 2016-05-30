@@ -259,8 +259,8 @@ def div(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.divide(a.info["Data"],b.info["Data"])
-        units=a.units
-        
+    
+    units=a.units        
     for key in units:
         if key in b.units:
             units[key]-=b.units[key]

@@ -462,7 +462,11 @@ class Measured(Measurement):
         else:
             self.name='unnamed_var%d'%(Measured.id_number)
         if units is not None:
-            self.units=units
+            if type(units) is str:
+                self.units[units]=1
+            else:
+                for i in range(len(units)//2):
+                    self.units[units[2*i]]=units[i+1]
         self.type="Measurement"
         self.info['ID']='var%d'%(Measured.id_number)
         self.info['Formula']='var%d'%(Measured.id_number)
