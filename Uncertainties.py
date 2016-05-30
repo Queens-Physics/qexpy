@@ -274,7 +274,7 @@ class Measurement:
         if func_flag is None and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
             self.user_name=False
-            self.units=var1.units+op_string[operation]+var2.units
+            self.units=var1.units+var2.units
             self.info['Formula']=var1.info['Formula']+op_string[operation]+\
                     var2.info['Formula']
             self.info['Function']['variables']+=(var1,var2),
@@ -293,6 +293,7 @@ class Measurement:
         elif func_flag is not None:
             self.rename(op_string[operation]+'('+var1.name+')')
             self.user_name=False
+            self.unit='unitless'
             self.info['Formula']=op_string[operation]+'('+\
                                     var1.info['Formula']+')'
             self.info['Function']['variables']+=(var1,),

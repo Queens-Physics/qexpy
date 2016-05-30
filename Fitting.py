@@ -1,11 +1,11 @@
-import pylab as pl
+#import pylab as pl
 from scipy.optimize import curve_fit
-import matplotlib.gridspec as gridspec
+#import matplotlib.gridspec as gridspec
 import numpy as np
 from uncertainties import Measured as M
 
 from bokeh.plotting import figure, show
-from bokeh.io import output_file
+from bokeh.io import output_file,vplot
 
 ARRAY = (list,tuple,)
 
@@ -96,11 +96,13 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
     
     # output to notebook
     output_file('Plot')
-
+    
     # create a new plot
     p = figure(
-        tools="pan,box_zoom,reset,save", width=800, height=400,
-        y_axis_type=fit, y_range=[0.1, 30], 
+        tools="pan,box_zoom,reset,save,wheel_zoom,reset", 
+                                                        width=800, height=400,
+        y_axis_type=fit, y_range=[min(ydata)-1.1*max(yerr), 
+                                                    max(ydata)+1.1*max(yerr)], 
         title="Theory versus Experiment",
         x_axis_label=parameters[0]+'['+xunits+']', 
         y_axis_label=parameters[1]+'['+yunits+']'
@@ -108,24 +110,56 @@ def bokeh_plot(x,y,xerr=None,yerr=None,title='Linear Plot',
 
     # add some renderers
     p.line(xdata, yfit, legend="theory f(x)")
-    p.circle(xdata, ydata, legend="experiment", color="black", size=2)
+    p.circle(xdata, ydata, legend="experiment", color="black", size=2) 
 
     # create the coordinates for the errorbars
     err_x1 = []
     err_d1 = []
-    errb_x1=[]
-    errb_d1=[]
 
-    for xdata, ydata, yerr in zip(xdata, ydata, yerr):
-        err_x1.append((xdata, xdata))
-        err_d1.append((ydata - yerr, ydata + yerr))
+    _xdata=xdata
+    _ydata=ydata
+    _yerr=yerr
 
+    for _xdata, _ydata, _yerr in zip(_xdata, _ydata, _yerr):
+        err_x1.append((_xdata, _xdata))
+        err_d1.append((_ydata - _yerr, _ydata + _yerr)) 
+    
     # plot them
     p.multi_line(err_x1, err_d1, color='red')
-    p.legend.location = "top_right"
+    p.legend.location = "top_right"     
+    
+    # create a new plot
+    p2 = figure(
+        tools="pan,box_zoom,reset,save,wheel_zoom,reset", 
+                                                        width=800, height=200,
+        y_axis_type='linear', y_range=[min(yres)-max(yres),max(yres)+max(yres)], 
+        title="Residual Plot",
+        x_axis_label=parameters[0]+'['+xunits+']', 
+        y_axis_label='Residuals'
+    )   
+    
+    # add some renderers
+    p2.circle(xdata, yres, color="black", size=2)
+    
+    # create the coordinates for the errorbars
+    err_x1 = []
+    err_d1 = []
 
-    # show the results
-    show(p)
+    _xdata=xdata
+    _yres=yres
+    _yerr=yerr
+
+    for _xdata, _yres, _yerr in zip(_xdata, _yres, _yerr):
+        err_x1.append((_xdata, _xdata))
+        err_d1.append((_yres - _yerr, _yres + _yerr)) 
+    
+    # plot them
+    p2.multi_line(err_x1, err_d1, color='red')
+    
+    #
+    gp = vplot(p,p2)
+    show(gp)
+
 
 
 '''
