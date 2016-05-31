@@ -24,56 +24,61 @@ def error_bar(xdata,ydata,yerr):
     
     return (err_x1,err_d1,)
 
-def data_transform(x,y,xerr,yerr):
+def data_transform(x,y,xerr,yerr):  
     if xerr is None:
         xdata=x.mean*np.linspace(1,len(y.info['Data']),len(y.info['Data']))
-        x_error=[x.std]*len(y.info['Data']) #*np.linspace(1,len(y),len(y))
+        x_error=[x.std]*len(y.info['Data'])
     else:
         try:
             x.type
         except AttributeError:
             xdata=x
-            x_error=xerr
         else:
             xdata=x.info['Data']
+        if type(xerr) in (int,float,):
+            x_error=[xerr]*len(xdata)
+        else:
             x_error=xerr
         
     if yerr is None:
         ydata=y.mean*np.linspace(1,len(x),len(x))
-        y_error=[y.std]*len(x.info['Data']) #*np.linspace(1,len(x),len(x))
+        y_error=[y.std]*len(x.info['Data'])
     else:
         try:
             y.type
         except AttributeError:
             ydata=y
-            y_error=yerr
         else:
             ydata=y.info['Data']
+        if type(yerr) in (int,float,):
+            y_error=[yerr]*len(ydata)
+        else:
             y_error=yerr
-    
     try:
         x.units
     except AttributeError:
-        xunits='unitless'
+        xunits=''
     else:
-        if x.units is not '':
+        if len(x.units) is not 0:
             xunits=''
             for key in x.units:
                 xunits+=key+'^%d'%(x.units[key])
+            xunits='['+xunits+']'
         else:
-            xunits='unitless'
+            xunits=''
     
     try:
         y.units
     except AttributeError:
-        yunits='unitless'
+        yunits=''
     else:
-        if y.units is not '':
+        if len(y.units) is not 0:
             yunits=''
             for key in y.units:
                 yunits+=key+'^%d'%(y.units[key])
+            yunits='['+yunits+']'
         else:
-            yunits='unitless'   
+            yunits=''   
 
     return (xdata,ydata,x_error,y_error,xunits,yunits,); 
 
@@ -93,8 +98,8 @@ def theoretical_plot(theory,x,y,xerr=None,yerr=None,
         x_axis_type='linear', x_range=[min(xdata)-1.1*max(xerr), 
                                                     max(xdata)+1.1*max(xerr)], 
         title=x.name+" versus "+y.name,
-        x_axis_label=parameters[0]+'['+xunits+']', 
-        y_axis_label=parameters[1]+'['+yunits+']'
+        x_axis_label=parameters[0]+xunits, 
+        y_axis_label=parameters[1]+yunits
     )   
 
     # add some renderers
@@ -169,8 +174,8 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
         x_axis_type='linear', x_range=[min(xdata)-1.1*max(xerr), 
                                                     max(xdata)+1.1*max(xerr)], 
         title=x.name+" versus "+y.name,
-        x_axis_label=parameters[0]+'['+xunits+']', 
-        y_axis_label=parameters[1]+'['+yunits+']'
+        x_axis_label=parameters[0]+xunits, 
+        y_axis_label=parameters[1]+yunits
     )   
 
     # add some renderers
