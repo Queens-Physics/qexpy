@@ -78,16 +78,16 @@ def data_transform(x,y,xerr,yerr):
     return (xdata,ydata,x_error,y_error,xunits,yunits,); 
 
 def theoretical_plot(theory,x,y,xerr=None,yerr=None,
-                                         parameters=['x','y','m','b']):
+                             parameters=['x','y','m','b'],filename='Plot'):
                                              
     xdata,ydata,xerr,yerr,xunits,yunits=data_transform(x,y,xerr,yerr)
     
-    output_file('Plot')
+    output_file(filename)
     
     # create a new plot
     p = figure(
         tools="pan,box_zoom,reset,save,wheel_zoom", 
-                                                        width=800, height=400,
+                                                        width=600, height=400,
         y_axis_type='linear', y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)],
         x_axis_type='linear', x_range=[min(xdata)-1.1*max(xerr), 
@@ -101,8 +101,8 @@ def theoretical_plot(theory,x,y,xerr=None,yerr=None,
     p.circle(xdata, ydata, legend="experiment", color="black", size=2) 
     
     #Plot theoretical line
-    xrange=np.linspace(min(xdata),max(xdata))
-    p.line(xdata,theory(xrange),legend='Theoretical')
+    xrange=np.linspace(min(xdata),max(xdata),1000)
+    p.line(xrange,theory(xrange),legend='Theoretical')
 
     err_x1,err_d1=error_bar(xdata,ydata,yerr)
     err_y1,err_d2=error_bar(ydata,xdata,xerr)
@@ -116,7 +116,7 @@ def theoretical_plot(theory,x,y,xerr=None,yerr=None,
     show(p)
 
 def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
-                                            fit='linear',theoretical=None):
+                                    fit='linear',theory=None,filename='Plot'):
     from numpy import exp
 
     xdata,ydata,xerr,yerr,xunits,yunits=data_transform(x,y,xerr,yerr)
@@ -157,12 +157,12 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
     yres = ydata-yfit
     
     # output to notebook
-    output_file('Plot')
+    output_file(filename)
     
     # create a new plot
     p = figure(
         tools="pan,box_zoom,reset,save,wheel_zoom", 
-                                                        width=800, height=400,
+                                                        width=600, height=400,
         y_axis_type=fit, y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)],
 
@@ -178,8 +178,9 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
     p.circle(xdata, ydata, legend="experiment", color="black", size=2) 
     
     #Plot theoretical line if applicable
-    if theoretical is not None:
-        p.line(xdata,theoretical(xdata),legend='Theoretical')
+    if theory is not None:
+        xrange=np.linspace(min(xdata),max(xdata),1000)
+        p.line(xrange,theory(xrange),legend='Theoretical')
         
     err_x1,err_d1=error_bar(xdata,ydata,yerr)
     err_y1,err_d2=error_bar(ydata,xdata,xerr)
@@ -197,7 +198,8 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
     p2 = figure(
         tools="pan,box_zoom,reset,save,wheel_zoom", 
                                                         width=800, height=200,
-        y_axis_type='linear', y_range=[min(yres)-max(yerr),max(yres)+max(yerr)], 
+        y_axis_type='linear', y_range=[min(yres)-1.1*max(yerr),
+                                                   max(yres)+1.1*max(yerr)], 
         title="Residual Plot",
         x_axis_label=parameters[0]+'['+xunits+']', 
         y_axis_label='Residuals'
