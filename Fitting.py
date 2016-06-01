@@ -1,6 +1,4 @@
-#import pylab as pl
 from scipy.optimize import curve_fit
-#import matplotlib.gridspec as gridspec
 import numpy as np
 from uncertainties import Measured as M
 
@@ -82,8 +80,8 @@ def data_transform(x,y,xerr,yerr):
 
     return (xdata,ydata,x_error,y_error,xunits,yunits,); 
 
-def theoretical_plot(theory,x,y,xerr=None,yerr=None,
-                             parameters=['x','y','m','b'],filename='Plot'):
+def theoretical_plot(theory,x,y,xerr=None,yerr=None,xscale='linear',
+                yscale='linear',parameters=['x','y','m','b'],filename='Plot'):
                                              
     xdata,ydata,xerr,yerr,xunits,yunits=data_transform(x,y,xerr,yerr)
     
@@ -93,9 +91,9 @@ def theoretical_plot(theory,x,y,xerr=None,yerr=None,
     p = figure(
         tools="pan,box_zoom,reset,save,wheel_zoom", 
                                                         width=600, height=400,
-        y_axis_type='linear', y_range=[min(ydata)-1.1*max(yerr), 
+        y_axis_type=yscale, y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)],
-        x_axis_type='linear', x_range=[min(xdata)-1.1*max(xerr), 
+        x_axis_type=xscale, x_range=[min(xdata)-1.1*max(xerr), 
                                                     max(xdata)+1.1*max(xerr)], 
         title=x.name+" versus "+y.name,
         x_axis_label=parameters[0]+xunits, 
@@ -106,8 +104,27 @@ def theoretical_plot(theory,x,y,xerr=None,yerr=None,
     p.circle(xdata, ydata, legend="experiment", color="black", size=2) 
     
     #Plot theoretical line
-    xrange=np.linspace(min(xdata),max(xdata),1000)
-    p.line(xrange,theory(xrange),legend='Theoretical')
+    n=1000
+    xrange=np.linspace(min(xdata),max(xdata),n)
+    x_theory=theory(min(xdata))
+    x_mid=[]
+    try:
+        x_theory.type
+    except AttributeError:
+        for i in range(n):
+            x_mid.append(theory(xrange[i]))
+        p.line(xrange,x_mid,legend='Theoretical')
+    else:
+        x_max=[]
+        x_min=[]
+        for i in range(n):
+            x_theory=theory(xrange[i])
+            x_mid.append(x_theory.mean)
+            x_max.append(x_theory.mean+x_theory.std)
+            x_min.append(x_theory.mean-x_theory.std)
+        p.line(xrange,x_mid,legend='Theoretical')
+        p.line(xrange,x_min,legend='Error')
+        p.line(xrange,x_max,legend='Error')
 
     err_x1,err_d1=error_bar(xdata,ydata,yerr)
     err_y1,err_d2=error_bar(ydata,xdata,xerr)
@@ -171,8 +188,7 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
         y_axis_type=fit, y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)],
 
-        x_axis_type='linear', x_range=[min(xdata)-1.1*max(xerr), 
-                                                    max(xdata)+1.1*max(xerr)], 
+        x_axis_type='linear', #x_range=[min(xdata)-1.1*max(xerr),max(xdata)+1.1*max(xerr)], 
         title=x.name+" versus "+y.name,
         x_axis_label=parameters[0]+xunits, 
         y_axis_label=parameters[1]+yunits
@@ -202,7 +218,7 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
     # create a new plot
     p2 = figure(
         tools="pan,box_zoom,reset,save,wheel_zoom", 
-                                                        width=800, height=200,
+                                                        width=600, height=200,
         y_axis_type='linear', y_range=[min(yres)-1.1*max(yerr),
                                                    max(yres)+1.1*max(yerr)], 
         title="Residual Plot",

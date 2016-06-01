@@ -1,7 +1,8 @@
 from uncertainties import Measurement
 from uncertainties import Function
 from uncertainties import Constant
-CONSTANT = (int,float,)
+from numpy import int64,float64
+CONSTANT = (int,float,int64,float64,)
 
 def dev(*args,der=None):
     '''
@@ -169,6 +170,7 @@ def sub(a,b):
     return result
 
 def mul(a,b):
+    print(a,b)
     a,b=check_values(a,b)
     #Propagating derivative of arguments    
     first_der={}
@@ -180,7 +182,7 @@ def mul(a,b):
         return check_formula(mul,a,b)
         
     #By error propogation formula    
-    if Measurement.method=="Derivative":          
+    if Measurement.method=="Derivative":
         mean=a.mean*b.mean
         std=dev(a,b,der=first_der)
         result=Function(mean,std)
@@ -461,6 +463,50 @@ def tan(x):
         MC=Measurement.monte_carlo(lambda x: np.tan(x),x)
         result.MC=[MC[0],MC[1]]
         MM=find_minmax(lambda x: m.tan(x),x)
+        result.MinMax=[MM.mean,MM.std]
+        
+    if x.info["Data"] is not None:
+        import numpy
+        result.info["Data"]=numpy.tan(x.info["Data"]) 
+        
+    result.first_der.update(first_der)
+    result._update_info(tan,x,func_flag=1)
+    result.error_flag=True
+    return result;
+    
+def atan(x):
+    x,=check_values(x)
+    first_der={}
+    from math import atan
+    for key in x.first_der:
+        first_der[key]=1/(1+x.mean**2)*x.first_der[key]
+    if check_formula(tan,x,func_flag=True) is not None:
+        return check_formula(tan,x,func_flag=True)
+    
+    #Derivative method
+    elif Measurement.method=='Derivative':  
+        mean=atan(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
+    
+    #By Min-Max method
+    if Measurement.method=="Min Max":
+        return find_minmax(lambda x: atan(x),x)
+
+    #Monte Carlo method
+    elif Measurement.method=='Monte Carlo':  
+        import numpy as np
+        (mean,std,)=Measurement.monte_carlo(lambda x: np.tan(x),x)
+        result=Function(mean,std)
+    
+    else:
+        import numpy as np
+        mean=atan(x.mean)
+        std=dev(x,der=first_der)
+        result=Function(mean,std)
+        MC=Measurement.monte_carlo(lambda x: np.tan(x),x)
+        result.MC=[MC[0],MC[1]]
+        MM=find_minmax(lambda x: atan(x),x)
         result.MinMax=[MM.mean,MM.std]
         
     if x.info["Data"] is not None:
