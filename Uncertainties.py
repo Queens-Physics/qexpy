@@ -489,7 +489,7 @@ class Constant(Measurement):
         super().__init__(arg,0)
         self.name='%d'%(arg)
         self.info['ID']='Constant'
-        self.info["Formula"]='%d'%arg
+        self.info["Formula"]='%f'%arg
         self.first_der={}
         self.info["Data"]=[arg]
         self.type="Constant"

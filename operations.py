@@ -163,14 +163,12 @@ def sub(a,b):
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
         result.info["Data"]=numpy.subtract(a.info["Data"],b.info["Data"])
-    
     result.units=a.units    
     result.first_der.update(first_der)
     result._update_info(sub,a,b)
     return result
 
 def mul(a,b):
-    print(a,b)
     a,b=check_values(a,b)
     #Propagating derivative of arguments    
     first_der={}

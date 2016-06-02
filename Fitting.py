@@ -7,10 +7,16 @@ from bokeh.io import output_file,gridplot
 
 ARRAY = (list,tuple,)
 
-def error_bar(xdata,ydata,yerr):
+def error_bar(p,xdata,ydata,xerr,yerr):
     # create the coordinates for the errorbars
-    err_x1 = []
-    err_d1 = []
+    err_x1=[]
+    err_d1=[]
+    err_y1=[]
+    err_d2=[]
+    err_t1=[]
+    err_t2=[]
+    err_b1=[]
+    err_b2=[]
 
     _xdata=xdata
     _ydata=ydata
@@ -19,9 +25,29 @@ def error_bar(xdata,ydata,yerr):
     for _xdata, _ydata, _yerr in zip(_xdata, _ydata, _yerr):
         err_x1.append((_xdata, _xdata))
         err_d1.append((_ydata - _yerr, _ydata + _yerr)) 
+        err_t1.append(_ydata+_yerr)
+        err_b1.append(_ydata-_yerr)
     
-    return (err_x1,err_d1,)
-
+    
+    p.multi_line(err_x1, err_d1, color='red')
+    p.rect(x=[*xdata,*xdata],y=[*err_t1,*err_b1],height=0.2,width=5,
+               height_units='screen',width_units='screen',color='red')
+    
+    if xerr is not None:
+        _xdata=xdata
+        _ydata=ydata
+        _xerr=xerr    
+        
+        for _ydata, _xdata, _xerr in zip(_ydata, _xdata, _xerr):
+            err_y1.append((_ydata, _ydata))
+            err_d2.append((_xdata - _xerr, _xdata + _xerr)) 
+            err_t2.append(_xdata+_xerr)
+            err_b2.append(_xdata-_xerr)
+            
+        p.multi_line(err_d2, err_y1, color='red')
+        p.rect(x=[*err_t2,*err_b2],y=[*ydata,*ydata],height=5,width=0.2,
+               height_units='screen',width_units='screen',color='red')
+    
 def data_transform(x,y,xerr,yerr):  
     if xerr is None:
         xdata=x.mean*np.linspace(1,len(y.info['Data']),len(y.info['Data']))
@@ -100,10 +126,21 @@ def theoretical_plot(theory,x,y,xerr=None,yerr=None,xscale='linear',
         y_axis_label=parameters[1]+yunits
     )   
 
-    # add some renderers
+    # add datapoints with errorbars
     p.circle(xdata, ydata, legend="experiment", color="black", size=2) 
+    error_bar(p,xdata,ydata,xerr,yerr)
     
     #Plot theoretical line
+    _plot_function(p,xdata,theory)
+
+        
+    # plot them
+    p.legend.location = "top_right"     
+    
+    #plotting and returning slope and intercept
+    show(p)
+
+def _plot_function(p,xdata,theory,n=1000):
     n=1000
     xrange=np.linspace(min(xdata),max(xdata),n)
     x_theory=theory(min(xdata))
@@ -122,21 +159,14 @@ def theoretical_plot(theory,x,y,xerr=None,yerr=None,xscale='linear',
             x_mid.append(x_theory.mean)
             x_max.append(x_theory.mean+x_theory.std)
             x_min.append(x_theory.mean-x_theory.std)
-        p.line(xrange,x_mid,legend='Theoretical')
-        p.line(xrange,x_min,legend='Error')
-        p.line(xrange,x_max,legend='Error')
-
-    err_x1,err_d1=error_bar(xdata,ydata,yerr)
-    err_y1,err_d2=error_bar(ydata,xdata,xerr)
-    
-    # plot them
-    p.multi_line(err_x1, err_d1, color='red')
-    p.multi_line(err_d2, err_y1, color='red')
-    p.legend.location = "top_right"     
-    
-    #plotting and returning slope and intercept
-    show(p)
-
+        p.line(xrange,x_mid,legend='Theoretical',line_color='red')
+        
+        xrange_reverse=list(reversed(xrange))
+        x_min_reverse=list(reversed(x_min))
+        p.patch(x=[*xrange,*xrange_reverse],y=[*x_max,*x_min_reverse],
+                    fill_alpha=0.3,fill_color='red',line_color='red',
+                    line_dash='dashed',line_alpha=0.3)
+        
 def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
                                     fit='linear',theory=None,filename='Plot'):
     from numpy import exp
@@ -145,9 +175,9 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
     
     def model(x,*pars):
         from numpy import multiply as m
-        fits={'linear':pars[0]+m(pars[1],x),
-              'log':exp(pars[0]+m(pars[1],x)),}
-        return fits[fit]
+        #fits={'linear':pars[0]+m(pars[1],x),
+        #      'exponential':exp(pars[0]+m(pars[1],x)),}
+        return pars[0]+m(pars[1],x)
     
     pars_guess = [1,1]
 
@@ -188,7 +218,7 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
         y_axis_type=fit, y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)],
 
-        x_axis_type='linear', #x_range=[min(xdata)-1.1*max(xerr),max(xdata)+1.1*max(xerr)], 
+        x_axis_type='linear',x_range=[min(xdata)-1.1*max(xerr),max(xdata)+1.1*max(xerr)], 
         title=x.name+" versus "+y.name,
         x_axis_label=parameters[0]+xunits, 
         y_axis_label=parameters[1]+yunits
@@ -197,18 +227,14 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
     # add some renderers
     p.line(xdata, yfit, legend="fit")
     p.circle(xdata, ydata, legend="experiment", color="black", size=2) 
+    _plot_function(p,xdata,lambda x:model(x,intercept,slope))
     
     #Plot theoretical line if applicable
     if theory is not None:
-        xrange=np.linspace(min(xdata),max(xdata),1000)
-        p.line(xrange,theory(xrange),legend='Theoretical')
+        _plot_function(p,xdata,theory)
         
-    err_x1,err_d1=error_bar(xdata,ydata,yerr)
-    err_y1,err_d2=error_bar(ydata,xdata,xerr)
-    
-    # plot them
-    p.multi_line(err_x1, err_d1, color='red')
-    p.multi_line(err_d2, err_y1, color='red')
+    # plot errorbars
+    error_bar(p,xdata,ydata,xerr,yerr)
     if pars_fit[1]>0:
         p.legend.location = "top_left"  
     else:
@@ -229,10 +255,8 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
     # add some renderers
     p2.circle(xdata, yres, color="black", size=2)
     
-    err_x1,err_d1=error_bar(xdata,yres,yerr)
-    
-    # plot them
-    p2.multi_line(err_x1, err_d1, color='red')
+    # plot y errorbars
+    error_bar(p2,xdata,yres,None,yerr)    
     
     #plotting and returning slope and intercept
     gp_alt = gridplot([[p],[p2]])
