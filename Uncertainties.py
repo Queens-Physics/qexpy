@@ -30,11 +30,13 @@ class Measurement:
         Creates a variable that contains a mean, standard deviation, 
         and name for inputted data.
         '''
+        data=None
+        error_data=None
+        
         if len(args)==2 and all(isinstance(n,Measurement.CONSTANT)\
                 for n in args):
             self.mean=args[0]
             self.std=args[1]
-            data=None
             
         elif all(isinstance(n,Measurement.ARRAY) for n in args):
             if len(args)==1 and \
@@ -44,31 +46,57 @@ class Measurement:
                 data=list(args)
             elif len(args)==1 and \
                     all(isinstance(n,Measurement) for n in args[0]):
-                pass
-                #Treat each element as measurement type
+                mean_vals=[]
+                std_vals=[]
+                for arg in args:
+                    mean_vals.append(arg.mean)
+                    std_vals.append(arg.std)
+                (self.mean,self.std)=weighted_variance(mean_vals,std_vals)
+                data=mean_vals
+                error_data=std_vals
                 
             elif len(args)==2 and \
                     all(isinstance(n,Measurement.CONSTANT) 
                                                     for n in args[0]) and\
                     all(isinstance(n,Measurement.CONSTANT) 
                                                     for n in args[1]):
-                pass
-                #Treat zeroth as mean, first as std for n measurements
-            
+                mean_vals=args[0]
+                std_vals=args[1]
+                (self.mean,self.std)=weighted_variance(mean_vals,std_vals)
+                data=mean_vals
+                error_data=std_vals
+        
         elif len(args)>2:
             if all(isinstance(n,Measurement.CONSTANT) for n in args):
                 (self.mean, self.std) = variance(args)
                 data=list(args)
                 
             elif all(isinstance(n,Measurement) for n in args):
-                pass
-                #Mean and std of each element, get weighted mean and std
-            
+                mean_vals=[]
+                std_vals=[]
+                for arg in args:
+                    mean_vals.append(arg.mean)
+                    std_vals.append(arg.std)
+                (self.mean,self.std)=weighted_variance(mean_vals,std_vals)
+                data=mean_vals
+                error_data=std_vals
+                
+        elif all(len(arg)==2 for arg in args):
+            mean_vals=[]
+            std_vals=[]
+            for i in len(args):
+                mean_vals.append(args[i][0])
+                std_vals.append(args[i][1])
+            (self.mean,self.std)=weighted_variance(mean_vals,std_vals)
+            data=mean_vals
+            error_data=std_vals
+        
         else:
             raise ValueError('''Input arguments must be one of: a mean and
             standard deviation, an array of values, or the individual values
             themselves.''')
         self.info={'ID': '', 'Formula': '' ,'Method': '', 'Data': data,
+                                               'Error': error_data, 
                        'Function': {'operation':(),'variables':()},}
         self.MC_list=None
         Measurement.id_register[id(self)]=self
@@ -553,6 +581,15 @@ def variance(*args,ddof=1):
         SumSq+=args[i]*args[i]        
     std=((SumSq-Sum**2/N)/(N-1))**(1/2)
     return (mean,std);
+
+def weighted_variance(mean,std,ddof=1):
+    import numpy as np
+    from math import sqrt    
+    
+    w=np.power(std,-2)
+    w_mean=sum(np.multiply(w,mean))/sum(w)
+    w_std=1/sqrt(sum(w))
+    return (w_mean,w_std)
     
 def tex_print(self,method=None):
     '''

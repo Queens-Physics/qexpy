@@ -50,8 +50,8 @@ def error_bar(p,xdata,ydata,xerr,yerr):
     
 def data_transform(x,y,xerr,yerr):  
     if xerr is None:
-        xdata=x.mean*np.linspace(1,len(y.info['Data']),len(y.info['Data']))
-        x_error=[x.std]*len(y.info['Data'])
+        xdata=x.info['Data']
+        x_error=x.info['Error']
     else:
         try:
             x.type
@@ -65,8 +65,8 @@ def data_transform(x,y,xerr,yerr):
             x_error=xerr
         
     if yerr is None:
-        ydata=y.mean*np.linspace(1,len(x),len(x))
-        y_error=[y.std]*len(x.info['Data'])
+        ydata=y.info['Data']
+        y_error=y.info['Error']
     else:
         try:
             y.type
@@ -120,7 +120,7 @@ def theoretical_plot(theory,x,y,xerr=None,yerr=None,xscale='linear',
         y_axis_type=yscale, y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)],
         x_axis_type=xscale, x_range=[min(xdata)-1.1*max(xerr), 
-                                                    max(xdata)+1.1*max(xerr)], 
+                                                    max(xdata)+1.1*max(xerr)],
         title=x.name+" versus "+y.name,
         x_axis_label=parameters[0]+xunits, 
         y_axis_label=parameters[1]+yunits
@@ -218,7 +218,8 @@ def fitted_plot(x,y,xerr=None,yerr=None,parameters=['x','y','m','b'],
         y_axis_type=fit, y_range=[min(ydata)-1.1*max(yerr), 
                                                     max(ydata)+1.1*max(yerr)],
 
-        x_axis_type='linear',x_range=[min(xdata)-1.1*max(xerr),max(xdata)+1.1*max(xerr)], 
+        x_axis_type='linear',x_range=[min(xdata)-1.1*max(xerr),
+                                                     max(xdata)+1.1*max(xerr)],
         title=x.name+" versus "+y.name,
         x_axis_label=parameters[0]+xunits, 
         y_axis_label=parameters[1]+yunits
