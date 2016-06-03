@@ -822,8 +822,8 @@ def operation_wrap(operation,*args,func_flag=False):
     
     if args[1] is not None and args[0].info["Data"] is not None\
                     and args[1].info['Data'] is not None\
-                    and len(args[0].info["Data"])==len(args[1].info["Data"]):
-        for i in len(args[0].info["Data"]):
+                    and len(args[0])==len(args[1]):
+        for i in len(args[0]):
             result.info["Data"].append(
                         operation(args[0].info["Data"],args[1].info["Data"]))
                         

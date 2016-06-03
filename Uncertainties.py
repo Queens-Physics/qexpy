@@ -30,8 +30,8 @@ class Measurement:
         Creates a variable that contains a mean, standard deviation, 
         and name for inputted data.
         '''
-        data=None
-        error_data=None
+        data=[]
+        error_data=[]
         
         if len(args)==2 and all(isinstance(n,Measurement.CONSTANT)\
                 for n in args):
@@ -65,7 +65,7 @@ class Measurement:
                 (self.mean,self.std)=weighted_variance(mean_vals,std_vals)
                 data=mean_vals
                 error_data=std_vals
-        
+
         elif len(args)>2:
             if all(isinstance(n,Measurement.CONSTANT) for n in args):
                 (self.mean, self.std) = variance(args)
@@ -251,7 +251,7 @@ class Measurement:
             
         elif self.info["Data"] is not None \
                     and variable.info["Data"] is not None\
-                    and len(self.info["Data"])==len(variable.info["Data"]):
+                    and len(self)==len(variable):
             Measurement._find_covariance(self,variable)
             var=self.covariance[variable.info['ID']]
             return var;
@@ -419,13 +419,12 @@ class Measurement:
         else:
             return Function(-self.mean,self.std,name='-'+self.name)
         
-    def sin(self):
-        from operations import sin
-        return sin(self)
-
+    def __len__(self):
+        return len(self.info['Data'])
+        
 #######################################################################
-    
-    def monte_carlo(func,*args):
+
+    def monte_carlo(func, *args):
         '''
         Uses a Monte Carlo simulation to determine the mean and standard 
         deviation of a function.

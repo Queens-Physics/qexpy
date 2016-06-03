@@ -13,42 +13,53 @@ class Plot:
     Class of objects which can be plotted to display measurement objects
     which contain data and error data.
     '''
+                   
+    def polynomial(x,pars):
+        poly=0
+        n=0
+        for par in pars:
+            poly+=par*x**n
+            n+=1
+        return poly;
 
     fit={'linear':lambda x,pars: pars[0]+pars[1]*x,
-         'exponential':lambda x,pars: exp(pars[0]+pars[1]*x),}
+         'exponential':lambda x,pars: exp(pars[0]+pars[1]*x),
+         'polynomial':lambda x,pars: Plot.polynomial(x,pars),}
     
-    def __init__(x,y,xerr=None,yerr=None):
+    def __init__(self,x,y,xerr=None,yerr=None):
         '''
         Object which can be plotted.   
         '''
         
-        colors={'Data Points':'red','Function':('blue','green',)}
+        colors={'Data Points':'red','Function':'blue','Error':'red'}
         fit_method='linear'
         fit_function=Plot.fit[fit_method] #analysis:ignore
         plot_para={'xscale':'linear','yscale':'linear','filename':'Plot'}
         flags={'fitted':False,'residuals':False,} #analysis:ignore
+        attributes={'title':'','xaxis':'x','yaxis':'y', #analysis:ignore
+                            'data':'Experiment','functions':(),}
         
-        xdata,ydata,xerr,yerr,xunits,yunits=data_transform(x,y,xerr,yerr)
+        data_transform(self,x,y,xerr,yerr)
         output_file(plot_para['filename'])
         
         # create a new plot
         p = figure(
             tools="pan,box_zoom,reset,save,wheel_zoom",width=600, height=400,
             y_axis_type=plot_para['filename'],
-                        y_range=[min(ydata)-1.1*max(yerr),
-                                 max(ydata)+1.1*max(yerr)],
+                        y_range=[min(self.ydata)-1.1*max(self.yerr),
+                                 max(self.ydata)+1.1*max(self.yerr)],
             x_axis_type=plot_para['filename'],
-                        x_range=[min(xdata)-1.1*max(xerr), 
-                                 max(xdata)+1.1*max(xerr)],
+                        x_range=[min(self.xdata)-1.1*max(self.xerr), 
+                                 max(self.xdata)+1.1*max(self.xerr)],
             title=x.name+" versus "+y.name,
-            x_axis_label=x.name+xunits, 
-            y_axis_label=y.name+yunits
+            x_axis_label=x.name+self.xunits, 
+            y_axis_label=y.name+self.yunits
         )   
     
         # add datapoints with errorbars
-        p.circle(xdata, ydata, legend="experiment",
+        p.circle(self.xdata, self.ydata, legend=attributes['data'],
                                      color=colors['Data Points'], size=2) 
-        error_bar(p,xdata,ydata,xerr,yerr)
+        error_bar(self,p)
         
     def residuals(self):
         
@@ -67,13 +78,13 @@ class Plot:
         #Calculate residual values
         yfit = self.fit.model(self.xdata,*self.fit.pars_fit)
         #Generate a set of residuals for the fit
-        yres = self.ydata-yfit
+        self.yres = self.ydata-yfit
         
         # add some renderers
-        p2.circle(self.xdata, yres, color="black", size=2)
+        p2.circle(self.xdata, self.yres, color="black", size=2)
         
         # plot y errorbars
-        error_bar(p2,self.xdata,yres,None,self.yerr)
+        error_bar(self,p2)
         
         self.flag['residuals']=True
     
@@ -100,30 +111,96 @@ class Plot:
         intercept=M(pars_fit[0],pars_err[0])
         intercept.rename('Intercept')
         
-        _plot_function(self.p,self.xdata,self.fit_function)
+        self.fit_parameters=(slope,intercept)
         
         self.flag['fitted']=True
         
     def function(self,function):
-        _plot_function(self.p,self.xdata,function)
+        self.attributes['function']+=function
         
     def plot(self):
+        '''
+        Method which creates and displays plot.
+        Previous methods sumply edit parameters which are used here, to
+        prevent run times increasing due to rebuilding the bokeh plot object.
+        '''
+        
+        # create a new plot
+        p = figure(
+            tools="pan,box_zoom,reset,save,wheel_zoom",width=600, height=400,
+            y_axis_type=self.plot_para['filename'],
+                        y_range=[min(self.ydata)-1.1*max(self.yerr),
+                                 max(self.ydata)+1.1*max(self.yerr)],
+            x_axis_type=self.plot_para['filename'],
+                        x_range=[min(self.xdata)-1.1*max(self.xerr), 
+                                 max(self.xdata)+1.1*max(self.xerr)],
+            title=self.attributes['xaxis']+" versus "+self.attributes['yaxis'],
+            x_axis_label=self.attributes['xaxis']+self.xunits, 
+            y_axis_label=self.attributes['yaxis']+self.yunits
+        )   
+    
+        # add datapoints with errorbars
+        p.circle(self.xdata, self.ydata, legend=self.attributes['data'],
+                                     color=self.colors['Data Points'], size=2) 
+        error_bar(p,self.xdata,self.ydata,self.xerr,self.yerr)
+        
+        for func in self.attributes['function']:
+            _plot_function(p,self.xdata,func)
         
         if self.flag['fitted'] is True:
-            if self.pars_fit[1]>0:
-                self.p.legend.location = "top_left"  
+            _plot_function(p,self.xdata,self.fit_function)
+            
+            if self.fit_parameters[1].mean>0:
+                p.legend.location = "top_left"  
             else:
-                self.p.legend.location = "top_right" 
+                p.legend.location = "top_right" 
         else:
-            self.p.legend.location = 'top_right'
+            p.legend.location = 'top_right'
         
         if self.flag['residuals'] is False:
-            show(self.p)
+            show(p)
         else:
-            gp_alt = gridplot([[self.p],[self.p2]])
+            
+            p2 = figure(
+                tools="pan,box_zoom,reset,save,wheel_zoom",width=600, 
+                                                                height=200,
+                y_axis_type='linear', y_range=[min(self.yres)
+                    -1.1*max(self.yerr),max(self.yres)+1.1*max(self.yerr)], 
+                title="Residual Plot",
+                x_axis_label=self.attributes['xaxis'], 
+                y_axis_label='Residuals'
+            )
+            
+            # add some renderers
+            p2.circle(self.xdata, self.yres, color="black", size=2)
+            
+            # plot y errorbars
+            error_bar(p2,self.xdata,self.yres,None,self.yerr)
+            
+            gp_alt = gridplot([[p],[p2]])
             show(gp_alt)
- 
-def error_bar(p,xdata,ydata,xerr,yerr):
+            
+    def set_colors(self,data=None,error=None,line=None):
+        if data is not None:
+            self.colors['Data Points']=data
+        if error is not None:
+            self.colors['Error']=error
+        if line is not None:
+            self.colors['Function']=line
+            
+    def set_name(self,title=None,xname=None,yname=None,data_name=None,):
+        if title is not None:
+            self.attributes['title']=title
+        if xname is not None:
+            self.attributes['xname']=xname
+        if yname is not None:
+            self.attributes['yname']=yname
+        if data_name is not None:
+            self.attributes['Data']=data_name
+            
+    
+        
+def error_bar(self,p):
     # create the coordinates for the errorbars
     err_x1=[]
     err_d1=[]
@@ -134,9 +211,9 @@ def error_bar(p,xdata,ydata,xerr,yerr):
     err_b1=[]
     err_b2=[]
 
-    _xdata=xdata
-    _ydata=ydata
-    _yerr=yerr
+    _xdata=self.xdata
+    _ydata=self.ydata
+    _yerr=self.yerr
 
     for _xdata, _ydata, _yerr in zip(_xdata, _ydata, _yerr):
         err_x1.append((_xdata, _xdata))
@@ -146,25 +223,25 @@ def error_bar(p,xdata,ydata,xerr,yerr):
     
     
     p.multi_line(err_x1, err_d1, color='red')
-    p.rect(x=[*xdata,*xdata],y=[*err_t1,*err_b1],height=0.2,width=5,
+    p.rect(x=[*self.xdata,*self.xdata],y=[*err_t1,*err_b1],height=0.2,width=5,
                height_units='screen',width_units='screen',color='red')
     
-    if xerr is not None:
-        _xdata=xdata
-        _ydata=ydata
-        _xerr=xerr    
+    _xdata=self.xdata
+    _ydata=self.ydata
+    _xerr=self.xerr    
         
-        for _ydata, _xdata, _xerr in zip(_ydata, _xdata, _xerr):
-            err_y1.append((_ydata, _ydata))
-            err_d2.append((_xdata - _xerr, _xdata + _xerr)) 
-            err_t2.append(_xdata+_xerr)
-            err_b2.append(_xdata-_xerr)
-            
-        p.multi_line(err_d2, err_y1, color='red')
-        p.rect(x=[*err_t2,*err_b2],y=[*ydata,*ydata],height=5,width=0.2,
-               height_units='screen',width_units='screen',color='red')
-    
-def data_transform(x,y,xerr,yerr):  
+    for _ydata, _xdata, _xerr in zip(_ydata, _xdata, _xerr):
+        err_y1.append((_ydata, _ydata))
+        err_d2.append((_xdata - _xerr, _xdata + _xerr)) 
+        err_t2.append(_xdata+_xerr)
+        err_b2.append(_xdata-_xerr)
+        
+    p.multi_line(err_d2, err_y1, color='red')
+    p.rect(x=[*err_t2,*err_b2],y=[*self.ydata,*self.ydata],height=5,width=0.2,
+           height_units='screen',width_units='screen',
+           color=self.colors['Data Points'])
+               
+def data_transform(self,x,y,xerr=None,yerr=None):  
     if xerr is None:
         xdata=x.info['Data']
         x_error=x.info['Error']
@@ -219,8 +296,12 @@ def data_transform(x,y,xerr,yerr):
             yunits='['+yunits+']'
         else:
             yunits=''   
-
-    return (xdata,ydata,x_error,y_error,xunits,yunits,); 
+    self.xdata=xdata
+    self.ydata=ydata
+    self.xerr=x_error
+    self.yerr=y_error
+    self.xunits=xunits
+    self.yunits=yunits
 
 def _plot_function(p,xdata,theory,n=1000):
     n=1000
