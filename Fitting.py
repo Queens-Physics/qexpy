@@ -22,7 +22,7 @@ class Plot:
             n+=1
         return poly;
 
-    fit={'linear':lambda x,pars: pars[0]+pars[1]*x,
+    fits={'linear':lambda x,pars: pars[0]+pars[1]*x,
          'exponential':lambda x,pars: exp(pars[0]+pars[1]*x),
          'polynomial':lambda x,pars: Plot.polynomial(x,pars),}
     
@@ -30,19 +30,19 @@ class Plot:
         '''
         Object which can be plotted.   
         '''
-        
-        colors={'Data Points':'red','Function':'blue','Error':'red'}
-        fit_method='linear'
-        fit_function=Plot.fit[fit_method] #analysis:ignore
-        plot_para={'xscale':'linear','yscale':'linear','filename':'Plot'}
-        flags={'fitted':False,'residuals':False,} #analysis:ignore
-        attributes={'title':'','xaxis':'x','yaxis':'y', #analysis:ignore
+        self.colors={'Data Points':'red','Function':'blue','Error':'red'}
+        self.fit_method='linear'
+        self.fit_function=Plot.fits[self.fit_method] #analysis:ignore
+        self.plot_para={'xscale':'linear','yscale':'linear','filename':'Plot'}
+        self.flags={'fitted':False,'residuals':False,} #analysis:ignore
+        self.attributes={'title':'','xaxis':'x','yaxis':'y', #analysis:ignore
                             'data':'Experiment','functions':(),}
         
         data_transform(self,x,y,xerr,yerr)
-        output_file(plot_para['filename'])
-        
+
+        '''
         # create a new plot
+        print(y.name,self.yunits)
         p = figure(
             tools="pan,box_zoom,reset,save,wheel_zoom",width=600, height=400,
             y_axis_type=plot_para['filename'],
@@ -52,14 +52,15 @@ class Plot:
                         x_range=[min(self.xdata)-1.1*max(self.xerr), 
                                  max(self.xdata)+1.1*max(self.xerr)],
             title=x.name+" versus "+y.name,
-            x_axis_label=x.name+self.xunits, 
-            y_axis_label=y.name+self.yunits
+            x_axis_label=x.name+self.xunits,
+            y_axis_label=y.name+self.yunits,
         )   
     
         # add datapoints with errorbars
         p.circle(self.xdata, self.ydata, legend=attributes['data'],
                                      color=colors['Data Points'], size=2) 
         error_bar(self,p)
+        '''
         
     def residuals(self):
         
@@ -118,13 +119,15 @@ class Plot:
     def function(self,function):
         self.attributes['function']+=function
         
-    def plot(self):
+    def show(self):
         '''
         Method which creates and displays plot.
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
         
+        output_file(self.plot_para['filename'])        
+    
         # create a new plot
         p = figure(
             tools="pan,box_zoom,reset,save,wheel_zoom",width=600, height=400,
@@ -135,8 +138,8 @@ class Plot:
                         x_range=[min(self.xdata)-1.1*max(self.xerr), 
                                  max(self.xdata)+1.1*max(self.xerr)],
             title=self.attributes['xaxis']+" versus "+self.attributes['yaxis'],
-            x_axis_label=self.attributes['xaxis']+self.xunits, 
-            y_axis_label=self.attributes['yaxis']+self.yunits
+            x_axis_label='x',#self.attributes['xaxis']+self.xunits, 
+            y_axis_label='y'#self.attributes['yaxis']+self.yunits
         )   
     
         # add datapoints with errorbars

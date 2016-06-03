@@ -123,9 +123,6 @@ class Measurement:
             if Measurement.numpy_installed:
                 Measurement.method="Monte Carlo"
             else:
-                #print('Numpy package must be installed to use Monte Carlo\
-                #        propagation, using the derivative method instead.')
-                #Measurement.method="Derivative"
                 Measurement.method="Monte Carlo"
         elif chosen_method in min_max_list:
             Measurement.method="Min Max"
