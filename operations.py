@@ -596,7 +596,8 @@ def csc(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        (mean,std,)=Measurement.monte_carlo(lambda x: np.divide(1,np.sin(x)),x)
+        (mean,std,)=Measurement.monte_carlo(
+                lambda x: np.divide(1,np.sin(x)),x)
         
     else:
         import numpy as np
@@ -648,7 +649,8 @@ def cot(x):
     #Monte Carlo method
     elif Measurement.method=='Monte Carlo':  
         import numpy as np
-        (mean,std,)=Measurement.monte_carlo(lambda x: np.divide(1,np.tan(x)),x)
+        (mean,std,)=Measurement.monte_carlo(
+                lambda x: np.divide(1,np.tan(x)),x)
         result=Function(mean,std)
     
     else:

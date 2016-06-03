@@ -108,8 +108,8 @@ class Measurement:
 
     def set_method(chosen_method):
         '''
-        Choose the method of error propagation to be used. Enter a string.       
-        
+        Choose the method of error propagation to be used. Enter a string.   
+
         Function to change default error propogation method used in 
         measurement functions.
         '''
