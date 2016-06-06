@@ -209,8 +209,8 @@ class Measurement:
 
         if data_x is None or data_y is None:
             raise TypeError(
-                "Data arrays must exist for both quantities "
-                + "to define covariance.")
+                "Data arrays must exist for both quantities " +
+                "to define covariance.")
 
         if len(data_x) != len(data_y):
             raise TypeError('Lengths of data arrays must be equal to\
@@ -297,169 +297,174 @@ class Measurement:
         from operations import sin, cos, tan, csc, sec, cot, exp, log, add,
         sub, mul, div, power
         op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc',
-                   sec: 'sec', cot: 'cot', exp: 'exp', log: 'log',
-                   add: '+', sub: '-', mul: '*', div: '/', power: '**', }
+                     sec: 'sec', cot: 'cot', exp: 'exp', log: 'log',
+                     add: '+', sub: '-', mul: '*', div: '/', power: '**', }
         if func_flag is None and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
             self.user_name = False
-            self.info['Formula'] = var1.info['Formula'] +\
-                    op_string[operation] + var2.info['Formula']
+            self.info['Formula'] = var1.info['Formula'] + \
+                op_string[operation] + var2.info['Formula']
             self.info['Function']['variables'] += (var1, var2),
             self.info['Function']['operation'] += operation,
-            Measurement.formula_register.update({self.info["Formula"]:
-                                                        self.info["ID"]})
-            self.info['Method'] += "Errors propagated by "+Measurement.method+\
-                    ' method.\n'
-            for root in var1.root: 
-                if root not in self.root: 
+            Measurement.formula_register.update(
+                {self.info["Formula"]: self.info["ID"]})
+            self.info['Method'] += "Errors propagated by " +\
+                Measurement.method + ' method.\n'
+            for root in var1.root:
+                if root not in self.root:
                     self.root += var1.root
-            for root in var2.root: 
-                if root not in self.root: 
+            for root in var2.root:
+                if root not in self.root:
                     self.root += var2.root
-                    
-        elif func_flag is not None: 
+
+        elif func_flag is not None:
             self.rename(op_string[operation]+'('+var1.name+')')
             self.user_name = False
-            self.info['Formula'] = op_string[operation]+'('+\
-                                    var1.info['Formula']+')'
-            self.info['Function']['variables'] += (var1,), 
-            self.info['Function']['operation'] += operation, 
-            self.info['Method'] += "Errors propagated by "+Measurement.method+\
-                    ' method.\n'
-            Measurement.formula_register.update({self.info["Formula"]\
-                    : self.info["ID"]})
-            for root in var1.root: 
-                if root not in self.root: 
+            self.info['Formula'] = op_string[operation] + '(' + \
+                var1.info['Formula'] + ')'
+            self.info['Function']['variables'] += (var1,),
+            self.info['Function']['operation'] += operation,
+            self.info['Method'] += "Errors propagated by " + \
+                Measurement.method + ' method.\n'
+            Measurement.formula_register.update(
+                {self.info["Formula"]: self.info["ID"]})
+            for root in var1.root:
+                if root not in self.root:
                     self.root += var1.root
-                    
-        else: 
+
+        else:
             print('Something went wrong in update_info')
-            
-            
-    def derivative(self, variable = None): 
+
+    def derivative(self, variable=None):
         '''
-        Returns the numerical value of the derivative with respect to an 
-        inputed variable.        
-        
+        Returns the numerical value of the derivative with respect to an
+        inputed variable.
+
         Function to find the derivative of a measurement or measurement like
         object. By default, derivative is with respect to itself, which will
-        always yeild 1. Operator acts by acessing the self.first_der 
+        always yeild 1. Operator acts by acessing the self.first_der
         dictionary and returning the value stored there under the specific
         variable inputted (ie. deriving with respect to variable = ???)
         '''
         if variable is not None \
-                and not hasattr(variable, 'type'): 
+                and not hasattr(variable, 'type'):
             return 'Only measurement objects can be derived.'
-        elif variable is None: 
+        elif variable is None:
             return self.first_der
-        if variable.info['ID'] not in self.first_der: 
+        if variable.info['ID'] not in self.first_der:
             self.first_der[variable.info['ID']] = 0
         derivative = self.first_der[variable.info["ID"]]
         return derivative
-    
-    def check_der(self, b): 
+
+    def check_der(self, b):
         '''
         Checks for a derivative with respect to b, else zero is defined as
-        the derivative.        
-        
-        Checks the existance of the derivative of an object in the 
+        the derivative.
+
+        Checks the existance of the derivative of an object in the
         dictionary of said object with respect to another variable, given
         the variable itself, then checking for the ID of said variable
-        in the .first_der dictionary. If non exists, the deriviative is 
+        in the .first_der dictionary. If non exists, the deriviative is
         assumed to be zero.
         '''
-        for key in b.first_der: 
-            if key in self.first_der: 
+        for key in b.first_der:
+            if key in self.first_der:
                 pass
-            else: 
+            else:
                 self.first_der[key] = 0
 
 # Operations on measurement objects
-    
-    def __add__(self, other): 
+
+    def __add__(self, other):
         from operations import add
         return add(self, other)
-    def __radd__(self, other): 
-        from operations import add
-        return add(self, other)  
 
-    def __mul__(self, other): 
+    def __radd__(self, other):
+        from operations import add
+        return add(self, other)
+
+    def __mul__(self, other):
         from operations import mul
         return mul(self, other)
-    def __rmul__(self, other): 
+
+    def __rmul__(self, other):
         from operations import mul
         return mul(self, other)
-        
-    def __sub__(self, other): 
+
+    def __sub__(self, other):
         from operations import sub
         return sub(self, other)
-    def __rsub__(self, other): 
+
+    def __rsub__(self, other):
         from operations import sub
         result = sub(other, self)
         return result
-        
-    def __truediv__(self, other): 
+
+    def __truediv__(self, other):
         from operations import div
         return div(self, other)
-    def __rtruediv__(self, other): 
+
+    def __rtruediv__(self, other):
         from operations import div
         return div(other, self)
-        
-    def __pow__(self, other): 
+
+    def __pow__(self, other):
         from operations import power
         return power(self, other)
-    def __rpow__(self, other): 
+
+    def __rpow__(self, other):
         from operations import power
         return power(other, self)
-        
-    def __neg__(self): 
-        if self.type == "Constant": 
-            return Constant(-self.mean, self.std, name = '-'+self.name)
-        else: 
-            return Function(-self.mean, self.std, name = '-'+self.name)
-        
-    def __len__(self): 
+
+    def __neg__(self):
+        if self.type == "Constant":
+            return Constant(-self.mean, self.std, name='-'+self.name)
+        else:
+            return Function(-self.mean, self.std, name='-'+self.name)
+
+    def __len__(self):
         return len(self.info['Data'])
-        
-    def monte_carlo(func, *args): 
+
+    def monte_carlo(func, *args):
         '''
-        Uses a Monte Carlo simulation to determine the mean and standard 
+        Uses a Monte Carlo simulation to determine the mean and standard
         deviation of a function.
-        
+
         Inputted arguments must be measurement type. Constants can be used
-        as 'normalized' quantities which produce a constant row in the 
+        as 'normalized' quantities which produce a constant row in the
         matrix of normally randomized values.
         '''
         # 2D array
         import numpy as np
         N = len(args)
-        n = Measurement.mcTrials # Can be adjusted in measurement.mcTrials
+        n = Measurement.mcTrials  # Can be adjusted in measurement.mcTrials
         value = np.zeros((N, n))
         result = np.zeros(n)
-        for i in range(N): 
-            if args[i].MC_list is not None: 
+        for i in range(N):
+            if args[i].MC_list is not None:
                 value[i] = args[i].MC_list
-            elif args[i].std == 0: 
+            elif args[i].std == 0:
                 value[i] = args[i].mean
                 args[i].MC_list = value[i]
-            else: 
+            else:
                 value[i] = np.random.normal(args[i].mean, args[i].std, n)
                 args[i].MC_list = value[i]
-                
+
         result = func(*value)
         data = np.mean(result)
-        error = np.std(result, ddof = 1)
+        error = np.std(result, ddof=1)
         return (data, error,)
-        
-class Function(Measurement): 
+
+
+class Function(Measurement):
     '''
-    Subclass of objects, which are measurements created by operations or 
+    Subclass of objects, which are measurements created by operations or
     functions of other measurement type objects.
     '''
-    id_number = 0    
-    
-    def __init__(self, *args, name = None): 
-        super().__init__(*args, name = name)
+    id_number = 0
+
+    def __init__(self, *args, name=None):
+        super().__init__(*args, name=name)
         self.name = 'obj%d' % (Function.id_number)
         self.info['ID'] = 'obj%d' % (Function.id_number)
         self.type = "Function"
@@ -471,25 +476,26 @@ class Function(Measurement):
         self.MC = None
         self.MinMax = None
         self.error_flag = False
-        
-class Measured(Measurement): 
+
+
+class Measured(Measurement):
     '''
     Subclass of measurements, specified by the user and treated as variables
     or arguments of functions when propagating error.
     '''
-    id_number = 0    
-    
-    def __init__(self, *args, name = None, units = None): 
-        super().__init__(*args, name = name)
-        if name is not None: 
+    id_number = 0
+
+    def __init__(self, *args, name=None, units=None):
+        super().__init__(*args, name=name)
+        if name is not None:
             self.name = name
-        else: 
+        else:
             self.name = 'unnamed_var%d' % (Measured.id_number)
-        if units is not None: 
-            if type(units) is str: 
+        if units is not None:
+            if type(units) is str:
                 self.units[units] = 1
-            else: 
-                for i in range(len(units)//2): 
+            else:
+                for i in range(len(units)//2):
                     self.units[units[2*i]] = units[i+1]
         self.type = "Measurement"
         self.info['ID'] = 'var%d' % (Measured.id_number)
@@ -499,30 +505,32 @@ class Measured(Measurement):
         self.covariance = {self.name: self.std**2}
         Measurement.register.update({self.info["ID"]: self})
         self.root = (self.info["ID"],)
-        
-class Constant(Measurement): 
+
+
+class Constant(Measurement):
     '''
-    Subclass of measurement objects, not neccesarily specified by the user, 
+    Subclass of measurement objects, not neccesarily specified by the user,
     called when a consant (int, float, etc.) is used in operation with a
-    measurement. This class is called before calculating operations to 
-    ensure objects can be combined. The mean of a constant is the specified 
+    measurement. This class is called before calculating operations to
+    ensure objects can be combined. The mean of a constant is the specified
     value, the standard deviation is zero, and the derivarive with respect
     to anything is zero.
     '''
-    def __init__(self, arg): 
+    def __init__(self, arg):
         super().__init__(arg, 0)
         self.name = '%d' % (arg)
         self.info['ID'] = 'Constant'
-        self.info["Formula"] = '%f'%arg
+        self.info["Formula"] = '%f' % arg
         self.first_der = {}
         self.info["Data"] = [arg]
         self.type = "Constant"
         self.covariance = {self.name: 0}
         self.root = ()
-   
-def f(function, *args): 
+
+
+def f(function, *args):
     '''
-    Function wrapper for any defined function to operate with arbitrary 
+    Function wrapper for any defined function to operate with arbitrary
     measurement type objects arguments. Returns a Function type measurement
     object.
     '''
@@ -530,40 +538,43 @@ def f(function, *args):
     mean = function(args)
     std_squared = 0
     for i in range(N):
-        for arg in args: 
-            std_squared += arg.std**2*numerical_partial_derivative(function, \
-                                                                i, args)**2
+        for arg in args:
+            std_squared += arg.std**2*numerical_partial_derivative(
+                function, i, args)**2
     std = (std_squared)**(1/2)
     argName = ""
-    for i in range(N): 
+    for i in range(N):
         argName += ', '+args[i].name
     name = function.__name__+"("+argName+")"
-    return Function(mean, std, name = name)
-      
-def numerical_partial_derivative(func, var, *args): 
+    return Function(mean, std, name=name)
+
+
+def numerical_partial_derivative(func, var, *args):
     '''
     Returns the parital derivative of a dunction with respect to var.
-    
+
     This function wraps the inputted function to become a function
     of only one variable, the derivative is taken with respect to said
     variable.
-    '''    
-    def restrict_dimension(x): 
+    '''
+    def restrict_dimension(x):
         partial_args = list(args)
         partial_args[var] = x
         return func(*partial_args)
     return numerical_derivative(restrict_dimension, args[var])
 
-def numerical_derivative(function, point, dx = 1e-10): 
+
+def numerical_derivative(function, point, dx=1e-10):
     '''
     Returns the first order derivative of a function.
     '''
     return (function(point+dx)-function(point))/dx
-    
-def variance(*args, ddof = 1): 
+
+
+def variance(*args, ddof=1): 
     '''
     Returns a tuple of the mean and standard deviation of a data array.
-    
+
     Uses a more sophisticated variance calculation to speed up calculation of
     mean and standard deviation.
     '''
