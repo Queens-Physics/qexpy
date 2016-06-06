@@ -34,82 +34,48 @@ class Plot:
         self.fit_method='linear'
         self.fit_function=Plot.fits[self.fit_method] #analysis:ignore
         self.plot_para={'xscale':'linear','yscale':'linear','filename':'Plot'}
-        self.flags={'fitted':False,'residuals':False,} #analysis:ignore
+        self.flag={'fitted':False,'residuals':False,} #analysis:ignore
         self.attributes={'title':'','xaxis':'x','yaxis':'y', #analysis:ignore
                             'data':'Experiment','functions':(),}
+        self.fit_parameters=()
+        self.yres=None
+        self.pars_fit=[]
         
         data_transform(self,x,y,xerr,yerr)
-
-        '''
-        # create a new plot
-        print(y.name,self.yunits)
-        p = figure(
-            tools="pan,box_zoom,reset,save,wheel_zoom",width=600, height=400,
-            y_axis_type=plot_para['filename'],
-                        y_range=[min(self.ydata)-1.1*max(self.yerr),
-                                 max(self.ydata)+1.1*max(self.yerr)],
-            x_axis_type=plot_para['filename'],
-                        x_range=[min(self.xdata)-1.1*max(self.xerr), 
-                                 max(self.xdata)+1.1*max(self.xerr)],
-            title=x.name+" versus "+y.name,
-            x_axis_label=x.name+self.xunits,
-            y_axis_label=y.name+self.yunits,
-        )   
-    
-        # add datapoints with errorbars
-        p.circle(self.xdata, self.ydata, legend=attributes['data'],
-                                     color=colors['Data Points'], size=2) 
-        error_bar(self,p)
-        '''
         
     def residuals(self):
         
         if self.flag['fitted'] is False:
             Plot.fit(self.fit_function)
         
-        p2 = figure(
-            tools="pan,box_zoom,reset,save,wheel_zoom",width=600, height=200,
-            y_axis_type='linear', y_range=[min(self.yres)-1.1*max(self.yerr),
-                                           max(self.yres)+1.1*max(self.yerr)], 
-            title="Residual Plot",
-            x_axis_label=self.x_axis_label, 
-            y_axis_label='Residuals'
-        )
-        
         #Calculate residual values
-        yfit = self.fit.model(self.xdata,*self.fit.pars_fit)
+        yfit = self.fit_function(self.xdata,self.pars_fit)
         #Generate a set of residuals for the fit
         self.yres = self.ydata-yfit
         
-        # add some renderers
-        p2.circle(self.xdata, self.yres, color="black", size=2)
-        
-        # plot y errorbars
-        error_bar(self,p2)
-        
         self.flag['residuals']=True
     
-    def fit(self,model=None):
-        
+    def fit(self,model=None,guess=[1,1]):
+
         if model is not None:
             if type(model) is not str:
                 self.fit_function=model
                 self.flag['Unknown Function']=True
             else:
-                self.fit_model(model)
-        
-        def model(x,*pars):
-            return self.fit_funciton
-        
-        pars_guess = [1,1]
+                self.fit_method=model
 
-        pars_fit, pcov=curve_fit(model, self.xdata, self.ydata, 
+        def model(x,*pars):
+            return self.fit_function(x,pars)
+
+        pars_guess = guess
+
+        self.pars_fit, pcov=curve_fit(model, self.xdata, self.ydata, 
                                  sigma=self.yerr, p0 = pars_guess)
         pars_err = np.sqrt(np.diag(pcov))
-        
-        slope=M(pars_fit[1],pars_err[1])
+
+        slope=M(self.pars_fit[1],pars_err[1])
         slope.rename('Slope')
-        intercept=M(pars_fit[0],pars_err[0])
+        intercept=M(self.pars_fit[0],pars_err[0])
         intercept.rename('Intercept')
         
         self.fit_parameters=(slope,intercept)
@@ -138,8 +104,8 @@ class Plot:
                         x_range=[min(self.xdata)-1.1*max(self.xerr), 
                                  max(self.xdata)+1.1*max(self.xerr)],
             title=self.attributes['xaxis']+" versus "+self.attributes['yaxis'],
-            x_axis_label='x',#self.attributes['xaxis']+self.xunits, 
-            y_axis_label='y'#self.attributes['yaxis']+self.yunits
+            x_axis_label=self.attributes['xaxis']+self.xunits, 
+            y_axis_label=self.attributes['yaxis']+self.yunits
         )   
     
         # add datapoints with errorbars
