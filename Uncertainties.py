@@ -571,7 +571,7 @@ def numerical_derivative(function, point, dx=1e-10):
     return (function(point+dx)-function(point))/dx
 
 
-def variance(*args, ddof=1): 
+def variance(*args, ddof=1):
     '''
     Returns a tuple of the mean and standard deviation of a data array.
 
@@ -583,49 +583,51 @@ def variance(*args, ddof=1):
     SumSq = 0
     N = len(args)
     mean = sum(args)/len(args)
-    for i in range(N): 
+    for i in range(N):
         Sum += args[i]
-        SumSq += args[i]*args[i]        
+        SumSq += args[i]*args[i]
     std = ((SumSq-Sum**2/N)/(N-1))**(1/2)
     return (mean, std)
 
-def weighted_variance(mean, std, ddof = 1): 
+
+def weighted_variance(mean, std, ddof=1):
     import numpy as np
-    from math import sqrt    
-    
+    from math import sqrt
+
     w = np.power(std, -2)
     w_mean = sum(np.multiply(w, mean))/sum(w)
     w_std = 1/sqrt(sum(w))
     return (w_mean, w_std)
-    
-def tex_print(self, method = None): 
+
+
+def tex_print(self, method=None):
     '''
-    Creates string used by __str__ in a style useful for printing in Latex, 
+    Creates string used by __str__ in a style useful for printing in Latex,
     as a value with error, in brackets multiplied by a power of ten. (ie.
     15+/-0.3 is (150 \pm 3)\e-1. Where Latex parses \pm as +\- and \e as
     *10**-1)
     '''
-    if method is None: 
+    if method is None:
         mean = self.mean
         std = self.std
-    elif method == 'MC': 
+    elif method == 'MC':
         [mean, std] = self.MC
-    elif method == 'MinMax': 
+    elif method == 'MinMax':
         [mean, std] = self.MinMax
     flag = True
     i = 0
-    if Measurement.figs is not None: 
+    if Measurement.figs is not None:
         value = abs(mean)
-        while(flag): 
-            if value == 0: 
+        while(flag):
+            if value == 0:
                 std = int(std/10**i//1)
                 mean = int(mean/10**i//1)
                 return "(%d \pm %d)\e%d" % (mean, std, i)
-            if value < 1: 
-                value*= 10
+            if value < 1:
+                value *= 10
                 i -= 1
-            elif value  >= 10: 
-                value/= 10
+            elif value >= 10:
+                value /= 10
                 i += 1
             elif value >= 1 and value < 10:
                 flag = False
@@ -633,26 +635,27 @@ def tex_print(self, method = None):
         mean = mean*10**-i*10**(Measurement.figs-1)
         return "(%d \pm %d)\e%d" % (mean, std, i-Measurement.figs + 1)
 
-    else: 
+    else:
         value = abs(std)
-        while(flag): 
-            if value == 0: 
+        while(flag):
+            if value == 0:
                 std = int(std)
                 mean = int(mean)
                 return "(%d \pm %d)\e%d" % (mean, std, i)
-            elif value < 1: 
+            elif value < 1:
                 value *= 10
                 i -= 1
-            elif value  >= 10: 
-                value/= 10
+            elif value >= 10:
+                value /= 10
                 i += 1
-            elif value  >= 1 and value < 10: 
+            elif value >= 1 and value < 10:
                 flag = False
         std = int(std/10**i)
         mean = int(mean/10**i)
         return "(%d \pm %d)\e%d" % (mean, std, (i))
-    
-def def_print(self, method = None): 
+
+
+def def_print(self, method=None):
     '''
     Returns string used by __str__ as two numbers representing mean and error
     to either the first non-zero digit of error or to a specified number of
@@ -660,81 +663,83 @@ def def_print(self, method = None):
     '''
     flag = True
     i = 0
-    if method is None: 
+    if method is None:
         mean = self.mean
         std = self.std
-    elif method == 'MC': 
+    elif method == 'MC':
         [mean, std] = self.MC
-    elif method == 'MinMax': 
+    elif method == 'MinMax':
         [mean, std] = self.MinMax
-    
-    if Measurement.figs is not None: 
+
+    if Measurement.figs is not None:
         value = abs(mean)
-        while(flag): 
-            if value == 0: 
+        while(flag):
+            if value == 0:
                 flag = False
-            elif value < 1: 
-                value*= 10
+            elif value < 1:
+                value *= 10
                 i += 1
-            elif value  >= 10: 
-                value/= 10
+            elif value >= 10:
+                value /= 10
                 i -= 1
-            elif value  >= 1 and value <= 10: 
+            elif value >= 1 and value <= 10:
                 flag = False
         figs = Measurement.figs+i-1
-        if figs > 0: 
+        if figs > 0:
             n = '%d' % (figs)
             n = "%."+n+"f"
-        else: 
+        else:
             n = '%.0f'
         std = float(round(std, i))
         mean = float(round(mean, i))
         return n % (mean)+" +/- "+n % (std)
-    else: 
+    else:
         value = abs(std)
-        while(flag): 
-            if value == 0: 
+        while(flag):
+            if value == 0:
                 flag = False
-            elif value < 1: 
-                value*= 10
+            elif value < 1:
+                value *= 10
                 i += 1
-            elif value  >= 10: 
-                value/= 10
+            elif value >= 10:
+                value /= 10
                 i -= 1
-            elif value  >= 1 and value < 10: 
+            elif value >= 1 and value < 10:
                 flag = False
-        if i > 0: 
+        if i > 0:
             n = '%d' % (i)
             n = "%."+n+"f"
-        else: 
+        else:
             n = '%.0f'
         std = float(round(std, i))
         mean = float(round(mean, i))
         return n % (mean)+" +/- "+n % (std)
 
-def sci_print(self, method = None): 
+
+def sci_print(self, method=None):
     '''
-    Returns string used by __str__ as two numbers representing mean and 
-    error, each in scientific notation to a specified numebr of significant 
+    Returns string used by __str__ as two numbers representing mean and
+    error, each in scientific notation to a specified numebr of significant
     figures, or 3 if none is given.
     '''
-    if method is None: 
+    if method is None:
         mean = self.mean
         std = self.std
-    elif method == 'MC': 
+    elif method == 'MC':
         [mean, std] = self.MC
-    elif method == 'MinMax': 
+    elif method == 'MinMax':
         [mean, std] = self.MinMax
-        
-    if Measurement.figs is not None: 
+
+    if Measurement.figs is not None:
         figs = Measurement.figs
-    else: 
+    else:
         figs = 3
     n = figs-1
     n = '{: .'+'%d' % (n)+'e}'
     return n.format(mean)+'+/-'+n.format(std)
-    
-def reset_variables(): 
+
+
+def reset_variables():
     '''
     Resets the ID number, directories and methods to their original values.
     Useful in Jupyter Notebooks if variables were unintentionally repeated.
@@ -743,7 +748,7 @@ def reset_variables():
     Function.id_number = 0
     Measurement.register = {}
     Measurement.formula_register = {}
-    Measurement.method = "Derivative" # Default error propogation method
-    Measurement.mcTrials = 10000 # Number of trial in Monte Carlo simulation
+    Measurement.method = "Derivative"  # Default error propogation method
+    Measurement.mcTrials = 10000  # Number of trial in Monte Carlo simulation
     Measurement.style = "Default"
     Measurement.figs = 3
