@@ -294,8 +294,8 @@ class Measurement:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        from operations import sin, cos, tan, csc, sec, cot, exp, log, add,
-        sub, mul, div, power
+        from operations import sin, cos, tan, csc, sec, cot, exp, log, add,\
+            sub, mul, div, power
         op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc',
                      sec: 'sec', cot: 'cot', exp: 'exp', log: 'log',
                      add: '+', sub: '-', mul: '*', div: '/', power: '**', }

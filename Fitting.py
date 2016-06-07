@@ -26,7 +26,9 @@ class Plot:
     fits = {
             'linear': lambda x, pars: pars[0]+pars[1]*x,
             'exponential': lambda x, pars: exp(pars[0]+pars[1]*x),
-            'polynomial': lambda x, pars: Plot.polynomial(x, pars), }
+            'polynomial': polynomial,
+            'gaussian': lambda x, pars: pars[0]*exp(
+                        (x-pars[1])**2/2/pars[2]**2)}
 
     def __init__(self, x, y, xerr=None, yerr=None):
         '''
@@ -36,17 +38,21 @@ class Plot:
         data_transform(self, x, y, xerr, yerr)
 
         self.colors = {
-            'Data Points': 'red', 'Function': ('blue', ), 'Error': 'red'}
+            'Data Points': 'red', 'Function': ['blue', 'green', 'orange'],
+            'Error': 'red'}
         self.fit_method = 'linear'
         self.fit_function = Plot.fits[self.fit_method] # analysis:ignore
         self.plot_para = {
             'xscale': 'linear', 'yscale': 'linear', 'filename': 'Plot'}
-        self.flag = {'fitted':False, 'residuals':False, } # analysis:ignore
+        self.flag = {'fitted': False, 'residuals': False,
+                     'Manual': False} # analysis:ignore
         self.attributes = {
             'title': x.name+' versus '+y.name, 'xaxis': 'x '+self.xunits,
             'yaxis': 'y '+self.yunits, 'data': 'Experiment', 'function': (), }
         self.fit_parameters = ()
         self.yres = None
+        self.function_counter = 0
+        self.manual_data = ()
 
     def residuals(self):
 
@@ -60,7 +66,14 @@ class Plot:
 
         self.flag['residuals'] = True
 
-    def fit(self, model=None, guess=[1, 1]):
+    def fit(self, model=None, guess=None):
+
+        if guess is None:
+            if model == 'linear':
+                guess = [1, 1]
+            elif model[0] is 'p':
+                degree = model[len(model)-1]
+                guess = [1]*degree
 
         if model is not None:
             if type(model) is not str:
@@ -105,28 +118,30 @@ class Plot:
             tools="pan, box_zoom, reset, save, wheel_zoom",
             width=600, height=400,
             y_axis_type=self.plot_para['yscale'],
-            y_range=[min(self.ydata)-1.1*max(self.yerr),
-                     max(self.ydata)+1.1*max(self.yerr)],
+            y_range=[min(self.ydata)-2*max(self.yerr),
+                     max(self.ydata)+2*max(self.yerr)],
             x_axis_type=self.plot_para['xscale'],
-            x_range=[min(self.xdata)-1.1*max(self.xerr),
-                     max(self.xdata)+1.1*max(self.xerr)],
+            x_range=[min(self.xdata)-2*max(self.xerr),
+                     max(self.xdata)+2*max(self.xerr)],
             title=self.attributes['title'],
             x_axis_label=self.attributes['xaxis'],
             y_axis_label=self.attributes['yaxis'],
         )
 
-        #  add datapoints with errorbars
-        p.circle(
-            self.xdata, self.ydata, legend=self.attributes['data'],
-            color=self.colors['Data Points'], size=2)
+        # add datapoints with errorbars
         error_bar(self, p)
 
-        for func in self.attributes['function']:
-            _plot_function(self, p, self.xdata, func)
+        if self.flag['Manual'] is True:
+            error_bar(self, p,
+                      xdata=self.manual_data[0], ydata=self.manual_data[1])
 
         if self.flag['fitted'] is True:
-            _plot_function(self, p, self.xdata,
-                           lambda x: self.fit_function(x, self.pars_fit))
+            _plot_function(
+                self, p, self.xdata,
+                lambda x: self.fit_function(x, self.fit_parameters),
+                color=self.colors['Function'][self.function_counter])
+
+            self.function_counter += 1
 
             if self.fit_parameters[1].mean > 0:
                 p.legend.location = "top_left"
@@ -136,6 +151,12 @@ class Plot:
         else:
             p.legend.location = 'top_right'
 
+        for func in self.attributes['function']:
+            _plot_function(
+                self, p, self.xdata, func,
+                color=self.colors['Function'][self.function_counter])
+            self.function_counter += 1
+
         if self.flag['residuals'] is False:
             show(p)
         else:
@@ -144,17 +165,16 @@ class Plot:
                 tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=600, height=200,
                 y_axis_type='linear',
-                y_range=[min(self.yres)-1.1*max(self.yerr),
-                         max(self.yres)+1.1*max(self.yerr)],
+                y_range=[min(self.yres)-2*max(self.yerr),
+                         max(self.yres)+2*max(self.yerr)],
+                x_range=[min(self.xdata)-2*max(self.xerr),
+                         max(self.xdata)+2*max(self.xerr)],
                 title="Residual Plot",
                 x_axis_label=self.attributes['xaxis'],
                 y_axis_label='Residuals'
             )
 
-            #  add some renderers
-            p2.circle(self.xdata, self.yres, color="black", size=2)
-
-            #  plot y errorbars
+            # plot y errorbars
             error_bar(self, p2, residual=True)
 
             gp_alt = gridplot([[p], [p2]])
@@ -165,8 +185,13 @@ class Plot:
             self.colors['Data Points'] = data
         if error is not None:
             self.colors['Error'] = error
-        if line is not None:
-            self.colors['Function'] = line
+        if type(line) is str:
+            self.colors['Function'][0] = line
+        elif len(line) <= 3:
+            for i in range(len(line)):
+                self.colors['Function'][i] = line
+        elif len(line) > 3 and type(line) in ARRAY:
+            self.colors['Function'] = list(line)
 
     def set_name(self, title=None, xlabel=None, ylabel=None, data_name=None, ):
         if title is not None:
@@ -178,9 +203,15 @@ class Plot:
         if data_name is not None:
             self.attributes['Data'] = data_name
 
+    def manual_errorbar(self, data, function):
+        from operations import check_values
+        data, function = check_values(data, function)
+        self.manual_data = (data, function(data))
+        self.flag['Manual'] = True
 
-def error_bar(self, p, residual=False):
-    #  create the coordinates for the errorbars
+
+def error_bar(self, p, residual=False, xdata=None, ydata=None):
+    # create the coordinates for the errorbars
     err_x1 = []
     err_d1 = []
     err_y1 = []
@@ -190,12 +221,28 @@ def error_bar(self, p, residual=False):
     err_b1 = []
     err_b2 = []
 
-    _xdata = self.xdata
+    if xdata is None:
+        _xdata = self.xdata
+        x_data = self.xdata
+    else:
+        _xdata = [xdata.mean]
+        x_data = [xdata.mean]
+
     if residual is True:
         _ydata = self.yres
-    else:
+        y_res = self.yres
+        _yerr = self.yerr
+
+    elif ydata is None:
         _ydata = self.ydata
-    _yerr = self.yerr
+        y_data = self.ydata
+        _yerr = self.yerr
+    else:
+        _ydata = [ydata.mean]
+        y_data = [ydata.mean]
+        _yerr = [ydata.std]
+
+    p.circle(_xdata, _ydata, color=self.colors['Data Points'], size=2)
 
     for _xdata, _ydata, _yerr in zip(_xdata, _ydata, _yerr):
         err_x1.append((_xdata, _xdata))
@@ -205,16 +252,28 @@ def error_bar(self, p, residual=False):
 
     p.multi_line(err_x1, err_d1, color='red')
     p.rect(
-        x=[*self.xdata, *self.xdata], y=[*err_t1, *err_b1],
+        x=[*x_data, *x_data], y=[*err_t1, *err_b1],
         height=0.2, width=5,
         height_units='screen', width_units='screen', color='red')
 
-    _xdata = self.xdata
+    if xdata is None:
+        _xdata = self.xdata
+        x_data = self.xdata
+        _xerr = self.xerr
+    else:
+        _xdata = [xdata.mean]
+        x_data = [xdata.mean]
+        _xerr = [xdata.std]
+
     if residual is True:
         _ydata = self.yres
-    else:
+        y_res = self.yres
+    elif ydata is None:
         _ydata = self.ydata
-    _xerr = self.xerr
+        y_data = self.ydata
+    else:
+        _ydata = [ydata.mean]
+        y_data = [ydata.mean]
 
     for _ydata, _xdata, _xerr in zip(_ydata, _xdata, _xerr):
         err_y1.append((_ydata, _ydata))
@@ -224,13 +283,15 @@ def error_bar(self, p, residual=False):
 
     p.multi_line(err_d2, err_y1, color='red')
     if residual is True:
+        p.circle(x_data, y_res, color=self.colors['Data Points'], size=2)
+
         p.rect(
-            x=[*err_t2, *err_b2], y=[*self.yres, *self.yres],
+            x=[*err_t2, *err_b2], y=[*y_res, *y_res],
             height=5, width=0.2, height_units='screen', width_units='screen',
             color=self.colors['Data Points'])
     else:
         p.rect(
-            x=[*err_t2, *err_b2], y=[*self.ydata, *self.ydata],
+            x=[*err_t2, *err_b2], y=[*y_data, *y_data],
             height=5, width=0.2, height_units='screen', width_units='screen',
             color=self.colors['Data Points'])
 
@@ -298,7 +359,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
     self.yunits = yunits
 
 
-def _plot_function(self, p, xdata, theory, n=1000):
+def _plot_function(self, p, xdata, theory, n=1000, color='red'):
     n = 1000
     xrange = np.linspace(min(xdata), max(xdata), n)
     x_theory = theory(min(xdata))
@@ -310,7 +371,7 @@ def _plot_function(self, p, xdata, theory, n=1000):
             x_mid.append(theory(xrange[i]))
         p.line(
             xrange, x_mid, legend='Theoretical',
-            line_color=self.colors['Function'])
+            line_color=color)
     else:
         x_max = []
         x_min = []
@@ -321,11 +382,12 @@ def _plot_function(self, p, xdata, theory, n=1000):
             x_min.append(x_theory.mean-x_theory.std)
         p.line(
             xrange, x_mid, legend='Theoretical',
-            line_color=self.colors['Function'])
+            line_color=color)
 
         xrange_reverse = list(reversed(xrange))
         x_min_reverse = list(reversed(x_min))
         p.patch(
             x=[*xrange, *xrange_reverse], y=[*x_max, *x_min_reverse],
-            fill_alpha=0.3, fill_color='red', line_color='red',
-            line_dash='dashed', line_alpha=0.3)
+            fill_alpha=0.3, fill_color=color,
+            line_color=color, line_dash='dashed',
+            line_alpha=0.3)
