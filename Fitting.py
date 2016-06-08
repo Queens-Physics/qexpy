@@ -1,7 +1,7 @@
 from scipy.optimize import curve_fit
 import numpy as np
 from uncertainties import Measured as M
-from math import exp
+from math import pi
 
 from bokeh.plotting import figure, show
 from bokeh.io import output_file, gridplot
@@ -23,18 +23,37 @@ class Plot:
             n += 1
         return poly
 
+    def gauss(x, pars):
+        from numpy import exp
+        mean, std = pars
+        return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
+
     fits = {
-            'linear': lambda x, pars: pars[0]+pars[1]*x,
-            'exponential': lambda x, pars: exp(pars[0]+pars[1]*x),
+            # 'linear': lambda x, pars: pars[0]+pars[1]*x,
+            'linear': polynomial,
+            'exponential': lambda x, pars: np.exp(pars[0]+pars[1]*x),
             'polynomial': polynomial,
-            'gaussian': lambda x, pars: pars[0]*exp(
-                        (x-pars[1])**2/2/pars[2]**2)}
+            'gaussian': gauss}
+
+    def mgauss(x, pars):
+        from operations import exp
+        mean, std = pars
+        return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
+
+    mfits = {
+            # 'linear': lambda x, pars: pars[0]+pars[1]*x,
+            'linear': polynomial,
+            'exponential': lambda x, pars: np.exp(pars[0]+pars[1]*x),
+            'polynomial': polynomial,
+            'gaussian': mgauss}
 
     def __init__(self, x, y, xerr=None, yerr=None):
         '''
         Object which can be plotted.
         '''
         self.pars_fit = []
+        self.pars_err = []
+        self.pcov = []
         data_transform(self, x, y, xerr, yerr)
 
         self.colors = {
@@ -42,6 +61,7 @@ class Plot:
             'Error': 'red'}
         self.fit_method = 'linear'
         self.fit_function = Plot.fits[self.fit_method] # analysis:ignore
+        self.mfit_function = Plot.mfits[self.fit_method]
         self.plot_para = {
             'xscale': 'linear', 'yscale': 'linear', 'filename': 'Plot'}
         self.flag = {'fitted': False, 'residuals': False,
@@ -72,37 +92,45 @@ class Plot:
             if model == 'linear':
                 guess = [1, 1]
             elif model[0] is 'p':
-                degree = model[len(model)-1]
+                degree = int(model[len(model)-1]) + 1
                 guess = [1]*degree
+            elif model is 'gaussian':
+                guess = [1]*2
 
         if model is not None:
             if type(model) is not str:
                 self.fit_function = model
                 self.flag['Unknown Function'] = True
+            elif model[0] is 'p' and model[1] is 'o':
+                model = 'polynomial'
             else:
                 self.fit_method = model
+
+        self.fit_function = Plot.fits[self.fit_method]
 
         def model(x, *pars):
             return self.fit_function(x, pars)
 
         pars_guess = guess
 
-        self.pars_fit, pcov = curve_fit(
+        self.pars_fit, self.pcov = curve_fit(
                                     model, self.xdata, self.ydata,
                                     sigma=self.yerr, p0=pars_guess)
-        pars_err = np.sqrt(np.diag(pcov))
+        self.pars_err = np.sqrt(np.diag(self.pcov))
+        for i in range(len(self.pars_fit)):
+            if i is 0:
+                name = 'intercept'
+            elif i is 1:
+                name = 'slope'
+            else:
+                name = 'parameter %d' % (i)
 
-        slope = M(self.pars_fit[1], pars_err[1])
-        slope.rename('Slope')
-        intercept = M(self.pars_fit[0], pars_err[0])
-        intercept.rename('Intercept')
-
-        self.fit_parameters = (intercept, slope, )
-
+            self.fit_parameters += (M(self.pars_fit[i], self.pars_err[i],
+                                      name=name),)
         self.flag['fitted'] = True
 
     def function(self, function):
-        self.attributes['function'] += function
+        self.attributes['function'] += (function,)
 
     def show(self):
         '''
@@ -137,9 +165,10 @@ class Plot:
                       xdata=self.manual_data[0], ydata=self.manual_data[1])
 
         if self.flag['fitted'] is True:
+            self.mfit_function = Plot.mfits[self.fit_method]
             _plot_function(
                 self, p, self.xdata,
-                lambda x: self.fit_function(x, self.fit_parameters),
+                lambda x: self.mfit_function(x, self.fit_parameters),
                 color=self.colors['Function'][self.function_counter])
 
             self.function_counter += 1
@@ -147,7 +176,6 @@ class Plot:
             if self.fit_parameters[1].mean > 0:
                 p.legend.orientation = "top_left"
             else:
-                print(self.fit_parameters[1].mean)
                 p.legend.orientation = "top_right"
         else:
             p.legend.orientation = 'top_right'
@@ -361,7 +389,6 @@ def data_transform(self, x, y, xerr=None, yerr=None):
 
 
 def _plot_function(self, p, xdata, theory, n=1000, color='red'):
-    n = 1000
     xrange = np.linspace(min(xdata), max(xdata), n)
     x_theory = theory(min(xdata))
     x_mid = []

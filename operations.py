@@ -64,6 +64,9 @@ def check_formula(operation, a, b=None, func_flag=False):
         mul: '*', div: '/', power: '**', }
     op = op_string[operation]
 
+    # check_formula is not behanving properly, requires overwrite, disabled
+    return None
+
     if func_flag is False:
         if a.info["Formula"] + op + b.info["Formula"] in \
                 Measurement.formula_register:
@@ -729,7 +732,7 @@ def exp(x):
 
     if x.info["Data"] is not None:
         import numpy
-        result.info["Data"] = numpy.divide(numpy.exp(x.info["Data"]))
+        result.info["Data"] = numpy.exp(x.info["Data"])
 
     result.first_der.update(first_der)
     result._update_info(exp, x, func_flag=1)
