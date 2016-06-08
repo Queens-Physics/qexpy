@@ -63,7 +63,10 @@ class Measurement:
                     all(
                     isinstance(n, Measurement.CONSTANT)for n in args[1]):
                 mean_vals = args[0]
-                std_vals = args[1]
+                if len(args[1]) == 1:
+                    std_vals = args[1]*len(args[0])
+                else:
+                    std_vals = args[1]
                 (self.mean, self.std) = weighted_variance(mean_vals, std_vals)
                 data = mean_vals
                 error_data = std_vals

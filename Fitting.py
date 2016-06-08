@@ -111,7 +111,8 @@ class Plot:
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
 
-        output_file(self.plot_para['filename'])
+        output_file(self.plot_para['filename']+'.html',
+                    title=self.attributes['title'])
 
         # create a new plot
         p = figure(
@@ -144,12 +145,12 @@ class Plot:
             self.function_counter += 1
 
             if self.fit_parameters[1].mean > 0:
-                p.legend.location = "top_left"
+                p.legend.orientation = "top_left"
             else:
                 print(self.fit_parameters[1].mean)
-                p.legend.location = "top_right"
+                p.legend.orientation = "top_right"
         else:
-            p.legend.location = 'top_right'
+            p.legend.orientation = 'top_right'
 
         for func in self.attributes['function']:
             _plot_function(
