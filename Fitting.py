@@ -118,10 +118,16 @@ class Plot:
                                     sigma=self.yerr, p0=pars_guess)
         self.pars_err = np.sqrt(np.diag(self.pcov))
         for i in range(len(self.pars_fit)):
-            if i is 0:
-                name = 'intercept'
-            elif i is 1:
-                name = 'slope'
+            if self.fit_method is 'gaussian':
+                if i is 0:
+                    name = 'mean'
+                elif i is 1:
+                    name = 'standard deviation'
+            elif self.fit_method is 'linear':
+                if i is 0:
+                    name = 'intercept'
+                elif i is 1:
+                    name = 'slope'
             else:
                 name = 'parameter %d' % (i)
 
