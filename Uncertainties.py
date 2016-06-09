@@ -732,14 +732,48 @@ def sci_print(self, method=None):
         [mean, std] = self.MC
     elif method == 'MinMax':
         [mean, std] = self.MinMax
-
+    flag = True
+    i = 0
     if Measurement.figs is not None:
-        figs = Measurement.figs
+        value = abs(mean)
+        while(flag):
+            if value == 0:
+                std = int(std/10**i//1)
+                mean = int(mean/10**i//1)
+                return "(%d \pm %d)\e%d" % (mean, std, i)
+            if value < 1:
+                value *= 10
+                i -= 1
+            elif value >= 10:
+                value /= 10
+                i += 1
+            elif value >= 1 and value < 10:
+                flag = False
+        std = std*10**-i*10**(Measurement.figs-1)
+        mean = mean*10**-i*10**(Measurement.figs-1)
+        return "(%d \pm %d)\e%d" % (mean, std, i-Measurement.figs + 1)
+
     else:
-        figs = 3
-    n = figs-1
-    n = '{: .'+'%d' % (n)+'e}'
-    return n.format(mean)+'+/-'+n.format(std)
+        value = abs(std)
+        while(flag):
+            if value == 0:
+                std = int(std)
+                mean = int(mean)
+                return "(%d \pm %d)\e%d" % (mean, std, i)
+            elif value < 1:
+                value *= 10
+                i -= 1
+            elif value >= 10:
+                value /= 10
+                i += 1
+            elif value >= 1 and value < 10:
+                flag = False
+        std = int(std/10**i)
+        mean = int(mean/10**i)
+        if i is not 0:
+            return "(%d \pm %d)*10**%d" % (mean, std, (i))
+        else:
+            return "(%d \pm %d)" % (mean, std)
 
 
 def reset_variables():

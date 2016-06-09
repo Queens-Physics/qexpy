@@ -4,7 +4,7 @@ from uncertainties import Measured as M
 from math import pi
 
 from bokeh.plotting import figure, show
-from bokeh.io import output_file, gridplot
+from bokeh.io import output_file, output_notebook, gridplot
 
 ARRAY = (list, tuple, )
 
@@ -138,15 +138,17 @@ class Plot:
     def function(self, function):
         self.attributes['function'] += (function,)
 
-    def show(self):
+    def show(self, output='inline'):
         '''
         Method which creates and displays plot.
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-
-        output_file(self.plot_para['filename']+'.html',
-                    title=self.attributes['title'])
+        if output is 'inline':
+            output_notebook()
+        elif output is 'file':
+            output_file(self.plot_para['filename']+'.html',
+                        title=self.attributes['title'])
 
         # create a new plot
         p = figure(

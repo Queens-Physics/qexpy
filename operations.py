@@ -125,7 +125,12 @@ def add(a, b):
 
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
-        result.info["Data"] = numpy.add(a.info["Data"], b.info["Data"])
+        try:
+            numpy.add(a.info["Data"], b.info["Data"])
+        except ValueError:
+            result.info["Data"] = None
+        else:
+            result.info["Data"] = numpy.add(a.info["Data"], b.info["Data"])
 
     result.unit = a.units
     result.first_der.update(first_der)
@@ -172,7 +177,14 @@ def sub(a, b):
 
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
-        result.info["Data"] = numpy.subtract(a.info["Data"], b.info["Data"])
+        try:
+            numpy.subtract(a.info["Data"], b.info["Data"])
+        except ValueError:
+            result.info["Data"] = None
+        else:
+            result.info["Data"] = numpy.subtract(a.info["Data"],
+                                                 b.info["Data"])
+
     result.units = a.units
     result.first_der.update(first_der)
     result._update_info(sub, a, b)
@@ -218,7 +230,13 @@ def mul(a, b):
 
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
-        result.info["Data"] = numpy.multiply(a.info["Data"], b.info["Data"])
+        try:
+            numpy.multiply(a.info["Data"], b.info["Data"])
+        except ValueError:
+            result.info["Data"] = None
+        else:
+            result.info["Data"] = numpy.multiply(a.info["Data"],
+                                                 b.info["Data"])
 
     units = a.units
     for key in units:
@@ -250,9 +268,13 @@ def div(a, b):
 
     # Addition by Min-Max method
     elif Measurement.method == "Min Max":
-        mean = (b.mean*a.std + a.mean*b.std)/(b.mean**2*b.std**2)
-        std = (a.mean*b.mean + a.std*b.std + 2*a.mean*b.std + 2*b.mean*a.std)
-        result = Function(mean, std)
+        if b.mean is not 0 and b.std is not 0:
+            mean = (b.mean*a.std + a.mean*b.std)/(b.mean**2*b.std**2)
+            std = (a.mean*b.mean +
+                   a.std*b.std + 2*a.mean*b.std + 2*b.mean*a.std)
+            result = Function(mean, std)
+        else:
+            result = None
 
     # If method specification is bad,  MC method is used
     elif Measurement.method == 'Monte Carlo':
@@ -265,13 +287,25 @@ def div(a, b):
         result = Function(mean, std)
         MC = Measurement.monte_carlo(lambda a, b: a/b, a, b)
         result.MC = [MC[0], MC[1]]
-        mean = (b.mean*a.std + a.mean*b.std)/(b.mean**2*b.std**2)
-        std = (a.mean*b.mean + a.std*b.std + 2*a.mean*b.std + 2*b.mean*a.std)
+
+        if b.mean is not 0 and b.std is not 0:
+            mean = (b.mean*a.std + a.mean*b.std)/(b.mean**2*b.std**2)
+            std = (a.mean*b.mean +
+                   a.std*b.std + 2*a.mean*b.std + 2*b.mean*a.std)
+        else:
+            mean = None
+            std = None
+
         result.MinMax = [mean, std]
 
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy
-        result.info["Data"] = numpy.divide(a.info["Data"], b.info["Data"])
+        try:
+            numpy.divide(a.info["Data"], b.info["Data"])
+        except ValueError:
+            result.info["Data"] = None
+        else:
+            result.info["Data"] = numpy.divide(a.info["Data"], b.info["Data"])
 
     units = a.units
     for key in units:
