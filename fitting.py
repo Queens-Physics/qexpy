@@ -10,12 +10,18 @@ ARRAY = (list, tuple, )
 
 
 class Plot:
-    '''
-    Class of objects which can be plotted to display measurement objects
-    which contain data and error data.
+    '''Objects which contain a dataset and any number of fuctions which can
+    be shown on a Bokeh plot
+
+    Plot objects are indirectly dependent on Bokeh plots. Plot objects
+    contain data and associated error lists, as well as functions or fits
+    of the data. These points are used to contruct Bokeh plots by using
+    custom functions to draw a series of circles, lines, and rectangles
+    which mimic errorbars and data points.
     '''
 
     def polynomial(x, pars):
+        '''Function for a polynomial of nth order, requiring n pars.'''
         poly = 0
         n = 0
         for par in pars:
@@ -24,6 +30,7 @@ class Plot:
         return poly
 
     def gauss(x, pars):
+        '''Fucntion of gaussian distribution'''
         from numpy import exp
         mean, std = pars
         return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
@@ -36,6 +43,7 @@ class Plot:
             'gaussian': gauss}
 
     def mgauss(x, pars):
+        '''Altered gaussian function to handle measurement objects.'''
         from operations import exp
         mean, std = pars
         return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
@@ -49,7 +57,13 @@ class Plot:
 
     def __init__(self, x, y, xerr=None, yerr=None):
         '''
-        Object which can be plotted.
+        Constructor requiring two measeurement objects, or lists of data and
+        error values.
+
+        Plotting objects do not create Bokeh objects until shown or if the
+        Bokeh object is otherwise requested. Class methods built here are
+        used to record the data to be plotted and track what the user has
+        requested to be plotted.
         '''
         self.pars_fit = []
         self.pars_err = []
@@ -75,7 +89,7 @@ class Plot:
         self.manual_data = ()
 
     def residuals(self):
-
+        '''Request residual output for plot.'''
         if self.flag['fitted'] is False:
             Plot.fit(self.fit_function)
 
@@ -87,7 +101,17 @@ class Plot:
         self.flag['residuals'] = True
 
     def fit(self, model=None, guess=None):
+        '''Fit data, by least squares method, to a model. Model must be
+        provided or specified from built in models. User specified models
+        require and inital guess for the fit parameters.
 
+        By default a linear fit is used, if the user enters a string
+        for another fit model which is built-in, that model is used.
+        If the user provides a fit function, with two arguments, the first
+        for the independent variable, and the second for the list of
+        parameters, an inital guess of the parameters in the form of a
+        list of values must be provided.
+        '''
         if guess is None:
             if model == 'linear':
                 guess = [1, 1]
@@ -136,6 +160,11 @@ class Plot:
         self.flag['fitted'] = True
 
     def function(self, function):
+        '''Adds a specified function to the list of functions to be plotted.
+
+        Functions are only plotted when a Bokeh object is created, thus user
+        specified functions are stored to be plotted later.
+        '''
         self.attributes['function'] += (function,)
 
     def show(self, output='inline'):
@@ -218,19 +247,29 @@ class Plot:
             show(gp_alt)
 
     def set_colors(self, data=None, error=None, line=None):
+        '''Method to changes colors of data or function lines.
+
+        User can specify a list or tuple of color strings for the data points
+        or functions, as multiple datasets and functions will be plotted with
+        different functions.
+        '''
         if data is not None:
             self.colors['Data Points'] = data
         if error is not None:
             self.colors['Error'] = error
         if type(line) is str:
             self.colors['Function'][0] = line
-        elif len(line) <= 3:
-            for i in range(len(line)):
-                self.colors['Function'][i] = line
-        elif len(line) > 3 and type(line) in ARRAY:
-            self.colors['Function'] = list(line)
+            if len(line) <= 3:
+                for i in range(len(line)):
+                    self.colors['Function'][i] = line
+            elif len(line) > 3 and type(line) in ARRAY:
+                self.colors['Function'] = list(line)
 
     def set_name(self, title=None, xlabel=None, ylabel=None, data_name=None, ):
+        '''Change the labels for plot axis, datasets, or the plot itself.
+
+        Method simply overwrites the automatically generated names used in
+        the Bokeh plot.'''
         if title is not None:
             self.attributes['title'] = title
         if xlabel is not None:
@@ -241,6 +280,7 @@ class Plot:
             self.attributes['Data'] = data_name
 
     def manual_errorbar(self, data, function):
+        '''Manually specify the location of a datapoint with errorbars.'''
         from operations import check_values
         data, function = check_values(data, function)
         self.manual_data = (data, function(data))
@@ -248,7 +288,15 @@ class Plot:
 
 
 def error_bar(self, p, residual=False, xdata=None, ydata=None):
-    # create the coordinates for the errorbars
+    '''Function to create a Bokeh glyph which appears to be a datapoint with
+    an errorbar.
+
+    The datapoint is created using a Bokeh circle glyph. The errobars consist
+    of two lines spanning error range of each datapoint. The errorbar caps
+    are rectangles at each end of the errorline. The errorbar caps are
+    rectangles whose size is based on Bokeh 'size' which is based on screen
+    size and thus does not get larger when zooming in on a plot.
+    '''
     err_x1 = []
     err_d1 = []
     err_y1 = []
@@ -334,6 +382,14 @@ def error_bar(self, p, residual=False, xdata=None, ydata=None):
 
 
 def data_transform(self, x, y, xerr=None, yerr=None):
+    '''Function to interpret user inputted data into a form compatible with
+    Plot objects.
+
+    Based on various input cases, the user given data is transformed into two
+    lists for x and y containing the data values and errors. These values and
+    any values included in measurement objects, should those objects be
+    inputted, are stored as object attributes. Information such as data units,
+    and the name of datasets are stored.'''
     if xerr is None:
         xdata = x.info['Data']
         x_error = x.info['Error']
@@ -397,6 +453,12 @@ def data_transform(self, x, y, xerr=None, yerr=None):
 
 
 def _plot_function(self, p, xdata, theory, n=1000, color='red'):
+    '''Semi-privite function to plot a function over a given range of values.
+
+    Curves are generated by creating a series of lines between points, the
+    parameter n is the number of points. Line color is given by the plot
+    attribute containing a list of colors which are assigned uniquly to a
+    curve.'''
     xrange = np.linspace(min(xdata), max(xdata), n)
     x_theory = theory(min(xdata))
     x_mid = []

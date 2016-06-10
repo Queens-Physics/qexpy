@@ -636,7 +636,10 @@ def tex_print(self, method=None):
                 flag = False
         std = std*10**-i*10**(Measurement.figs-1)
         mean = mean*10**-i*10**(Measurement.figs-1)
-        return "(%d \pm %d)\e%d" % (mean, std, i-Measurement.figs + 1)
+        if i-Measurement.figs is not -1:
+            return "(%d \pm %d)\e%d" % (mean, std, i-Measurement.figs + 1)
+        else:
+            return "(%d \pm %d)" % (mean, std)
 
     else:
         value = abs(std)
@@ -655,7 +658,10 @@ def tex_print(self, method=None):
                 flag = False
         std = int(std/10**i)
         mean = int(mean/10**i)
-        return "(%d \pm %d)\e%d" % (mean, std, (i))
+        if i is not 0:
+            return "(%d \pm %d)\e%d" % (mean, std, (i))
+        else:
+            return "(%d \pm %d)" % (mean, std)
 
 
 def def_print(self, method=None):
@@ -751,7 +757,10 @@ def sci_print(self, method=None):
                 flag = False
         std = std*10**-i*10**(Measurement.figs-1)
         mean = mean*10**-i*10**(Measurement.figs-1)
-        return "(%d \pm %d)\e%d" % (mean, std, i-Measurement.figs + 1)
+        if i-Measurement.figs is not -1:
+            return "(%d \pm %d)\e%d" % (mean, std, i-Measurement.figs + 1)
+        else:
+            return "(%d \pm %d)" % (mean, std)
 
     else:
         value = abs(std)
