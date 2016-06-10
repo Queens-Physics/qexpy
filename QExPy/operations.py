@@ -1,6 +1,6 @@
-from uncertainties import Measurement
-from uncertainties import Function
-from uncertainties import Constant
+from QExPy.uncertainties import Measurement
+from QExPy.uncertainties import Function
+from QExPy.uncertainties import Constant
 from numpy import int64, float64
 CONSTANT = (int, float, int64, float64, )
 
@@ -192,6 +192,7 @@ def sub(a, b):
 
 
 def mul(a, b):
+    '''Returns the product of two values with propagated errors.'''
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
@@ -249,6 +250,7 @@ def mul(a, b):
 
 
 def div(a, b):
+    '''Returns the quotient of two values with propagated errors.'''
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
@@ -318,6 +320,7 @@ def div(a, b):
 
 
 def power(a, b):
+    '''Returns the power of two values with propagated errors.'''
     import math as m
 
     a, b = check_values(a, b)
@@ -384,6 +387,7 @@ def power(a, b):
 
 
 def sin(x):
+    '''Returns the sine of a measurement with propagated errors'''
     import math as m
 
     x, = check_values(x)
@@ -430,6 +434,7 @@ def sin(x):
 
 
 def cos(x):
+    '''Returns the cosine of a measurement with propagated errors'''
     import math as m
 
     x, = check_values(x)
@@ -476,6 +481,7 @@ def cos(x):
 
 
 def tan(x):
+    '''Returns the tangent of a measurement with propagated errors'''
     import math as m
 
     def Sec(x):
@@ -525,6 +531,7 @@ def tan(x):
 
 
 def atan(x):
+    '''Returns the arctangent of a measurement with propagated errors'''
     x, = check_values(x)
     first_der = {}
     from math import atan
@@ -570,6 +577,7 @@ def atan(x):
 
 
 def sec(x):
+    '''Returns the secant of a measurement with propagated errors'''
     import math as m
 
     def Csc(x):
@@ -623,6 +631,7 @@ def sec(x):
 
 
 def csc(x):
+    '''Returns the cosecant of a measurement with propagated errors'''
     import math as m
 
     def Cot(x):
@@ -676,6 +685,7 @@ def csc(x):
 
 
 def cot(x):
+    '''Returns the cotangent of a measurement with propagated errors'''
     import math as m
 
     def Cot(x):
@@ -729,6 +739,7 @@ def cot(x):
 
 
 def exp(x):
+    '''Returns the exponent of a measurement with propagated errors'''
     import math as m
 
     x, = check_values(x)
@@ -774,10 +785,12 @@ def exp(x):
 
 
 def e(value):
+    '''Returns the exponent of a measurement with propagated errors'''
     Measurement.exp(value)
 
 
 def log(x):
+    '''Returns the natural logarithm of a measurement with propagated errors'''
     import math as m
 
     x, = check_values(x)

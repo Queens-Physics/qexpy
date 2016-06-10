@@ -1,6 +1,6 @@
 from scipy.optimize import curve_fit
 import numpy as np
-from uncertainties import Measured as M
+from QExPy.uncertainties import Measured as M
 from math import pi
 
 from bokeh.plotting import figure, show
