@@ -1,5 +1,6 @@
-# QPhysSy
+# QExPy
 Scientific analysis package for Queen's Physics and Engineering Physics Students
 
-This package, designed for Python 3, will contain modules relating to the propogation of uncertainties, plotting of data,
-and analysis of undergraduate experiments in physics.
+QExPy or the Queen's Experimental Physics package is designed for Python 3 as well as in a iPython environment, specifically in a Jupyter Notebook environment. The aim of this package is to simplify the analysis of Physics labs by combining a measurement and the associated uncertainty into a single object, called a measurement. This object can then be operated on and used in a function while error propigation is handled by either the derivative formula, the min-max method, or the Monte Carlo method. Errors are propagated automatically and without any intervention by the user, other than creating a measurement object and using the appropriate function in the case of a sine, cosine, or any other elementary function.
+
+Furthermore, datasets can be plotted easily using the fitting module by providing a list of x and y data coordinates, or simply a measurement object. The user can then request a fit of this data, as well as a residual plot, and any other functions that should be shown on this plot. The plot is then created using Bokeh and displayed either in an iPython console or saved as a .html and shown on the default broswer.
