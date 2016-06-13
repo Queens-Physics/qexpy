@@ -1,6 +1,6 @@
 from scipy.optimize import curve_fit
 import numpy as np
-from uncertainties import Measured as M
+from QExPy.uncertainties import Measured as M
 from math import pi
 
 from bokeh.plotting import figure, show
@@ -44,7 +44,7 @@ class Plot:
 
     def mgauss(x, pars):
         '''Altered gaussian function to handle measurement objects.'''
-        from operations import exp
+        from QExPy.operations import exp
         mean, std = pars
         return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
 
@@ -279,7 +279,7 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        from operations import check_values
+        from QExPy.operations import check_values
         data, function = check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True

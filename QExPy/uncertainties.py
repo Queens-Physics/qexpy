@@ -297,8 +297,9 @@ class Measurement:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        from operations import sin, cos, tan, csc, sec, cot, exp, log, add,\
-            sub, mul, div, power
+        from QExPy.operations import sin, cos, tan, csc, sec, cot, exp, log,\
+            add, sub, mul, div, power
+
         op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc',
                      sec: 'sec', cot: 'cot', exp: 'exp', log: 'log',
                      add: '+', sub: '-', mul: '*', div: '/', power: '**',
@@ -380,47 +381,47 @@ class Measurement:
 # Operations on measurement objects
 
     def __add__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.add(self, other)
 
     def __radd__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.add(self, other)
 
     def __mul__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.mul(self, other)
 
     def __rmul__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.mul(self, other)
 
     def __sub__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.sub(self, other)
 
     def __rsub__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.sub(other, self)
 
     def __truediv__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.div(self, other)
 
     def __rtruediv__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.div(other, self)
 
     def __pow__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.power(self, other)
 
     def __rpow__(self, other):
-        import operations as op
+        import QExPy.operations as op
         return op.power(other, self)
 
     def __neg__(self):
-        import operations as op
+        import QExPy.operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -552,52 +553,52 @@ class Constant(Measurement):
 
 
 def sin(x):
-    import operations as op
+    import QExPy.operations as op
     return op.sin(x)
 
 
 def cos(x):
-    import operations as op
+    import QExPy.operations as op
     return op.cos(x)
 
 
 def tan(x):
-    import operations as op
+    import QExPy.operations as op
     return op.tan(x)
 
 
 def sec(x):
-    import operations as op
+    import QExPy.operations as op
     return op.sec(x)
 
 
 def csc(x):
-    import operations as op
+    import QExPy.operations as op
     return op.csc(x)
 
 
 def cot(x):
-    import operations as op
+    import QExPy.operations as op
     return op.cot(x)
 
 
 def log(x):
-    import operations as op
+    import QExPy.operations as op
     return op.log(x)
 
 
 def exp(x):
-    import operations as op
+    import QExPy.operations as op
     return op.exp(x)
 
 
 def e(x):
-    import operations as op
+    import QExPy.operations as op
     return op.e(x)
 
 
 def atan(x):
-    import operations as op
+    import QExPy.operations as op
     return op.atan(x)
 
 

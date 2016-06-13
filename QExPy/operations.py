@@ -1,6 +1,3 @@
-from uncertainties import Measurement
-from uncertainties import Function
-from uncertainties import Constant
 from numpy import int64, float64
 CONSTANT = (int, float, int64, float64, )
 
@@ -15,6 +12,8 @@ def dev(*args, der=None):
     of variables. The derivative dictionary of a function must be passes by
     the der argument.
     '''
+    from QExPy.uncertainties import Measurement
+
     std = 0
     roots = ()
     for arg in args:
@@ -41,6 +40,8 @@ def check_values(*args):
     converted,  this is done by calling the normalize function,  which
     outputs a measurement object with no standard deviation.
     '''
+    from QExPy.uncertainties import Constant
+
     val = ()
     for arg in args:
         if type(arg) in CONSTANT:
@@ -58,6 +59,8 @@ def check_formula(operation, a, b=None, func_flag=False):
     register of previously calculated operations is checked. If the
     quantity does exist,  the previously calculated object is returned.
     '''
+    from QExPy.uncertainties import Measurement
+
     op_string = {
         sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
         cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
@@ -84,6 +87,8 @@ def neg(x):
     '''
     Returns the negitive of a measurement object
     '''
+    from QExPy.uncertainties import Function
+
     x, = check_values(x)
     first_der = {}
     for key in x.first_der:
@@ -104,6 +109,8 @@ def add(a, b):
     also specifed by applying the chain rule to the input and the
     derivative of the inputs.
     '''
+    from QExPy.uncertainties import Measurement, Function
+
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
@@ -157,6 +164,8 @@ def sub(a, b):
     '''
     Returns a measurement object that is the subtraction of two measurements.
     '''
+    from QExPy.uncertainties import Measurement, Function
+
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
@@ -208,6 +217,8 @@ def sub(a, b):
 
 def mul(a, b):
     '''Returns the product of two values with propagated errors.'''
+    from QExPy.uncertainties import Measurement, Function
+
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
@@ -266,6 +277,8 @@ def mul(a, b):
 
 def div(a, b):
     '''Returns the quotient of two values with propagated errors.'''
+    from QExPy.uncertainties import Measurement, Function
+
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
@@ -337,6 +350,7 @@ def div(a, b):
 def power(a, b):
     '''Returns the power of two values with propagated errors.'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     a, b = check_values(a, b)
     # Propagating derivative of arguments
@@ -407,6 +421,7 @@ def power(a, b):
 def sin(x):
     '''Returns the sine of a measurement with propagated errors'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     x, = check_values(x)
     first_der = {}
@@ -454,6 +469,7 @@ def sin(x):
 def cos(x):
     '''Returns the cosine of a measurement with propagated errors'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     x, = check_values(x)
     first_der = {}
@@ -501,6 +517,7 @@ def cos(x):
 def tan(x):
     '''Returns the tangent of a measurement with propagated errors'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     def Sec(x):
         return 1/m.cos(x)
@@ -550,6 +567,8 @@ def tan(x):
 
 def atan(x):
     '''Returns the arctangent of a measurement with propagated errors'''
+    from QExPy.uncertainties import Measurement, Function
+
     x, = check_values(x)
     first_der = {}
     from math import atan
@@ -597,6 +616,7 @@ def atan(x):
 def sec(x):
     '''Returns the secant of a measurement with propagated errors'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     def Csc(x):
         return 1/m.sin(x)
@@ -651,6 +671,7 @@ def sec(x):
 def csc(x):
     '''Returns the cosecant of a measurement with propagated errors'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     def Cot(x):
         return 1/m.tan(x)
@@ -705,6 +726,7 @@ def csc(x):
 def cot(x):
     '''Returns the cotangent of a measurement with propagated errors'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     def Cot(x):
         return 1/m.tan(x)
@@ -759,6 +781,7 @@ def cot(x):
 def exp(x):
     '''Returns the exponent of a measurement with propagated errors'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     x, = check_values(x)
     first_der = {}
@@ -804,12 +827,14 @@ def exp(x):
 
 def e(value):
     '''Returns the exponent of a measurement with propagated errors'''
+    from QExPy.uncertainties import Measurement
     Measurement.exp(value)
 
 
 def log(x):
     '''Returns the natural logarithm of a measurement with propagated errors'''
     import math as m
+    from QExPy.uncertainties import Measurement, Function
 
     x, = check_values(x)
     first_der = {}
@@ -859,6 +884,8 @@ def find_minmax(function, x):
     and error on a given function
     '''
     import numpy as np
+    from QExPy.uncertainties import Function
+
     vals = np.linspace(x.mean-x.std, x.mean + x.std, 100)
     results = []
     for i in range(100):
@@ -876,6 +903,8 @@ def operation_wrap(operation, *args, func_flag=False):
     which can handle measurement objects and return an error propagated by
     derivative,  min-max,  or Monte Carlo method.
     '''
+    from QExPy.uncertainties import Measurement, Function
+
     args = check_values(args)
     if args[1] is not None:
         args[0].check_der(args[1])
