@@ -11,6 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   intro
+   uncertainties
+   operations
+   plotting
 
 
 Indices and tables
