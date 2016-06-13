@@ -301,7 +301,8 @@ class Measurement:
             sub, mul, div, power
         op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc',
                      sec: 'sec', cot: 'cot', exp: 'exp', log: 'log',
-                     add: '+', sub: '-', mul: '*', div: '/', power: '**', }
+                     add: '+', sub: '-', mul: '*', div: '/', power: '**',
+                     'neg': '-', }
         if func_flag is None and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
             self.user_name = False
@@ -379,54 +380,73 @@ class Measurement:
 # Operations on measurement objects
 
     def __add__(self, other):
-        from operations import add
-        return add(self, other)
+        import operations as op
+        return op.add(self, other)
 
     def __radd__(self, other):
-        from operations import add
-        return add(self, other)
+        import operations as op
+        return op.add(self, other)
 
     def __mul__(self, other):
-        from operations import mul
-        return mul(self, other)
+        import operations as op
+        return op.mul(self, other)
 
     def __rmul__(self, other):
-        from operations import mul
-        return mul(self, other)
+        import operations as op
+        return op.mul(self, other)
 
     def __sub__(self, other):
-        from operations import sub
-        return sub(self, other)
+        import operations as op
+        return op.sub(self, other)
 
     def __rsub__(self, other):
-        from operations import sub
-        result = sub(other, self)
-        return result
+        import operations as op
+        return op.sub(other, self)
 
     def __truediv__(self, other):
-        from operations import div
-        return div(self, other)
+        import operations as op
+        return op.div(self, other)
 
     def __rtruediv__(self, other):
-        from operations import div
-        return div(other, self)
+        import operations as op
+        return op.div(other, self)
 
     def __pow__(self, other):
-        from operations import power
-        return power(self, other)
+        import operations as op
+        return op.power(self, other)
 
     def __rpow__(self, other):
-        from operations import power
-        return power(other, self)
+        import operations as op
+        return op.power(other, self)
 
     def __neg__(self):
-        if self.type == "Constant":
-            return Constant(-self.mean, self.std, name='-'+self.name)
-        else:
-            return Function(-self.mean, self.std, name='-'+self.name)
+        import operations as op
+        return op.neg(self)
 
     def __len__(self):
         return len(self.info['Data'])
+
+    def __eq__(self, other):
+        if type(other) in Measurement.CONSTANT:
+            return self.mean == other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean == other.mean
+
+    def __req__(self, other):
+        if type(other) in Measurement.CONSTANT:
+            return self.mean == other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean == other.mean
 
     def monte_carlo(func, *args):
         '''
@@ -529,6 +549,56 @@ class Constant(Measurement):
         self.type = "Constant"
         self.covariance = {self.name: 0}
         self.root = ()
+
+
+def sin(x):
+    import operations as op
+    return op.sin(x)
+
+
+def cos(x):
+    import operations as op
+    return op.cos(x)
+
+
+def tan(x):
+    import operations as op
+    return op.tan(x)
+
+
+def sec(x):
+    import operations as op
+    return op.sec(x)
+
+
+def csc(x):
+    import operations as op
+    return op.csc(x)
+
+
+def cot(x):
+    import operations as op
+    return op.cot(x)
+
+
+def log(x):
+    import operations as op
+    return op.log(x)
+
+
+def exp(x):
+    import operations as op
+    return op.exp(x)
+
+
+def e(x):
+    import operations as op
+    return op.e(x)
+
+
+def atan(x):
+    import operations as op
+    return op.atan(x)
 
 
 def f(function, *args):

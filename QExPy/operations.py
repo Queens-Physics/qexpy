@@ -1,6 +1,6 @@
-from QExPy.uncertainties import Measurement
-from QExPy.uncertainties import Function
-from QExPy.uncertainties import Constant
+from uncertainties import Measurement
+from uncertainties import Function
+from uncertainties import Constant
 from numpy import int64, float64
 CONSTANT = (int, float, int64, float64, )
 
@@ -61,7 +61,7 @@ def check_formula(operation, a, b=None, func_flag=False):
     op_string = {
         sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
         cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
-        mul: '*', div: '/', power: '**', }
+        mul: '*', div: '/', power: '**', 'neg': '-', }
     op = op_string[operation]
 
     # check_formula is not behanving properly, requires overwrite, disabled
@@ -78,6 +78,21 @@ def check_formula(operation, a, b=None, func_flag=False):
             ID = Measurement.formula_register[
                 op + '(' + a.info["Formula"] + ')']
             return Measurement.register[ID]
+
+
+def neg(x):
+    '''
+    Returns the negitive of a measurement object
+    '''
+    x, = check_values(x)
+    first_der = {}
+    for key in x.first_der:
+        first_der[key] = -x.first_der[key]
+    result = Function(-x.mean, x.std)
+    result.first_der.update(first_der)
+    result._update_info('neg', x, func_flag=1)
+    result.error_flag = True
+    return result
 
 
 def add(a, b):
@@ -329,8 +344,11 @@ def power(a, b):
     a.check_der(b)
     b.check_der(a)
     for key in a.first_der:
-        first_der[key] = a.mean**b.mean * (b.first_der[key] * m.log(
-            abs(a.mean)) + b.mean / a.mean * a.first_der[key])
+        if a.mean is 0:
+            first_der[key] = None
+        else:
+            first_der[key] = a.mean**b.mean * (b.first_der[key] * m.log(
+                abs(a.mean)) + b.mean / a.mean * a.first_der[key])
     if check_formula(power, a, b) is not None:
         return check_formula(power, a, b)
 
@@ -622,7 +640,7 @@ def sec(x):
 
     if x.info["Data"] is not None:
         import numpy
-        result.info["Data"] = numpy.divide(numpy.cos(x.info["Data"]))
+        result.info["Data"] = numpy.divide(1, numpy.cos(x.info["Data"]))
 
     result.first_der.update(first_der)
     result._update_info(sec, x, func_flag=1)
@@ -675,7 +693,7 @@ def csc(x):
 
     if x.info["Data"] is not None:
         import numpy
-        result.info["Data"] = numpy.divide(numpy.sin(x.info["Data"]))
+        result.info["Data"] = numpy.divide(1, numpy.sin(x.info["Data"]))
         result = Function(mean, std)
 
     result.first_der.update(first_der)
@@ -730,7 +748,7 @@ def cot(x):
 
     if x.info["Data"] is not None:
         import numpy
-        result.info["Data"] = numpy.divide(numpy.tan(x.info["Data"]))
+        result.info["Data"] = numpy.divide(1, numpy.tan(x.info["Data"]))
 
     result.first_der.update(first_der)
     result._update_info(cot, x, func_flag=1)
