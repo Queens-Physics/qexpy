@@ -13,6 +13,7 @@ Contents
    :maxdepth: 2
 
    intro
+   Youngs Modulus Lab.ipynb
    uncertainties
    operations
    plotting

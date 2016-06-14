@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
     name='QExPy',
     packages=['QExPy'],
-    version='0.1.1',
+    version='0.1.2',
     description='''Objects to handle calculations with uncertainty and
     plotting with a focus on use in physics.''',
     author='Connor Kapahi and Prof. Ryan Martin',

@@ -45,28 +45,28 @@
           <div class="body" role="main">
             
   <h1>Source code for QExPy.uncertainties</h1><div class="highlight"><pre>
-<div class="viewcode-block" id="Measurement"><a class="viewcode-back" href="../../uncertainties.html#QExPy.uncertainties.Measurement">[docs]</a><span class="k">class</span> <span class="nc">Measurement</span><span class="p">:</span>
+<div class="viewcode-block" id="Measurement"><a class="viewcode-back" href="../../uncertainties.html#QExPy.uncertainties.Measurement">[docs]</a><span></span><span class="k">class</span> <span class="nc">Measurement</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Root class of objects which containt a mean and standard deviation.</span>
 <span class="sd">    From this class, objects with properties pertaining to their use or</span>
 <span class="sd">    formulation can be instanced. (ie. the result of an operation of</span>
 <span class="sd">    measured values, called Funciton and Measured respectivly)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">method</span> <span class="o">=</span> <span class="s">&quot;Default&quot;</span>  <span class="c"># Default error propogation method</span>
-    <span class="n">mcTrials</span> <span class="o">=</span> <span class="mi">10000</span>  <span class="c"># option for number of trial in Monte Carlo simulation</span>
-    <span class="n">style</span> <span class="o">=</span> <span class="s">&quot;Default&quot;</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Default&quot;</span>  <span class="c1"># Default error propogation method</span>
+    <span class="n">mcTrials</span> <span class="o">=</span> <span class="mi">10000</span>  <span class="c1"># option for number of trial in Monte Carlo simulation</span>
+    <span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;Default&quot;</span>
     <span class="n">figs</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">register</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">formula_register</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">id_register</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="c"># Defining common types under single arrayclear</span>
+    <span class="c1"># Defining common types under single arrayclear</span>
     <span class="n">CONSTANT</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,)</span>
     <span class="n">ARRAY</span> <span class="o">=</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span> <span class="nn">numpy</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Please install numpy for full features.&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Please install numpy for full features.&quot;</span><span class="p">)</span>
         <span class="n">numpy_installed</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">ARRAY</span> <span class="o">+=</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,)</span>
@@ -144,13 +144,13 @@
             <span class="n">error_data</span> <span class="o">=</span> <span class="n">std_vals</span>
 
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;&#39;&#39;Input arguments must be one of: a mean and</span>
-<span class="s">            standard deviation, an array of values, or the individual values</span>
-<span class="s">            themselves.&#39;&#39;&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;Input arguments must be one of: a mean and</span>
+<span class="s1">            standard deviation, an array of values, or the individual values</span>
+<span class="s1">            themselves.&#39;&#39;&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s">&#39;ID&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="s">&#39;Formula&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="s">&#39;Method&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="s">&#39;Data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">,</span>
-                <span class="s">&#39;Error&#39;</span><span class="p">:</span> <span class="n">error_data</span><span class="p">,</span> <span class="s">&#39;Function&#39;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s">&#39;operation&#39;</span><span class="p">:</span> <span class="p">(),</span> <span class="s">&#39;variables&#39;</span><span class="p">:</span> <span class="p">()},</span> <span class="p">}</span>
+                <span class="s1">&#39;ID&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;Formula&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;Method&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;Data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">,</span>
+                <span class="s1">&#39;Error&#39;</span><span class="p">:</span> <span class="n">error_data</span><span class="p">,</span> <span class="s1">&#39;Function&#39;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s1">&#39;operation&#39;</span><span class="p">:</span> <span class="p">(),</span> <span class="s1">&#39;variables&#39;</span><span class="p">:</span> <span class="p">()},</span> <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">MC_list</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="n">Measurement</span><span class="o">.</span><span class="n">id_register</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="p">{}</span>
@@ -168,49 +168,49 @@
 <span class="sd">        measurement functions.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">mc_list</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s">&#39;MC&#39;</span><span class="p">,</span> <span class="s">&#39;mc&#39;</span><span class="p">,</span> <span class="s">&#39;montecarlo&#39;</span><span class="p">,</span> <span class="s">&#39;Monte Carlo&#39;</span><span class="p">,</span> <span class="s">&#39;MonteCarlo&#39;</span><span class="p">,</span>
-            <span class="s">&#39;monte carlo&#39;</span><span class="p">,)</span>
-        <span class="n">min_max_list</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Min Max&#39;</span><span class="p">,</span> <span class="s">&#39;MinMax&#39;</span><span class="p">,</span> <span class="s">&#39;minmax&#39;</span><span class="p">,</span> <span class="s">&#39;min max&#39;</span><span class="p">,)</span>
-        <span class="n">derr_list</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Derivative&#39;</span><span class="p">,</span> <span class="s">&#39;derivative&#39;</span><span class="p">,</span> <span class="s">&#39;diff&#39;</span><span class="p">,</span> <span class="s">&#39;der&#39;</span><span class="p">,)</span>
-        <span class="n">default_list</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Default&#39;</span><span class="p">,</span> <span class="s">&#39;default&#39;</span><span class="p">,)</span>
+            <span class="s1">&#39;MC&#39;</span><span class="p">,</span> <span class="s1">&#39;mc&#39;</span><span class="p">,</span> <span class="s1">&#39;montecarlo&#39;</span><span class="p">,</span> <span class="s1">&#39;Monte Carlo&#39;</span><span class="p">,</span> <span class="s1">&#39;MonteCarlo&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;monte carlo&#39;</span><span class="p">,)</span>
+        <span class="n">min_max_list</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Min Max&#39;</span><span class="p">,</span> <span class="s1">&#39;MinMax&#39;</span><span class="p">,</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span> <span class="s1">&#39;min max&#39;</span><span class="p">,)</span>
+        <span class="n">derr_list</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Derivative&#39;</span><span class="p">,</span> <span class="s1">&#39;derivative&#39;</span><span class="p">,</span> <span class="s1">&#39;diff&#39;</span><span class="p">,</span> <span class="s1">&#39;der&#39;</span><span class="p">,)</span>
+        <span class="n">default_list</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Default&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">,)</span>
 
         <span class="k">if</span> <span class="n">chosen_method</span> <span class="ow">in</span> <span class="n">mc_list</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">numpy_installed</span><span class="p">:</span>
-                <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&quot;Monte Carlo&quot;</span>
+                <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Monte Carlo&quot;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&quot;Monte Carlo&quot;</span>
+                <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Monte Carlo&quot;</span>
         <span class="k">elif</span> <span class="n">chosen_method</span> <span class="ow">in</span> <span class="n">min_max_list</span><span class="p">:</span>
-            <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&quot;Min Max&quot;</span>
+            <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Min Max&quot;</span>
         <span class="k">elif</span> <span class="n">chosen_method</span> <span class="ow">in</span> <span class="n">derr_list</span><span class="p">:</span>
-            <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&quot;Derivative&quot;</span>
+            <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Derivative&quot;</span>
         <span class="k">elif</span> <span class="n">chosen_method</span> <span class="ow">in</span> <span class="n">default_list</span><span class="p">:</span>
-            <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&quot;Default&quot;</span>
+            <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Default&quot;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Method not recognized, using default method.&quot;</span><span class="p">)</span>
-            <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&quot;Default&quot;</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Method not recognized, using default method.&quot;</span><span class="p">)</span>
+            <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Default&quot;</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Method called when printing measurement objects.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_name</span><span class="p">:</span>
-            <span class="n">string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s">&#39; = &#39;</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39; = &#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">string</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
-        <span class="k">if</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s">&quot;Latex&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;Latex&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">+=</span> <span class="n">tex_print</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s">&quot;Default&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;Default&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">+=</span> <span class="n">def_print</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s">&quot;Scientific&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;Scientific&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">+=</span> <span class="n">sci_print</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error_flag</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">string</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_flag</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="n">string</span> <span class="o">=</span> <span class="n">string</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">Errors may be inacurate, &#39;</span>\
-                <span class="o">+</span> <span class="s">&#39; Monte Carlo method recommended.&#39;</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="n">string</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Errors may be inacurate, &#39;</span>\
+                <span class="o">+</span> <span class="s1">&#39; Monte Carlo method recommended.&#39;</span>
             <span class="k">return</span> <span class="n">string</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">string</span>
@@ -220,22 +220,22 @@
 <span class="sd">        Set the style of printing and number of significant figures for the</span>
 <span class="sd">        output of a printing a measurement object.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">latex</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Latex&quot;</span><span class="p">,</span> <span class="s">&quot;latex&quot;</span><span class="p">,</span> <span class="s">&#39;Tex&#39;</span><span class="p">,</span> <span class="s">&#39;tex&#39;</span><span class="p">,)</span>
-        <span class="n">Sci</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Scientific&quot;</span><span class="p">,</span> <span class="s">&quot;Sci&quot;</span><span class="p">,</span> <span class="s">&#39;scientific&#39;</span><span class="p">,</span> <span class="s">&#39;sci&#39;</span><span class="p">,</span> <span class="s">&#39;sigfigs&#39;</span><span class="p">,)</span>
+        <span class="n">latex</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Latex&quot;</span><span class="p">,</span> <span class="s2">&quot;latex&quot;</span><span class="p">,</span> <span class="s1">&#39;Tex&#39;</span><span class="p">,</span> <span class="s1">&#39;tex&#39;</span><span class="p">,)</span>
+        <span class="n">Sci</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Scientific&quot;</span><span class="p">,</span> <span class="s2">&quot;Sci&quot;</span><span class="p">,</span> <span class="s1">&#39;scientific&#39;</span><span class="p">,</span> <span class="s1">&#39;sci&#39;</span><span class="p">,</span> <span class="s1">&#39;sigfigs&#39;</span><span class="p">,)</span>
         <span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="o">=</span> <span class="n">figs</span>
         <span class="k">if</span> <span class="n">style</span> <span class="ow">in</span> <span class="n">latex</span><span class="p">:</span>
-            <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="s">&quot;Latex&quot;</span>
+            <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;Latex&quot;</span>
         <span class="k">elif</span> <span class="n">style</span> <span class="ow">in</span> <span class="n">Sci</span><span class="p">:</span>
-            <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="s">&quot;Scientific&quot;</span>
+            <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;Scientific&quot;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="s">&quot;Default&quot;</span>
+            <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;Default&quot;</span>
 
     <span class="k">def</span> <span class="nf">MC_print</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s">&quot;Latex&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;Latex&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">=</span> <span class="n">tex_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MC</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s">&quot;Default&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;Default&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">=</span> <span class="n">def_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MC</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s">&quot;Scientific&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;Scientific&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">=</span> <span class="n">sci_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">MC</span><span class="p">)</span>
         <span class="k">print</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
 
@@ -249,29 +249,29 @@
 <span class="sd">        only defined in these cases.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
             <span class="k">return</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">pass</span>
 
-        <span class="n">data_x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;Data&quot;</span><span class="p">]</span>
-        <span class="n">data_y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;Data&quot;</span><span class="p">]</span>
+        <span class="n">data_x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span>
+        <span class="n">data_y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">data_x</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">data_y</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="s">&quot;Data arrays must exist for both quantities &quot;</span> <span class="o">+</span>
-                <span class="s">&quot;to define covariance.&quot;</span><span class="p">)</span>
+                <span class="s2">&quot;Data arrays must exist for both quantities &quot;</span> <span class="o">+</span>
+                <span class="s2">&quot;to define covariance.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_x</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_y</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Lengths of data arrays must be equal to</span><span class="se">\</span>
-<span class="s">                      define a covariance&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Lengths of data arrays must be equal to</span><span class="se">\</span>
+<span class="s1">                      define a covariance&#39;</span><span class="p">)</span>
         <span class="n">sigma_xy</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_x</span><span class="p">)):</span>
             <span class="n">sigma_xy</span> <span class="o">+=</span> <span class="p">(</span><span class="n">data_x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">data_y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
         <span class="n">sigma_xy</span> <span class="o">/=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_x</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
-        <span class="n">y</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
+        <span class="n">y</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
 
     <span class="k">def</span> <span class="nf">set_correlation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">factor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -284,8 +284,8 @@
         <span class="n">ro_xy</span> <span class="o">=</span> <span class="n">factor</span>
         <span class="n">sigma_xy</span> <span class="o">=</span> <span class="n">ro_xy</span><span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="o">*</span><span class="n">y</span><span class="o">.</span><span class="n">std</span>
 
-        <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
-        <span class="n">y</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
+        <span class="n">y</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
 
     <span class="k">def</span> <span class="nf">return_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -297,14 +297,14 @@
 <span class="sd">        the data arrays are of different lengths or do not exist, in that</span>
 <span class="sd">        case a covariance of zero is returned.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">covariance</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">covariance</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;Data&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> \
-                <span class="ow">and</span> <span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;Data&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>\
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> \
+                <span class="ow">and</span> <span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>\
                 <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="p">):</span>
             <span class="n">Measurement</span><span class="o">.</span><span class="n">_find_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">)</span>
-            <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
             <span class="k">return</span> <span class="n">var</span>
 
         <span class="k">else</span><span class="p">:</span>
@@ -321,7 +321,7 @@
             <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">Measurement</span><span class="o">.</span><span class="n">_find_covariance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-        <span class="n">sigma_xy</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span>
+        <span class="n">sigma_xy</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
         <span class="n">sigma_x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span>
         <span class="n">sigma_y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">std</span>
         <span class="k">return</span> <span class="n">sigma_xy</span><span class="o">/</span><span class="n">sigma_x</span><span class="o">/</span><span class="n">sigma_y</span>
@@ -347,21 +347,21 @@
         <span class="kn">from</span> <span class="nn">QExPy.operations</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">tan</span><span class="p">,</span> <span class="n">csc</span><span class="p">,</span> <span class="n">sec</span><span class="p">,</span> <span class="n">cot</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span>\
             <span class="n">add</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">mul</span><span class="p">,</span> <span class="n">div</span><span class="p">,</span> <span class="n">power</span>
 
-        <span class="n">op_string</span> <span class="o">=</span> <span class="p">{</span><span class="n">sin</span><span class="p">:</span> <span class="s">&#39;sin&#39;</span><span class="p">,</span> <span class="n">cos</span><span class="p">:</span> <span class="s">&#39;cos&#39;</span><span class="p">,</span> <span class="n">tan</span><span class="p">:</span> <span class="s">&#39;tan&#39;</span><span class="p">,</span> <span class="n">csc</span><span class="p">:</span> <span class="s">&#39;csc&#39;</span><span class="p">,</span>
-                     <span class="n">sec</span><span class="p">:</span> <span class="s">&#39;sec&#39;</span><span class="p">,</span> <span class="n">cot</span><span class="p">:</span> <span class="s">&#39;cot&#39;</span><span class="p">,</span> <span class="n">exp</span><span class="p">:</span> <span class="s">&#39;exp&#39;</span><span class="p">,</span> <span class="n">log</span><span class="p">:</span> <span class="s">&#39;log&#39;</span><span class="p">,</span>
-                     <span class="n">add</span><span class="p">:</span> <span class="s">&#39;+&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="n">mul</span><span class="p">:</span> <span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="n">div</span><span class="p">:</span> <span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">power</span><span class="p">:</span> <span class="s">&#39;**&#39;</span><span class="p">,</span>
-                     <span class="s">&#39;neg&#39;</span><span class="p">:</span> <span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="p">}</span>
+        <span class="n">op_string</span> <span class="o">=</span> <span class="p">{</span><span class="n">sin</span><span class="p">:</span> <span class="s1">&#39;sin&#39;</span><span class="p">,</span> <span class="n">cos</span><span class="p">:</span> <span class="s1">&#39;cos&#39;</span><span class="p">,</span> <span class="n">tan</span><span class="p">:</span> <span class="s1">&#39;tan&#39;</span><span class="p">,</span> <span class="n">csc</span><span class="p">:</span> <span class="s1">&#39;csc&#39;</span><span class="p">,</span>
+                     <span class="n">sec</span><span class="p">:</span> <span class="s1">&#39;sec&#39;</span><span class="p">,</span> <span class="n">cot</span><span class="p">:</span> <span class="s1">&#39;cot&#39;</span><span class="p">,</span> <span class="n">exp</span><span class="p">:</span> <span class="s1">&#39;exp&#39;</span><span class="p">,</span> <span class="n">log</span><span class="p">:</span> <span class="s1">&#39;log&#39;</span><span class="p">,</span>
+                     <span class="n">add</span><span class="p">:</span> <span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">mul</span><span class="p">:</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">div</span><span class="p">:</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">power</span><span class="p">:</span> <span class="s1">&#39;**&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;neg&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="p">}</span>
         <span class="k">if</span> <span class="n">func_flag</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">var2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">var1</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="n">op_string</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span><span class="o">+</span><span class="n">var2</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">user_name</span> <span class="o">=</span> <span class="bp">False</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var1</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">+</span> \
-                <span class="n">op_string</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span> <span class="o">+</span> <span class="n">var2</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Formula&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Function&#39;</span><span class="p">][</span><span class="s">&#39;variables&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">var1</span><span class="p">,</span> <span class="n">var2</span><span class="p">),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Function&#39;</span><span class="p">][</span><span class="s">&#39;operation&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">operation</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var1</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">+</span> \
+                <span class="n">op_string</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span> <span class="o">+</span> <span class="n">var2</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Formula&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Function&#39;</span><span class="p">][</span><span class="s1">&#39;variables&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">var1</span><span class="p">,</span> <span class="n">var2</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Function&#39;</span><span class="p">][</span><span class="s1">&#39;operation&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">operation</span><span class="p">,</span>
             <span class="n">Measurement</span><span class="o">.</span><span class="n">formula_register</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;Formula&quot;</span><span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;ID&quot;</span><span class="p">]})</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Method&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="s">&quot;Errors propagated by &quot;</span> <span class="o">+</span>\
-                <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">+</span> <span class="s">&#39; method.</span><span class="se">\n</span><span class="s">&#39;</span>
+                <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Formula&quot;</span><span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Method&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">&quot;Errors propagated by &quot;</span> <span class="o">+</span>\
+                <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">+</span> <span class="s1">&#39; method.</span><span class="se">\n</span><span class="s1">&#39;</span>
             <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">var1</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">+=</span> <span class="n">var1</span><span class="o">.</span><span class="n">root</span>
@@ -370,22 +370,22 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">+=</span> <span class="n">var2</span><span class="o">.</span><span class="n">root</span>
 
         <span class="k">elif</span> <span class="n">func_flag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">op_string</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;(&#39;</span><span class="o">+</span><span class="n">var1</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s">&#39;)&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">op_string</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;(&#39;</span><span class="o">+</span><span class="n">var1</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39;)&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">user_name</span> <span class="o">=</span> <span class="bp">False</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">op_string</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;(&#39;</span> <span class="o">+</span> \
-                <span class="n">var1</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Function&#39;</span><span class="p">][</span><span class="s">&#39;variables&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">var1</span><span class="p">,),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Function&#39;</span><span class="p">][</span><span class="s">&#39;operation&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">operation</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Method&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="s">&quot;Errors propagated by &quot;</span> <span class="o">+</span> \
-                <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">+</span> <span class="s">&#39; method.</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">op_string</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> \
+                <span class="n">var1</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Function&#39;</span><span class="p">][</span><span class="s1">&#39;variables&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">var1</span><span class="p">,),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Function&#39;</span><span class="p">][</span><span class="s1">&#39;operation&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">operation</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Method&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">&quot;Errors propagated by &quot;</span> <span class="o">+</span> \
+                <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">+</span> <span class="s1">&#39; method.</span><span class="se">\n</span><span class="s1">&#39;</span>
             <span class="n">Measurement</span><span class="o">.</span><span class="n">formula_register</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;Formula&quot;</span><span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;ID&quot;</span><span class="p">]})</span>
+                <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Formula&quot;</span><span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]})</span>
             <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">var1</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">+=</span> <span class="n">var1</span><span class="o">.</span><span class="n">root</span>
 
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Something went wrong in update_info&#39;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Something went wrong in update_info&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -399,13 +399,13 @@
 <span class="sd">        variable inputted (ie. deriving with respect to variable = ???)</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">variable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> \
-                <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="s">&#39;Only measurement objects can be derived.&#39;</span>
+                <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s1">&#39;Only measurement objects can be derived.&#39;</span>
         <span class="k">elif</span> <span class="n">variable</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span>
-        <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">derivative</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;ID&quot;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">derivative</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]]</span>
         <span class="k">return</span> <span class="n">derivative</span>
 
     <span class="k">def</span> <span class="nf">check_der</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
@@ -425,7 +425,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
-<span class="c"># Operations on measurement objects</span>
+<span class="c1"># Operations on measurement objects</span>
 
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="kn">import</span> <span class="nn">QExPy.operations</span> <span class="kn">as</span> <span class="nn">op</span>
@@ -472,7 +472,7 @@
         <span class="k">return</span> <span class="n">op</span><span class="o">.</span><span class="n">neg</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Data&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Data&#39;</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">in</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">:</span>
@@ -505,10 +505,10 @@
 <span class="sd">        as &#39;normalized&#39; quantities which produce a constant row in the</span>
 <span class="sd">        matrix of normally randomized values.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="c"># 2D array</span>
+        <span class="c1"># 2D array</span>
         <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
         <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">mcTrials</span>  <span class="c"># Can be adjusted in measurement.mcTrials</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">mcTrials</span>  <span class="c1"># Can be adjusted in measurement.mcTrials</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
@@ -536,12 +536,12 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;obj</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Function</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;obj</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Function</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;Function&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;obj</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Function</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;obj</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Function</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;Function&quot;</span>
         <span class="n">Function</span><span class="o">.</span><span class="n">id_number</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]:</span> <span class="mi">1</span><span class="p">}</span>
-        <span class="n">Measurement</span><span class="o">.</span><span class="n">register</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;ID&quot;</span><span class="p">]:</span> <span class="bp">self</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="n">Measurement</span><span class="o">.</span><span class="n">register</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]:</span> <span class="bp">self</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="o">**</span><span class="mi">2</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">MC</span> <span class="o">=</span> <span class="bp">None</span>
@@ -561,21 +561,21 @@
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;unnamed_var</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Measured</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;unnamed_var</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Measured</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">units</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">units</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">units</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">units</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;Measurement&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;var</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Measured</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;var</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Measured</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;Measurement&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;var</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Measured</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Formula&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;var</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Measured</span><span class="o">.</span><span class="n">id_number</span><span class="p">)</span>
         <span class="n">Measured</span><span class="o">.</span><span class="n">id_number</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]:</span> <span class="mi">1</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="o">**</span><span class="mi">2</span><span class="p">}</span>
-        <span class="n">Measurement</span><span class="o">.</span><span class="n">register</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;ID&quot;</span><span class="p">]:</span> <span class="bp">self</span><span class="p">})</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;ID&quot;</span><span class="p">],)</span>
+        <span class="n">Measurement</span><span class="o">.</span><span class="n">register</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]:</span> <span class="bp">self</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">],)</span>
 
 </div>
 <span class="k">class</span> <span class="nc">Constant</span><span class="p">(</span><span class="n">Measurement</span><span class="p">):</span>
@@ -589,12 +589,12 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Constant&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;Formula&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%f</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">arg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Constant&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Formula&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">arg</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">first_der</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;Data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;Constant&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;Constant&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="p">()</span>
 
@@ -663,10 +663,10 @@
             <span class="n">std_squared</span> <span class="o">+=</span> <span class="n">arg</span><span class="o">.</span><span class="n">std</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">numerical_partial_derivative</span><span class="p">(</span>
                 <span class="n">function</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
     <span class="n">std</span> <span class="o">=</span> <span class="p">(</span><span class="n">std_squared</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">argName</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+    <span class="n">argName</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
-        <span class="n">argName</span> <span class="o">+=</span> <span class="s">&#39;, &#39;</span><span class="o">+</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">function</span><span class="o">.</span><span class="n">__name__</span><span class="o">+</span><span class="s">&quot;(&quot;</span><span class="o">+</span><span class="n">argName</span><span class="o">+</span><span class="s">&quot;)&quot;</span>
+        <span class="n">argName</span> <span class="o">+=</span> <span class="s1">&#39;, &#39;</span><span class="o">+</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">function</span><span class="o">.</span><span class="n">__name__</span><span class="o">+</span><span class="s2">&quot;(&quot;</span><span class="o">+</span><span class="n">argName</span><span class="o">+</span><span class="s2">&quot;)&quot;</span>
     <span class="k">return</span> <span class="n">Function</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
 
@@ -731,9 +731,9 @@
     <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
         <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span>
-    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;MC&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;MC&#39;</span><span class="p">:</span>
         <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MC</span>
-    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;MinMax&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;MinMax&#39;</span><span class="p">:</span>
         <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MinMax</span>
     <span class="n">flag</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
@@ -743,7 +743,7 @@
             <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">std</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">std</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="o">//</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">mean</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mean</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="o">//</span><span class="mi">1</span><span class="p">)</span>
-                <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)\e</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)\e</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">*=</span> <span class="mi">10</span>
                 <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
@@ -755,9 +755,9 @@
         <span class="n">std</span> <span class="o">=</span> <span class="n">std</span><span class="o">*</span><span class="mi">10</span><span class="o">**-</span><span class="n">i</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">*</span><span class="mi">10</span><span class="o">**-</span><span class="n">i</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">i</span><span class="o">-</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)\e</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)\e</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
@@ -765,7 +765,7 @@
             <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">std</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
                 <span class="n">mean</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
-                <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)\e</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)\e</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">*=</span> <span class="mi">10</span>
                 <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
@@ -777,9 +777,9 @@
         <span class="n">std</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">std</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="p">)</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mean</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">i</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)\e</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)\e</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">def_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -793,9 +793,9 @@
     <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
         <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span>
-    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;MC&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;MC&#39;</span><span class="p">:</span>
         <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MC</span>
-    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;MinMax&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;MinMax&#39;</span><span class="p">:</span>
         <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MinMax</span>
 
     <span class="k">if</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -813,13 +813,13 @@
                 <span class="n">flag</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="n">figs</span> <span class="o">=</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span><span class="o">+</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span>
         <span class="k">if</span> <span class="n">figs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">n</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">figs</span><span class="p">)</span>
-            <span class="n">n</span> <span class="o">=</span> <span class="s">&quot;%.&quot;</span><span class="o">+</span><span class="n">n</span><span class="o">+</span><span class="s">&quot;f&quot;</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">figs</span><span class="p">)</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="s2">&quot;%.&quot;</span><span class="o">+</span><span class="n">n</span><span class="o">+</span><span class="s2">&quot;f&quot;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">n</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%.0f</span><span class="s">&#39;</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%.0f</span><span class="s1">&#39;</span>
         <span class="n">std</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">)</span><span class="o">+</span><span class="s">&quot; +/- &quot;</span><span class="o">+</span><span class="n">n</span> <span class="o">%</span> <span class="p">(</span><span class="n">std</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; +/- &quot;</span><span class="o">+</span><span class="n">n</span> <span class="o">%</span> <span class="p">(</span><span class="n">std</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
         <span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">):</span>
@@ -834,13 +834,13 @@
             <span class="k">elif</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
                 <span class="n">flag</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">n</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">)</span>
-            <span class="n">n</span> <span class="o">=</span> <span class="s">&quot;%.&quot;</span><span class="o">+</span><span class="n">n</span><span class="o">+</span><span class="s">&quot;f&quot;</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="s2">&quot;%.&quot;</span><span class="o">+</span><span class="n">n</span><span class="o">+</span><span class="s2">&quot;f&quot;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">n</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%.0f</span><span class="s">&#39;</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%.0f</span><span class="s1">&#39;</span>
         <span class="n">std</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">)</span><span class="o">+</span><span class="s">&quot; +/- &quot;</span><span class="o">+</span><span class="n">n</span> <span class="o">%</span> <span class="p">(</span><span class="n">std</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; +/- &quot;</span><span class="o">+</span><span class="n">n</span> <span class="o">%</span> <span class="p">(</span><span class="n">std</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">sci_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -852,9 +852,9 @@
     <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
         <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span>
-    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;MC&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;MC&#39;</span><span class="p">:</span>
         <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MC</span>
-    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;MinMax&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;MinMax&#39;</span><span class="p">:</span>
         <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MinMax</span>
     <span class="n">flag</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
@@ -864,7 +864,7 @@
             <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">std</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">std</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="o">//</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">mean</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mean</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="o">//</span><span class="mi">1</span><span class="p">)</span>
-                <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)\e</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)\e</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">*=</span> <span class="mi">10</span>
                 <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
@@ -876,9 +876,9 @@
         <span class="n">std</span> <span class="o">=</span> <span class="n">std</span><span class="o">*</span><span class="mi">10</span><span class="o">**-</span><span class="n">i</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">*</span><span class="mi">10</span><span class="o">**-</span><span class="n">i</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">i</span><span class="o">-</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)\e</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)\e</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
@@ -886,7 +886,7 @@
             <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">std</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
                 <span class="n">mean</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
-                <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)\e</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)\e</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">*=</span> <span class="mi">10</span>
                 <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
@@ -898,9 +898,9 @@
         <span class="n">std</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">std</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="p">)</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mean</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">i</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)*10**</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)*10**</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;(</span><span class="si">%d</span><span class="s"> \pm </span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">&quot;(</span><span class="si">%d</span><span class="s2"> \pm </span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">reset_variables</span><span class="p">():</span>
@@ -912,9 +912,9 @@
     <span class="n">Function</span><span class="o">.</span><span class="n">id_number</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">Measurement</span><span class="o">.</span><span class="n">register</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">Measurement</span><span class="o">.</span><span class="n">formula_register</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&quot;Derivative&quot;</span>  <span class="c"># Default error propogation method</span>
-    <span class="n">Measurement</span><span class="o">.</span><span class="n">mcTrials</span> <span class="o">=</span> <span class="mi">10000</span>  <span class="c"># Number of trial in Monte Carlo simulation</span>
-    <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="s">&quot;Default&quot;</span>
+    <span class="n">Measurement</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;Derivative&quot;</span>  <span class="c1"># Default error propogation method</span>
+    <span class="n">Measurement</span><span class="o">.</span><span class="n">mcTrials</span> <span class="o">=</span> <span class="mi">10000</span>  <span class="c1"># Number of trial in Monte Carlo simulation</span>
+    <span class="n">Measurement</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;Default&quot;</span>
     <span class="n">Measurement</span><span class="o">.</span><span class="n">figs</span> <span class="o">=</span> <span class="mi">3</span>
 </pre></div>
 

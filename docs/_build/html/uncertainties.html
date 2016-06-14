@@ -26,7 +26,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="QExPy 0.1.1 documentation" href="index.html" />
     <link rel="next" title="Operations Module" href="operations.html" />
-    <link rel="prev" title="Introduction" href="intro.html" /> 
+    <link rel="prev" title="&lt;no title&gt;" href="Youngs Modulus Lab.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -39,7 +39,7 @@
           <a href="operations.html" title="Operations Module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="intro.html" title="Introduction"
+          <a href="Youngs Modulus Lab.html" title="&lt;no title&gt;"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
       </ul>
@@ -69,37 +69,37 @@ or arguments of functions when propagating error.</p>
 
 <p>The arguments, or <a href="#id1"><span class="problematic" id="id2">*</span></a>args, of this class can be in several forms:</p>
 <p>A mean and standard deviation can be entred directly.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="c"># This would create an object with a mean of 10 and a standard</span>
-<span class="c"># deviation of 1.</span>
+<span class="c1"># This would create an object with a mean of 10 and a standard</span>
+<span class="c1"># deviation of 1.</span>
 </pre></div>
 </div>
 <p>A list or numpy array of values can be provided, from which the mean and
 standard deviation of the values can be taken.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Data&#39;</span><span class="p">)</span>
-<span class="c"># This would also produce an object with a mean of 10 and a standard</span>
-<span class="c"># deviation of 1.</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Data&#39;</span><span class="p">)</span>
+<span class="c1"># This would also produce an object with a mean of 10 and a standard</span>
+<span class="c1"># deviation of 1.</span>
 </pre></div>
 </div>
 <p>If the list of values has errors associated with each measurement, the
 data can be entered either as pairs of a value and error, or as two lists
 of data and error respectivly.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
-<span class="c"># The mean and standard deviation of x and y are the same</span>
+<span class="c1"># The mean and standard deviation of x and y are the same</span>
 </pre></div>
 </div>
 <p>The optional arguments <em>name</em> and <em>units</em> can be used to include strings
 for both of these parameters as shown below:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s">&#39;cm&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="working-with-measurement-objects">
 <h2>Working with Measurement Objects<a class="headerlink" href="#working-with-measurement-objects" title="Permalink to this headline">¶</a></h2>
 <p>Once created, these objects can be operated on just as any other value:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
 
 <span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
@@ -112,7 +112,7 @@ for both of these parameters as shown below:</p>
 </div>
 <p>Elementary functions such as the trig functions, inverse trig functions,
 natural logarithm and exponential function can also be used:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">f</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 <span class="o">&gt;&gt;</span> <span class="mf">0.7</span> <span class="o">+/-</span> <span class="mf">0.8</span>
 </pre></div>
@@ -120,9 +120,9 @@ natural logarithm and exponential function can also be used:</p>
 <p>Furthermore, the use of Measured objects in equations also allows for the
 calculation of the derivative of these expressions with respect to any of the
 Measured objects used.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">d1</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">d1</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
-<span class="c"># This can be compared to the analytic expression of the derivative</span>
+<span class="c1"># This can be compared to the analytic expression of the derivative</span>
 <span class="n">d2</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">10</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span>
 <span class="k">print</span><span class="p">(</span><span class="n">d1</span> <span class="o">==</span> <span class="n">d2</span><span class="p">)</span>
 <span class="o">&gt;&gt;</span> <span class="bp">True</span>
@@ -134,6 +134,22 @@ propagation formula.</p>
 \[For\ some\ F(x,y):
 \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \
     + (\frac{\partial F}{\partial y} \sigma_y)^2\]</div>
+<p>This formula is the default method of error propagation and will be accurate in
+most cases.</p>
+</div>
+<div class="section" id="formatting">
+<h2>Formatting<a class="headerlink" href="#formatting" title="Permalink to this headline">¶</a></h2>
+<p>As shown above, the default method of printing a value with an uncertainty is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="o">&gt;&gt;</span> <span class="mi">10</span> <span class="o">+/-</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>However, there are three ways of outputting a Measurement object. Furthermore, each
+method also allows for a specific number of significant digits to be shown.</p>
+<p>One method is called scientific and will output the number in scientific notation
+with the error being shown as a value with only a single whole digit.</p>
 <p>This will produce an object with a mean of 10 and a standard deviation of 1.</p>
 <dl class="class">
 <dt id="QExPy.uncertainties.Measurement">
@@ -160,13 +176,14 @@ as shown above, which can be used by the user.</p>
 <li><a class="reference internal" href="#">Uncertainties Module</a><ul>
 <li><a class="reference internal" href="#creating-measurement-objects">Creating Measurement Objects</a></li>
 <li><a class="reference internal" href="#working-with-measurement-objects">Working with Measurement Objects</a></li>
+<li><a class="reference internal" href="#formatting">Formatting</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="intro.html"
-                        title="previous chapter">Introduction</a></p>
+  <p class="topless"><a href="Youngs Modulus Lab.html"
+                        title="previous chapter">&lt;no title&gt;</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="operations.html"
                         title="next chapter">Operations Module</a></p>
@@ -204,7 +221,7 @@ as shown above, which can be used by the user.</p>
           <a href="operations.html" title="Operations Module"
              >next</a> |</li>
         <li class="right" >
-          <a href="intro.html" title="Introduction"
+          <a href="Youngs Modulus Lab.html" title="&lt;no title&gt;"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
       </ul>

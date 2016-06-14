@@ -113,6 +113,12 @@ As shown above, the default method of printing a value with an uncertainty is:
 	x = u.Measured(10, 1)
 	print(x)
 	>> 10 +/- 1
+	
+However, there are three ways of outputting a Measurement object. Furthermore, each
+method also allows for a specific number of significant digits to be shown.
+
+One method is called scientific and will output the number in scientific notation
+with the error being shown as a value with only a single whole digit.
 
 This will produce an object with a mean of 10 and a standard deviation of 1.
 
