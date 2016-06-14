@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Uncertainties Module &mdash; QExPy 0.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="QExPy 0.1.1 documentation" href="index.html" />
+    <link rel="next" title="Operations Module" href="operations.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="operations.html" title="Operations Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="intro.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="uncertainties-module">
+<h1>Uncertainties Module<a class="headerlink" href="#uncertainties-module" title="Permalink to this headline">¶</a></h1>
+<p>This module is the core of the QExPy package, this is where the Measurement
+class of objects is created and the methods which allow for derivatives to be
+calculated and the names and units of values to be stored and propagated.</p>
+<div class="section" id="creating-measurement-objects">
+<h2>Creating Measurement Objects<a class="headerlink" href="#creating-measurement-objects" title="Permalink to this headline">¶</a></h2>
+<p>The method that will be used most commonly is the Measured class. This object
+can store the mean, standard deviation, original data, name, units, and other
+attributes which can be used by other elements of this package.</p>
+<dl class="class">
+<dt id="QExPy.uncertainties.Measured">
+<em class="property">class </em><code class="descclassname">QExPy.uncertainties.</code><code class="descname">Measured</code><span class="sig-paren">(</span><em>*args</em>, <em>name=None</em>, <em>units=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QExPy/uncertainties.html#Measured"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#QExPy.uncertainties.Measured" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subclass of measurements, specified by the user and treated as variables
+or arguments of functions when propagating error.</p>
+</dd></dl>
+
+<p>The arguments, or <a href="#id1"><span class="problematic" id="id2">*</span></a>args, of this class can be in several forms:</p>
+<p>A mean and standard deviation can be entred directly.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c"># This would create an object with a mean of 10 and a standard</span>
+<span class="c"># deviation of 1.</span>
+</pre></div>
+</div>
+<p>A list or numpy array of values can be provided, from which the mean and
+standard deviation of the values can be taken.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Data&#39;</span><span class="p">)</span>
+<span class="c"># This would also produce an object with a mean of 10 and a standard</span>
+<span class="c"># deviation of 1.</span>
+</pre></div>
+</div>
+<p>If the list of values has errors associated with each measurement, the
+data can be entered either as pairs of a value and error, or as two lists
+of data and error respectivly.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<span class="c"># The mean and standard deviation of x and y are the same</span>
+</pre></div>
+</div>
+<p>The optional arguments <em>name</em> and <em>units</em> can be used to include strings
+for both of these parameters as shown below:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s">&#39;cm&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="working-with-measurement-objects">
+<h2>Working with Measurement Objects<a class="headerlink" href="#working-with-measurement-objects" title="Permalink to this headline">¶</a></h2>
+<p>Once created, these objects can be operated on just as any other value:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">QExPy.uncertainties</span> <span class="nn">as</span> <span class="nn">u</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="n">y</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<span class="o">&gt;&gt;</span> <span class="k">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will produce an object with a mean of 10 and a standard deviation of 1.</p>
+<dl class="class">
+<dt id="QExPy.uncertainties.Measurement">
+<em class="property">class </em><code class="descclassname">QExPy.uncertainties.</code><code class="descname">Measurement</code><span class="sig-paren">(</span><em>*args</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QExPy/uncertainties.html#Measurement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#QExPy.uncertainties.Measurement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root class of objects which containt a mean and standard deviation.
+From this class, objects with properties pertaining to their use or
+formulation can be instanced. (ie. the result of an operation of
+measured values, called Funciton and Measured respectivly)</p>
+</dd></dl>
+
+<p>This class is not used by the user directly; however, it is used by subclasses,
+as shown above, which can be used by the user.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Uncertainties Module</a><ul>
+<li><a class="reference internal" href="#creating-measurement-objects">Creating Measurement Objects</a></li>
+<li><a class="reference internal" href="#working-with-measurement-objects">Working with Measurement Objects</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="intro.html"
+                        title="previous chapter">Introduction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="operations.html"
+                        title="next chapter">Operations Module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/uncertainties.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="operations.html" title="Operations Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="intro.html" title="Introduction"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Connor Kapahi.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>
