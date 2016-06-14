@@ -87,8 +87,18 @@ Measured objects used.
 
    # This can be compared to the analytic expression of the derivative
    d2 = m.cos(10+3)*3
-   print(d1, d2)
-   >> VALVALVAL
+   print(d1 == d2)
+   >> True
+
+This derivative method is what is used to propagate error by the error
+propagation formula.
+
+..  math::
+    
+    For some F(x,y):
+    \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \\
+    + (\frac{\partial F}{\partial y} \sigma_y)^2
+    
    
    
 
