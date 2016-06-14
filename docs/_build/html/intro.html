@@ -50,7 +50,140 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="introduction">
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput,
+div.nbinput > div,
+div.nbinput div[class^=highlight],
+div.nbinput div[class^=highlight] pre,
+div.nboutput,
+div.nboutput > div,
+div.nboutput div[class^=highlight],
+div.nboutput div[class^=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput div[class^=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput,
+div.nboutput {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+}
+
+/* input container */
+div.nbinput {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput > :first-child pre {
+    color: #303F9F;
+}
+
+/* output prompt */
+div.nboutput > :first-child pre {
+    color: #D84315;
+}
+
+/* all prompts */
+div.nbinput > :first-child[class^=highlight],
+div.nboutput > :first-child[class^=highlight],
+div.nboutput > :first-child {
+    min-width: 11ex;
+    padding-top: 0.4em;
+    padding-right: 0.4em;
+    text-align: right;
+    flex: 0;
+}
+
+/* input/output area */
+div.nbinput > :nth-child(2)[class^=highlight],
+div.nboutput > :nth-child(2),
+div.nboutput > :nth-child(2)[class^=highlight] {
+    padding: 0.4em;
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+
+/* input area */
+div.nbinput > :nth-child(2)[class^=highlight] {
+    border: 1px solid #cfcfcf;
+    border-radius: 2px;
+    background: #f7f7f7;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.pngmath center alignment in output cells */
+div.nboutput div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput  > :nth-child(2).stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-bold { font-weight: bold; }
+</style>
+<div class="section" id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
 <p>QExPy is a package whose goal is to reduce the time required to produce
 lab reports for undergraduate students of Physics and Engineering Physics.
@@ -60,6 +193,78 @@ as possible. For example, a common lab preformed by first years is an
 analysis of the stress and strain in a steel beam as one end is bent by a
 measured amount. The next section contains an example of a Jupyter notebook
 for said lab.</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [1]:
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>
+<span></span>   <span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+   <span class="kn">import</span> <span class="nn">QExPy.fitting</span> <span class="kn">as</span> <span class="nn">fit</span>
+
+   <span class="c1"># This cell will load the package in a way that is shorter to type</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [2]:
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>
+<span></span>   <span class="c1"># We can now enter the data gathered in the lab itself</span>
+
+   <span class="n">dl</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mf">185e-6</span><span class="p">,</span> <span class="mf">250e-6</span><span class="p">,</span> <span class="mf">305e-6</span><span class="p">,</span> <span class="mf">378e-6</span><span class="p">,</span> <span class="mf">460e-6</span><span class="p">,</span> <span class="mf">515e-6</span><span class="p">,</span> <span class="mf">573e-6</span><span class="p">,</span>
+                                    <span class="mf">659e-6</span><span class="p">,</span> <span class="mf">733e-6</span><span class="p">,</span> <span class="mf">799e-6</span><span class="p">,</span> <span class="mf">1199e-6</span><span class="p">,</span> <span class="mf">860e-6</span><span class="p">,</span> <span class="mf">933e-6</span><span class="p">,</span> <span class="mf">993e-6</span><span class="p">,</span>
+                                    <span class="mf">1060e-6</span><span class="p">,</span> <span class="mf">1125e-6</span><span class="p">],</span> <span class="p">[</span><span class="mf">5e-6</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Lengthening&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+   <span class="c1"># This data is the amount that the cable streched for each applied mass</span>
+   <span class="c1"># As the error on each of these measurements is the same, we will use a single</span>
+   <span class="c1"># value of error instead of another list containing the error for each point.</span>
+
+   <span class="n">m50</span> <span class="o">=</span> <span class="mf">0.05008</span>
+   <span class="n">m1</span> <span class="o">=</span> <span class="mf">0.10010</span>
+   <span class="n">m2x</span> <span class="o">=</span> <span class="mf">0.20019</span>
+   <span class="n">m2i</span> <span class="o">=</span> <span class="mf">0.20025</span>
+   <span class="n">m5</span> <span class="o">=</span> <span class="mf">0.50054</span>
+   <span class="n">m5d</span> <span class="o">=</span> <span class="mf">0.50087</span>
+
+   <span class="n">mass</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2x</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">,</span> <span class="n">m5</span><span class="p">,</span> <span class="n">m1</span><span class="o">+</span><span class="n">m5</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m5</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m5</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span>
+                                    <span class="n">m5</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="p">,</span>
+                                    <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span><span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.04</span><span class="p">],</span>
+                                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Suspended Mass&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+
+   <span class="c1"># This list is the combonation of weights that were used in each trial</span>
+   <span class="c1"># As the error on each of these measurements is the same, we will use a single</span>
+   <span class="c1"># value of error instead of another list containing the error for each point.</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [3]:
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>
+<span></span>   <span class="c1"># Now that we have the data stored, we can plot the data, along with a line of</span>
+   <span class="c1"># best fit</span>
+
+   <span class="n">plot</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">dl</span><span class="p">,</span> <span class="n">mass</span><span class="p">)</span> <span class="c1"># This creates the plot and stores it as plot</span>
+   <span class="n">plot</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span> <span class="c1"># We can now say that we want to see a linear fit of the data</span>
+   <span class="n">plot</span><span class="o">.</span><span class="n">residuals</span><span class="p">()</span> <span class="c1"># This tells the plot that we also want a residual plot</span>
+   <span class="n">plot</span><span class="o">.</span><span class="n">show</span><span class="p">()</span> <span class="c1"># Now that we have prepared the plot with everything, it is shown</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>Out[3]:
+</pre></div>
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>
+</pre></div>
+</div>
+</div>
 </div>
 
 

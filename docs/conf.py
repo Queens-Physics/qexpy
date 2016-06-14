@@ -39,6 +39,9 @@ extensions = [
     'nbsphinx'
 ]
 
+# Default Pygments lexer for syntax highlighting in code cells
+nbsphinx_codecell_lexer = 'python'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

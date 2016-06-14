@@ -1,3 +1,6 @@
+License
+=======
+
 QExPy - A scientific computing tool for physicists
 Copyright (C) 2016  Connor Kapahi
 
