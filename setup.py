@@ -11,7 +11,7 @@ setup(
     url='https://github.com/Queens-Physics/qphyssy',
     download_url='https://github.com/Queens-Physics/qphyssy/tarball/0.1',
     keywords=['physics', 'undergrad', 'queens', 'university', 'analysis',
-                'uncertainty', 'plotting'],
+                'uncertainty', 'plotting', 'error analysis'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
