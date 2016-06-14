@@ -18,90 +18,101 @@ The arguments, or *args, of this class can be in several forms:
 
 A mean and standard deviation can be entred directly.
 
-.. code-block:: python
+..  code-block:: python
    
-   import QExPy.uncertainties as u
-   x = u.Measured(10, 1)
-   # This would create an object with a mean of 10 and a standard
-   # deviation of 1.
+	import QExPy.uncertainties as u
+	x = u.Measured(10, 1)
+	# This would create an object with a mean of 10 and a standard
+	# deviation of 1.
 
 A list or numpy array of values can be provided, from which the mean and
 standard deviation of the values can be taken.
 
-.. code-block:: python
+..  code-block:: python
    
-   x = u.Measured([9, 10, 11], name='Data')
-   # This would also produce an object with a mean of 10 and a standard
-   # deviation of 1.
+	x = u.Measured([9, 10, 11], name='Data')
+	# This would also produce an object with a mean of 10 and a standard
+	# deviation of 1.
 
 If the list of values has errors associated with each measurement, the
 data can be entered either as pairs of a value and error, or as two lists
 of data and error respectivly.
 
-.. code-block:: python
+..  code-block:: python
    
-   x = u.Measured([10, 1], [9, 0.5], [11, 0.25])
-   y = u.Measured([10, 9, 11], [1, 0.5, 0.25])
-   # The mean and standard deviation of x and y are the same
+	x = u.Measured([10, 1], [9, 0.5], [11, 0.25])
+	y = u.Measured([10, 9, 11], [1, 0.5, 0.25])
+	# The mean and standard deviation of x and y are the same
 
 The optional arguments *name* and *units* can be used to include strings
 for both of these parameters as shown below:
 
-.. code-block:: python
+..  code-block:: python
 
-   x = u.Measured(10, 1, name='Length', units='cm')
+    x = u.Measured(10, 1, name='Length', units='cm')
 
 Working with Measurement Objects
 --------------------------------
 
 Once created, these objects can be operated on just as any other value:
 
-.. code-block:: python
+..  code-block:: python
    
-   import QExPy.uncertainties as u
+	import QExPy.uncertainties as u
 
-   x = u.Measured(10, 1)
-   y = u.Measured(3, 0.1)
-   z = x-y
-   f = u.sin(z)
+	x = u.Measured(10, 1)
+	y = u.Measured(3, 0.1)
+	z = x-y
+	f = u.sin(z)
 
-   print(z)
-   >> 10 +/- 1
+	print(z)
+	>> 10 +/- 1
 
 Elementary functions such as the trig functions, inverse trig functions,
 natural logarithm and exponential function can also be used:
 
-.. code-block:: python
+..  code-block:: python
 
-   f = u.sin(z)
-   print(f)
-   >> 0.7 +/- 0.8
+	f = u.sin(z)
+	print(f)
+	>> 0.7 +/- 0.8
 
 Furthermore, the use of Measured objects in equations also allows for the
 calculation of the derivative of these expressions with respect to any of the
 Measured objects used.
 
-.. code-block:: python
+..  code-block:: python
 
-   d1 = f.derivative(x)
+	d1 = f.derivative(x)
 
-   # This can be compared to the analytic expression of the derivative
-   d2 = m.cos(10+3)*3
-   print(d1 == d2)
-   >> True
+	# This can be compared to the analytic expression of the derivative
+	d2 = m.cos(10+3)*3
+	print(d1 == d2)
+	>> True
 
 This derivative method is what is used to propagate error by the error
 propagation formula.
 
 ..  math::
     
-    For some F(x,y):
-    \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \\
-    + (\frac{\partial F}{\partial y} \sigma_y)^2
+    For\ some\ F(x,y):
+    \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \
+	+ (\frac{\partial F}{\partial y} \sigma_y)^2
     
-   
-   
+This formula is the default method of error propagation and will be accurate in
+most cases.
 
+Formatting
+----------
+
+As shown above, the default method of printing a value with an uncertainty is:
+   
+..  code-block:: python
+   
+	import QExPy.uncertainties as u
+	x = u.Measured(10, 1)
+	print(x)
+	>> 10 +/- 1
 
 This will produce an object with a mean of 10 and a standard deviation of 1.
 

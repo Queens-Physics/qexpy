@@ -6,6 +6,6 @@ Run Test*
 WorkList.txt
 ToDo*
 *.png
-*.ipynb
+*.ipynb_checkpoints
 *Plot*
 *.pypirc

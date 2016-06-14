@@ -95,9 +95,9 @@ propagation formula.
 
 ..  math::
     
-    For some F(x,y):
-    \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \\
-    + (\frac{\partial F}{\partial y} \sigma_y)^2
+    For\ some\ F(x,y):
+    \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \
+	+ (\frac{\partial F}{\partial y} \sigma_y)^2
     
    
    

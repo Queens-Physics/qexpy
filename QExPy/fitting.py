@@ -25,8 +25,8 @@ class Plot:
         poly = 0
         n = 0
         for par in pars:
+            poly += np.multiply(par, np.power(x, n))
             n += 1
-            poly += par*x**n
         return poly
 
     def gauss(x, pars):
@@ -36,8 +36,7 @@ class Plot:
         return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
 
     fits = {
-            # 'linear': lambda x, pars: pars[0]+pars[1]*x,
-            'linear': polynomial,
+            'linear': lambda x, pars: pars[0]+np.multiply(pars[1], x),
             'exponential': lambda x, pars: np.exp(pars[0]+pars[1]*x),
             'polynomial': polynomial,
             'gaussian': gauss}
@@ -50,7 +49,7 @@ class Plot:
 
     mfits = {
             # 'linear': lambda x, pars: pars[0]+pars[1]*x,
-            'linear': polynomial,
+            'linear': lambda x, pars: pars[0]+np.multiply(pars[1], x),
             'exponential': lambda x, pars: np.exp(pars[0]+pars[1]*x),
             'polynomial': polynomial,
             'gaussian': mgauss}
