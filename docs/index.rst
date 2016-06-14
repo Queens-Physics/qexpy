@@ -6,11 +6,17 @@
 Welcome to QExPy's documentation!
 =================================
 
-Contents:
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
-
+    
+   intro
+   uncertainties
+   operations
+   plotting
+   LICENSE
 
 
 Indices and tables
