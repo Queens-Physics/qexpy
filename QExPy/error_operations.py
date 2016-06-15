@@ -106,7 +106,7 @@ def add(a, b):
     Returns a measurement object that is the sum of two other measurements.
 
     The sum can be taken by multiple methods,  specified by the measurement
-    class variable measurement.method. The derivative of this new object is
+    class variable measurement.error_method. The derivative of this new object is
     also specifed by applying the chain rule to the input and the
     derivative of the inputs.
     '''
@@ -122,19 +122,19 @@ def add(a, b):
     if check_formula(add, a, b) is not None:
         return check_formula(add, a, b)
     # Addition by error propogation formula
-    if e.ExperimentalValue.method == "Derivative":
+    if e.ExperimentalValue.error_method == "Derivative":
         mean = a.mean + b.mean
         std = dev(a, b, der=result_derivative)
         result = e.Function(mean, std)
 
     # Addition by Min-Max method
-    elif e.ExperimentalValue.method == "Min Max":
+    elif e.ExperimentalValue.error_method == "Min Max":
         mean = a.mean + b.mean
         std = a.std + b.std
         result = e.Function(mean, std)
 
     # If method specification is bad,  MC method is used
-    elif e.ExperimentalValue.method == "Monte Carlo":
+    elif e.ExperimentalValue.error_method == "Monte Carlo":
         (mean, std, ) = e.ExperimentalValue.monte_carlo(
             lambda x, y: x + y, a, b)
         result = e.Function(mean, std)
@@ -179,17 +179,17 @@ def sub(a, b):
         return check_formula(sub, a, b)
 
     # Addition by error propogation formula
-    if e.ExperimentalValue.method == "Derivative":
+    if e.ExperimentalValue.error_method == "Derivative":
         mean = a.mean-b.mean
         std = dev(a, b, der=result_derivative)
         result = e.Function(mean, std)
 
     # Addition by Min-Max method
-    elif e.ExperimentalValue.method == "Min Max":
+    elif e.ExperimentalValue.error_method == "Min Max":
         result = add(a, -b)
 
     # Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x, y: x-y, a, b)
         result = e.Function(mean, std)
 
@@ -233,19 +233,19 @@ def mul(a, b):
         return check_formula(mul, a, b)
 
     # By error propogation formula
-    if e.ExperimentalValue.method == "Derivative":
+    if e.ExperimentalValue.error_method == "Derivative":
         mean = a.mean*b.mean
         std = dev(a, b, der=result_derivative)
         result = e.Function(mean, std)
 
     # Addition by Min-Max method
-    elif e.ExperimentalValue.method == "Min Max":
+    elif e.ExperimentalValue.error_method == "Min Max":
         mean = a.mean*b.mean + a.std*b.std
         std = a.mean*b.std + b.mean*a.std
         result = e.Function(mean, std)
 
     # If method specification is bad,  MC method is used
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda a, b: a*b, a, b)
         result = e.Function(mean, std)
 
@@ -294,13 +294,13 @@ def div(a, b):
         return check_formula(div, a, b)
 
     # By error propgation
-    if e.ExperimentalValue.method == "Derivative":
+    if e.ExperimentalValue.error_method == "Derivative":
         mean = a.mean/b.mean
         std = dev(a, b, der=result_derivative)
         result = e.Function(mean, std)
 
     # Addition by Min-Max method
-    elif e.ExperimentalValue.method == "Min Max":
+    elif e.ExperimentalValue.error_method == "Min Max":
         if b.mean is not 0 and b.std is not 0:
             mean = (b.mean*a.std + a.mean*b.std)/(b.mean**2*b.std**2)
             std = (a.mean*b.mean +
@@ -310,7 +310,7 @@ def div(a, b):
             result = None
 
     # If method specification is bad,  MC method is used
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda a, b: a/b, a, b)
         result = e.Function(mean, std)
 
@@ -371,13 +371,13 @@ def power(a, b):
         return check_formula(power, a, b)
 
     # By derivative method
-    if e.ExperimentalValue.method == "Derivative":
+    if e.ExperimentalValue.error_method == "Derivative":
         mean = a.mean**b.mean
         std = dev(a, b, der=result_derivative)
         result = e.Function(mean, std)
 
     # By min-max method
-    elif e.ExperimentalValue.method == 'Min Max':
+    elif e.ExperimentalValue.error_method == 'Min Max':
         if (b.mean < 0):
             max_val = (a.mean + a.std)**(b.mean-b.std)
             min_val = (a.mean-a.std)**(b.mean + b.std)
@@ -389,7 +389,7 @@ def power(a, b):
         result = e.Function(mid_val, err)
 
     # By Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         (mean, std, ) = e.ExperimentalValue.monte_carlo(
             lambda a, b: a**b, a, b)
         result = e.Function(mean, std)
@@ -436,17 +436,17 @@ def sin(x):
         return check_formula(sin, x, func_flag=True)
 
     # By derivative method
-    if e.ExperimentalValue.method == 'Derivative':
+    if e.ExperimentalValue.error_method == 'Derivative':
         mean = m.sin(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: m.sin(x), x)
 
     # By Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.sin(x), x)
         result = e.Function(mean, std)
@@ -484,17 +484,17 @@ def cos(x):
         return check_formula(cos, x, func_flag=True)
 
     # By derivative method
-    if e.ExperimentalValue.method == 'Derivative':
+    if e.ExperimentalValue.error_method == 'Derivative':
         mean = m.cos(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: m.cos(x), x)
 
     # By Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.cos(x), x)
         result = e.Function(mean, std)
@@ -535,17 +535,17 @@ def tan(x):
         return check_formula(tan, x, func_flag=True)
 
     # Derivative method
-    elif e.ExperimentalValue.method == 'Derivative':
+    elif e.ExperimentalValue.error_method == 'Derivative':
         mean = m.tan(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: m.tan(x), x)
 
     # Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.tan(x), x)
         result = e.Function(mean, std)
@@ -583,17 +583,17 @@ def atan(x):
         return check_formula(tan, x, func_flag=True)
 
     # Derivative method
-    elif e.ExperimentalValue.method == 'Derivative':
+    elif e.ExperimentalValue.error_method == 'Derivative':
         mean = atan(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: m.atan(x), x)
 
     # Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.tan(x), x)
         result = e.Function(mean, std)
@@ -637,17 +637,17 @@ def sec(x):
         return check_formula(sec, x, func_flag=True)
 
     # Derivative method
-    elif e.ExperimentalValue.method == 'Derivative':
+    elif e.ExperimentalValue.error_method == 'Derivative':
         mean = Sec(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: Sec(x), x)
 
     # Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(
             lambda x: np.divide(1, np.cos(x)), x)
@@ -693,17 +693,17 @@ def csc(x):
         return check_formula(csc, x, func_flag=True)
 
     # Derivative method
-    elif e.ExperimentalValue.method == 'Derivative':
+    elif e.ExperimentalValue.error_method == 'Derivative':
         mean = Csc(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: Csc(x), x)
 
     # Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(
                 lambda x: np.divide(1, np.sin(x)), x)
@@ -749,17 +749,17 @@ def cot(x):
         return check_formula(cot, x, func_flag=True)
 
     # Derivative method
-    elif e.ExperimentalValue.method == 'Derivative':
+    elif e.ExperimentalValue.error_method == 'Derivative':
         mean = Cot(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: Cot(x), x)
 
     # Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(
                 lambda x: np.divide(1, np.tan(x)), x)
@@ -799,17 +799,17 @@ def exp(x):
         return check_formula(exp, x, func_flag=True)
 
     # By derivative method
-    if e.ExperimentalValue.method == 'Derivative':
+    if e.ExperimentalValue.error_method == 'Derivative':
         mean = m.exp(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: m.exp(x), x)
 
     # By Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.exp(x), x)
         result = e.Function(mean, std)
@@ -852,22 +852,22 @@ def log(x):
         return check_formula(log, x, func_flag=True)
 
     # By derivative method
-    if e.ExperimentalValue.method == 'Derivative':
+    if e.ExperimentalValue.error_method == 'Derivative':
         mean = m.log(x.mean)
         std = dev(x, der=result_derivative)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    if e.ExperimentalValue.method == "Min Max":
+    if e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(lambda x: m.log(x), x)
 
     # By Monte Carlo method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         import numpy as np
         (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.log(x), x)
         result = e.Function(mean, std)
 
-    elif e.ExperimentalValue.method == 'Default':
+    elif e.ExperimentalValue.error_method == 'Default':
         import numpy as np
         mean = m.log(x.mean)
         std = dev(x, der=result_derivative)
@@ -924,17 +924,17 @@ def operation_wrap(operation, *args, func_flag=False):
         return check_formula(op_string[operation], *args, func_flag)
 
     # Derivative Method
-    if e.ExperimentalValue.method == "Derivative":
+    if e.ExperimentalValue.error_method == "Derivative":
         mean = operation(*args)
         std = dev(*args, der=df)
         result = e.Function(mean, std)
 
     # By Min-Max method
-    elif e.ExperimentalValue.method == "Min Max":
+    elif e.ExperimentalValue.error_method == "Min Max":
         return find_minmax(operation, *args)
 
     # Monte Carlo Method
-    elif e.ExperimentalValue.method == 'Monte Carlo':
+    elif e.ExperimentalValue.error_method == 'Monte Carlo':
         (mean, std, ) = e.ExperimentalValue.monte_carlo(operation, *args)
 
     # Default method with all above method calculations

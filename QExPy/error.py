@@ -351,7 +351,7 @@ class ExperimentalValue:
         else:
             print('Something went wrong in update_info')
 
-    def derivative(self, variable=None):
+    def return_derivative(self, variable=None):
         '''
         Returns the numerical value of the derivative with respect to an
         inputed variable.
@@ -472,7 +472,7 @@ class ExperimentalValue:
         # 2D array
         import numpy as np
         N = len(args)
-        n = ExperimentalValue.mc_trial_numeber
+        n = ExperimentalValue.mc_trial_number
         value = np.zeros((N, n))
         result = np.zeros(n)
         for i in range(N):
@@ -887,6 +887,6 @@ def reset_variables():
     ExperimentalValue.register = {}
     ExperimentalValue.formula_register = {}
     ExperimentalValue.error_method = "Derivative"
-    ExperimentalValue.mc_trial_numeber = 10000
+    ExperimentalValue.mc_trial_number = 10000
     ExperimentalValue.default_style = "Default"
     ExperimentalValue.figs = 3
