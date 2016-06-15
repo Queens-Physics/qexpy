@@ -1,10 +1,9 @@
-from scipy.optimize import curve_fit
+import scipy.optimize as sp
 import numpy as np
-from error import Measurement as M
+import error as e
 from math import pi
-
-from bokeh.plotting import figure, show
-from bokeh.io import output_file, output_notebook, gridplot
+import bokeh.plotting as bp
+import bokeh.io as bi
 
 ARRAY = (list, tuple, )
 
@@ -136,7 +135,7 @@ class Plot:
 
         pars_guess = guess
 
-        self.pars_fit, self.pcov = curve_fit(
+        self.pars_fit, self.pcov = sp.curve_fit(
                                     model, self.xdata, self.ydata,
                                     sigma=self.yerr, p0=pars_guess)
         self.pars_err = np.sqrt(np.diag(self.pcov))
@@ -154,8 +153,8 @@ class Plot:
             else:
                 name = 'parameter %d' % (i)
 
-            self.fit_parameters += (M(self.pars_fit[i], self.pars_err[i],
-                                      name=name),)
+            self.fit_parameters += (
+                e.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
         self.flag['fitted'] = True
 
     def function(self, function):
@@ -173,13 +172,13 @@ class Plot:
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
         if output is 'inline':
-            output_notebook()
+            bi.output_notebook()
         elif output is 'file':
-            output_file(self.plot_para['filename']+'.html',
-                        title=self.attributes['title'])
+            bi.output_file(self.plot_para['filename']+'.html',
+                           title=self.attributes['title'])
 
         # create a new plot
-        p = figure(
+        p = bp.figure(
             tools="pan, box_zoom, reset, save, wheel_zoom",
             width=600, height=400,
             y_axis_type=self.plot_para['yscale'],
@@ -221,10 +220,10 @@ class Plot:
             self.function_counter += 1
 
         if self.flag['residuals'] is False:
-            show(p)
+            bp.show(p)
         else:
 
-            p2 = figure(
+            p2 = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=600, height=200,
                 y_axis_type='linear',
@@ -240,8 +239,8 @@ class Plot:
             # plot y errorbars
             error_bar(self, p2, residual=True)
 
-            gp_alt = gridplot([[p], [p2]])
-            show(gp_alt)
+            gp_alt = bi.gridplot([[p], [p2]])
+            bp.show(gp_alt)
 
     def set_colors(self, data=None, error=None, line=None):
         '''Method to changes colors of data or function lines.

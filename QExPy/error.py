@@ -6,8 +6,8 @@ class ExperimentalValue:
     measured values, called Funciton and Measured respectivly)
     '''
     error_method = "Default"  # Default error propogation method
-    mcTrials = 10000  # option for number of trial in Monte Carlo simulation
-    style = "Default"
+    mc_trial_number = 10000  # number of trial in Monte Carlo simulation
+    default_style = "Default"
     figs = None
     register = {}
     formula_register = {}
@@ -108,6 +108,7 @@ class ExperimentalValue:
         self.MC_list = None
         ExperimentalValue.id_register[id(self)] = self
         self.units = {}
+        self.style = ExperimentalValue.default_style
 
         if name is not None:
             self.user_name = True
@@ -152,11 +153,11 @@ class ExperimentalValue:
         else:
             string = ''
 
-        if ExperimentalValue.style == "Latex":
+        if self.style == "Latex":
             string += tex_print(self)
-        elif ExperimentalValue.style == "Default":
+        elif self.style == "Default":
             string += def_print(self)
-        elif ExperimentalValue.style == "Scientific":
+        elif self.style == "Scientific":
             string += sci_print(self)
         try:
             self.error_flag
@@ -169,7 +170,7 @@ class ExperimentalValue:
         else:
             return string
 
-    def print_style(style, figs=None):
+    def print_style(self, style, figs=None):
         '''
         Set the style of printing and number of significant figures for the
         output of a printing a measurement object.
@@ -178,11 +179,11 @@ class ExperimentalValue:
         Sci = ("Scientific", "Sci", 'scientific', 'sci', 'sigfigs',)
         ExperimentalValue.figs = figs
         if style in latex:
-            ExperimentalValue.style = "Latex"
+            self.style = "Latex"
         elif style in Sci:
-            ExperimentalValue.style = "Scientific"
+            self.style = "Scientific"
         else:
-            ExperimentalValue.style = "Default"
+            self.style = "Default"
 
     def MC_print(self):
         if ExperimentalValue.style == "Latex":
@@ -306,13 +307,14 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        from error_operations import sin, cos, tan, csc, sec, cot, exp, log,\
-            add, sub, mul, div, power
+        import error_operations as op
 
-        op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc',
-                     sec: 'sec', cot: 'cot', exp: 'exp', log: 'log',
-                     add: '+', sub: '-', mul: '*', div: '/', power: '**',
+        op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan',
+                     op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
+                     op.exp: 'exp', op.log: 'log', op.add: '+',
+                     op.sub: '-', op.mul: '*', op.div: '/', op.power: '**',
                      'neg': '-', }
+
         if func_flag is None and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
             self.user_name = False
@@ -356,7 +358,7 @@ class ExperimentalValue:
 
         Function to find the derivative of a measurement or measurement like
         object. By default, derivative is with respect to itself, which will
-        always yeild 1. Operator acts by acessing the self.first_der
+        always yeild 1. Operator acts by acessing the self.derivative
         dictionary and returning the value stored there under the specific
         variable inputted (ie. deriving with respect to variable = ???)
         '''
@@ -364,10 +366,10 @@ class ExperimentalValue:
                 and not hasattr(variable, 'type'):
             return 'Only measurement objects can be derived.'
         elif variable is None:
-            return self.first_der
-        if variable.info['ID'] not in self.first_der:
-            self.first_der[variable.info['ID']] = 0
-        derivative = self.first_der[variable.info["ID"]]
+            return self.derivative
+        if variable.info['ID'] not in self.derivative:
+            self.derivative[variable.info['ID']] = 0
+        derivative = self.derivative[variable.info["ID"]]
         return derivative
 
     def _check_der(self, b):
@@ -378,14 +380,14 @@ class ExperimentalValue:
         Checks the existance of the derivative of an object in the
         dictionary of said object with respect to another variable, given
         the variable itself, then checking for the ID of said variable
-        in the .first_der dictionary. If non exists, the deriviative is
+        in the .derivative dictionary. If non exists, the deriviative is
         assumed to be zero.
         '''
-        for key in b.first_der:
-            if key in self.first_der:
+        for key in b.derivative:
+            if key in self.derivative:
                 pass
             else:
-                self.first_der[key] = 0
+                self.derivative[key] = 0
 
 # Operations on measurement objects
 
@@ -470,7 +472,7 @@ class ExperimentalValue:
         # 2D array
         import numpy as np
         N = len(args)
-        n = ExperimentalValue.mcTrials
+        n = ExperimentalValue.mc_trial_numeber
         value = np.zeros((N, n))
         result = np.zeros(n)
         for i in range(N):
@@ -489,6 +491,14 @@ class ExperimentalValue:
         return (data, error,)
 
 
+def set_default_print_style(style=None):
+    if type(style) is str:
+        ExperimentalValue.default_style(style)
+    else:
+        print('''A style must be a string of either: Scientific notation,
+        Latex, or the default style.''')
+
+
 class Function(ExperimentalValue):
     '''
     Subclass of objects, which are measurements created by operations or
@@ -502,7 +512,7 @@ class Function(ExperimentalValue):
         self.info['ID'] = 'obj%d' % (Function.id_number)
         self.type = "Function"
         Function.id_number += 1
-        self.first_der = {self.info['ID']: 1}
+        self.derivative = {self.info['ID']: 1}
         ExperimentalValue.register.update({self.info["ID"]: self})
         self.covariance = {self.name: self.std**2}
         self.root = ()
@@ -534,7 +544,7 @@ class Measurement(ExperimentalValue):
         self.info['ID'] = 'var%d' % (Measurement.id_number)
         self.info['Formula'] = 'var%d' % (Measurement.id_number)
         Measurement.id_number += 1
-        self.first_der = {self.info['ID']: 1}
+        self.derivative = {self.info['ID']: 1}
         self.covariance = {self.name: self.std**2}
         ExperimentalValue.register.update({self.info["ID"]: self})
         self.root = (self.info["ID"],)
@@ -554,7 +564,7 @@ class Constant(ExperimentalValue):
         self.name = '%d' % (arg)
         self.info['ID'] = 'Constant'
         self.info["Formula"] = '%f' % arg
-        self.first_der = {}
+        self.derivative = {}
         self.info["Data"] = [arg]
         self.type = "Constant"
         self.covariance = {self.name: 0}
@@ -877,6 +887,6 @@ def reset_variables():
     ExperimentalValue.register = {}
     ExperimentalValue.formula_register = {}
     ExperimentalValue.error_method = "Derivative"
-    ExperimentalValue.mcTrials = 10000
-    ExperimentalValue.style = "Default"
+    ExperimentalValue.mc_trial_numeber = 10000
+    ExperimentalValue.default_style = "Default"
     ExperimentalValue.figs = 3
