@@ -115,8 +115,8 @@ def add(a, b):
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
-    a.check_der(b)
-    b.check_der(a)
+    a._check_der(b)
+    b._check_der(a)
     for key in a.first_der:
         first_der[key] = diff[add](key, a, b)
     if check_formula(add, a, b) is not None:
@@ -170,8 +170,8 @@ def sub(a, b):
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
-    a.check_der(b)
-    b.check_der(a)
+    a._check_der(b)
+    b._check_der(a)
     for key in a.first_der:
         first_der[key] = a.first_der[key] - b.first_der[key]
     if check_formula(sub, a, b) is not None:
@@ -223,8 +223,8 @@ def mul(a, b):
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
-    a.check_der(b)
-    b.check_der(a)
+    a._check_der(b)
+    b._check_der(a)
     for key in a.first_der:
         first_der[key] = a.mean*b.first_der[key] + b.mean*a.first_der[key]
     if check_formula(mul, a, b) is not None:
@@ -283,8 +283,8 @@ def div(a, b):
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
-    a.check_der(b)
-    b.check_der(a)
+    a._check_der(b)
+    b._check_der(a)
     for key in a.first_der:
         first_der[key] = (a.first_der[key]*b.mean-b.first_der[key]*a.mean)\
                 / b.mean**2
@@ -356,8 +356,8 @@ def power(a, b):
     a, b = check_values(a, b)
     # Propagating derivative of arguments
     first_der = {}
-    a.check_der(b)
-    b.check_der(a)
+    a._check_der(b)
+    b._check_der(a)
     for key in a.first_der:
         if a.mean is 0:
             first_der[key] = None
@@ -911,8 +911,8 @@ def operation_wrap(operation, *args, func_flag=False):
 
     args = check_values(args)
     if args[1] is not None:
-        args[0].check_der(args[1])
-        args[1].check_der(args[0])
+        args[0]._check_der(args[1])
+        args[1]._check_der(args[0])
     df = {}
     for key in args[0].first_der:
         df[key] = diff[operation](key, *args)

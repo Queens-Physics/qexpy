@@ -5,7 +5,7 @@ class ExperimentalValue:
     formulation can be instanced. (ie. the result of an operation of
     measured values, called Funciton and Measured respectivly)
     '''
-    method = "Default"  # Default error propogation method
+    error_method = "Default"  # Default error propogation method
     mcTrials = 10000  # option for number of trial in Monte Carlo simulation
     style = "Default"
     figs = None
@@ -130,18 +130,18 @@ class ExperimentalValue:
 
         if chosen_method in mc_list:
             if ExperimentalValue.numpy_installed:
-                ExperimentalValue.method = "Monte Carlo"
+                ExperimentalValue.error_method = "Monte Carlo"
             else:
-                ExperimentalValue.method = "Monte Carlo"
+                ExperimentalValue.error_method = "Monte Carlo"
         elif chosen_method in min_max_list:
-            ExperimentalValue.method = "Min Max"
+            ExperimentalValue.error_method = "Min Max"
         elif chosen_method in derr_list:
-            ExperimentalValue.method = "Derivative"
+            ExperimentalValue.error_method = "Derivative"
         elif chosen_method in default_list:
-            ExperimentalValue.method = "Default"
+            ExperimentalValue.error_method = "Default"
         else:
             print("Method not recognized, using default method.")
-            ExperimentalValue.method = "Default"
+            ExperimentalValue.error_method = "Default"
 
     def __str__(self):
         '''
@@ -323,7 +323,7 @@ class ExperimentalValue:
             ExperimentalValue.formula_register.update(
                 {self.info["Formula"]: self.info["ID"]})
             self.info['Method'] += "Errors propagated by " +\
-                ExperimentalValue.method + ' method.\n'
+                ExperimentalValue.error_method + ' method.\n'
             for root in var1.root:
                 if root not in self.root:
                     self.root += var1.root
@@ -339,7 +339,7 @@ class ExperimentalValue:
             self.info['Function']['variables'] += (var1,),
             self.info['Function']['operation'] += operation,
             self.info['Method'] += "Errors propagated by " + \
-                ExperimentalValue.method + ' method.\n'
+                ExperimentalValue.error_method + ' method.\n'
             ExperimentalValue.formula_register.update(
                 {self.info["Formula"]: self.info["ID"]})
             for root in var1.root:
@@ -370,7 +370,7 @@ class ExperimentalValue:
         derivative = self.first_der[variable.info["ID"]]
         return derivative
 
-    def check_der(self, b):
+    def _check_der(self, b):
         '''
         Checks for a derivative with respect to b, else zero is defined as
         the derivative.
@@ -876,7 +876,7 @@ def reset_variables():
     Function.id_number = 0
     ExperimentalValue.register = {}
     ExperimentalValue.formula_register = {}
-    ExperimentalValue.method = "Derivative"
+    ExperimentalValue.error_method = "Derivative"
     ExperimentalValue.mcTrials = 10000
     ExperimentalValue.style = "Default"
     ExperimentalValue.figs = 3
