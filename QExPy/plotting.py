@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import error as e
+import qexpy.error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
