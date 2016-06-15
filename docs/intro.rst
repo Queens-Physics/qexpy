@@ -10,7 +10,7 @@ analysis of the stress and strain in a steel beam as one end is bent by a
 measured amount. The next section contains an example of a Jupyter notebook
 for said lab.
 
-..  nbinput:: python
+..  nbinput:: ipython3
      :execution-count: 1
 
 	import QExPy.uncertainties as u
@@ -18,7 +18,7 @@ for said lab.
 
 	# This cell will load the package in a way that is shorter to type
 	
-..  nbinput:: python
+..  nbinput:: ipython3
      :execution-count: 2
 
 	# We can now enter the data gathered in the lab itself
@@ -46,7 +46,7 @@ for said lab.
 	# As the error on each of these measurements is the same, we will use a single
 	# value of error instead of another list containing the error for each point.
 	
-..  nbinput:: python
+..  nbinput:: ipython3
      :execution-count: 3
 	 
 	# Now that we have the data stored, we can plot the data, along with a line of

@@ -26,7 +26,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="QExPy 0.1.1 documentation" href="index.html" />
     <link rel="next" title="Operations Module" href="operations.html" />
-    <link rel="prev" title="&lt;no title&gt;" href="Youngs Modulus Lab.html" /> 
+    <link rel="prev" title="Using QExPy in a Lab" href="Youngs Modulus Lab.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -39,7 +39,7 @@
           <a href="operations.html" title="Operations Module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="Youngs Modulus Lab.html" title="&lt;no title&gt;"
+          <a href="Youngs Modulus Lab.html" title="Using QExPy in a Lab"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
       </ul>
@@ -50,7 +50,140 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="uncertainties-module">
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput,
+div.nbinput > div,
+div.nbinput div[class^=highlight],
+div.nbinput div[class^=highlight] pre,
+div.nboutput,
+div.nboutput > div,
+div.nboutput div[class^=highlight],
+div.nboutput div[class^=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput div[class^=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput,
+div.nboutput {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+}
+
+/* input container */
+div.nbinput {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput > :first-child pre {
+    color: #303F9F;
+}
+
+/* output prompt */
+div.nboutput > :first-child pre {
+    color: #D84315;
+}
+
+/* all prompts */
+div.nbinput > :first-child[class^=highlight],
+div.nboutput > :first-child[class^=highlight],
+div.nboutput > :first-child {
+    min-width: 11ex;
+    padding-top: 0.4em;
+    padding-right: 0.4em;
+    text-align: right;
+    flex: 0;
+}
+
+/* input/output area */
+div.nbinput > :nth-child(2)[class^=highlight],
+div.nboutput > :nth-child(2),
+div.nboutput > :nth-child(2)[class^=highlight] {
+    padding: 0.4em;
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+
+/* input area */
+div.nbinput > :nth-child(2)[class^=highlight] {
+    border: 1px solid #cfcfcf;
+    border-radius: 2px;
+    background: #f7f7f7;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.pngmath center alignment in output cells */
+div.nboutput div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput  > :nth-child(2).stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-bold { font-weight: bold; }
+</style>
+<div class="section" id="uncertainties-module">
 <h1>Uncertainties Module<a class="headerlink" href="#uncertainties-module" title="Permalink to this headline">¶</a></h1>
 <p>This module is the core of the QExPy package, this is where the Measurement
 class of objects is created and the methods which allow for derivatives to be
@@ -67,39 +200,73 @@ attributes which can be used by other elements of this package.</p>
 or arguments of functions when propagating error.</p>
 </dd></dl>
 
-<p>The arguments, or <a href="#id1"><span class="problematic" id="id2">*</span></a>args, of this class can be in several forms:</p>
+<p>The arguments, or *args, of this class can be in several forms:</p>
 <p>A mean and standard deviation can be entred directly.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="c1"># This would create an object with a mean of 10 and a standard</span>
 <span class="c1"># deviation of 1.</span>
 </pre></div>
 </div>
+</div>
 <p>A list or numpy array of values can be provided, from which the mean and
 standard deviation of the values can be taken.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Data&#39;</span><span class="p">)</span>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Data&#39;</span><span class="p">)</span>
 <span class="c1"># This would also produce an object with a mean of 10 and a standard</span>
 <span class="c1"># deviation of 1.</span>
 </pre></div>
 </div>
+</div>
 <p>If the list of values has errors associated with each measurement, the
 data can be entered either as pairs of a value and error, or as two lists
 of data and error respectivly.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
 <span class="c1"># The mean and standard deviation of x and y are the same</span>
 </pre></div>
 </div>
+</div>
 <p>The optional arguments <em>name</em> and <em>units</em> can be used to include strings
 for both of these parameters as shown below:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
 </pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="working-with-measurement-objects">
 <h2>Working with Measurement Objects<a class="headerlink" href="#working-with-measurement-objects" title="Permalink to this headline">¶</a></h2>
 <p>Once created, these objects can be operated on just as any other value:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
 
 <span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
@@ -107,26 +274,62 @@ for both of these parameters as shown below:</p>
 <span class="n">f</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
 
 <span class="k">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-<span class="o">&gt;&gt;</span> <span class="mi">10</span> <span class="o">+/-</span> <span class="mi">1</span>
 </pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>10 +/- 1
+</pre></div>
+</div>
 </div>
 <p>Elementary functions such as the trig functions, inverse trig functions,
 natural logarithm and exponential function can also be used:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-<span class="o">&gt;&gt;</span> <span class="mf">0.7</span> <span class="o">+/-</span> <span class="mf">0.8</span>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
 </pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">f</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>0.7 +/- 0.8
+</pre></div>
+</div>
 </div>
 <p>Furthermore, the use of Measured objects in equations also allows for the
 calculation of the derivative of these expressions with respect to any of the
 Measured objects used.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">d1</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">d1</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
 <span class="c1"># This can be compared to the analytic expression of the derivative</span>
 <span class="n">d2</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">10</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span>
 <span class="k">print</span><span class="p">(</span><span class="n">d1</span> <span class="o">==</span> <span class="n">d2</span><span class="p">)</span>
-<span class="o">&gt;&gt;</span> <span class="bp">True</span>
 </pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>True
+</pre></div>
+</div>
 </div>
 <p>This derivative method is what is used to propagate error by the error
 propagation formula.</p>
@@ -140,11 +343,27 @@ most cases.</p>
 <div class="section" id="formatting">
 <h2>Formatting<a class="headerlink" href="#formatting" title="Permalink to this headline">¶</a></h2>
 <p>As shown above, the default method of printing a value with an uncertainty is:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="o">&gt;&gt;</span> <span class="mi">10</span> <span class="o">+/-</span> <span class="mi">1</span>
 </pre></div>
+</div>
+</div>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="mi">10</span> <span class="o">+/-</span> <span class="mi">1</span>
+</pre></div>
+</div>
 </div>
 <p>However, there are three ways of outputting a Measurement object. Furthermore, each
 method also allows for a specific number of significant digits to be shown.</p>
@@ -183,7 +402,7 @@ as shown above, which can be used by the user.</p>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="Youngs Modulus Lab.html"
-                        title="previous chapter">&lt;no title&gt;</a></p>
+                        title="previous chapter">Using QExPy in a Lab</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="operations.html"
                         title="next chapter">Operations Module</a></p>
@@ -221,7 +440,7 @@ as shown above, which can be used by the user.</p>
           <a href="operations.html" title="Operations Module"
              >next</a> |</li>
         <li class="right" >
-          <a href="Youngs Modulus Lab.html" title="&lt;no title&gt;"
+          <a href="Youngs Modulus Lab.html" title="Using QExPy in a Lab"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
       </ul>

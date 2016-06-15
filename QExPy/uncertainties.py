@@ -279,12 +279,20 @@ class Measurement:
         sigma_y = y.std
         return sigma_xy/sigma_x/sigma_y
 
-    def rename(self, newName):
+    def rename(self, newName=None, units=None):
         '''
         Renames an object, requires a string.
         '''
-        self.name = newName
-        self.user_name = True
+        if newName is not None:
+            self.name = newName
+            self.user_name = True
+
+        if units is not None:
+            if type(units) is str:
+                self.units[units] = 1
+            else:
+                for i in range(len(units)//2):
+                    self.units[units[2*i]] = units[i+1]
 
     def _update_info(self, operation, var1, var2=None, func_flag=None):
         '''
@@ -829,9 +837,10 @@ def sci_print(self, method=None):
         std = std*10**-i*10**(Measurement.figs-1)
         mean = mean*10**-i*10**(Measurement.figs-1)
         if i-Measurement.figs is not -1:
-            return "(%d \pm %d)\e%d" % (mean, std, i-Measurement.figs + 1)
+            return "(%d +/- %d)*10**%d" % (round(mean), round(std),
+                                           i-Measurement.figs + 1)
         else:
-            return "(%d \pm %d)" % (mean, std)
+            return "(%d +/- %d)" % (round(mean), round(std))
 
     else:
         value = abs(std)
@@ -851,9 +860,9 @@ def sci_print(self, method=None):
         std = int(std/10**i)
         mean = int(mean/10**i)
         if i is not 0:
-            return "(%d \pm %d)*10**%d" % (mean, std, (i))
+            return "(%d +/- %d)*10**%d" % (round(mean), round(std), (i))
         else:
-            return "(%d \pm %d)" % (mean, std)
+            return "(%d +/- %d)" % (round(mean), round(std))
 
 
 def reset_variables():

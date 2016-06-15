@@ -14,11 +14,11 @@ attributes which can be used by other elements of this package.
 
 .. autoclass:: QExPy.uncertainties.Measured
 
-The arguments, or *args, of this class can be in several forms:
+The arguments, or \*args, of this class can be in several forms:
 
 A mean and standard deviation can be entred directly.
 
-..  code-block:: python
+..  nbinput:: ipython3
    
 	import QExPy.uncertainties as u
 	x = u.Measured(10, 1)
@@ -28,7 +28,7 @@ A mean and standard deviation can be entred directly.
 A list or numpy array of values can be provided, from which the mean and
 standard deviation of the values can be taken.
 
-..  code-block:: python
+..  nbinput:: ipython3
    
 	x = u.Measured([9, 10, 11], name='Data')
 	# This would also produce an object with a mean of 10 and a standard
@@ -38,7 +38,7 @@ If the list of values has errors associated with each measurement, the
 data can be entered either as pairs of a value and error, or as two lists
 of data and error respectivly.
 
-..  code-block:: python
+..  nbinput:: ipython3
    
 	x = u.Measured([10, 1], [9, 0.5], [11, 0.25])
 	y = u.Measured([10, 9, 11], [1, 0.5, 0.25])
@@ -47,7 +47,7 @@ of data and error respectivly.
 The optional arguments *name* and *units* can be used to include strings
 for both of these parameters as shown below:
 
-..  code-block:: python
+..  nbinput:: ipython3
 
     x = u.Measured(10, 1, name='Length', units='cm')
 
@@ -56,7 +56,7 @@ Working with Measurement Objects
 
 Once created, these objects can be operated on just as any other value:
 
-..  code-block:: python
+..  nbinput:: ipython3
    
 	import QExPy.uncertainties as u
 
@@ -66,29 +66,38 @@ Once created, these objects can be operated on just as any other value:
 	f = u.sin(z)
 
 	print(z)
-	>> 10 +/- 1
+
+..  nboutput:: ipython3
+
+	10 +/- 1
 
 Elementary functions such as the trig functions, inverse trig functions,
 natural logarithm and exponential function can also be used:
 
-..  code-block:: python
+..  nbinput:: ipython3
 
 	f = u.sin(z)
 	print(f)
-	>> 0.7 +/- 0.8
+	
+..  nboutput:: ipython3
+
+	0.7 +/- 0.8
 
 Furthermore, the use of Measured objects in equations also allows for the
 calculation of the derivative of these expressions with respect to any of the
 Measured objects used.
 
-..  code-block:: python
+..  nbinput:: ipython3
 
 	d1 = f.derivative(x)
 
 	# This can be compared to the analytic expression of the derivative
 	d2 = m.cos(10+3)*3
 	print(d1 == d2)
-	>> True
+
+..  nboutput:: ipython3
+
+	True
 
 This derivative method is what is used to propagate error by the error
 propagation formula.
@@ -107,12 +116,15 @@ Formatting
 
 As shown above, the default method of printing a value with an uncertainty is:
    
-..  code-block:: python
+..  nbinput:: ipython3
    
 	import QExPy.uncertainties as u
 	x = u.Measured(10, 1)
 	print(x)
-	>> 10 +/- 1
+
+..  nbinput:: ipython3
+
+	10 +/- 1
 	
 However, there are three ways of outputting a Measurement object. Furthermore, each
 method also allows for a specific number of significant digits to be shown.
