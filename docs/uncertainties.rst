@@ -12,7 +12,7 @@ The method that will be used most commonly is the Measured class. This object
 can store the mean, standard deviation, original data, name, units, and other
 attributes which can be used by other elements of this package.
 
-.. autoclass:: QExPy.uncertainties.Measured
+.. autoclass:: qexpy.error.Measurement
 
 The arguments, or \*args, of this class can be in several forms:
 
@@ -20,8 +20,8 @@ A mean and standard deviation can be entred directly.
 
 ..  nbinput:: ipython3
    
-	import QExPy.uncertainties as u
-	x = u.Measured(10, 1)
+	import qexpy.error as u
+	x = e.Measurement(10, 1)
 	# This would create an object with a mean of 10 and a standard
 	# deviation of 1.
 
@@ -30,7 +30,7 @@ standard deviation of the values can be taken.
 
 ..  nbinput:: ipython3
    
-	x = u.Measured([9, 10, 11])
+	x = e.Measurement([9, 10, 11])
 	# This would also produce an object with a mean of 10 and a standard
 	# deviation of 1.
 
@@ -40,8 +40,8 @@ of data and error respectivly.
 
 ..  nbinput:: ipython3
    
-	x = u.Measured([10, 1], [9, 0.5], [11, 0.25])
-	y = u.Measured([10, 9, 11], [1, 0.5, 0.25])
+	x = e.Measurement([10, 1], [9, 0.5], [11, 0.25])
+	y = e.Measurement([10, 9, 11], [1, 0.5, 0.25])
 	# The mean and standard deviation of x and y are the same
 
 The optional arguments *name* and *units* can be used to include strings
@@ -49,7 +49,7 @@ for both of these parameters as shown below:
 
 ..  nbinput:: ipython3
 
-    x = u.Measured(10, 1, name='Length', units='cm')
+    x = e.Measurement(10, 1, name='Length', units='cm')
 
 Working with Measurement Objects
 --------------------------------
@@ -58,12 +58,12 @@ Once created, these objects can be operated on just as any other value:
 
 ..  nbinput:: ipython3
    
-	import QExPy.uncertainties as u
+	import qexpy.error as u
 
-	x = u.Measured(10, 1)
-	y = u.Measured(3, 0.1)
+	x = e.Measurement(10, 1)
+	y = e.Measurement(3, 0.1)
 	z = x-y
-	f = u.sin(z)
+	f = e.sin(z)
 
 	print(z)
 
@@ -76,7 +76,7 @@ natural logarithm and exponential function can also be used:
 
 ..  nbinput:: ipython3
 
-	f = u.sin(z)
+	f = e.sin(z)
 	print(f)
 	
 ..  nboutput:: ipython3
@@ -123,9 +123,9 @@ be declared either when the object is created or altered after.
 
 ..  nbinput:: ipython3
 
-	import QExPy.uncertainties as u
+	import qexpy.error as u
 	
-	x = u.Measured(10, 1, name='Length', units='cm')
+	x = e.Measurement(10, 1, name='Length', units='cm')
 	# This value can be changed using the following method
 	
 	x.rename(name='Cable Length', units='m')
@@ -139,15 +139,35 @@ be declared either when the object is created or altered after.
 	Cable Length = 10 +/- 1
 	
 Values which have more complicated units can also be entered using the
-following syntax
+following syntax. Consider a measurement of acceleration, with units of m/s^2
+or meters per second squared, this can be entered as a list of the unit letters
+followed by the exponent of the unit, for every base unit, such as meter order
+second:
 	
+.. nbinput:: ipython3
 
+	import qexpy.error as e
+	
+	t = e.Measurement(3,0.25, name='Time', units='s')
+	a = e.Measurement(10, 1, name='Acceleration', units=['m',1,'s',-1])
+
+This also allows for the units of values produced by operations such as
+multiplication to be generated automatically. Consider the calculation of the
+velocity of some object that accelerates at a for t seconds:
+
+..  nbinput:: ipython3
+
+	v = a*t
+	print(v.units)
+	
+.. nbinput:: ipython3
+	
 As shown above, the default method of printing a value with an uncertainty is:
    
 ..  nbinput:: ipython3
    
-	import QExPy.uncertainties as u
-	x = u.Measured(10, 1)
+	import qexpy.error as u
+	x = e.Measurement(10, 1)
 	print(x)
 
 ..  nbinput:: ipython3
@@ -165,10 +185,10 @@ change how the package prints a Measurement object:
 
 ..  nbinput:: ipython3
 
-	import QExPy.uncertainties as u
+	import qexpy.error as u
 	
-	x = u.Measured(122, 10)
-	u.Measurement.print_style("Scientific")
+	x = e.Measurement(122, 10)
+	e.Measurement.print_style("Scientific")
 	print(x)
 	
 ..  nboutput:: ipython3
@@ -182,10 +202,10 @@ Latex document.
 
 ..  nbinput:: ipython3
 
-	import QExPy.uncertainties as u
+	import qexpy.error as u
 	
-	x = u.Measured(122, 10)
-	u.Measurement.print_style("Latex")
+	x = e.Measurement(122, 10)
+	e.Measurement.print_style("Latex")
 	print(x)
 	
 ..  nboutput:: ipython3
@@ -204,10 +224,10 @@ by default, and a specific method can be chosen as shown below.
 
 .. nbinput:: ipython3
 
-	import QExPy.uncertainties as u
+	import qexpy.error as u
 	
-	x = u.Measured(13,2)
-	y = u.Measured(2,0.23)
+	x = e.Measurement(13,2)
+	y = e.Measurement(2,0.23)
 	z = x**2 - x/y
 	
 	print(z)
@@ -230,24 +250,24 @@ chosen.
 
 .. nbinput:: ipython3
 	
-	x = u.Measured(10,2)
-	y = u.Measured(5,1)
+	x = e.Measurement(10,2)
+	y = e.Measurement(5,1)
 
-	u.Measurement.set_method("Derivative")
+	e.Measurement.set_method("Derivative")
 	# This option will limit the error calculation to using the derivative
 	# formula
 	
 	z = x-y
 	z.rename('Derivative Method')
 	
-	u.Measurement.set_method("Monte Carlo")
+	e.Measurement.set_method("Monte Carlo")
 	# This option will limit the error calculation to using the derivative
 	# formula
 	
 	z = x-y
 	z.rename('Monte Carlo')
 	
-	u.Measurement.set_method("Min-Max")
+	e.Measurement.set_method("Min-Max")
 	# This option will limit the error calculation to using the derivative
 	# formula
 	
