@@ -1,3 +1,4 @@
 nbsphinx
 ipykernel
 bokeh
+qexpy
