@@ -194,8 +194,8 @@ calculated and the names and units of values to be stored and propagated.</p>
 can store the mean, standard deviation, original data, name, units, and other
 attributes which can be used by other elements of this package.</p>
 <dl class="class">
-<dt id="QExPy.uncertainties.Measured">
-<em class="property">class </em><code class="descclassname">QExPy.uncertainties.</code><code class="descname">Measured</code><span class="sig-paren">(</span><em>*args</em>, <em>name=None</em>, <em>units=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QExPy/uncertainties.html#Measured"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#QExPy.uncertainties.Measured" title="Permalink to this definition">¶</a></dt>
+<dt id="qexpy.error.Measurement">
+<em class="property">class </em><code class="descclassname">qexpy.error.</code><code class="descname">Measurement</code><span class="sig-paren">(</span><em>*args</em>, <em>name=None</em>, <em>units=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Subclass of measurements, specified by the user and treated as variables
 or arguments of functions when propagating error.</p>
 </dd></dl>
@@ -208,24 +208,35 @@ or arguments of functions when propagating error.</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="c1"># This would create an object with a mean of 10 and a standard</span>
 <span class="c1"># deviation of 1.</span>
 </pre></div>
 </div>
 </div>
 <p>A list or numpy array of values can be provided, from which the mean and
-standard deviation of the values can be taken.</p>
+standard deviation of the values can be taken. These values can be outputted
+by calling for the mean and std attributes of whatever object is created.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Data&#39;</span><span class="p">)</span>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
 <span class="c1"># This would also produce an object with a mean of 10 and a standard</span>
 <span class="c1"># deviation of 1.</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>10, 1
 </pre></div>
 </div>
 </div>
@@ -238,8 +249,8 @@ of data and error respectivly.</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
 <span class="c1"># The mean and standard deviation of x and y are the same</span>
 </pre></div>
 </div>
@@ -252,7 +263,7 @@ for both of these parameters as shown below:</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -266,12 +277,12 @@ for both of these parameters as shown below:</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
 
-<span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
 <span class="n">z</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="n">y</span>
-<span class="n">f</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
 
 <span class="k">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
 </pre></div>
@@ -293,7 +304,7 @@ natural logarithm and exponential function can also be used:</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="n">f</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<span></span><span class="n">f</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -342,15 +353,92 @@ most cases.</p>
 </div>
 <div class="section" id="formatting">
 <h2>Formatting<a class="headerlink" href="#formatting" title="Permalink to this headline">¶</a></h2>
-<p>As shown above, the default method of printing a value with an uncertainty is:</p>
+<p>In addition to containing a mean and standard deviation, Measurement objects
+can also have a string name and unit associated with it. These can then be
+used both in printing values and in labelling any plots created with these
+values. By default, Measured objects are named unnamed_var0, with a unique
+number assigned to each object. The name and units of a Measured object can
+be declared either when the object is created or altered after.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
+<span class="c1"># This value can be changed using the following method</span>
+
+<span class="n">x</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Cable Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+<span class="c1"># Note that units are only a marker and changing units does not change</span>
+<span class="c1"># any values with a Measurement</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>Cable Length = 10 +/- 1
+</pre></div>
+</div>
+</div>
+<p>Values which have more complicated units can also be entered using the
+following syntax. Consider a measurement of acceleration, with units of m/s^2
+or meters per second squared, this can be entered as a list of the unit letters
+followed by the exponent of the unit, for every base unit, such as meter order
+second:</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Acceleration&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>This also allows for the units of values produced by operations such as
+multiplication to be generated automatically. Consider the calculation of the
+velocity of some object that accelerates at a for t seconds:</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">v</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">t</span>
+<span class="k">print</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">units</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>[&#39;m&#39;,1,&#39;s&#39;,&#39;1&#39;]
+</pre></div>
+</div>
+</div>
+<p>This unit list, when used in a plot will appear as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s1">&#39;m^1s^-1&#39;</span>
+</pre></div>
+</div>
+<p>The default format of printing a value with an uncertainty is:</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -365,22 +453,136 @@ most cases.</p>
 </pre></div>
 </div>
 </div>
-<p>However, there are three ways of outputting a Measurement object. Furthermore, each
-method also allows for a specific number of significant digits to be shown.</p>
-<p>One method is called scientific and will output the number in scientific notation
-with the error being shown as a value with only a single whole digit.</p>
-<p>This will produce an object with a mean of 10 and a standard deviation of 1.</p>
-<dl class="class">
-<dt id="QExPy.uncertainties.Measurement">
-<em class="property">class </em><code class="descclassname">QExPy.uncertainties.</code><code class="descname">Measurement</code><span class="sig-paren">(</span><em>*args</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QExPy/uncertainties.html#Measurement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#QExPy.uncertainties.Measurement" title="Permalink to this definition">¶</a></dt>
-<dd><p>Root class of objects which containt a mean and standard deviation.
-From this class, objects with properties pertaining to their use or
-formulation can be instanced. (ie. the result of an operation of
-measured values, called Funciton and Measured respectivly)</p>
-</dd></dl>
+<p>However, there are three ways of outputting a Measurement object. Furthermore,
+each method also allows for a specific number of significant digits to be
+shown.</p>
+<p>One method is called scientific and will output the number in scientific
+notation with the error being shown as a value with only a single whole digit.
+In order to change between any printing method, the following function will
+change how the package prints a Measurement object:</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
 
-<p>This class is not used by the user directly; however, it is used by subclasses,
-as shown above, which can be used by the user.</p>
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">print_style</span><span class="p">(</span><span class="s2">&quot;Scientific&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>(12 +/- 1)*10**1
+</pre></div>
+</div>
+</div>
+<p>The same process is used for a print style called Latex which, as the name
+suggests, is formatted for use in Latex documents. This may be useful in the
+creation of labs by allowing variables to be copied and pasted directly into a
+Latex document.</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">print_style</span><span class="p">(</span><span class="s2">&quot;Latex&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>(12 \pm 1)\e1
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="methods-of-propagating-error">
+<h2>Methods of Propagating Error<a class="headerlink" href="#methods-of-propagating-error" title="Permalink to this headline">¶</a></h2>
+<p>While the default method of propagating error is the derivative formula, there
+are a number of other methods by which error can be calculated. In addition to
+the derivative method, this package is also capible of calculating error by the
+Monte Carlo and min-max methods. While this documentation will not go into
+detail about how these methods work, the output of each method is available
+by default, and a specific method can be chosen as shown below.</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mf">0.23</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">x</span><span class="o">/</span><span class="n">y</span>
+
+<span class="k">print</span><span class="p">([</span><span class="n">z</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">z</span><span class="o">.</span><span class="n">std</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">MC</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">MinMax</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast container">
+<div class="container">
+</div>
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>[162.5, 51.00547770828149]
+[162.88454043577516, 51.509516186100562]
+[162.5, 51.00547770828149]
+</pre></div>
+</div>
+</div>
+<p>While the Monte Carlo and min-max output of the default method are not as
+elegent as the derivative method, it does provide an easy avenue to check
+the error against another method to ensure accuracy.</p>
+<p>Furthermore, the output can be limited to a single method if desired. In this
+case, the output seen in the <em>print(x)</em> line would be from whatever method is
+chosen.</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">set_method</span><span class="p">(</span><span class="s2">&quot;Derivative&quot;</span><span class="p">)</span>
+<span class="c1"># This option will limit the error calculation to using the derivative</span>
+<span class="c1"># formula</span>
+
+<span class="n">z</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="n">y</span>
+<span class="n">z</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s1">&#39;Derivative Method&#39;</span><span class="p">)</span>
+
+<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">set_method</span><span class="p">(</span><span class="s2">&quot;Monte Carlo&quot;</span><span class="p">)</span>
+<span class="c1"># This option will limit the error calculation to using the derivative</span>
+<span class="c1"># formula</span>
+
+<span class="n">z</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="n">y</span>
+<span class="n">z</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s1">&#39;Monte Carlo&#39;</span><span class="p">)</span>
+
+<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">set_method</span><span class="p">(</span><span class="s2">&quot;Min-Max&quot;</span><span class="p">)</span>
+<span class="c1"># This option will limit the error calculation to using the derivative</span>
+<span class="c1"># formula</span>
+
+<span class="n">z</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="n">y</span>
+<span class="n">z</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;Min-Max&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 
@@ -396,6 +598,7 @@ as shown above, which can be used by the user.</p>
 <li><a class="reference internal" href="#creating-measurement-objects">Creating Measurement Objects</a></li>
 <li><a class="reference internal" href="#working-with-measurement-objects">Working with Measurement Objects</a></li>
 <li><a class="reference internal" href="#formatting">Formatting</a></li>
+<li><a class="reference internal" href="#methods-of-propagating-error">Methods of Propagating Error</a></li>
 </ul>
 </li>
 </ul>

@@ -26,13 +26,20 @@ A mean and standard deviation can be entred directly.
 	# deviation of 1.
 
 A list or numpy array of values can be provided, from which the mean and
-standard deviation of the values can be taken.
+standard deviation of the values can be taken. These values can be outputted
+by calling for the mean and std attributes of whatever object is created.
 
 ..  nbinput:: ipython3
    
 	x = e.Measurement([9, 10, 11])
 	# This would also produce an object with a mean of 10 and a standard
 	# deviation of 1.
+	
+	print(x.mean, x.std)
+	
+..  nboutput:: ipython3
+
+	10, 1
 
 If the list of values has errors associated with each measurement, the
 data can be entered either as pairs of a value and error, or as two lists
@@ -160,9 +167,17 @@ velocity of some object that accelerates at a for t seconds:
 	v = a*t
 	print(v.units)
 	
-.. nbinput:: ipython3
+.. nboutput:: ipython3
+
+	['m',1,'s','1']
 	
-As shown above, the default method of printing a value with an uncertainty is:
+This unit list, when used in a plot will appear as:
+
+.. code-block:: python
+
+	'm^1s^-1'
+	
+The default format of printing a value with an uncertainty is:
    
 ..  nbinput:: ipython3
    
@@ -230,15 +245,15 @@ by default, and a specific method can be chosen as shown below.
 	y = e.Measurement(2,0.23)
 	z = x**2 - x/y
 	
-	print(z)
-	print(z.MC())
-	print(z.MinMax())
+	print([z.mean, z.std])
+	print(z.MC)
+	print(z.MinMax)
 	
 ..  nboutput:: ipython3
 
-	(0 \pm 2)*10**4
-	[145.18464217708808, 27094.377985685125]
-	[162.5, 27569.397460908742]
+	[162.5, 51.00547770828149]
+	[162.88454043577516, 51.509516186100562]
+	[162.5, 51.00547770828149]
 
 While the Monte Carlo and min-max output of the default method are not as
 elegent as the derivative method, it does provide an easy avenue to check

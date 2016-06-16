@@ -37,7 +37,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'nbsphinx',
-    'IPython.sphinxext.ipython_console_highlighting'
+    'IPython.sphinxext.ipython_console_highlighting',
+    'bokeh.sphinxext.bokeh_plot'
 ]
 
 # Default Pygments lexer for syntax highlighting in code cells

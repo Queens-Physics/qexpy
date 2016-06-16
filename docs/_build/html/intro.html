@@ -199,8 +199,8 @@ for said lab.</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span>   <span class="kn">import</span> <span class="nn">QExPy.uncertainties</span> <span class="kn">as</span> <span class="nn">u</span>
-   <span class="kn">import</span> <span class="nn">QExPy.fitting</span> <span class="kn">as</span> <span class="nn">fit</span>
+<span></span>   <span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+   <span class="kn">import</span> <span class="nn">qexpy.plotting</span> <span class="kn">as</span> <span class="nn">p</span>
 
    <span class="c1"># This cell will load the package in a way that is shorter to type</span>
 </pre></div>
@@ -214,12 +214,13 @@ for said lab.</p>
 <div class="highlight-ipython3"><div class="highlight"><pre>
 <span></span>   <span class="c1"># We can now enter the data gathered in the lab itself</span>
 
-   <span class="n">dl</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mf">185e-6</span><span class="p">,</span> <span class="mf">250e-6</span><span class="p">,</span> <span class="mf">305e-6</span><span class="p">,</span> <span class="mf">378e-6</span><span class="p">,</span> <span class="mf">460e-6</span><span class="p">,</span> <span class="mf">515e-6</span><span class="p">,</span> <span class="mf">573e-6</span><span class="p">,</span>
+   <span class="n">dl</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mf">185e-6</span><span class="p">,</span> <span class="mf">250e-6</span><span class="p">,</span> <span class="mf">305e-6</span><span class="p">,</span> <span class="mf">378e-6</span><span class="p">,</span> <span class="mf">460e-6</span><span class="p">,</span> <span class="mf">515e-6</span><span class="p">,</span> <span class="mf">573e-6</span><span class="p">,</span>
                                     <span class="mf">659e-6</span><span class="p">,</span> <span class="mf">733e-6</span><span class="p">,</span> <span class="mf">799e-6</span><span class="p">,</span> <span class="mf">1199e-6</span><span class="p">,</span> <span class="mf">860e-6</span><span class="p">,</span> <span class="mf">933e-6</span><span class="p">,</span> <span class="mf">993e-6</span><span class="p">,</span>
                                     <span class="mf">1060e-6</span><span class="p">,</span> <span class="mf">1125e-6</span><span class="p">],</span> <span class="p">[</span><span class="mf">5e-6</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Lengthening&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
    <span class="c1"># This data is the amount that the cable streched for each applied mass</span>
-   <span class="c1"># As the error on each of these measurements is the same, we will use a single</span>
-   <span class="c1"># value of error instead of another list containing the error for each point.</span>
+   <span class="c1"># As the error on each of these measurements is the same, we will use a</span>
+   <span class="c1"># single value of error instead of another list containing the error for</span>
+   <span class="c1"># each point.</span>
 
    <span class="n">m50</span> <span class="o">=</span> <span class="mf">0.05008</span>
    <span class="n">m1</span> <span class="o">=</span> <span class="mf">0.10010</span>
@@ -228,14 +229,15 @@ for said lab.</p>
    <span class="n">m5</span> <span class="o">=</span> <span class="mf">0.50054</span>
    <span class="n">m5d</span> <span class="o">=</span> <span class="mf">0.50087</span>
 
-   <span class="n">mass</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Measured</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2x</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">,</span> <span class="n">m5</span><span class="p">,</span> <span class="n">m1</span><span class="o">+</span><span class="n">m5</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m5</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m5</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span>
-                                    <span class="n">m5</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="p">,</span>
-                                    <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span><span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.04</span><span class="p">],</span>
-                                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Suspended Mass&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+   <span class="n">mass</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2x</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">,</span> <span class="n">m5</span><span class="p">,</span> <span class="n">m1</span><span class="o">+</span><span class="n">m5</span><span class="p">,</span> <span class="n">m2x</span><span class="o">+</span><span class="n">m5</span><span class="p">,</span>
+                                   <span class="n">m2x</span><span class="o">+</span><span class="n">m5</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="p">,</span>
+                                   <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="p">,</span> <span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m1</span><span class="p">,</span><span class="n">m5</span><span class="o">+</span><span class="n">m5d</span><span class="o">+</span><span class="n">m2x</span><span class="o">+</span><span class="n">m2i</span><span class="p">],</span>
+                                   <span class="p">[</span><span class="mf">0.04</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Suspended Mass&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
 
    <span class="c1"># This list is the combonation of weights that were used in each trial</span>
-   <span class="c1"># As the error on each of these measurements is the same, we will use a single</span>
-   <span class="c1"># value of error instead of another list containing the error for each point.</span>
+   <span class="c1"># As the error on each of these measurements is the same, we will use a</span>
+   <span class="c1"># single value of error instead of another list containing the error for</span>
+   <span class="c1"># each point.</span>
 </pre></div>
 </div>
 </div>
@@ -245,13 +247,13 @@ for said lab.</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span>   <span class="c1"># Now that we have the data stored, we can plot the data, along with a line of</span>
-   <span class="c1"># best fit</span>
+<span></span>   <span class="c1"># Now that we have the data stored, we can plot the data, along with a</span>
+   <span class="c1"># line of best fit</span>
 
-   <span class="n">plot</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">dl</span><span class="p">,</span> <span class="n">mass</span><span class="p">)</span> <span class="c1"># This creates the plot and stores it as plot</span>
-   <span class="n">plot</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span> <span class="c1"># We can now say that we want to see a linear fit of the data</span>
+   <span class="n">plot</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">dl</span><span class="p">,</span> <span class="n">mass</span><span class="p">)</span> <span class="c1"># This creates the plot and stores it as plot</span>
+   <span class="n">plot</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span> <span class="c1"># We can find a linear fit of the data</span>
    <span class="n">plot</span><span class="o">.</span><span class="n">residuals</span><span class="p">()</span> <span class="c1"># This tells the plot that we also want a residual plot</span>
-   <span class="n">plot</span><span class="o">.</span><span class="n">show</span><span class="p">()</span> <span class="c1"># Now that we have prepared the plot with everything, it is shown</span>
+   <span class="n">plot</span><span class="o">.</span><span class="n">show</span><span class="p">()</span> <span class="c1"># Now the plot can be shown</span>
 </pre></div>
 </div>
 </div>

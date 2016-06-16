@@ -307,7 +307,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import error_operations as op
+        import qexpy.error_operations as op
 
         op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan',
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',

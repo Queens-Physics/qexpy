@@ -106,8 +106,8 @@ def add(a, b):
     Returns a measurement object that is the sum of two other measurements.
 
     The sum can be taken by multiple methods,  specified by the measurement
-    class variable measurement.error_method. The derivative of this new object is
-    also specifed by applying the chain rule to the input and the
+    class variable measurement.error_method. The derivative of this new object
+    is also specifed by applying the chain rule to the input and the
     derivative of the inputs.
     '''
     import qexpy.error as e
