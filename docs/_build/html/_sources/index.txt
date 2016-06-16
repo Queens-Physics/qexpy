@@ -17,7 +17,6 @@ Contents
    uncertainties
    operations
    plotting
-   test.rst
    LICENSE
 
 

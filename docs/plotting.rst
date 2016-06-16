@@ -17,8 +17,14 @@ functions or simply the color of data point.
 ..  bokeh-plot::
 	:source-position: above
 	
-	import qexpy.error as e
+	from inspect import getsourcefile
+	import os.path as path, sys
+	current_dir = path.dirname(path.abspath(getsourcefile(lambda:0)))
+	sys.path.insert(0, current_dir[:current_dir.rfind(path.sep)])
+
 	import qexpy.plotting as p
+	import qexpy.error as e
+	sys.path.pop(0)
 
 	x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
 	y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
@@ -70,8 +76,14 @@ constructed.
 ..  bokeh-plot::
 	:source-position: none
 	
-	import qexpy.error as e
+	from inspect import getsourcefile
+	import os.path as path, sys
+	current_dir = path.dirname(path.abspath(getsourcefile(lambda:0)))
+	sys.path.insert(0, current_dir[:current_dir.rfind(path.sep)])
+
 	import qexpy.plotting as p
+	import qexpy.error as e
+	sys.path.pop(0)
 
 	x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
 	y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
