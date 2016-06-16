@@ -17,14 +17,8 @@ functions or simply the color of data point.
 ..  bokeh-plot::
 	:source-position: above
 	
-	from inspect import getsourcefile
-	import os.path as path, sys
-	current_dir = path.dirname(path.abspath(getsourcefile(lambda:0)))
-	sys.path.insert(0, current_dir[:current_dir.rfind(path.sep)])
-
-	import qexpy.plotting as p
 	import qexpy.error as e
-	sys.path.pop(0)
+	import qexpy.plotting as p
 
 	x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
 	y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
@@ -76,14 +70,8 @@ constructed.
 ..  bokeh-plot::
 	:source-position: none
 	
-	from inspect import getsourcefile
-	import os.path as path, sys
-	current_dir = path.dirname(path.abspath(getsourcefile(lambda:0)))
-	sys.path.insert(0, current_dir[:current_dir.rfind(path.sep)])
-
-	import qexpy.plotting as p
 	import qexpy.error as e
-	sys.path.pop(0)
+	import qexpy.plotting as p
 
 	x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
 	y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
@@ -101,21 +89,3 @@ Linear: :math:`y=mx+b`
 Gaussian: :math:`y=\frac{1}{\sqrt{2 \pi \sigma}}\exp{-\frac{(x-\mu)^2}{\sigma}}`
 
 Polynomial: :math:`\sum_{i=0}^{N} a_i x^i` with parameters :math:`a_i`
-
-TEST
-----
-
-.. bokeh-plot::
-
-    from bokeh.plotting import figure, output_file, show
-
-    output_file("example.html")
-
-    x = [1, 2, 3, 4, 5]
-    y = [6, 7, 6, 4, 5]
-
-    p = figure(title="example", plot_width=300, plot_height=300)
-    p.line(x, y, line_width=2)
-    p.circle(x, y, size=10, fill_color="white")
-
-    show(p)
