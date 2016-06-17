@@ -15,18 +15,18 @@ add or change different aspects of the plot, such as lines of fit, user-defined
 functions or simply the color of data point.
 
 ..  bokeh-plot::
-	:source-position: above
-	
-	import qexpy.error as e
-	import qexpy.plotting as p
+    :source-position: above
 
-	x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-	y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
-	# This produces two sets of data which should be fit to a line with a slope
-	# of 3 and an intercept 2
+    import qexpy.error as e
+    import qexpy.plotting as p
 
-	figure = p.Plot(x, y)
-	figure.show()
+    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+    # This produces two sets of data which should be fit to a line with a slope
+    # of 3 and an intercept 2
+
+    figure = p.Plot(x, y)
+    figure.show()
 	
 Using class methods such as *.fit* or *.residuals* will create a best fit of
 the data and display the residual output. The *.fit* attribute also has 
@@ -42,44 +42,43 @@ may take longer to complete. For example:
 
 ..  nbinput:: ipython3
 
-	def model(x, pars):
-		return pars[0] + pars[1]*x
+    def model(x, pars):
+	return pars[0] + pars[1]*x
 		
-	# As this model requires two parameters a guess should be:
-	
-	guess = [1, 1]
+    # As this model requires two parameters a guess should be:
+    guess = [1, 1]
 	
 Using these methods, a plot with a best fit line and residuals can easily be
 constructed.
 
 .. nbinput:: ipython3
 
-	import qexpy.error as e
-	import qexpy.plotting as p
+    import qexpy.error as e
+    import qexpy.plotting as p
 
-	x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-	y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
 
-	figure = p.Plot(x, y)
-	figure.fit('linear')
-	figure.residuals()
-	figure.show()
+    figure = p.Plot(x, y)
+    figure.fit('linear')
+    figure.residuals()
+    figure.show()
 
 ..  nboutput:: ipython3
 	
 ..  bokeh-plot::
-	:source-position: none
+    :source-position: none
 	
-	import qexpy.error as e
-	import qexpy.plotting as p
+    import qexpy.error as e
+    import qexpy.plotting as p
 
-	x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-	y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
 
-	figure = p.Plot(x, y)
-	figure.fit('linear')
-	figure.residuals()
-	figure.show('file')
+    figure = p.Plot(x, y)
+    figure.fit('linear')
+    figure.residuals()
+    figure.show('file')
 
 	
 The included models for fitting include:
@@ -89,3 +88,54 @@ Linear: :math:`y=mx+b`
 Gaussian: :math:`y=\frac{1}{\sqrt{2 \pi \sigma}}\exp{-\frac{(x-\mu)^2}{\sigma}}`
 
 Polynomial: :math:`\sum_{i=0}^{N} a_i x^i` with parameters :math:`a_i`
+
+User-Defined Functions
+----------------------
+
+A user defined function can be plotted using the *.function* method as we have
+previously done for curve fits and residual outputs. To add a theoretical
+curve, or any other curve:
+
+..  nbinput:: ipython3
+
+    import qexpy.error as e
+    import qexpy.plotting as p
+
+    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+
+    figure = p.Plot(x, y)
+    figure.fit('linear')
+
+    def theoretical(x):
+        return 3 + 2*x
+
+    figure.function(x, theoretical)
+    figure.show()
+    
+.. automethod:: qexpy.plotting.Plot.function
+
+The final method relevent to Plot objects is the show method. This, by default
+will output the Bokeh plot in a terminal, or output of a Jupyter notebook, if
+that is where the code is executed. This method does have an optional
+argument that determines where the plot is shown, with options of 'inline' and
+'file'. The 'inline' option is selected by default and refers to output
+in the console line itself, while 'file' creates an html file that should
+open in your default browser and save to whatever location your Python code
+file is currently in.
+
+..  nbinput:: ipython3
+
+    import qexpy.error as e
+    import qexpy.plotting as p
+
+    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+
+    figure = p.Plot(x, y)
+    figure.show('file')
+
+For this code, there is no output, as the plot will be saved in the working
+directory and opened in a browser. For example, if the above code is located
+in *Diligent_Physics_Student\Documents\Python* then the html file will also
+be in said *\Python* folder.
