@@ -306,7 +306,10 @@ two variables.
 Furthermore, the covariance and correlation of the fitted parameters found
 by the *.fit* method in QExPy.plotting 
 
+.. todo::
 
+   Build public method for finding name and ID of variable
+   
 
 
 

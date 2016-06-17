@@ -31,3 +31,6 @@ of elementary operations and functions, the exact numerical derivative can be
 calculated. All that is required is to be able to store the derivative of each
 of these elementary operations with respect to whatever variables are involved.
 
+.. todo::
+
+   Outline operation wrapper

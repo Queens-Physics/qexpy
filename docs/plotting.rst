@@ -139,3 +139,7 @@ For this code, there is no output, as the plot will be saved in the working
 directory and opened in a browser. For example, if the above code is located
 in *Diligent_Physics_Student\Documents\Python* then the html file will also
 be in said *\Python* folder.
+
+.. todo:::
+
+   Add Bokeh object as attribute, allow return and entry of object
