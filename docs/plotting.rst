@@ -14,19 +14,19 @@ in a variable like any other value. This variable can then be operated on to
 add or change different aspects of the plot, such as lines of fit, user-defined
 functions or simply the color of data point.
 
-..  bokeh-plot::
-    :source-position: above
+.. bokeh-plot::
+   :source-position: above
 
-    import qexpy.error as e
-    import qexpy.plotting as p
+   import qexpy.error as e
+   import qexpy.plotting as p
 
-    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
-    # This produces two sets of data which should be fit to a line with a slope
-    # of 3 and an intercept 2
+   x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+   # This produces two sets of data which should be fit to a line with a slope
+   # of 3 and an intercept 2
 
-    figure = p.Plot(x, y)
-    figure.show()
+   figure = p.Plot(x, y)
+   figure.show()
 	
 Using class methods such as *.fit* or *.residuals* will create a best fit of
 the data and display the residual output. The *.fit* attribute also has 
@@ -40,45 +40,45 @@ should be close to the true parameters. If said values are not known, a list
 of ones, of the correct length will suffice, although the fitting algorithm
 may take longer to complete. For example:
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-    def model(x, pars):
-	return pars[0] + pars[1]*x
+   def model(x, pars):
+   return pars[0] + pars[1]*x
 		
-    # As this model requires two parameters a guess should be:
-    guess = [1, 1]
+   # As this model requires two parameters a guess should be:
+   guess = [1, 1]
 	
 Using these methods, a plot with a best fit line and residuals can easily be
 constructed.
 
 .. nbinput:: ipython3
 
-    import qexpy.error as e
-    import qexpy.plotting as p
+   import qexpy.error as e
+   import qexpy.plotting as p
 
-    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+   x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
 
-    figure = p.Plot(x, y)
-    figure.fit('linear')
-    figure.residuals()
-    figure.show()
+   figure = p.Plot(x, y)
+   figure.fit('linear')
+   figure.residuals()
+   figure.show()
 
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 	
-..  bokeh-plot::
-    :source-position: none
+.. bokeh-plot::
+   :source-position: none
 	
-    import qexpy.error as e
-    import qexpy.plotting as p
+   import qexpy.error as e
+   import qexpy.plotting as p
 
-    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+   x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
 
-    figure = p.Plot(x, y)
-    figure.fit('linear')
-    figure.residuals()
-    figure.show('file')
+   figure = p.Plot(x, y)
+   figure.fit('linear')
+   figure.residuals()
+   figure.show('file')
 
 	
 The included models for fitting include:
@@ -96,22 +96,22 @@ A user defined function can be plotted using the *.function* method as we have
 previously done for curve fits and residual outputs. To add a theoretical
 curve, or any other curve:
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-    import qexpy.error as e
-    import qexpy.plotting as p
+   import qexpy.error as e
+   import qexpy.plotting as p
 
-    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+   x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
 
-    figure = p.Plot(x, y)
-    figure.fit('linear')
+   figure = p.Plot(x, y)
+   figure.fit('linear')
 
-    def theoretical(x):
-        return 3 + 2*x
+   def theoretical(x):
+       return 3 + 2*x
 
-    figure.function(x, theoretical)
-    figure.show()
+   figure.function(x, theoretical)
+   figure.show()
     
 .. automethod:: qexpy.plotting.Plot.function
 
@@ -124,16 +124,16 @@ in the console line itself, while 'file' creates an html file that should
 open in your default browser and save to whatever location your Python code
 file is currently in.
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-    import qexpy.error as e
-    import qexpy.plotting as p
+   import qexpy.error as e
+   import qexpy.plotting as p
 
-    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-    y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+   x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
 
-    figure = p.Plot(x, y)
-    figure.show('file')
+   figure = p.Plot(x, y)
+   figure.show('file')
 
 For this code, there is no output, as the plot will be saved in the working
 directory and opened in a browser. For example, if the above code is located

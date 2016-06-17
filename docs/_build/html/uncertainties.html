@@ -347,7 +347,7 @@ propagation formula.</p>
 <div class="math">
 \[For\ some\ F(x,y):
 \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \
-    + (\frac{\partial F}{\partial y} \sigma_y)^2\]</div>
++ (\frac{\partial F}{\partial y} \sigma_y)^2\]</div>
 <p>This formula is the default method of error propagation and will be accurate in
 most cases.</p>
 </div>
@@ -584,6 +584,36 @@ chosen.</p>
 </div>
 </div>
 </div>
+<div class="section" id="correlation">
+<h2>Correlation<a class="headerlink" href="#correlation" title="Permalink to this headline">¶</a></h2>
+<p>For many experiments, parameters may be correlated or may be expected to be
+correlated. Thus, there exists methods to define and, in the case that th
+arrays of data used to create two Measurements are equal in length, return the
+covariance or correlation of some parameters. There are two methods which can
+be used to set the correlation of two variables, or return the covariance of
+two variables.</p>
+<dl class="method">
+<dt id="qexpy.error.Measurement.set_correlation">
+<code class="descclassname">Measurement.</code><code class="descname">set_correlation</code><span class="sig-paren">(</span><em>y</em>, <em>factor</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.set_correlation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manually set the correlation between two quantities</p>
+<p>Given a correlation factor, the covariance and correlation
+between two variables is added to both objects.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.return_covariance">
+<code class="descclassname">Measurement.</code><code class="descname">return_covariance</code><span class="sig-paren">(</span><em>variable</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.return_covariance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the covariance of the object and a specified variable.</p>
+<p>This funciton checks for the existance of a data array in each
+object and that the covariance of the two objects is not already
+specified. In each case, the covariance is returned, unless
+the data arrays are of different lengths or do not exist, in that
+case a covariance of zero is returned.</p>
+</dd></dl>
+
+<p>Furthermore, the covariance and correlation of the fitted parameters found
+by the <em>.fit</em> method in QExPy.plotting</p>
+</div>
 </div>
 
 
@@ -599,6 +629,7 @@ chosen.</p>
 <li><a class="reference internal" href="#working-with-measurement-objects">Working with Measurement Objects</a></li>
 <li><a class="reference internal" href="#formatting">Formatting</a></li>
 <li><a class="reference internal" href="#methods-of-propagating-error">Methods of Propagating Error</a></li>
+<li><a class="reference internal" href="#correlation">Correlation</a></li>
 </ul>
 </li>
 </ul>

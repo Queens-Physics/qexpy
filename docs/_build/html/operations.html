@@ -56,7 +56,27 @@
 propagation of errors with Measurement objects, created in the uncertainties
 module. To improve the user experience, all of these methods are available
 through the uncertainties module. Thus, this module will not be directly used
-by most users.</p>
+by most users. There are several techniques used in this module which are the
+basis on which this package operates. Thus, said methods will be covered in this
+section of the documentation.</p>
+<div class="section" id="derivatives">
+<h2>Derivatives<a class="headerlink" href="#derivatives" title="Permalink to this headline">¶</a></h2>
+<p>The method by which numerical solutions to the derivative of expressions are
+evaluated is called automatic differentiation. This method relies on the chain
+rule and the fact that the derivative of any expression can be reduced to some
+combonation of elementary functions and operations. Consider the following
+function.</p>
+<div class="math">
+\[\begin{split}f(x,y) = \cos(xy)
+\implies \partial_x f(x,y) = \cos(xy)y
+Let\ xy = z
+\partial_x f(x,y) \= \cos(z) \frac{\partial(z)}{\partial(x)} \\
+\= \cos(xy)y\end{split}\]</div>
+<p>What this example illustrates is how, by considering an expression as a series
+of elementary operations and functions, the exact numerical derivative can be
+calculated. All that is required is to be able to store the derivative of each
+of these elementary operations with respect to whatever variables are involved.</p>
+</div>
 </div>
 
 
@@ -65,6 +85,14 @@ by most users.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Operations Module</a><ul>
+<li><a class="reference internal" href="#derivatives">Derivatives</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="uncertainties.html"
                         title="previous chapter">Uncertainties Module</a></p>

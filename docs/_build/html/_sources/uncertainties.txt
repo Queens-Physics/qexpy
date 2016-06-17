@@ -18,102 +18,102 @@ The arguments, or \*args, of this class can be in several forms:
 
 A mean and standard deviation can be entred directly.
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
    
-	import qexpy.error as u
-	x = e.Measurement(10, 1)
-	# This would create an object with a mean of 10 and a standard
-	# deviation of 1.
+   import qexpy.error as u
+   x = e.Measurement(10, 1)
+   # This would create an object with a mean of 10 and a standard
+   # deviation of 1.
 
 A list or numpy array of values can be provided, from which the mean and
 standard deviation of the values can be taken. These values can be outputted
 by calling for the mean and std attributes of whatever object is created.
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
    
-	x = e.Measurement([9, 10, 11])
-	# This would also produce an object with a mean of 10 and a standard
-	# deviation of 1.
+   x = e.Measurement([9, 10, 11])
+   # This would also produce an object with a mean of 10 and a standard
+   # deviation of 1.
 	
-	print(x.mean, x.std)
+   print(x.mean, x.std)
 	
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 
-	10, 1
+   10, 1
 
 If the list of values has errors associated with each measurement, the
 data can be entered either as pairs of a value and error, or as two lists
 of data and error respectivly.
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
    
-	x = e.Measurement([10, 1], [9, 0.5], [11, 0.25])
-	y = e.Measurement([10, 9, 11], [1, 0.5, 0.25])
-	# The mean and standard deviation of x and y are the same
+   x = e.Measurement([10, 1], [9, 0.5], [11, 0.25])
+   y = e.Measurement([10, 9, 11], [1, 0.5, 0.25])
+   # The mean and standard deviation of x and y are the same
 
 The optional arguments *name* and *units* can be used to include strings
 for both of these parameters as shown below:
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-    x = e.Measurement(10, 1, name='Length', units='cm')
+   x = e.Measurement(10, 1, name='Length', units='cm')
 
 Working with Measurement Objects
 --------------------------------
 
 Once created, these objects can be operated on just as any other value:
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
    
-	import qexpy.error as u
+   import qexpy.error as u
 
-	x = e.Measurement(10, 1)
-	y = e.Measurement(3, 0.1)
-	z = x-y
-	f = e.sin(z)
+   x = e.Measurement(10, 1)
+   y = e.Measurement(3, 0.1)
+   z = x-y
+   f = e.sin(z)
 
-	print(z)
+   print(z)
 
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 
-	10 +/- 1
+   10 +/- 1
 
 Elementary functions such as the trig functions, inverse trig functions,
 natural logarithm and exponential function can also be used:
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-	f = e.sin(z)
-	print(f)
+   f = e.sin(z)
+   print(f)
 	
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 
-	0.7 +/- 0.8
+   0.7 +/- 0.8
 
 Furthermore, the use of Measured objects in equations also allows for the
 calculation of the derivative of these expressions with respect to any of the
 Measured objects used.
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-	d1 = f.derivative(x)
+   d1 = f.derivative(x)
 
-	# This can be compared to the analytic expression of the derivative
-	d2 = m.cos(10+3)*3
-	print(d1 == d2)
+   # This can be compared to the analytic expression of the derivative
+   d2 = m.cos(10+3)*3
+   print(d1 == d2)
 
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 
-	True
+   True
 
 This derivative method is what is used to propagate error by the error
 propagation formula.
 
-..  math::
+.. math::
     
-    For\ some\ F(x,y):
-    \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \
-	+ (\frac{\partial F}{\partial y} \sigma_y)^2
+   For\ some\ F(x,y):
+   \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \
+   + (\frac{\partial F}{\partial y} \sigma_y)^2
     
 This formula is the default method of error propagation and will be accurate in
 most cases.
@@ -128,22 +128,22 @@ values. By default, Measured objects are named unnamed_var0, with a unique
 number assigned to each object. The name and units of a Measured object can
 be declared either when the object is created or altered after.
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-	import qexpy.error as u
+   import qexpy.error as u
 	
-	x = e.Measurement(10, 1, name='Length', units='cm')
-	# This value can be changed using the following method
+   x = e.Measurement(10, 1, name='Length', units='cm')
+   # This value can be changed using the following method
 	
-	x.rename(name='Cable Length', units='m')
-	# Note that units are only a marker and changing units does not change
-	# any values with a Measurement
+   x.rename(name='Cable Length', units='m')
+   # Note that units are only a marker and changing units does not change
+   # any values with a Measurement
 	
-	print(x)
+   print(x)
 	
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 
-	Cable Length = 10 +/- 1
+   Cable Length = 10 +/- 1
 	
 Values which have more complicated units can also be entered using the
 following syntax. Consider a measurement of acceleration, with units of m/s^2
@@ -153,19 +153,19 @@ second:
 	
 .. nbinput:: ipython3
 
-	import qexpy.error as e
+   import qexpy.error as e
 	
-	t = e.Measurement(3,0.25, name='Time', units='s')
-	a = e.Measurement(10, 1, name='Acceleration', units=['m',1,'s',-1])
+   t = e.Measurement(3,0.25, name='Time', units='s')
+   a = e.Measurement(10, 1, name='Acceleration', units=['m',1,'s',-1])
 
 This also allows for the units of values produced by operations such as
 multiplication to be generated automatically. Consider the calculation of the
 velocity of some object that accelerates at a for t seconds:
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-	v = a*t
-	print(v.units)
+   v = a*t
+   print(v.units)
 	
 .. nboutput:: ipython3
 
@@ -175,19 +175,19 @@ This unit list, when used in a plot will appear as:
 
 .. code-block:: python
 
-	'm^1s^-1'
+   'm^1s^-1'
 	
 The default format of printing a value with an uncertainty is:
    
-..  nbinput:: ipython3
+.. nbinput:: ipython3
    
-	import qexpy.error as u
-	x = e.Measurement(10, 1)
-	print(x)
+   import qexpy.error as u
+   x = e.Measurement(10, 1)
+   print(x)
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-	10 +/- 1
+   10 +/- 1
 	
 However, there are three ways of outputting a Measurement object. Furthermore,
 each method also allows for a specific number of significant digits to be 
@@ -198,34 +198,34 @@ notation with the error being shown as a value with only a single whole digit.
 In order to change between any printing method, the following function will
 change how the package prints a Measurement object:
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-	import qexpy.error as u
+   import qexpy.error as u
 	
-	x = e.Measurement(122, 10)
-	e.Measurement.print_style("Scientific")
-	print(x)
+   x = e.Measurement(122, 10)
+   e.Measurement.print_style("Scientific")
+   print(x)
 	
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 
-	(12 +/- 1)*10**1
+   (12 +/- 1)*10**1
 	
 The same process is used for a print style called Latex which, as the name
 suggests, is formatted for use in Latex documents. This may be useful in the
 creation of labs by allowing variables to be copied and pasted directly into a
 Latex document.
 
-..  nbinput:: ipython3
+.. nbinput:: ipython3
 
-	import qexpy.error as u
+   import qexpy.error as u
 	
-	x = e.Measurement(122, 10)
-	e.Measurement.print_style("Latex")
-	print(x)
+   x = e.Measurement(122, 10)
+   e.Measurement.print_style("Latex")
+   print(x)
 	
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 
-	(12 \pm 1)\e1
+   (12 \pm 1)\e1
 	
 Methods of Propagating Error
 ----------------------------
@@ -239,21 +239,21 @@ by default, and a specific method can be chosen as shown below.
 
 .. nbinput:: ipython3
 
-	import qexpy.error as u
+   import qexpy.error as u
 	
-	x = e.Measurement(13,2)
-	y = e.Measurement(2,0.23)
-	z = x**2 - x/y
+   x = e.Measurement(13,2)
+   y = e.Measurement(2,0.23)
+   z = x**2 - x/y
 	
-	print([z.mean, z.std])
-	print(z.MC)
-	print(z.MinMax)
+   print([z.mean, z.std])
+   print(z.MC)
+   print(z.MinMax)
 	
-..  nboutput:: ipython3
+.. nboutput:: ipython3
 
-	[162.5, 51.00547770828149]
-	[162.88454043577516, 51.509516186100562]
-	[162.5, 51.00547770828149]
+   [162.5, 51.00547770828149]
+   [162.88454043577516, 51.509516186100562]
+   [162.5, 51.00547770828149]
 
 While the Monte Carlo and min-max output of the default method are not as
 elegent as the derivative method, it does provide an easy avenue to check
@@ -265,31 +265,79 @@ chosen.
 
 .. nbinput:: ipython3
 	
-	x = e.Measurement(10,2)
-	y = e.Measurement(5,1)
+   x = e.Measurement(10,2)
+   y = e.Measurement(5,1)
 
-	e.Measurement.set_method("Derivative")
-	# This option will limit the error calculation to using the derivative
-	# formula
-	
-	z = x-y
-	z.rename('Derivative Method')
-	
-	e.Measurement.set_method("Monte Carlo")
-	# This option will limit the error calculation to using the derivative
-	# formula
-	
-	z = x-y
-	z.rename('Monte Carlo')
-	
-	e.Measurement.set_method("Min-Max")
-	# This option will limit the error calculation to using the derivative
-	# formula
-	
-	z = x-y
-	z.rename("Min-Max")
+   e.Measurement.set_method("Derivative")
+   # This option will limit the error calculation to using the derivative
+   # formula
+
+   z = x-y
+   z.rename('Derivative Method')
+
+   e.Measurement.set_method("Monte Carlo")
+   # This option will limit the error calculation to using the derivative
+   # formula
+
+   z = x-y
+   z.rename('Monte Carlo')
+
+   e.Measurement.set_method("Min-Max")
+   # This option will limit the error calculation to using the derivative
+   # formula
+
+   z = x-y
+   z.rename("Min-Max")
+
+Correlation
+-----------
+
+For many experiments, parameters may be correlated or may be expected to be
+correlated. Thus, there exists methods to define and, in the case that th
+arrays of data used to create two Measurements are equal in length, return the
+covariance or correlation of some parameters. There are two methods which can
+be used to set the correlation of two variables, or return the covariance of
+two variables.
+
+.. automethod:: qexpy.error.Measurement.set_correlation
+
+.. automethod:: qexpy.error.Measurement.return_covariance
+
+Furthermore, the covariance and correlation of the fitted parameters found
+by the *.fit* method in QExPy.plotting 
 
 
 
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	
