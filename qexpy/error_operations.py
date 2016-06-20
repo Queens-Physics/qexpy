@@ -12,7 +12,7 @@ def dev(*args, der=None):
     of variables. The derivative dictionary of a function must be passes by
     the der argument.
     '''
-    import qexpy.error as e
+    import error as e
 
     std = 0
     roots = ()
@@ -40,7 +40,7 @@ def check_values(*args):
     converted,  this is done by calling the normalize function,  which
     outputs a measurement object with no standard deviation.
     '''
-    import qexpy.error as e
+    import error as e
 
     val = ()
     for arg in args:
@@ -59,7 +59,7 @@ def check_formula(operation, a, b=None, func_flag=False):
     register of previously calculated operations is checked. If the
     quantity does exist,  the previously calculated object is returned.
     '''
-    import qexpy.error as e
+    import error as e
 
     op_string = {
         sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
@@ -88,7 +88,7 @@ def neg(x):
     '''
     Returns the negitive of a measurement object
     '''
-    import qexpy.error as e
+    import error as e
 
     x, = check_values(x)
     result_derivative = {}
@@ -110,7 +110,7 @@ def add(a, b):
     is also specifed by applying the chain rule to the input and the
     derivative of the inputs.
     '''
-    import qexpy.error as e
+    import error as e
 
     a, b = check_values(a, b)
     # Propagating derivative of arguments
@@ -166,7 +166,7 @@ def sub(a, b):
     '''
     Returns a measurement object that is the subtraction of two measurements.
     '''
-    import qexpy.error as e
+    import error as e
 
     a, b = check_values(a, b)
     # Propagating derivative of arguments
@@ -219,7 +219,7 @@ def sub(a, b):
 
 def mul(a, b):
     '''Returns the product of two values with propagated errors.'''
-    import qexpy.error as e
+    import error as e
 
     a, b = check_values(a, b)
     # Propagating derivative of arguments
@@ -280,7 +280,7 @@ def mul(a, b):
 
 def div(a, b):
     '''Returns the quotient of two values with propagated errors.'''
-    import qexpy.error as e
+    import error as e
 
     a, b = check_values(a, b)
     # Propagating derivative of arguments
@@ -353,7 +353,7 @@ def div(a, b):
 def power(a, b):
     '''Returns the power of two values with propagated errors.'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     a, b = check_values(a, b)
     # Propagating derivative of arguments
@@ -426,7 +426,7 @@ def power(a, b):
 def sin(x):
     '''Returns the sine of a measurement with propagated errors'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     x, = check_values(x)
     result_derivative = {}
@@ -474,7 +474,7 @@ def sin(x):
 def cos(x):
     '''Returns the cosine of a measurement with propagated errors'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     x, = check_values(x)
     result_derivative = {}
@@ -522,7 +522,7 @@ def cos(x):
 def tan(x):
     '''Returns the tangent of a measurement with propagated errors'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     def Sec(x):
         return 1/m.cos(x)
@@ -572,7 +572,7 @@ def tan(x):
 
 def atan(x):
     '''Returns the arctangent of a measurement with propagated errors'''
-    import qexpy.error as e
+    import error as e
     import math as m
 
     x, = check_values(x)
@@ -621,7 +621,7 @@ def atan(x):
 def sec(x):
     '''Returns the secant of a measurement with propagated errors'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     def Csc(x):
         return 1/m.sin(x)
@@ -677,7 +677,7 @@ def sec(x):
 def csc(x):
     '''Returns the cosecant of a measurement with propagated errors'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     def Cot(x):
         return 1/m.tan(x)
@@ -733,7 +733,7 @@ def csc(x):
 def cot(x):
     '''Returns the cotangent of a measurement with propagated errors'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     def Cot(x):
         return 1/m.tan(x)
@@ -789,7 +789,7 @@ def cot(x):
 def exp(x):
     '''Returns the exponent of a measurement with propagated errors'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     x, = check_values(x)
     result_derivative = {}
@@ -835,14 +835,14 @@ def exp(x):
 
 def e(value):
     '''Returns the exponent of a measurement with propagated errors'''
-    import qexpy.error as e
+    import error as e
     e.ExperimentalValue.exp(value)
 
 
 def log(x):
     '''Returns the natural logarithm of a measurement with propagated errors'''
     import math as m
-    import qexpy.error as e
+    import error as e
 
     x, = check_values(x)
     result_derivative = {}
@@ -892,7 +892,7 @@ def find_minmax(function, x):
     and error on a given function
     '''
     import numpy as np
-    import qexpy.error as e
+    import error as e
 
     vals = np.linspace(x.mean-x.std, x.mean + x.std, 100)
     results = []
@@ -911,7 +911,7 @@ def operation_wrap(operation, *args, func_flag=False):
     which can handle measurement objects and return an error propagated by
     derivative,  min-max,  or Monte Carlo method.
     '''
-    import qexpy.error as e
+    import error as e
 
     args = check_values(args)
     if args[1] is not None:
