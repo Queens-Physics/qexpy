@@ -7,6 +7,7 @@ To that end, the propagation of errors and plotting of results has been moved
 into the background of the code as much as possible. For example, a common lab
 preformed by first years is an analysis of the stress and strain in a steel
 beam as one end is deflected by a measured amount.
+
 .. nbinput:: ipython3
    :execution-count: 1
 
