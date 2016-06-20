@@ -165,3 +165,4 @@ be in said */Python* folder.
 
    Add Bokeh object as attribute, allow return and entry of object
    Adust _plot_function so that lines are plotted along x-xerr to x+xerr
+   Test for compatibility with on ReadTheDocs
