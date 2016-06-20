@@ -311,7 +311,7 @@ def error_bar(self, p, residual=False, xdata=None, ydata=None):
 
     if residual is True:
         _ydata = self.yres
-        y_res = self.yres
+        y_res = list(self.yres)
         _yerr = self.yerr
 
     elif ydata is None:
@@ -333,7 +333,7 @@ def error_bar(self, p, residual=False, xdata=None, ydata=None):
 
     p.multi_line(err_x1, err_d1, color=self.colors['Data Points'])
     p.rect(
-        x=[*x_data, *x_data], y=[*err_t1, *err_b1],
+        x=x_data*2, y=err_t1+err_b1,
         height=0.2, width=5,
         height_units='screen', width_units='screen',
         color=self.colors['Data Points'])
@@ -349,7 +349,7 @@ def error_bar(self, p, residual=False, xdata=None, ydata=None):
 
     if residual is True:
         _ydata = self.yres
-        y_res = self.yres
+        y_res = list(self.yres)
     elif ydata is None:
         _ydata = self.ydata
         y_data = self.ydata
@@ -368,12 +368,12 @@ def error_bar(self, p, residual=False, xdata=None, ydata=None):
         p.circle(x_data, y_res, color=self.colors['Data Points'], size=2)
 
         p.rect(
-            x=[*err_t2, *err_b2], y=[*y_res, *y_res],
+            x=err_t2+err_b2, y=y_res*2,
             height=5, width=0.2, height_units='screen', width_units='screen',
             color=self.colors['Data Points'])
     else:
         p.rect(
-            x=[*err_t2, *err_b2], y=[*y_data, *y_data],
+            x=err_t2+err_b2, y=y_data*2,
             height=5, width=0.2, height_units='screen', width_units='screen',
             color=self.colors['Data Points'])
 
