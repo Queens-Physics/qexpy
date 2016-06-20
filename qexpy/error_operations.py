@@ -199,7 +199,7 @@ def sub(a, b):
         result = e.Function(mean, std)
         MC = e.ExperimentalValue.monte_carlo(lambda x, y: x-y, a, b)
         result.MC = [MC[0], MC[1]]
-        result.MinMax = [a.mean-b.mean, dev(a, b, der=result_derivative)]
+        result.MinMax = [a.mean-b.mean, a.mean+b.mean]
 
     if a.info["Data"] is not None and b.info["Data"] is not None:
         import numpy

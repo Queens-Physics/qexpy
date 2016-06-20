@@ -4,15 +4,15 @@ Plotting Module
 This module is where QExPy and Bokeh combine. The creation of plots and the
 tools used to interact with said plots are created using Bokeh. The aim of
 the plotting module is to allow for the creation of plots and fits without
-the invloved methods required to create Bokeh plots.
+the invloved methods normally required to create an interactive plot.
 
 The Plot Object
 ---------------
 
-Unlike other modules which allow plotting, those created with QExPy are stored
-in a variable like any other value. This variable can then be operated on to
-add or change different aspects of the plot, such as lines of fit, user-defined
-functions or simply the color of data point.
+Plots created with QExPy are stored in a variable like any other value.
+This variable can then be operated on to add or change different aspects of
+the plot, such as lines of fit, user-defined functions or simply the color
+of data point.
 
 .. bokeh-plot::
    :source-position: above
@@ -21,17 +21,17 @@ functions or simply the color of data point.
    import qexpy.plotting as p
 
    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Mass', units='g')
    # This produces two sets of data which should be fit to a line with a slope
    # of 3 and an intercept 2
 
    figure = p.Plot(x, y)
    figure.show()
 	
-Using class methods such as *.fit* or *.residuals* will create a best fit of
+Using methods such as *.fit* or *.residuals* will create a best fit of
 the data and display the residual output. The *.fit* attribute also has 
-arguments of what type of fit is required and, if the model is not previously
-defined, an inital guess of the fitting parameters.
+arguments of what type of fit is required and, if the model is not built-in
+to the module, an inital guess of the fitting parameters.
 
 .. automethod:: qexpy.plotting.Plot.fit
 
@@ -57,7 +57,7 @@ constructed.
    import qexpy.plotting as p
 
    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Mass', units='g')
 
    figure = p.Plot(x, y)
    figure.fit('linear')
@@ -80,7 +80,6 @@ constructed.
    figure.residuals()
    figure.show('file')
 
-	
 The included models for fitting include:
 
 Linear: :math:`y=mx+b`
@@ -88,6 +87,28 @@ Linear: :math:`y=mx+b`
 Gaussian: :math:`y=\frac{1}{\sqrt{2 \pi \sigma}}\exp{-\frac{(x-\mu)^2}{\sigma}}`
 
 Polynomial: :math:`\sum_{i=0}^{N} a_i x^i` with parameters :math:`a_i`
+
+Once fitted, the parameters of a fit can be returned with the
+*.fit_parameters* method.
+
+Parameters of a Fit
+-------------------
+
+In the case of any polynomial fit, included as a model by default, each
+parameter is labelled in accordance with the power of the *x* variable.
+Thus in the case of a linear fit, the intercept would be *pars[0]* and the
+slope would be *pars[1]*. This pattern hold for any degree of polynomial
+fitted to the data.
+
+For the gaussian fit, *pars[0]* refers to the mean and *pars[1]* to the
+standard deviation of the gaussian curve. Any models given by the user are
+required to have two arguments. The first being the independent variable
+and the second as the parameters of the model. For example:
+
+.. code-block:: python
+
+   def model(x, pars):
+	
 
 User-Defined Functions
 ----------------------
@@ -102,7 +123,7 @@ curve, or any other curve:
    import qexpy.plotting as p
 
    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Mass', units='g')
 
    figure = p.Plot(x, y)
    figure.fit('linear')
@@ -143,3 +164,4 @@ be in said *\Python* folder.
 .. todo:::
 
    Add Bokeh object as attribute, allow return and entry of object
+   Adust _plot_function so that lines are plotted along x-xerr to x+xerr

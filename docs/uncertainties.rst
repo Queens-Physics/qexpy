@@ -1,9 +1,13 @@
-Uncertainties Module
-====================
+Error Propagation
+=================
 
-This module is the core of the QExPy package, this is where the Measurement
-class of objects is created and the methods which allow for derivatives to be
-calculated and the names and units of values to be stored and propagated.
+The propagation of measurements, including the propagation of errors is at
+the heart of this package. This section will describe how Measurement
+objects are created and used in calculations. Furthermore, features such as
+the calculation of the exact numerical derivative of expressions will be
+outlined. While some aspects of this documentation will not neccesarily be
+required to work with the package itself, many of the methods used in the
+underlying code can be useful to understand.
 
 Creating Measurement Objects
 ----------------------------
@@ -14,26 +18,26 @@ attributes which can be used by other elements of this package.
 
 .. autoclass:: qexpy.error.Measurement
 
-The arguments, or \*args, of this class can be in several forms:
+The arguments, or \*args, of this class can be entered in several forms:
 
 A mean and standard deviation can be entred directly.
 
 .. nbinput:: ipython3
    
-   import qexpy.error as u
+   import qexpy.error as e
    x = e.Measurement(10, 1)
    # This would create an object with a mean of 10 and a standard
    # deviation of 1.
 
 A list or numpy array of values can be provided, from which the mean and
-standard deviation of the values can be taken. These values can be outputted
+standard deviation of the values is calculated. These values can be outputted
 by calling for the mean and std attributes of whatever object is created.
 
 .. nbinput:: ipython3
    
    x = e.Measurement([9, 10, 11])
    # This would also produce an object with a mean of 10 and a standard
-   # deviation of 1.
+   # deviation of 1. This can be shown by calling for x.mean and x.std:
 	
    print(x.mean, x.std)
 	
@@ -41,18 +45,32 @@ by calling for the mean and std attributes of whatever object is created.
 
    10, 1
 
-If the list of values has errors associated with each measurement, the
-data can be entered either as pairs of a value and error, or as two lists
+If several measurements, each with an associated error needs to be entered,
+the data can be entered either as pairs of a value and error, or as two lists
 of data and error respectivly.
+
+For example, given measurements 10 +/- 1, 9 +/- 0.5 and 11 +/- 0.25, the
+data can be entered as either
 
 .. nbinput:: ipython3
    
    x = e.Measurement([10, 1], [9, 0.5], [11, 0.25])
    y = e.Measurement([10, 9, 11], [1, 0.5, 0.25])
    # The mean and standard deviation of x and y are the same
+   
+If the error associated with each measured value is the same, a single
+value can be entered into the second list in the *y* example shown above.
+This is done simply for efficientcy and is treated as a list of repeated
+values by the module.
 
-The optional arguments *name* and *units* can be used to include strings
-for both of these parameters as shown below:
+.. nbinput:: ipython3
+
+   x = e.Measurement([9, 10, 11], [1])
+   # This is equivilent to:
+   y = e.Measurement([9, 10, 11], [1, 1, 1])
+
+In all cases, the optional arguments *name* and *units* can be used to
+include strings for both of these parameters as shown below:
 
 .. nbinput:: ipython3
 
@@ -65,7 +83,7 @@ Once created, these objects can be operated on just as any other value:
 
 .. nbinput:: ipython3
    
-   import qexpy.error as u
+   import qexpy.error as e
 
    x = e.Measurement(10, 1)
    y = e.Measurement(3, 0.1)
@@ -118,115 +136,6 @@ propagation formula.
 This formula is the default method of error propagation and will be accurate in
 most cases.
 
-Formatting
-----------
-
-In addition to containing a mean and standard deviation, Measurement objects
-can also have a string name and unit associated with it. These can then be
-used both in printing values and in labelling any plots created with these
-values. By default, Measured objects are named unnamed_var0, with a unique
-number assigned to each object. The name and units of a Measured object can
-be declared either when the object is created or altered after.
-
-.. nbinput:: ipython3
-
-   import qexpy.error as u
-	
-   x = e.Measurement(10, 1, name='Length', units='cm')
-   # This value can be changed using the following method
-	
-   x.rename(name='Cable Length', units='m')
-   # Note that units are only a marker and changing units does not change
-   # any values with a Measurement
-	
-   print(x)
-	
-.. nboutput:: ipython3
-
-   Cable Length = 10 +/- 1
-	
-Values which have more complicated units can also be entered using the
-following syntax. Consider a measurement of acceleration, with units of m/s^2
-or meters per second squared, this can be entered as a list of the unit letters
-followed by the exponent of the unit, for every base unit, such as meter order
-second:
-	
-.. nbinput:: ipython3
-
-   import qexpy.error as e
-	
-   t = e.Measurement(3,0.25, name='Time', units='s')
-   a = e.Measurement(10, 1, name='Acceleration', units=['m',1,'s',-1])
-
-This also allows for the units of values produced by operations such as
-multiplication to be generated automatically. Consider the calculation of the
-velocity of some object that accelerates at a for t seconds:
-
-.. nbinput:: ipython3
-
-   v = a*t
-   print(v.units)
-	
-.. nboutput:: ipython3
-
-	['m',1,'s','1']
-	
-This unit list, when used in a plot will appear as:
-
-.. code-block:: python
-
-   'm^1s^-1'
-	
-The default format of printing a value with an uncertainty is:
-   
-.. nbinput:: ipython3
-   
-   import qexpy.error as u
-   x = e.Measurement(10, 1)
-   print(x)
-
-.. nbinput:: ipython3
-
-   10 +/- 1
-	
-However, there are three ways of outputting a Measurement object. Furthermore,
-each method also allows for a specific number of significant digits to be 
-shown.
-
-One method is called scientific and will output the number in scientific
-notation with the error being shown as a value with only a single whole digit.
-In order to change between any printing method, the following function will
-change how the package prints a Measurement object:
-
-.. nbinput:: ipython3
-
-   import qexpy.error as u
-	
-   x = e.Measurement(122, 10)
-   e.Measurement.print_style("Scientific")
-   print(x)
-	
-.. nboutput:: ipython3
-
-   (12 +/- 1)*10**1
-	
-The same process is used for a print style called Latex which, as the name
-suggests, is formatted for use in Latex documents. This may be useful in the
-creation of labs by allowing variables to be copied and pasted directly into a
-Latex document.
-
-.. nbinput:: ipython3
-
-   import qexpy.error as u
-	
-   x = e.Measurement(122, 10)
-   e.Measurement.print_style("Latex")
-   print(x)
-	
-.. nboutput:: ipython3
-
-   (12 \pm 1)\e1
-	
 Methods of Propagating Error
 ----------------------------
 
@@ -239,7 +148,7 @@ by default, and a specific method can be chosen as shown below.
 
 .. nbinput:: ipython3
 
-   import qexpy.error as u
+   import qexpy.error as e
 	
    x = e.Measurement(13,2)
    y = e.Measurement(2,0.23)
@@ -253,7 +162,7 @@ by default, and a specific method can be chosen as shown below.
 
    [162.5, 51.00547770828149]
    [162.88454043577516, 51.509516186100562]
-   [162.5, 51.00547770828149]
+   [162.5, 53.24850160192128]
 
 While the Monte Carlo and min-max output of the default method are not as
 elegent as the derivative method, it does provide an easy avenue to check
@@ -309,38 +218,31 @@ by the *.fit* method in QExPy.plotting
 .. todo::
 
    Build public method for finding name and ID of variable
+   Min Max propagation should be altered to represent true min and max with
+   a generalized function.
+
+Derivatives
+-----------
+
+The method by which numerical solutions to the derivative of expressions are
+evaluated is called automatic differentiation. This method relies on the chain
+rule and the fact that the derivative of any expression can be reduced to some
+combonation of elementary functions and operations. Consider the following
+function.
+
+.. math::
+
+   f(x,y) = \cos(xy)
+   \implies \partial_x f(x,y) = \cos(xy)y
+   Let\ xy = z
+   \partial_x f(x,y) \= \cos(z) \frac{\partial(z)}{\partial(x)} \\
+   \= \cos(xy)y
    
+What this example illustrates is how, by considering an expression as a series
+of elementary operations and functions, the exact numerical derivative can be
+calculated. All that is required is to be able to store the derivative of each
+of these elementary operations with respect to whatever variables are involved.
 
+.. todo::
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
+   Outline operation wrapper

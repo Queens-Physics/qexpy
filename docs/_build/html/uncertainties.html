@@ -1,54 +1,142 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Uncertainties Module &mdash; QExPy 0.1.1 documentation</title>
-    
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.1.1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="QExPy 0.1.1 documentation" href="index.html" />
-    <link rel="next" title="Operations Module" href="operations.html" />
-    <link rel="prev" title="Using QExPy in a Lab" href="Youngs Modulus Lab.html" /> 
-  </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="operations.html" title="Operations Module"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="Youngs Modulus Lab.html" title="Using QExPy in a Lab"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Error Propagation &mdash; QExPy 0.1.1 documentation</title>
+  
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="QExPy 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="Formatting" href="operations.html"/>
+        <link rel="prev" title="Introduction" href="intro.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> QExPy
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Error Propagation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#creating-measurement-objects">Creating Measurement Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#working-with-measurement-objects">Working with Measurement Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#methods-of-propagating-error">Methods of Propagating Error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#correlation">Correlation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#derivatives">Derivatives</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="operations.html">Formatting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">QExPy</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Error Propagation</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/uncertainties.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   
 <style>
@@ -182,12 +270,48 @@ div.nboutput  > :nth-child(2).stderr {
 .ansi-white-intense-bg { background-color: #A1A6B2; }
 
 .ansi-bold { font-weight: bold; }
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+/* nice headers on first paragraph of info/warning boxes */
+.admonition .first {
+    margin: -12px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    color: #fff;
+    line-height: 1;
+    display: block;
+}
+.admonition.warning .first {
+    background: #f0b37e;
+}
+.admonition.note .first {
+    background: #6ab0de;
+}
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
 </style>
-<div class="section" id="uncertainties-module">
-<h1>Uncertainties Module<a class="headerlink" href="#uncertainties-module" title="Permalink to this headline">¶</a></h1>
-<p>This module is the core of the QExPy package, this is where the Measurement
-class of objects is created and the methods which allow for derivatives to be
-calculated and the names and units of values to be stored and propagated.</p>
+<div class="section" id="error-propagation">
+<h1>Error Propagation<a class="headerlink" href="#error-propagation" title="Permalink to this headline">¶</a></h1>
+<p>The propagation of measurements, including the propagation of errors is at
+the heart of this package. This section will describe how Measurement
+objects are created and used in calculations. Furthermore, features such as
+the calculation of the exact numerical derivative of expressions will be
+outlined. While some aspects of this documentation will not neccesarily be
+required to work with the package itself, many of the methods used in the
+underlying code can be useful to understand.</p>
 <div class="section" id="creating-measurement-objects">
 <h2>Creating Measurement Objects<a class="headerlink" href="#creating-measurement-objects" title="Permalink to this headline">¶</a></h2>
 <p>The method that will be used most commonly is the Measured class. This object
@@ -200,7 +324,7 @@ attributes which can be used by other elements of this package.</p>
 or arguments of functions when propagating error.</p>
 </dd></dl>
 
-<p>The arguments, or *args, of this class can be in several forms:</p>
+<p>The arguments, or *args, of this class can be entered in several forms:</p>
 <p>A mean and standard deviation can be entred directly.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
@@ -208,7 +332,7 @@ or arguments of functions when propagating error.</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="c1"># This would create an object with a mean of 10 and a standard</span>
 <span class="c1"># deviation of 1.</span>
@@ -216,7 +340,7 @@ or arguments of functions when propagating error.</p>
 </div>
 </div>
 <p>A list or numpy array of values can be provided, from which the mean and
-standard deviation of the values can be taken. These values can be outputted
+standard deviation of the values is calculated. These values can be outputted
 by calling for the mean and std attributes of whatever object is created.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
@@ -226,7 +350,7 @@ by calling for the mean and std attributes of whatever object is created.</p>
 <div class="highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
 <span class="c1"># This would also produce an object with a mean of 10 and a standard</span>
-<span class="c1"># deviation of 1.</span>
+<span class="c1"># deviation of 1. This can be shown by calling for x.mean and x.std:</span>
 
 <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
 </pre></div>
@@ -240,9 +364,11 @@ by calling for the mean and std attributes of whatever object is created.</p>
 </pre></div>
 </div>
 </div>
-<p>If the list of values has errors associated with each measurement, the
-data can be entered either as pairs of a value and error, or as two lists
+<p>If several measurements, each with an associated error needs to be entered,
+the data can be entered either as pairs of a value and error, or as two lists
 of data and error respectivly.</p>
+<p>For example, given measurements 10 +/- 1, 9 +/- 0.5 and 11 +/- 0.25, the
+data can be entered as either</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -255,8 +381,24 @@ of data and error respectivly.</p>
 </pre></div>
 </div>
 </div>
-<p>The optional arguments <em>name</em> and <em>units</em> can be used to include strings
-for both of these parameters as shown below:</p>
+<p>If the error associated with each measured value is the same, a single
+value can be entered into the second list in the <em>y</em> example shown above.
+This is done simply for efficientcy and is treated as a list of repeated
+values by the module.</p>
+<div class="nbinput container">
+<div class="highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="c1"># This is equivilent to:</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>In all cases, the optional arguments <em>name</em> and <em>units</em> can be used to
+include strings for both of these parameters as shown below:</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -277,7 +419,7 @@ for both of these parameters as shown below:</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
 
 <span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
@@ -351,164 +493,6 @@ propagation formula.</p>
 <p>This formula is the default method of error propagation and will be accurate in
 most cases.</p>
 </div>
-<div class="section" id="formatting">
-<h2>Formatting<a class="headerlink" href="#formatting" title="Permalink to this headline">¶</a></h2>
-<p>In addition to containing a mean and standard deviation, Measurement objects
-can also have a string name and unit associated with it. These can then be
-used both in printing values and in labelling any plots created with these
-values. By default, Measured objects are named unnamed_var0, with a unique
-number assigned to each object. The name and units of a Measured object can
-be declared either when the object is created or altered after.</p>
-<div class="nbinput container">
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>In [ ]:
-</pre></div>
-</div>
-<div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
-
-<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
-<span class="c1"># This value can be changed using the following method</span>
-
-<span class="n">x</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Cable Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
-<span class="c1"># Note that units are only a marker and changing units does not change</span>
-<span class="c1"># any values with a Measurement</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast container">
-<div class="container">
-</div>
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>Cable Length = 10 +/- 1
-</pre></div>
-</div>
-</div>
-<p>Values which have more complicated units can also be entered using the
-following syntax. Consider a measurement of acceleration, with units of m/s^2
-or meters per second squared, this can be entered as a list of the unit letters
-followed by the exponent of the unit, for every base unit, such as meter order
-second:</p>
-<div class="nbinput container">
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>In [ ]:
-</pre></div>
-</div>
-<div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
-
-<span class="n">t</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-<span class="n">a</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Acceleration&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-</pre></div>
-</div>
-</div>
-<p>This also allows for the units of values produced by operations such as
-multiplication to be generated automatically. Consider the calculation of the
-velocity of some object that accelerates at a for t seconds:</p>
-<div class="nbinput container">
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>In [ ]:
-</pre></div>
-</div>
-<div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="n">v</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">t</span>
-<span class="k">print</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">units</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast container">
-<div class="container">
-</div>
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>[&#39;m&#39;,1,&#39;s&#39;,&#39;1&#39;]
-</pre></div>
-</div>
-</div>
-<p>This unit list, when used in a plot will appear as:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s1">&#39;m^1s^-1&#39;</span>
-</pre></div>
-</div>
-<p>The default format of printing a value with an uncertainty is:</p>
-<div class="nbinput container">
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>In [ ]:
-</pre></div>
-</div>
-<div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput container">
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>In [ ]:
-</pre></div>
-</div>
-<div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="mi">10</span> <span class="o">+/-</span> <span class="mi">1</span>
-</pre></div>
-</div>
-</div>
-<p>However, there are three ways of outputting a Measurement object. Furthermore,
-each method also allows for a specific number of significant digits to be
-shown.</p>
-<p>One method is called scientific and will output the number in scientific
-notation with the error being shown as a value with only a single whole digit.
-In order to change between any printing method, the following function will
-change how the package prints a Measurement object:</p>
-<div class="nbinput container">
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>In [ ]:
-</pre></div>
-</div>
-<div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
-
-<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">print_style</span><span class="p">(</span><span class="s2">&quot;Scientific&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast container">
-<div class="container">
-</div>
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>(12 +/- 1)*10**1
-</pre></div>
-</div>
-</div>
-<p>The same process is used for a print style called Latex which, as the name
-suggests, is formatted for use in Latex documents. This may be useful in the
-creation of labs by allowing variables to be copied and pasted directly into a
-Latex document.</p>
-<div class="nbinput container">
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>In [ ]:
-</pre></div>
-</div>
-<div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
-
-<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">print_style</span><span class="p">(</span><span class="s2">&quot;Latex&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast container">
-<div class="container">
-</div>
-<div class="highlight-none"><div class="highlight"><pre>
-<span></span>(12 \pm 1)\e1
-</pre></div>
-</div>
-</div>
-</div>
 <div class="section" id="methods-of-propagating-error">
 <h2>Methods of Propagating Error<a class="headerlink" href="#methods-of-propagating-error" title="Permalink to this headline">¶</a></h2>
 <p>While the default method of propagating error is the derivative formula, there
@@ -523,7 +507,7 @@ by default, and a specific method can be chosen as shown below.</p>
 </pre></div>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">u</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
 
 <span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mf">0.23</span><span class="p">)</span>
@@ -541,7 +525,7 @@ by default, and a specific method can be chosen as shown below.</p>
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>[162.5, 51.00547770828149]
 [162.88454043577516, 51.509516186100562]
-[162.5, 51.00547770828149]
+[162.5, 53.24850160192128]
 </pre></div>
 </div>
 </div>
@@ -613,75 +597,104 @@ case a covariance of zero is returned.</p>
 
 <p>Furthermore, the covariance and correlation of the fitted parameters found
 by the <em>.fit</em> method in QExPy.plotting</p>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">Build public method for finding name and ID of variable
+Min Max propagation should be altered to represent true min and max with
+a generalized function.</p>
+</div>
+</div>
+<div class="section" id="derivatives">
+<h2>Derivatives<a class="headerlink" href="#derivatives" title="Permalink to this headline">¶</a></h2>
+<p>The method by which numerical solutions to the derivative of expressions are
+evaluated is called automatic differentiation. This method relies on the chain
+rule and the fact that the derivative of any expression can be reduced to some
+combonation of elementary functions and operations. Consider the following
+function.</p>
+<div class="math">
+\[\begin{split}f(x,y) = \cos(xy)
+\implies \partial_x f(x,y) = \cos(xy)y
+Let\ xy = z
+\partial_x f(x,y) \= \cos(z) \frac{\partial(z)}{\partial(x)} \\
+\= \cos(xy)y\end{split}\]</div>
+<p>What this example illustrates is how, by considering an expression as a series
+of elementary operations and functions, the exact numerical derivative can be
+calculated. All that is required is to be able to store the derivative of each
+of these elementary operations with respect to whatever variables are involved.</p>
+<div class="admonition-todo admonition" id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last">Outline operation wrapper</p>
+</div>
 </div>
 </div>
 
 
+           </div>
           </div>
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Uncertainties Module</a><ul>
-<li><a class="reference internal" href="#creating-measurement-objects">Creating Measurement Objects</a></li>
-<li><a class="reference internal" href="#working-with-measurement-objects">Working with Measurement Objects</a></li>
-<li><a class="reference internal" href="#formatting">Formatting</a></li>
-<li><a class="reference internal" href="#methods-of-propagating-error">Methods of Propagating Error</a></li>
-<li><a class="reference internal" href="#correlation">Correlation</a></li>
-</ul>
-</li>
-</ul>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="operations.html" class="btn btn-neutral float-right" title="Formatting" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="intro.html" class="btn btn-neutral" title="Introduction" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="Youngs Modulus Lab.html"
-                        title="previous chapter">Using QExPy in a Lab</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="operations.html"
-                        title="next chapter">Operations Module</a></p>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/uncertainties.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Connor Kapahi.
+
     </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="operations.html" title="Operations Module"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="Youngs Modulus Lab.html" title="Using QExPy in a Lab"
-             >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
-      </ul>
-    </div>
-    <div class="footer" role="contentinfo">
-        &copy; Copyright 2016, Connor Kapahi.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
-    </div>
-  </body>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
 </html>
