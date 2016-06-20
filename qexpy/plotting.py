@@ -178,7 +178,7 @@ class Plot:
                            title=self.attributes['title'])
 
         # create a new plot
-        p = bp.figure(
+        self.p = bp.figure(
             tools="pan, box_zoom, reset, save, wheel_zoom",
             width=600, height=400,
             y_axis_type=self.plot_para['yscale'],
@@ -193,37 +193,37 @@ class Plot:
         )
 
         # add datapoints with errorbars
-        error_bar(self, p)
+        error_bar(self)
 
         if self.flag['Manual'] is True:
-            error_bar(self, p,
+            error_bar(self,
                       xdata=self.manual_data[0], ydata=self.manual_data[1])
 
         if self.flag['fitted'] is True:
             self.mfit_function = Plot.mfits[self.fit_method]
             _plot_function(
-                self, p, self.xdata,
+                self, self.xdata,
                 lambda x: self.mfit_function(x, self.fit_parameters))
 
             self.function_counter += 1
 
             if self.fit_parameters[1].mean > 0:
-                p.legend.orientation = "top_left"
+                self.p.legend.location = "top_left"
             else:
-                p.legend.orientation = "top_right"
+                self.p.legend.location = "top_right"
         else:
-            p.legend.orientation = 'top_right'
+            self.p.legend.location = 'top_right'
 
         for func in self.attributes['function']:
             _plot_function(
-                self, p, self.xdata, func)
+                self, self.xdata, func)
             self.function_counter += 1
 
         if self.flag['residuals'] is False:
-            bp.show(p)
+            bp.show(self.p)
         else:
 
-            p2 = bp.figure(
+            self.p2 = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=600, height=200,
                 y_axis_type='linear',
@@ -237,9 +237,9 @@ class Plot:
             )
 
             # plot y errorbars
-            error_bar(self, p2, residual=True)
+            error_bar(self, residual=True)
 
-            gp_alt = bi.gridplot([[p], [p2]])
+            gp_alt = bi.gridplot([[self.p], [self.p2]])
             bp.show(gp_alt)
 
     def set_colors(self, data=None, error=None, line=None):
@@ -282,8 +282,77 @@ class Plot:
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
 
+    def return_bokeh(self):
+        '''Return Bokeh plot object for the plot acted upon.
 
-def error_bar(self, p, residual=False, xdata=None, ydata=None):
+        If no residual plot exists, a single Bokeh object, containing the
+        main plot is returned. Else, a tuple with the main and residual plot
+        in that order is returned.'''
+        # create a new plot
+        self.p = bp.figure(
+            tools="pan, box_zoom, reset, save, wheel_zoom",
+            width=600, height=400,
+            y_axis_type=self.plot_para['yscale'],
+            y_range=[min(self.ydata)-2*max(self.yerr),
+                     max(self.ydata)+2*max(self.yerr)],
+            x_axis_type=self.plot_para['xscale'],
+            x_range=[min(self.xdata)-2*max(self.xerr),
+                     max(self.xdata)+2*max(self.xerr)],
+            title=self.attributes['title'],
+            x_axis_label=self.attributes['xaxis'],
+            y_axis_label=self.attributes['yaxis'],
+        )
+
+        # add datapoints with errorbars
+        error_bar(self)
+
+        if self.flag['Manual'] is True:
+            error_bar(self,
+                      xdata=self.manual_data[0], ydata=self.manual_data[1])
+
+        if self.flag['fitted'] is True:
+            self.mfit_function = Plot.mfits[self.fit_method]
+            _plot_function(
+                self, self.xdata,
+                lambda x: self.mfit_function(x, self.fit_parameters))
+
+            self.function_counter += 1
+
+            if self.fit_parameters[1].mean > 0:
+                self.p.legend.location = "top_left"
+            else:
+                self.p.legend.location = "top_right"
+        else:
+            self.p.legend.location = 'top_right'
+
+        for func in self.attributes['function']:
+            _plot_function(
+                self, self.xdata, func)
+            self.function_counter += 1
+
+        if self.flag['residuals'] is False:
+            return self.p
+        else:
+
+            self.p2 = bp.figure(
+                tools="pan, box_zoom, reset, save, wheel_zoom",
+                width=600, height=200,
+                y_axis_type='linear',
+                y_range=[min(self.yres)-2*max(self.yerr),
+                         max(self.yres)+2*max(self.yerr)],
+                x_range=[min(self.xdata)-2*max(self.xerr),
+                         max(self.xdata)+2*max(self.xerr)],
+                title="Residual Plot",
+                x_axis_label=self.attributes['xaxis'],
+                y_axis_label='Residuals'
+            )
+
+            # plot y errorbars
+            error_bar(self, residual=True)
+            return (self.p, self.p2)
+
+
+def error_bar(self, residual=False, xdata=None, ydata=None):
     '''Function to create a Bokeh glyph which appears to be a datapoint with
     an errorbar.
 
@@ -293,6 +362,11 @@ def error_bar(self, p, residual=False, xdata=None, ydata=None):
     rectangles whose size is based on Bokeh 'size' which is based on screen
     size and thus does not get larger when zooming in on a plot.
     '''
+    if residual is False:
+        p = self.p
+    else:
+        p = self.p2
+
     err_x1 = []
     err_d1 = []
     err_y1 = []
@@ -378,6 +452,16 @@ def error_bar(self, p, residual=False, xdata=None, ydata=None):
             color=self.colors['Data Points'])
 
 
+def show_bokeh(self, p, p2=None):
+    self.p = p
+    if p2 is None:
+        bp.show(p)
+    else:
+        self.p2 = p2
+        gp_alt = bi.gridplot([[p], [p2]])
+        bp.show(gp_alt)
+
+
 def data_transform(self, x, y, xerr=None, yerr=None):
     '''Function to interpret user inputted data into a form compatible with
     Plot objects.
@@ -449,7 +533,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
     self.yunits = yunits
 
 
-def _plot_function(self, p, xdata, theory, n=1000):
+def _plot_function(self, xdata, theory, n=1000):
     '''Semi-privite function to plot a function over a given range of values.
 
     Curves are generated by creating a series of lines between points, the
@@ -464,7 +548,7 @@ def _plot_function(self, p, xdata, theory, n=1000):
     except AttributeError:
         for i in range(n):
             x_mid.append(theory(xrange[i]))
-        p.line(
+        self.p.line(
             xrange, x_mid, legend='Theoretical',
             line_color=self.colors['Function'][self.function_counter])
     else:
@@ -475,13 +559,13 @@ def _plot_function(self, p, xdata, theory, n=1000):
             x_mid.append(x_theory.mean)
             x_max.append(x_theory.mean+x_theory.std)
             x_min.append(x_theory.mean-x_theory.std)
-        p.line(
+        self.p.line(
             xrange, x_mid, legend='Theoretical',
             line_color=self.colors['Function'][self.function_counter])
 
         xrange_reverse = list(reversed(xrange))
         x_min_reverse = list(reversed(x_min))
-        p.patch(
+        self.p.patch(
             x=[*xrange, *xrange_reverse], y=[*x_max, *x_min_reverse],
             fill_alpha=0.3,
             fill_color=self.colors['Function'][self.function_counter],
