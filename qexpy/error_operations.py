@@ -1,4 +1,5 @@
 from numpy import int64, float64
+import math as m
 CONSTANT = (int, float, int64, float64, )
 
 
@@ -100,16 +101,18 @@ def neg(x):
     result.error_flag = True
     return result
 
-
+'''
 def add(a, b):
-    '''
-    Returns a measurement object that is the sum of two other measurements.
+'''
+'''
+Returns a measurement object that is the sum of two other measurements.
 
-    The sum can be taken by multiple methods,  specified by the measurement
-    class variable measurement.error_method. The derivative of this new object
-    is also specifed by applying the chain rule to the input and the
-    derivative of the inputs.
-    '''
+The sum can be taken by multiple methods,  specified by the measurement
+class variable measurement.error_method. The derivative of this new object
+is also specifed by applying the chain rule to the input and the
+derivative of the inputs.
+'''
+'''
     import error as e
 
     a, b = check_values(a, b)
@@ -160,7 +163,7 @@ def add(a, b):
     result.derivative.update(result_derivative)
     result._update_info(add, a, b)
     return result
-
+'''
 
 def sub(a, b):
     '''
@@ -174,7 +177,7 @@ def sub(a, b):
     a._check_der(b)
     b._check_der(a)
     for key in a.derivative:
-        result_derivative[key] = a.derivative[key] - b.derivative[key]
+        result_derivative[key] = diff[sub](key, a, b)
     if check_formula(sub, a, b) is not None:
         return check_formula(sub, a, b)
 
@@ -227,8 +230,7 @@ def mul(a, b):
     a._check_der(b)
     b._check_der(a)
     for key in a.derivative:
-        result_derivative[key] = a.mean*b.derivative[key] +\
-            b.mean*a.derivative[key]
+        result_derivative[key] = diff[mul](key, a, b)
     if check_formula(mul, a, b) is not None:
         return check_formula(mul, a, b)
 
@@ -288,8 +290,7 @@ def div(a, b):
     a._check_der(b)
     b._check_der(a)
     for key in a.derivative:
-        result_derivative[key] = (a.derivative[key]*b.mean -
-                                  b.derivative[key]*a.mean) / b.mean**2
+        result_derivative[key] = diff[div](key, a, b)
     if check_formula(div, a, b) is not None:
         return check_formula(div, a, b)
 
@@ -352,7 +353,6 @@ def div(a, b):
 
 def power(a, b):
     '''Returns the power of two values with propagated errors.'''
-    import math as m
     import error as e
 
     a, b = check_values(a, b)
@@ -364,9 +364,7 @@ def power(a, b):
         if a.mean is 0:
             result_derivative[key] = None
         else:
-            result_derivative[key] = a.mean**b.mean *\
-                (b.derivative[key] * m.log(abs(a.mean)) +
-                    b.mean / a.mean*a.derivative[key])
+            result_derivative[key] = diff[power](key, a, b)
     if check_formula(power, a, b) is not None:
         return check_formula(power, a, b)
 
@@ -431,7 +429,7 @@ def sin(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = m.cos(x.mean)*x.derivative[key]
+        result_derivative[key] = diff[sin](key, x)
     if check_formula(sin, x, func_flag=True) is not None:
         return check_formula(sin, x, func_flag=True)
 
@@ -479,7 +477,7 @@ def cos(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = -m.sin(x.mean)*x.derivative[key]
+        result_derivative[key] = diff[cos](key, x)
     if check_formula(cos, x, func_flag=True) is not None:
         return check_formula(cos, x, func_flag=True)
 
@@ -530,7 +528,7 @@ def tan(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = Sec(x.mean)**2*x.derivative[key]
+        result_derivative[key] = diff[tan](key, x)
     if check_formula(tan, x, func_flag=True) is not None:
         return check_formula(tan, x, func_flag=True)
 
@@ -578,7 +576,7 @@ def atan(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = 1/(1 + x.mean**2)*x.derivative[key]
+        result_derivative[key] = diff[atan](key, x)
     if check_formula(tan, x, func_flag=True) is not None:
         return check_formula(tan, x, func_flag=True)
 
@@ -632,7 +630,7 @@ def sec(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = Sec(x.mean)*m.tan(x.mean)*x.derivative[key]
+        result_derivative[key] = diff[sec](key, x)
     if check_formula(sec, x, func_flag=True) is not None:
         return check_formula(sec, x, func_flag=True)
 
@@ -688,7 +686,7 @@ def csc(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = -Cot(x.mean)*Csc(x.mean)*x.derivative[key]
+        result_derivative[key] = diff[csc](key, x)
     if check_formula(csc, x, func_flag=True) is not None:
         return check_formula(csc, x, func_flag=True)
 
@@ -744,7 +742,7 @@ def cot(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = -Csc(x.mean)**2*x.derivative[key]
+        result_derivative[key] = diff[cot](key, x)
     if check_formula(cot, x, func_flag=True) is not None:
         return check_formula(cot, x, func_flag=True)
 
@@ -794,7 +792,7 @@ def exp(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = m.exp(x.mean)*x.derivative[key]
+        result_derivative[key] = diff[exp](key, x)
     if check_formula(exp, x, func_flag=True) is not None:
         return check_formula(exp, x, func_flag=True)
 
@@ -847,7 +845,7 @@ def log(x):
     x, = check_values(x)
     result_derivative = {}
     for key in x.derivative:
-        result_derivative[key] = 1/x.mean*x.derivative[key]
+        result_derivative[key] = diff[log](key, x)
     if check_formula(log, x, func_flag=True) is not None:
         return check_formula(log, x, func_flag=True)
 
@@ -886,7 +884,7 @@ def log(x):
     return result
 
 
-def find_minmax(function, x):
+def find_minmax(function, *args):
     '''
     e.Function to use Min-Max method to find the best estimate value
     and error on a given function
@@ -894,10 +892,22 @@ def find_minmax(function, x):
     import numpy as np
     import error as e
 
-    vals = np.linspace(x.mean-x.std, x.mean + x.std, 100)
-    results = []
-    for i in range(100):
-        results.append(function(vals[i]))
+    if len(args) is 1:
+        x = args[0]
+        vals = np.linspace(x.mean-x.std, x.mean + x.std, 100)
+        results = []
+        for i in range(100):
+            results.append(function(vals[i]))
+
+    elif len(args) is 2:
+        a = args[0]
+        b = args[1]
+        results = []
+        a_vals = np.linspace(a.mean-a.std, a.mean + a.std, 10)
+        b_vals = np.linspace(b.mean-b.std, b.mean + b.std, 10)
+        for i in range(10):
+            results.append(function(a_vals[i], b_vals[i]))
+
     min_val = min(results)
     max_val = max(results)
     mid_val = (max_val + min_val)/2
@@ -914,13 +924,14 @@ def operation_wrap(operation, *args, func_flag=False):
     import error as e
 
     args = check_values(args)
+    args = args[0]
     if args[1] is not None:
         args[0]._check_der(args[1])
         args[1]._check_der(args[0])
     df = {}
     for key in args[0].derivative:
         df[key] = diff[operation](key, *args)
-    if check_formula(op_string[operation], *args, func_flag) is not None:
+    if check_formula(operation, *args, func_flag) is not None:
         return check_formula(op_string[operation], *args, func_flag)
 
     # Derivative Method
@@ -949,34 +960,55 @@ def operation_wrap(operation, *args, func_flag=False):
 
     if args[1] is not None and args[0].info["Data"] is not None\
             and args[1].info['Data'] is not None\
-            and len(args[0]) == len(args[1]):
-        for i in len(args[0]):
+            and len(args[0].info['Data']) == len(args[1].info['Data']):
+        for i in range(len(args[0].info['Data'])):
             result.info["Data"].append(
-                        operation(args[0].info["Data"], args[1].info["Data"]))
+                        operation(args[0].info["Data"][i],
+                                  args[1].info["Data"][i]))
 
     elif args[0].info["Data"] is not None:
         result.info["Data"].append(operation(args[0].info["Data"]))
 
     result.derivative.update(df)
-    result._update_info(op_string[operation], *args, func_flag)
+    result._update_info(operation, *args, func_flag)
     return result
 
-diff = {sin: lambda key, x: cos(x.mean)*x.derivative[key],
-        cos: lambda key, x: -sin(x.mean)*x.derivative[key],
-        tan: lambda key, x: sec(x.mean)**2*x.derivative[key],
-        sec: lambda key, x: tan(x)*sec(x)*x.derivative[key],
-        csc: lambda key, x: -cot(x)*csc(x)*x.derivative[key],
-        cot: lambda key, x: -csc(x)**2*x.derivative[key],
-        exp: lambda key, x: exp(x)*x.derivative[key],
-        log: lambda key, x: 1/x*x.derivative[key],
+
+def add(a, b):
+    if type(a) in CONSTANT:
+        if type(b) in CONSTANT:
+            return a+b
+        else:
+            return a+b.mean
+    else:
+        if type(b) in CONSTANT:
+            return a.mean+b
+        else:
+            return a.mean+b.mean
+
+diff = {sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
+        cos: lambda key, x: -m.sin(x.mean)*x.derivative[key],
+        tan: lambda key, x: m.cos(x.mean)**-2*x.derivative[key],
+        sec: lambda key, x: m.tan(x.mean)*m.cos(x.mean)**-1*x.derivative[key],
+        csc: lambda key, x: -(m.tan(x.mean)*m.sin(x.mean))**-1 *
+        x.derivative[key],
+
+        cot: lambda key, x: -m.sin(x.mean)**-2*x.derivative[key],
+        exp: lambda key, x: m.exp(x.mean)*x.derivative[key],
+        log: lambda key, x: 1/x.mean*x.derivative[key],
         add: lambda key, a, b: a.derivative[key] + b.derivative[key],
         sub: lambda key, a, b: a.derivative[key] - b.derivative[key],
         mul: lambda key, a, b: a.derivative[key]*b.mean +
         b.derivative[key]*a.mean,
+
         div: lambda key, a, b: (a.derivative[key]*b.mean -
         b.derivative[key]*a.mean) / b.mean**2,
+
         power: lambda key, a, b: a.mean**b.mean*(
-        b.derivative[key]*log(abs(a.mean)) + b.mean/a.mean*a.derivative[key], )
+        b.derivative[key]*m.log(abs(a.mean)) +
+        b.mean/a.mean*a.derivative[key]),
+
+        atan: lambda key, x: 1/(1 + x.mean**2)*x.derivative[key]
         }
 
 op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',

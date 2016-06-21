@@ -194,11 +194,11 @@ class Plot:
         )
 
         # add datapoints with errorbars
-        error_bar(self)
+        _error_bar(self)
 
         if self.flag['Manual'] is True:
-            error_bar(self,
-                      xdata=self.manual_data[0], ydata=self.manual_data[1])
+            _error_bar(self,
+                       xdata=self.manual_data[0], ydata=self.manual_data[1])
 
         if self.flag['fitted'] is True:
             self.mfit_function = Plot.mfits[self.fit_method]
@@ -238,7 +238,7 @@ class Plot:
             )
 
             # plot y errorbars
-            error_bar(self, residual=True)
+            _error_bar(self, residual=True)
 
             gp_alt = bi.gridplot([[self.p], [self.p2]])
             bp.show(gp_alt)
@@ -305,11 +305,11 @@ class Plot:
         )
 
         # add datapoints with errorbars
-        error_bar(self)
+        _error_bar(self)
 
         if self.flag['Manual'] is True:
-            error_bar(self,
-                      xdata=self.manual_data[0], ydata=self.manual_data[1])
+            _error_bar(self,
+                       xdata=self.manual_data[0], ydata=self.manual_data[1])
 
         if self.flag['fitted'] is True:
             self.mfit_function = Plot.mfits[self.fit_method]
@@ -348,11 +348,11 @@ class Plot:
             )
 
             # plot y errorbars
-            error_bar(self, residual=True)
+            _error_bar(self, residual=True)
             return (self.p, self.p2)
 
 
-def error_bar(self, residual=False, xdata=None, ydata=None):
+def _error_bar(self, residual=False, xdata=None, ydata=None):
     '''Function to create a Bokeh glyph which appears to be a datapoint with
     an errorbar.
 
@@ -377,21 +377,21 @@ def error_bar(self, residual=False, xdata=None, ydata=None):
     err_b2 = []
 
     if xdata is None:
-        _xdata = self.xdata
-        x_data = self.xdata
+        _xdata = list(self.xdata)
+        x_data = list(self.xdata)
     else:
         _xdata = [xdata.mean]
         x_data = [xdata.mean]
 
     if residual is True:
-        _ydata = self.yres
+        _ydata = list(self.yres)
         y_res = list(self.yres)
-        _yerr = self.yerr
+        _yerr = list(self.yerr)
 
     elif ydata is None:
-        _ydata = self.ydata
-        y_data = self.ydata
-        _yerr = self.yerr
+        _ydata = list(self.ydata)
+        y_data = list(self.ydata)
+        _yerr = list(self.yerr)
     else:
         _ydata = [ydata.mean]
         y_data = [ydata.mean]
@@ -413,20 +413,20 @@ def error_bar(self, residual=False, xdata=None, ydata=None):
         color=self.colors['Data Points'])
 
     if xdata is None:
-        _xdata = self.xdata
-        x_data = self.xdata
-        _xerr = self.xerr
+        _xdata = list(self.xdata)
+        x_data = list(self.xdata)
+        _xerr = list(self.xerr)
     else:
         _xdata = [xdata.mean]
         x_data = [xdata.mean]
         _xerr = [xdata.std]
 
     if residual is True:
-        _ydata = self.yres
+        _ydata = list(self.yres)
         y_res = list(self.yres)
     elif ydata is None:
-        _ydata = self.ydata
-        y_data = self.ydata
+        _ydata = list(self.ydata)
+        y_data = list(self.ydata)
     else:
         _ydata = [ydata.mean]
         y_data = [ydata.mean]
@@ -539,14 +539,15 @@ def data_transform(self, x, y, xerr=None, yerr=None):
     else:
         yname = y.name
 
-    self.xname = xname
-    self.yname = yname
     self.xdata = xdata
     self.ydata = ydata
     self.xerr = x_error
     self.yerr = y_error
+
     self.xunits = xunits
     self.yunits = yunits
+    self.xname = xname
+    self.yname = yname
 
 
 def _plot_function(self, xdata, theory, n=1000):

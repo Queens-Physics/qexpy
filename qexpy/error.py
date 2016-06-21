@@ -393,7 +393,7 @@ class ExperimentalValue:
 
     def __add__(self, other):
         import error_operations as op
-        return op.add(self, other)
+        return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
         import error_operations as op
@@ -471,6 +471,13 @@ class ExperimentalValue:
         '''
         # 2D array
         import numpy as np
+        import error_operations as op
+
+        _np_func = {op.add: np.add, op.sub: np.subtract, op.mul: np.multiply,
+                    op.div: np.divide, op.power: np.power, op.log: np.log,
+                    op.exp: np.exp, op.sin: np.sin, op.cos: np.cos,
+                    op.tan: np.tan, }
+
         N = len(args)
         n = ExperimentalValue.mc_trial_number
         value = np.zeros((N, n))
@@ -485,7 +492,7 @@ class ExperimentalValue:
                 value[i] = np.random.normal(args[i].mean, args[i].std, n)
                 args[i].MC_list = value[i]
 
-        result = func(*value)
+        result = _np_func[func](*value)
         data = np.mean(result)
         error = np.std(result, ddof=1)
         return (data, error,)
