@@ -59,13 +59,12 @@ beam as one end is deflected by a measured amount.
 	 
 .. bokeh-plot::
    :source-position: none
-	
-   import qexpy.error as e
+
    import qexpy.plotting as p
 
-   dl = e.Measurement([185e-6, 250e-6, 305e-6, 378e-6, 460e-6, 515e-6, 573e-6,
+   dl = [185e-6, 250e-6, 305e-6, 378e-6, 460e-6, 515e-6, 573e-6,
 					 659e-6, 733e-6, 799e-6, 1199e-6, 860e-6, 933e-6, 993e-6,
-					 1060e-6, 1125e-6], [5e-6], name='Lengthening', units='m')
+					 1060e-6, 1125e-6]
 
    m50 = 0.05008
    m1 = 0.10010
@@ -74,12 +73,11 @@ beam as one end is deflected by a measured amount.
    m5 = 0.50054
    m5d = 0.50087
 
-   mass = e.Measurement([0, m1, m2x, m2x+m1, m2x+m2i, m5, m1+m5, m2x+m5,
+   mass = [0, m1, m2x, m2x+m1, m2x+m2i, m5, m1+m5, m2x+m5,
 					m2x+m5+m1, m5+m2x+m2i, m5+m5d+m2x+m2i+m1, m5+m5d,
-					m5+m5d+m1, m5+m5d+m2x, m5+m5d+m2x+m1,m5+m5d+m2x+m2i],
-					[0.04], name='Suspended Mass', units='m')
+					m5+m5d+m1, m5+m5d+m2x, m5+m5d+m2x+m1,m5+m5d+m2x+m2i]
 
-   plot = p.Plot(dl, mass) # This creates the plot and stores it as plot
+   plot = p.Plot(dl, mass, xerr=5e-6, yerr=0.04) # This creates the plot and stores it as plot
    plot.fit('linear') # We can find a linear fit of the data
    plot.residuals() # This tells the plot that we also want a residual plot
    plot.show() # Now the plot can be shown

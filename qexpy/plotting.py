@@ -79,8 +79,9 @@ class Plot:
         self.flag = {'fitted': False, 'residuals': False,
                      'Manual': False} # analysis:ignore
         self.attributes = {
-            'title': x.name+' versus '+y.name, 'xaxis': 'x '+self.xunits,
-            'yaxis': 'y '+self.yunits, 'data': 'Experiment', 'function': (), }
+            'title': self.xname+' versus '+self.yname,
+            'xaxis': 'x '+self.xunits, 'yaxis': 'y '+self.yunits,
+            'data': 'Experiment', 'function': (), }
         self.fit_parameters = ()
         self.yres = None
         self.function_counter = 0
@@ -499,6 +500,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
             y_error = [yerr]*len(ydata)
         else:
             y_error = yerr
+
     try:
         x.units
     except AttributeError:
@@ -511,7 +513,6 @@ def data_transform(self, x, y, xerr=None, yerr=None):
             xunits = '['+xunits+']'
         else:
             xunits = ''
-
     try:
         y.units
     except AttributeError:
@@ -524,6 +525,22 @@ def data_transform(self, x, y, xerr=None, yerr=None):
             yunits = '['+yunits+']'
         else:
             yunits = ''
+
+    try:
+        x.name
+    except AttributeError:
+        xname = 'x'
+    else:
+        xname = x.name
+    try:
+        y.name
+    except AttributeError:
+        yname = 'y'
+    else:
+        yname = y.name
+
+    self.xname = xname
+    self.yname = yname
     self.xdata = xdata
     self.ydata = ydata
     self.xerr = x_error

@@ -17,15 +17,12 @@ of data point.
 .. bokeh-plot::
    :source-position: above
 
-   import qexpy.error as e
    import qexpy.plotting as p
 
-   x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Mass', units='g')
    # This produces two sets of data which should be fit to a line with a slope
    # of 3 and an intercept 2
 
-   figure = p.Plot(x, y)
+   figure = p.Plot([1, 2, 3, 4, 5], [5, 7, 11, 14, 17], xerr=0.5, yerr=1)
    figure.show()
 	
 Using methods such as *.fit* or *.residuals* will create a best fit of
@@ -69,13 +66,9 @@ constructed.
 .. bokeh-plot::
    :source-position: none
 	
-   import qexpy.error as e
    import qexpy.plotting as p
 
-   x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Appplied Mass', units='g')
-
-   figure = p.Plot(x, y)
+   figure = p.Plot([1, 2, 3, 4, 5], [5, 7, 11, 14, 17], xerr=0.5, yerr=1)
    figure.fit('linear')
    figure.residuals()
    figure.show('file')
