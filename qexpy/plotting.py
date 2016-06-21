@@ -564,8 +564,11 @@ def _plot_function(self, xdata, theory, n=1000):
 
         xrange_reverse = list(reversed(xrange))
         x_min_reverse = list(reversed(x_min))
+        xrange = list(xrange)
+        x_max = list(x_max)
+
         self.p.patch(
-            x=[*xrange, *xrange_reverse], y=[*x_max, *x_min_reverse],
+            x=xrange+xrange_reverse, y=[*x_max, *x_min_reverse],
             fill_alpha=0.3,
             fill_color=self.colors['Function'][self.function_counter],
             line_color=self.colors['Function'][self.function_counter],
