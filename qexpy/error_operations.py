@@ -101,734 +101,164 @@ def neg(x):
     result.error_flag = True
     return result
 
-'''
+
 def add(a, b):
-'''
-'''
-Returns a measurement object that is the sum of two other measurements.
+    '''
+    Returns a measurement object that is the sum of two other measurements.
 
-The sum can be taken by multiple methods,  specified by the measurement
-class variable measurement.error_method. The derivative of this new object
-is also specifed by applying the chain rule to the input and the
-derivative of the inputs.
-'''
-'''
-    import error as e
-
-    a, b = check_values(a, b)
-    # Propagating derivative of arguments
-    result_derivative = {}
-    a._check_der(b)
-    b._check_der(a)
-    for key in a.derivative:
-        result_derivative[key] = diff[add](key, a, b)
-    if check_formula(add, a, b) is not None:
-        return check_formula(add, a, b)
-    # Addition by error propogation formula
-    if e.ExperimentalValue.error_method == "Derivative":
-        mean = a.mean + b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # Addition by Min-Max method
-    elif e.ExperimentalValue.error_method == "Min Max":
-        mean = a.mean + b.mean
-        std = a.std + b.std
-        result = e.Function(mean, std)
-
-    # If method specification is bad,  MC method is used
-    elif e.ExperimentalValue.error_method == "Monte Carlo":
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(
-            lambda x, y: x + y, a, b)
-        result = e.Function(mean, std)
-
-    else:
-        mean = a.mean + b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda x, y: x + y, a, b)
-        result.MC = [MC[0], MC[1]]
-        result.MinMax = [a.mean + b.mean, a.std + b.std]
-
-    if a.info["Data"] is not None and b.info["Data"] is not None:
-        import numpy
-        try:
-            numpy.add(a.info["Data"], b.info["Data"])
-        except ValueError:
-            result.info["Data"] = None
+    The sum can be taken by multiple methods,  specified by the measurement
+    class variable measurement.error_method. The derivative of this new object
+    is also specifed by applying the chain rule to the input and the
+    derivative of the inputs.
+    '''
+    if type(a) in CONSTANT:
+        if type(b) in CONSTANT:
+            return a+b
         else:
-            result.info["Data"] = numpy.add(a.info["Data"], b.info["Data"])
+            return a+b.mean
+    else:
+        if type(b) in CONSTANT:
+            return a.mean+b
+        else:
+            return a.mean+b.mean
 
-    result.unit = a.units
-    result.derivative.update(result_derivative)
-    result._update_info(add, a, b)
-    return result
-'''
 
 def sub(a, b):
     '''
     Returns a measurement object that is the subtraction of two measurements.
     '''
-    import error as e
-
-    a, b = check_values(a, b)
-    # Propagating derivative of arguments
-    result_derivative = {}
-    a._check_der(b)
-    b._check_der(a)
-    for key in a.derivative:
-        result_derivative[key] = diff[sub](key, a, b)
-    if check_formula(sub, a, b) is not None:
-        return check_formula(sub, a, b)
-
-    # Addition by error propogation formula
-    if e.ExperimentalValue.error_method == "Derivative":
-        mean = a.mean-b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # Addition by Min-Max method
-    elif e.ExperimentalValue.error_method == "Min Max":
-        result = add(a, -b)
-
-    # Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x, y: x-y, a, b)
-        result = e.Function(mean, std)
-
-    else:
-        mean = a.mean-b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda x, y: x-y, a, b)
-        result.MC = [MC[0], MC[1]]
-        result.MinMax = [a.mean-b.mean, a.mean+b.mean]
-
-    if a.info["Data"] is not None and b.info["Data"] is not None:
-        import numpy
-        try:
-            numpy.subtract(a.info["Data"], b.info["Data"])
-        except ValueError:
-            result.info["Data"] = None
+    if type(a) in CONSTANT:
+        if type(b) in CONSTANT:
+            return a-b
         else:
-            result.info["Data"] = numpy.subtract(a.info["Data"],
-                                                 b.info["Data"])
-
-    result.units = a.units
-    result.derivative.update(result_derivative)
-    result._update_info(sub, a, b)
-    return result
+            return a-b.mean
+    else:
+        if type(b) in CONSTANT:
+            return a.mean-b
+        else:
+            return a.mean-b.mean
 
 
 def mul(a, b):
     '''Returns the product of two values with propagated errors.'''
-    import error as e
-
-    a, b = check_values(a, b)
-    # Propagating derivative of arguments
-    result_derivative = {}
-    a._check_der(b)
-    b._check_der(a)
-    for key in a.derivative:
-        result_derivative[key] = diff[mul](key, a, b)
-    if check_formula(mul, a, b) is not None:
-        return check_formula(mul, a, b)
-
-    # By error propogation formula
-    if e.ExperimentalValue.error_method == "Derivative":
-        mean = a.mean*b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # Addition by Min-Max method
-    elif e.ExperimentalValue.error_method == "Min Max":
-        mean = a.mean*b.mean + a.std*b.std
-        std = a.mean*b.std + b.mean*a.std
-        result = e.Function(mean, std)
-
-    # If method specification is bad,  MC method is used
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda a, b: a*b, a, b)
-        result = e.Function(mean, std)
-
-    else:
-        mean = a.mean*b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda a, b: a*b, a, b)
-        result.MC = [MC[0], MC[1]]
-        result.MinMax = [
-            a.mean*b.mean + a.std*b.std, a.mean*b.std + b.mean*a.std]
-
-    if a.info["Data"] is not None and b.info["Data"] is not None:
-        import numpy
-        try:
-            numpy.multiply(a.info["Data"], b.info["Data"])
-        except ValueError:
-            result.info["Data"] = None
+    if type(a) in CONSTANT:
+        if type(b) in CONSTANT:
+            return a*b
         else:
-            result.info["Data"] = numpy.multiply(a.info["Data"],
-                                                 b.info["Data"])
-
-    units = a.units
-    for key in units:
-        if key in b.units:
-            units[key] += b.units[key]
-    result.units = units
-    result.derivative.update(result_derivative)
-    result._update_info(mul, a, b)
-    return result
+            return a*b.mean
+    else:
+        if type(b) in CONSTANT:
+            return a.mean*b
+        else:
+            return a.mean*b.mean
 
 
 def div(a, b):
     '''Returns the quotient of two values with propagated errors.'''
-    import error as e
-
-    a, b = check_values(a, b)
-    # Propagating derivative of arguments
-    result_derivative = {}
-    a._check_der(b)
-    b._check_der(a)
-    for key in a.derivative:
-        result_derivative[key] = diff[div](key, a, b)
-    if check_formula(div, a, b) is not None:
-        return check_formula(div, a, b)
-
-    # By error propgation
-    if e.ExperimentalValue.error_method == "Derivative":
-        mean = a.mean/b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # Addition by Min-Max method
-    elif e.ExperimentalValue.error_method == "Min Max":
-        if b.mean is not 0 and b.std is not 0:
-            mean = (b.mean*a.std + a.mean*b.std)/(b.mean**2*b.std**2)
-            std = (a.mean*b.mean +
-                   a.std*b.std + 2*a.mean*b.std + 2*b.mean*a.std)
-            result = e.Function(mean, std)
+    if type(a) in CONSTANT:
+        if type(b) in CONSTANT:
+            return a/b
         else:
-            result = None
-
-    # If method specification is bad,  MC method is used
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda a, b: a/b, a, b)
-        result = e.Function(mean, std)
-
+            return a/b.mean
     else:
-        mean = a.mean/b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda a, b: a/b, a, b)
-        result.MC = [MC[0], MC[1]]
-
-        if b.mean is not 0 and b.std is not 0:
-            mean = (b.mean*a.std + a.mean*b.std)/(b.mean**2*b.std**2)
-            std = (a.mean*b.mean +
-                   a.std*b.std + 2*a.mean*b.std + 2*b.mean*a.std)
+        if type(b) in CONSTANT:
+            return a.mean/b
         else:
-            mean = None
-            std = None
-
-        result.MinMax = [mean, std]
-
-    if a.info["Data"] is not None and b.info["Data"] is not None:
-        import numpy
-        try:
-            numpy.divide(a.info["Data"], b.info["Data"])
-        except ValueError:
-            result.info["Data"] = None
-        else:
-            result.info["Data"] = numpy.divide(a.info["Data"], b.info["Data"])
-
-    units = a.units
-    for key in units:
-        if key in b.units:
-            units[key] -= b.units[key]
-    result.units = units
-    result.derivative.update(result_derivative)
-    result._update_info(div, a, b)
-    return result
+            return a.mean/b.mean
 
 
 def power(a, b):
     '''Returns the power of two values with propagated errors.'''
-    import error as e
-
-    a, b = check_values(a, b)
-    # Propagating derivative of arguments
-    result_derivative = {}
-    a._check_der(b)
-    b._check_der(a)
-    for key in a.derivative:
-        if a.mean is 0:
-            result_derivative[key] = None
+    if type(a) in CONSTANT:
+        if type(b) in CONSTANT:
+            return a**b
         else:
-            result_derivative[key] = diff[power](key, a, b)
-    if check_formula(power, a, b) is not None:
-        return check_formula(power, a, b)
-
-    # By derivative method
-    if e.ExperimentalValue.error_method == "Derivative":
-        mean = a.mean**b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By min-max method
-    elif e.ExperimentalValue.error_method == 'Min Max':
-        if (b.mean < 0):
-            max_val = (a.mean + a.std)**(b.mean-b.std)
-            min_val = (a.mean-a.std)**(b.mean + b.std)
-        elif(b.mean >= 0):
-            max_val = (a.mean + a.std)**(b.mean + b.std)
-            min_val = (a.mean-a.std)**(b.mean-b.std)
-        mid_val = (max_val + min_val)/2
-        err = (max_val-min_val)/2
-        result = e.Function(mid_val, err)
-
-    # By Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(
-            lambda a, b: a**b, a, b)
-        result = e.Function(mean, std)
-
+            return a**b.mean
     else:
-        mean = a.mean**b.mean
-        std = dev(a, b, der=result_derivative)
-        result = e.Function(mean, std)
-        if (b.mean < 0):
-            max_val = (a.mean + a.std)**(b.mean-b.std)
-            min_val = (a.mean-a.std)**(b.mean + b.std)
-        elif(b.mean >= 0):
-            max_val = (a.mean + a.std)**(b.mean + b.std)
-            min_val = (a.mean-a.std)**(b.mean-b.std)
-        mid_val = (max_val + min_val)/2
-        err = (max_val-min_val)/2
-        result.MinMax = [mid_val, err]
-        MC = e.ExperimentalValue.monte_carlo(lambda a, b: a**b, a, b)
-        result.MC = [MC[0], MC[1]]
-
-    if a.info["Data"] is not None and b.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.power(a.info["Data"], b.info["Data"])
-
-    units = a.units
-    for key in units:
-        units[key] *= b.mean
-    result.units = units
-    result.derivative.update(result_derivative)
-    result._update_info(power, a, b)
-    return result
+        if type(b) in CONSTANT:
+            return a.mean**b
+        else:
+            return a.mean**b.mean
 
 
 def sin(x):
     '''Returns the sine of a measurement with propagated errors'''
     import math as m
-    import error as e
 
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[sin](key, x)
-    if check_formula(sin, x, func_flag=True) is not None:
-        return check_formula(sin, x, func_flag=True)
-
-    # By derivative method
-    if e.ExperimentalValue.error_method == 'Derivative':
-        mean = m.sin(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: m.sin(x), x)
-
-    # By Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.sin(x), x)
-        result = e.Function(mean, std)
-
+    if type(x) in CONSTANT:
+        m.sin(x)
     else:
-        import numpy as np
-        mean = m.sin(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda x: np.sin(x), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: m.sin(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.sin(x.info["Data"])
-
-    result.derivative.update(result_derivative)
-    result._update_info(sin, x, func_flag=1)
-    result.error_flag = True
-    return result
+        m.sin(x.mean)
 
 
 def cos(x):
     '''Returns the cosine of a measurement with propagated errors'''
     import math as m
-    import error as e
 
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[cos](key, x)
-    if check_formula(cos, x, func_flag=True) is not None:
-        return check_formula(cos, x, func_flag=True)
-
-    # By derivative method
-    if e.ExperimentalValue.error_method == 'Derivative':
-        mean = m.cos(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: m.cos(x), x)
-
-    # By Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.cos(x), x)
-        result = e.Function(mean, std)
-
+    if type(x) in CONSTANT:
+        m.cos(x)
     else:
-        import numpy as np
-        mean = m.cos(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda x: np.cos(x), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: m.cos(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.cos(x.info["Data"])
-
-    result.derivative.update(result_derivative)
-    result._update_info(cos, x, func_flag=1)
-    result.error_flag = True
-    return result
+        m.cos(x.mean)
 
 
 def tan(x):
     '''Returns the tangent of a measurement with propagated errors'''
     import math as m
-    import error as e
 
-    def Sec(x):
-        return 1/m.cos(x)
-
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[tan](key, x)
-    if check_formula(tan, x, func_flag=True) is not None:
-        return check_formula(tan, x, func_flag=True)
-
-    # Derivative method
-    elif e.ExperimentalValue.error_method == 'Derivative':
-        mean = m.tan(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: m.tan(x), x)
-
-    # Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.tan(x), x)
-        result = e.Function(mean, std)
-
+    if type(x) in CONSTANT:
+        m.tan(x)
     else:
-        import numpy as np
-        mean = m.tan(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda x: np.tan(x), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: m.tan(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.tan(x.info["Data"])
-
-    result.derivative.update(result_derivative)
-    result._update_info(tan, x, func_flag=1)
-    result.error_flag = True
-    return result
+        m.tan(x.mean)
 
 
 def atan(x):
     '''Returns the arctangent of a measurement with propagated errors'''
-    import error as e
     import math as m
 
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[atan](key, x)
-    if check_formula(tan, x, func_flag=True) is not None:
-        return check_formula(tan, x, func_flag=True)
-
-    # Derivative method
-    elif e.ExperimentalValue.error_method == 'Derivative':
-        mean = atan(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: m.atan(x), x)
-
-    # Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.tan(x), x)
-        result = e.Function(mean, std)
-
+    if type(x) in CONSTANT:
+        m.atan(x)
     else:
-        import numpy as np
-        mean = atan(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda x: np.tan(x), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: atan(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.tan(x.info["Data"])
-
-    result.derivative.update(result_derivative)
-    result._update_info(tan, x, func_flag=1)
-    result.error_flag = True
-    return result
+        m.atan(x.mean)
 
 
 def sec(x):
     '''Returns the secant of a measurement with propagated errors'''
     import math as m
-    import error as e
 
-    def Csc(x):
-        return 1/m.sin(x)
-
-    def Sec(x):
-        return 1/m.cos(x)
-
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[sec](key, x)
-    if check_formula(sec, x, func_flag=True) is not None:
-        return check_formula(sec, x, func_flag=True)
-
-    # Derivative method
-    elif e.ExperimentalValue.error_method == 'Derivative':
-        mean = Sec(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: Sec(x), x)
-
-    # Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(
-            lambda x: np.divide(1, np.cos(x)), x)
-        result = e.Function(mean, std)
-
+    if type(x) in CONSTANT:
+        1/m.cos(x)
     else:
-        import numpy as np
-        mean = Sec(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(
-            lambda x: np.divide(1, np.cos(x)), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: Sec(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.divide(1, numpy.cos(x.info["Data"]))
-
-    result.derivative.update(result_derivative)
-    result._update_info(sec, x, func_flag=1)
-    result.error_flag = True
-    return result
+        1/m.cos(x.mean)
 
 
 def csc(x):
     '''Returns the cosecant of a measurement with propagated errors'''
     import math as m
-    import error as e
 
-    def Cot(x):
-        return 1/m.tan(x)
-
-    def Csc(x):
-        return 1/m.sin(x)
-
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[csc](key, x)
-    if check_formula(csc, x, func_flag=True) is not None:
-        return check_formula(csc, x, func_flag=True)
-
-    # Derivative method
-    elif e.ExperimentalValue.error_method == 'Derivative':
-        mean = Csc(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: Csc(x), x)
-
-    # Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(
-                lambda x: np.divide(1, np.sin(x)), x)
-
+    if type(x) in CONSTANT:
+        1/m.sin(x)
     else:
-        import numpy as np
-        mean = Csc(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(
-            lambda x: np.divide(1, np.sin(x)), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: Csc(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.divide(1, numpy.sin(x.info["Data"]))
-        result = e.Function(mean, std)
-
-    result.derivative.update(result_derivative)
-    result._update_info(csc, x, func_flag=1)
-    result.error_flag = True
-    return result
+        1/m.sin(x.mean)
 
 
 def cot(x):
     '''Returns the cotangent of a measurement with propagated errors'''
     import math as m
-    import error as e
 
-    def Cot(x):
-        return 1/m.tan(x)
-
-    def Csc(x):
-        return 1/m.sin(x)
-
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[cot](key, x)
-    if check_formula(cot, x, func_flag=True) is not None:
-        return check_formula(cot, x, func_flag=True)
-
-    # Derivative method
-    elif e.ExperimentalValue.error_method == 'Derivative':
-        mean = Cot(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: Cot(x), x)
-
-    # Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(
-                lambda x: np.divide(1, np.tan(x)), x)
-        result = e.Function(mean, std)
-
+    if type(x) in CONSTANT:
+        1/m.tan(x)
     else:
-        import numpy as np
-        mean = Cot(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(
-            lambda x: np.divide(1, np.tan(x)), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: Cot(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.divide(1, numpy.tan(x.info["Data"]))
-
-    result.derivative.update(result_derivative)
-    result._update_info(cot, x, func_flag=1)
-    result.error_flag = True
-    return result
+        1/m.tan(x.mean)
 
 
 def exp(x):
     '''Returns the exponent of a measurement with propagated errors'''
     import math as m
-    import error as e
 
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[exp](key, x)
-    if check_formula(exp, x, func_flag=True) is not None:
-        return check_formula(exp, x, func_flag=True)
-
-    # By derivative method
-    if e.ExperimentalValue.error_method == 'Derivative':
-        mean = m.exp(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: m.exp(x), x)
-
-    # By Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.exp(x), x)
-        result = e.Function(mean, std)
-
+    if type(x) in CONSTANT:
+        m.exp(x)
     else:
-        import numpy as np
-        mean = m.exp(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda x: np.exp(x), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: m.exp(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.exp(x.info["Data"])
-
-    result.derivative.update(result_derivative)
-    result._update_info(exp, x, func_flag=1)
-    return result
+        m.exp(x.mean)
 
 
 def e(value):
@@ -840,48 +270,11 @@ def e(value):
 def log(x):
     '''Returns the natural logarithm of a measurement with propagated errors'''
     import math as m
-    import error as e
 
-    x, = check_values(x)
-    result_derivative = {}
-    for key in x.derivative:
-        result_derivative[key] = diff[log](key, x)
-    if check_formula(log, x, func_flag=True) is not None:
-        return check_formula(log, x, func_flag=True)
-
-    # By derivative method
-    if e.ExperimentalValue.error_method == 'Derivative':
-        mean = m.log(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-
-    # By Min-Max method
-    if e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(lambda x: m.log(x), x)
-
-    # By Monte Carlo method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        import numpy as np
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(lambda x: np.log(x), x)
-        result = e.Function(mean, std)
-
-    elif e.ExperimentalValue.error_method == 'Default':
-        import numpy as np
-        mean = m.log(x.mean)
-        std = dev(x, der=result_derivative)
-        result = e.Function(mean, std)
-        MC = e.ExperimentalValue.monte_carlo(lambda x: np.log(x), x)
-        result.MC = [MC[0], MC[1]]
-        MM = find_minmax(lambda x: m.log(x), x)
-        result.MinMax = [MM.mean, MM.std]
-
-    if x.info["Data"] is not None:
-        import numpy
-        result.info["Data"] = numpy.log(x.info["Data"])
-
-    result.derivative.update(result_derivative)
-    result._update_info(log, x, func_flag=1)
-    return result
+    if type(x) in CONSTANT:
+        m.log(x)
+    else:
+        m.log(x.mean)
 
 
 def find_minmax(function, *args):
@@ -923,8 +316,7 @@ def operation_wrap(operation, *args, func_flag=False):
     '''
     import error as e
 
-    args = check_values(args)
-    args = args[0]
+    args = check_values(*args)
     if args[1] is not None:
         args[0]._check_der(args[1])
         args[1]._check_der(args[0])
@@ -973,18 +365,6 @@ def operation_wrap(operation, *args, func_flag=False):
     result._update_info(operation, *args, func_flag)
     return result
 
-
-def add(a, b):
-    if type(a) in CONSTANT:
-        if type(b) in CONSTANT:
-            return a+b
-        else:
-            return a+b.mean
-    else:
-        if type(b) in CONSTANT:
-            return a.mean+b
-        else:
-            return a.mean+b.mean
 
 diff = {sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
         cos: lambda key, x: -m.sin(x.mean)*x.derivative[key],

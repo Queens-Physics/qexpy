@@ -397,7 +397,7 @@ class ExperimentalValue:
 
     def __radd__(self, other):
         import error_operations as op
-        return op.add(self, other)
+        return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
         import error_operations as op
@@ -409,11 +409,11 @@ class ExperimentalValue:
 
     def __sub__(self, other):
         import error_operations as op
-        return op.sub(self, other)
+        return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
         import error_operations as op
-        return op.sub(other, self)
+        return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
         import error_operations as op
