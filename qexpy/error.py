@@ -30,8 +30,8 @@ class ExperimentalValue:
         Creates a variable that contains a mean, standard deviation,
         and name for inputted data.
         '''
-        data = []
-        error_data = []
+        data = None
+        error_data = None
 
         if len(args) == 2 and all(
                 isinstance(n, ExperimentalValue.CONSTANT)for n in args
@@ -313,7 +313,7 @@ class ExperimentalValue:
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
                      op.exp: 'exp', op.log: 'log', op.add: '+',
                      op.sub: '-', op.mul: '*', op.div: '/', op.power: '**',
-                     'neg': '-', }
+                     'neg': '-', atan: 'atan', }
 
         if func_flag is None and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
@@ -401,11 +401,11 @@ class ExperimentalValue:
 
     def __mul__(self, other):
         import qexpy.error_operations as op
-        return op.mul(self, other)
+        return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
         import qexpy.error_operations as op
-        return op.mul(self, other)
+        return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
         import qexpy.error_operations as op
@@ -417,19 +417,19 @@ class ExperimentalValue:
 
     def __truediv__(self, other):
         import qexpy.error_operations as op
-        return op.div(self, other)
+        return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
         import qexpy.error_operations as op
-        return op.div(other, self)
+        return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
         import qexpy.error_operations as op
-        return op.power(self, other)
+        return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
         import qexpy.error_operations as op
-        return op.power(other, self)
+        return op.operation_wrap(op.power, other, self)
 
     def __neg__(self):
         import qexpy.error_operations as op
@@ -476,7 +476,10 @@ class ExperimentalValue:
         _np_func = {op.add: np.add, op.sub: np.subtract, op.mul: np.multiply,
                     op.div: np.divide, op.power: np.power, op.log: np.log,
                     op.exp: np.exp, op.sin: np.sin, op.cos: np.cos,
-                    op.tan: np.tan, }
+                    op.tan: np.tan, op.atan: np.arctan,
+                    op.csc: lambda x: np.divide(1, np.sin(x)),
+                    op.sec: lambda x: np.divide(1, np.cos(x)),
+                    op.cot: lambda x: np.divide(1, np.tan(x)), }
 
         N = len(args)
         n = ExperimentalValue.mc_trial_number
@@ -580,52 +583,52 @@ class Constant(ExperimentalValue):
 
 def sin(x):
     import qexpy.error_operations as op
-    return op.sin(x)
+    return op.operation_wrap(op.sin, x, func_flag=True)
 
 
 def cos(x):
     import qexpy.error_operations as op
-    return op.cos(x)
+    return op.operation_wrap(op.cos, x, func_flag=True)
 
 
 def tan(x):
     import qexpy.error_operations as op
-    return op.tan(x)
+    return op.operation_wrap(op.tan, x, func_flag=True)
 
 
 def sec(x):
     import qexpy.error_operations as op
-    return op.sec(x)
+    return op.operation_wrap(op.sec, x, func_flag=True)
 
 
 def csc(x):
     import qexpy.error_operations as op
-    return op.csc(x)
+    return op.operation_wrap(op.csc, x, func_flag=True)
 
 
 def cot(x):
     import qexpy.error_operations as op
-    return op.cot(x)
+    return op.operation_wrap(op.cot, x, func_flag=True)
 
 
 def log(x):
     import qexpy.error_operations as op
-    return op.log(x)
+    return op.operation_wrap(op.log, x, func_flag=True)
 
 
 def exp(x):
     import qexpy.error_operations as op
-    return op.exp(x)
+    return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def e(x):
     import qexpy.error_operations as op
-    return op.e(x)
+    return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def atan(x):
     import qexpy.error_operations as op
-    return op.atan(x)
+    return op.operation_wrap(op.atan, x, func_flag=True)
 
 
 def f(function, *args):

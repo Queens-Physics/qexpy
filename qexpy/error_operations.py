@@ -1,6 +1,7 @@
-from numpy import int64, float64
+from numpy import int64, float64, ndarray
 import math as m
 CONSTANT = (int, float, int64, float64, )
+ARRAY = (list, tuple, ndarray)
 
 
 def dev(*args, der=None):
@@ -65,7 +66,7 @@ def check_formula(operation, a, b=None, func_flag=False):
     op_string = {
         sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
         cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
-        mul: '*', div: '/', power: '**', 'neg': '-', }
+        mul: '*', div: '/', power: '**', 'neg': '-', atan: 'atan', }
     op = op_string[operation]
 
     # check_formula is not behanving properly, requires overwrite, disabled
@@ -186,9 +187,14 @@ def sin(x):
     import math as m
 
     if type(x) in CONSTANT:
-        m.sin(x)
+        return m.sin(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.sin(x[i]))
+        return result
     else:
-        m.sin(x.mean)
+        return m.sin(x.mean)
 
 
 def cos(x):
@@ -196,9 +202,14 @@ def cos(x):
     import math as m
 
     if type(x) in CONSTANT:
-        m.cos(x)
+        return m.cos(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.cos(x[i]))
+        return result
     else:
-        m.cos(x.mean)
+        return m.cos(x.mean)
 
 
 def tan(x):
@@ -206,9 +217,14 @@ def tan(x):
     import math as m
 
     if type(x) in CONSTANT:
-        m.tan(x)
+        return m.tan(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.tan(x[i]))
+        return result
     else:
-        m.tan(x.mean)
+        return m.tan(x.mean)
 
 
 def atan(x):
@@ -216,9 +232,14 @@ def atan(x):
     import math as m
 
     if type(x) in CONSTANT:
-        m.atan(x)
+        return m.atan(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.atan(x[i]))
+        return result
     else:
-        m.atan(x.mean)
+        return m.atan(x.mean)
 
 
 def sec(x):
@@ -226,9 +247,14 @@ def sec(x):
     import math as m
 
     if type(x) in CONSTANT:
-        1/m.cos(x)
+        return 1/m.cos(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(1/m.cos(x[i]))
+        return result
     else:
-        1/m.cos(x.mean)
+        return 1/m.cos(x.mean)
 
 
 def csc(x):
@@ -236,9 +262,14 @@ def csc(x):
     import math as m
 
     if type(x) in CONSTANT:
-        1/m.sin(x)
+        return 1/m.sin(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(1/m.sin(x[i]))
+        return result
     else:
-        1/m.sin(x.mean)
+        return 1/m.sin(x.mean)
 
 
 def cot(x):
@@ -246,9 +277,14 @@ def cot(x):
     import math as m
 
     if type(x) in CONSTANT:
-        1/m.tan(x)
+        return 1/m.tan(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(1/m.tan(x[i]))
+        return result
     else:
-        1/m.tan(x.mean)
+        return 1/m.tan(x.mean)
 
 
 def exp(x):
@@ -256,15 +292,14 @@ def exp(x):
     import math as m
 
     if type(x) in CONSTANT:
-        m.exp(x)
+        return m.exp(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.exp(x[i]))
+        return result
     else:
-        m.exp(x.mean)
-
-
-def e(value):
-    '''Returns the exponent of a measurement with propagated errors'''
-    import qexpy.error as e
-    e.ExperimentalValue.exp(value)
+        return m.exp(x.mean)
 
 
 def log(x):
@@ -272,9 +307,14 @@ def log(x):
     import math as m
 
     if type(x) in CONSTANT:
-        m.log(x)
+        return m.log(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.log(x[i]))
+        return result
     else:
-        m.log(x.mean)
+        return m.log(x.mean)
 
 
 def find_minmax(function, *args):
@@ -317,14 +357,16 @@ def operation_wrap(operation, *args, func_flag=False):
     import qexpy.error as e
 
     args = check_values(*args)
-    if args[1] is not None:
+
+    if func_flag is False:
         args[0]._check_der(args[1])
         args[1]._check_der(args[0])
+
     df = {}
     for key in args[0].derivative:
         df[key] = diff[operation](key, *args)
-    if check_formula(operation, *args, func_flag) is not None:
-        return check_formula(op_string[operation], *args, func_flag)
+    if check_formula(operation, *args, func_flag=func_flag) is not None:
+        return check_formula(op_string[operation], *args, func_flag=func_flag)
 
     # Derivative Method
     if e.ExperimentalValue.error_method == "Derivative":
@@ -350,7 +392,7 @@ def operation_wrap(operation, *args, func_flag=False):
         MC = e.ExperimentalValue.monte_carlo(operation, *args)
         result.MC = [MC[0], MC[1]]
 
-    if args[1] is not None and args[0].info["Data"] is not None\
+    if func_flag is False and args[0].info["Data"] is not None\
             and args[1].info['Data'] is not None\
             and len(args[0].info['Data']) == len(args[1].info['Data']):
         for i in range(len(args[0].info['Data'])):
@@ -358,11 +400,11 @@ def operation_wrap(operation, *args, func_flag=False):
                         operation(args[0].info["Data"][i],
                                   args[1].info["Data"][i]))
 
-    elif args[0].info["Data"] is not None:
+    elif args[0].info["Data"] is not None and func_flag is True:
         result.info["Data"].append(operation(args[0].info["Data"]))
 
     result.derivative.update(df)
-    result._update_info(operation, *args, func_flag)
+    result._update_info(operation, *args, func_flag=func_flag)
     return result
 
 
