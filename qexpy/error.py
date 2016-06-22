@@ -307,7 +307,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import error_operations as op
+        import qexpy.error_operations as op
 
         op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan',
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
@@ -392,47 +392,47 @@ class ExperimentalValue:
 # Operations on measurement objects
 
     def __add__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.mul(self, other)
 
     def __rmul__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.mul(self, other)
 
     def __sub__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.div(self, other)
 
     def __rtruediv__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.div(other, self)
 
     def __pow__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.power(self, other)
 
     def __rpow__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.power(other, self)
 
     def __neg__(self):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -471,7 +471,7 @@ class ExperimentalValue:
         '''
         # 2D array
         import numpy as np
-        import error_operations as op
+        import qexpy.error_operations as op
 
         _np_func = {op.add: np.add, op.sub: np.subtract, op.mul: np.multiply,
                     op.div: np.divide, op.power: np.power, op.log: np.log,
@@ -579,52 +579,52 @@ class Constant(ExperimentalValue):
 
 
 def sin(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.sin(x)
 
 
 def cos(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.cos(x)
 
 
 def tan(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.tan(x)
 
 
 def sec(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.sec(x)
 
 
 def csc(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.csc(x)
 
 
 def cot(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.cot(x)
 
 
 def log(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.log(x)
 
 
 def exp(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.exp(x)
 
 
 def e(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.e(x)
 
 
 def atan(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     return op.atan(x)
 
 

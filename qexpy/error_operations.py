@@ -13,7 +13,7 @@ def dev(*args, der=None):
     of variables. The derivative dictionary of a function must be passes by
     the der argument.
     '''
-    import error as e
+    import qexpy.error as e
 
     std = 0
     roots = ()
@@ -41,7 +41,7 @@ def check_values(*args):
     converted,  this is done by calling the normalize function,  which
     outputs a measurement object with no standard deviation.
     '''
-    import error as e
+    import qexpy.error as e
 
     val = ()
     for arg in args:
@@ -60,7 +60,7 @@ def check_formula(operation, a, b=None, func_flag=False):
     register of previously calculated operations is checked. If the
     quantity does exist,  the previously calculated object is returned.
     '''
-    import error as e
+    import qexpy.error as e
 
     op_string = {
         sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
@@ -89,7 +89,7 @@ def neg(x):
     '''
     Returns the negitive of a measurement object
     '''
-    import error as e
+    import qexpy.error as e
 
     x, = check_values(x)
     result_derivative = {}
@@ -263,7 +263,7 @@ def exp(x):
 
 def e(value):
     '''Returns the exponent of a measurement with propagated errors'''
-    import error as e
+    import qexpy.error as e
     e.ExperimentalValue.exp(value)
 
 
@@ -283,7 +283,7 @@ def find_minmax(function, *args):
     and error on a given function
     '''
     import numpy as np
-    import error as e
+    import qexpy.error as e
 
     if len(args) is 1:
         x = args[0]
@@ -314,7 +314,7 @@ def operation_wrap(operation, *args, func_flag=False):
     which can handle measurement objects and return an error propagated by
     derivative,  min-max,  or Monte Carlo method.
     '''
-    import error as e
+    import qexpy.error as e
 
     args = check_values(*args)
     if args[1] is not None:
