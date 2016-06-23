@@ -18,18 +18,21 @@ def dev(*args, der=None):
 
     std = 0
     roots = ()
+
     for arg in args:
         for i in range(len(arg.root)):
             if arg.root[i] not in roots:
                 roots += (arg.root[i], )
         for root in roots:
             std += (der[root]*e.ExperimentalValue.register[root].std)**2
+
     for i in range(len(roots)):
         for j in range(len(roots)-i-1):
             cov = e.ExperimentalValue.register[roots[i]].return_covariance(
                 e.ExperimentalValue.register[roots[j + 1 + i]])
             std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
     std = std**(1/2)
+
     return std
 
 
@@ -78,6 +81,7 @@ def check_formula(operation, a, b=None, func_flag=False):
             ID = e.ExperimentalValue.formula_register[
                 a.info["Formula"] + op + b.info["Formula"]]
             return e.ExperimentalValue.register[ID]
+
     else:
         if op + '(' + a.info["Formula"] + ')' in\
                     e.ExperimentalValue.formula_register:
@@ -117,11 +121,13 @@ def add(a, b):
             return a+b
         else:
             return a+b.mean
+
     elif type(a) and type(b) in ARRAY:
         result = []
         for i in range(len(a)):
             result.append(a[i] + b[i])
         return result
+
     else:
         if type(b) in CONSTANT:
             return a.mean+b
@@ -138,6 +144,7 @@ def sub(a, b):
             return a-b
         else:
             return a-b.mean
+
     else:
         if type(b) in CONSTANT:
             return a.mean-b
@@ -152,6 +159,7 @@ def mul(a, b):
             return a*b
         else:
             return a*b.mean
+
     else:
         if type(b) in CONSTANT:
             return a.mean*b
@@ -166,6 +174,7 @@ def div(a, b):
             return a/b
         else:
             return a/b.mean
+
     else:
         if type(b) in CONSTANT:
             return a.mean/b
@@ -180,6 +189,7 @@ def power(a, b):
             return a**b
         else:
             return a**b.mean
+
     else:
         if type(b) in CONSTANT:
             return a.mean**b
@@ -193,11 +203,13 @@ def sin(x):
 
     if type(x) in CONSTANT:
         return m.sin(x)
+
     elif type(x) in ARRAY:
         result = []
         for i in range(len(x)):
             result.append(m.sin(x[i]))
         return result
+
     else:
         return m.sin(x.mean)
 
@@ -208,11 +220,13 @@ def cos(x):
 
     if type(x) in CONSTANT:
         return m.cos(x)
+
     elif type(x) in ARRAY:
         result = []
         for i in range(len(x)):
             result.append(m.cos(x[i]))
         return result
+
     else:
         return m.cos(x.mean)
 
@@ -370,6 +384,7 @@ def operation_wrap(operation, *args, func_flag=False):
     df = {}
     for key in args[0].derivative:
         df[key] = diff[operation](key, *args)
+
     if check_formula(operation, *args, func_flag=func_flag) is not None:
         return check_formula(op_string[operation], *args, func_flag=func_flag)
 

@@ -96,12 +96,25 @@ fitted to the data.
 For the gaussian fit, *pars[0]* refers to the mean and *pars[1]* to the
 standard deviation of the gaussian curve. Any models given by the user are
 required to have two arguments. The first being the independent variable
-and the second as the parameters of the model. For example:
-
-.. code-block:: python
-
-   def model(x, pars):
+and the second as the parameters of the model. 
 	
+Once calculated, the parameters are stored in the Plot object, and can be
+printed using the *.print_fit* method, which will print the parameters and,
+in the case of parameters with defined names, the name in a pretty format.
+
+.. nbinput:: ipython3
+
+   x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Mass', units='g')
+
+   figure = p.Plot(x, y)
+   figure.fit('linear')
+   figure.print_fit()
+
+.. nbinput:: ipython3
+
+   intercept = 3 +/- 1
+   slope = 2 +/- 1
 
 User-Defined Functions
 ----------------------

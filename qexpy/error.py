@@ -6,8 +6,8 @@ class ExperimentalValue:
     measured values, called Funciton and Measured respectivly)
     '''
     error_method = "Default"  # Default error propogation method
+    default_style = "Default" # Default printing style
     mc_trial_number = 10000  # number of trial in Monte Carlo simulation
-    default_style = "Default"
     figs = None
     register = {}
     formula_register = {}
@@ -191,6 +191,7 @@ class ExperimentalValue:
         latex = ("Latex", "latex", 'Tex', 'tex',)
         Sci = ("Scientific", "Sci", 'scientific', 'sci', 'sigfigs',)
         ExperimentalValue.figs = figs
+
         if style in latex:
             self.style = "Latex"
         elif style in Sci:
@@ -289,6 +290,7 @@ class ExperimentalValue:
             pass
         else:
             ExperimentalValue._find_covariance(x, y)
+
         sigma_xy = x.covariance[y.info['ID']]
         sigma_x = x.std
         sigma_y = y.std
@@ -730,8 +732,10 @@ def tex_print(self, method=None):
         [mean, std] = self.MC
     elif method == 'MinMax':
         [mean, std] = self.MinMax
+
     flag = True
     i = 0
+
     if ExperimentalValue.figs is not None:
         value = abs(mean)
         while(flag):
@@ -816,6 +820,7 @@ def def_print(self, method=None):
         std = float(round(std, i))
         mean = float(round(mean, i))
         return n % (mean)+" +/- "+n % (std)
+
     else:
         value = abs(std)
         while(flag):
@@ -852,8 +857,10 @@ def sci_print(self, method=None):
         [mean, std] = self.MC
     elif method == 'MinMax':
         [mean, std] = self.MinMax
+
     flag = True
     i = 0
+
     if ExperimentalValue.figs is not None:
         value = abs(mean)
         while(flag):

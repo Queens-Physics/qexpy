@@ -23,6 +23,7 @@ class Plot:
         '''Function for a polynomial of nth order, requiring n pars.'''
         poly = 0
         n = 0
+
         for par in pars:
             poly += np.multiply(par, np.power(x, n))
             n += 1
@@ -274,8 +275,10 @@ class Plot:
         '''
         if data is not None:
             self.colors['Data Points'] = data
+
         if error is not None:
             self.colors['Error'] = error
+
         if type(line) is str:
             self.colors['Function'][0] = line
             if len(line) <= 3:
@@ -291,10 +294,13 @@ class Plot:
         the Bokeh plot.'''
         if title is not None:
             self.attributes['title'] = title
+
         if xlabel is not None:
             self.attributes['xname'] = xlabel
+
         if ylabel is not None:
             self.attributes['yname'] = ylabel
+
         if data_name is not None:
             self.attributes['Data'] = data_name
 
@@ -543,6 +549,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
             xunits = '['+xunits+']'
         else:
             xunits = ''
+
     try:
         y.units
     except AttributeError:
@@ -562,6 +569,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         xname = 'x'
     else:
         xname = x.name
+
     try:
         y.name
     except AttributeError:
@@ -590,6 +598,7 @@ def _plot_function(self, xdata, theory, n=1000):
     xrange = np.linspace(min(xdata), max(xdata), n)
     x_theory = theory(min(xdata))
     x_mid = []
+
     try:
         x_theory.type
     except AttributeError:
@@ -598,6 +607,7 @@ def _plot_function(self, xdata, theory, n=1000):
         self.p.line(
             xrange, x_mid, legend='Theoretical',
             line_color=self.colors['Function'][self.function_counter])
+
     else:
         x_max = []
         x_min = []
