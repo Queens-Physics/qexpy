@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import error as e
+from . import error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -42,9 +42,9 @@ class Plot:
 
     def mgauss(x, pars):
         '''Altered gaussian function to handle measurement objects.'''
-        from error_operations import exp
+        from . import error_operations as op
         mean, std = pars
-        return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
+        return (2*pi*std**2)**(-1/2)*op.exp(-(x-mean)**2/2/std**2)
 
     mfits = {
             # 'linear': lambda x, pars: pars[0]+pars[1]*x,
@@ -300,8 +300,8 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        from error_operations import check_values
-        data, function = check_values(data, function)
+        from . import error_operations as op
+        data, function = op.check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
 

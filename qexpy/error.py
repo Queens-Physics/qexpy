@@ -33,6 +33,7 @@ class ExperimentalValue:
         data = None
         error_data = None
 
+        # If two values eneterd first value is mean and second value is std
         if len(args) == 2 and all(
                 isinstance(n, ExperimentalValue.CONSTANT)for n in args
                 ):
@@ -40,12 +41,16 @@ class ExperimentalValue:
             self.std = args[1]
 
         elif all(isinstance(n, ExperimentalValue.ARRAY) for n in args):
+
+            # Sample mean and std talen from list of values
             if len(args) == 1 and\
                     all(isinstance(n, ExperimentalValue.CONSTANT)
                         for n in args[0]):
                 args = args[0]
                 (self.mean, self.std) = variance(args)
                 data = list(args)
+
+            # List of Measurements, weighted mean and std taken
             elif len(args) == 1 and \
                     all(isinstance(n, ExperimentalValue) for n in args[0]):
                 mean_vals = []
@@ -57,6 +62,7 @@ class ExperimentalValue:
                 data = mean_vals
                 error_data = std_vals
 
+            # Mean and std taken from list of values and associated errors
             elif len(args) == 2 and \
                     all(
                     isinstance(n, ExperimentalValue.CONSTANT)for n in args[0]
@@ -73,10 +79,13 @@ class ExperimentalValue:
                 error_data = std_vals
 
         elif len(args) > 2:
+
+            # Series of values entered, mean and std taken from said values
             if all(isinstance(n, ExperimentalValue.CONSTANT) for n in args):
                 (self.mean, self.std) = variance(args)
                 data = list(args)
 
+            # Series of Measurements, weighted mean and std taken
             elif all(isinstance(n, ExperimentalValue) for n in args):
                 mean_vals = []
                 std_vals = []
@@ -87,6 +96,7 @@ class ExperimentalValue:
                 data = mean_vals
                 error_data = std_vals
 
+        # Series of lists with mean and std in each, mean and std calculated
         elif all(len(arg) == 2 for arg in args):
             mean_vals = []
             std_vals = []
@@ -97,23 +107,26 @@ class ExperimentalValue:
             data = mean_vals
             error_data = std_vals
 
+        # If that fails, where than will you go
         else:
             raise ValueError('''Input arguments must be one of: a mean and
             standard deviation, an array of values, or the individual values
             themselves.''')
+
         self.info = {
                 'ID': '', 'Formula': '', 'Method': '', 'Data': data,
                 'Error': error_data, 'Function': {
                         'operation': (), 'variables': ()}, }
-        self.MC_list = None
-        ExperimentalValue.id_register[id(self)] = self
-        self.units = {}
-        self.style = ExperimentalValue.default_style
 
+        ExperimentalValue.id_register[id(self)] = self
+        self.style = ExperimentalValue.default_style
         if name is not None:
             self.user_name = True
         else:
             self.user_name = False
+
+        self.units = {}
+        self.MC_list = None
 
     def set_method(chosen_method):
         '''
@@ -307,7 +320,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import error_operations as op
+        from . import error_operations as op
 
         op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan',
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
@@ -392,47 +405,47 @@ class ExperimentalValue:
 # Operations on measurement objects
 
     def __add__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
-        import error_operations as op
+        from . import error_operations as op
         return op.operation_wrap(op.power, other, self)
 
     def __neg__(self):
-        import error_operations as op
+        from . import error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -471,7 +484,7 @@ class ExperimentalValue:
         '''
         # 2D array
         import numpy as np
-        import error_operations as op
+        from . import error_operations as op
 
         _np_func = {op.add: np.add, op.sub: np.subtract, op.mul: np.multiply,
                     op.div: np.divide, op.power: np.power, op.log: np.log,
@@ -582,52 +595,52 @@ class Constant(ExperimentalValue):
 
 
 def sin(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.sin, x, func_flag=True)
 
 
 def cos(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.cos, x, func_flag=True)
 
 
 def tan(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.tan, x, func_flag=True)
 
 
 def sec(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.sec, x, func_flag=True)
 
 
 def csc(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.csc, x, func_flag=True)
 
 
 def cot(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.cot, x, func_flag=True)
 
 
 def log(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.log, x, func_flag=True)
 
 
 def exp(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def e(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def atan(x):
-    import error_operations as op
+    from . import error_operations as op
     return op.operation_wrap(op.atan, x, func_flag=True)
 
 
