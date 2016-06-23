@@ -235,8 +235,7 @@ function.
    f(x,y) = \cos{xy}
    \implies \partial_x f(x,y) = \cos{xy}y
    Let\ xy = z
-   \partial_x f(x,y) \= \cos{z} \frac{\partial(z)}{\partial(x)} \\
-   \= \cos{xy}y
+   \partial_x f(x,y) = \cos{z} \frac{\partial(z)}{\partial(x)} = \cos{xy}y
    
 What this example illustrates is how, by considering an expression as a series
 of elementary operations and functions, the exact numerical derivative can be
