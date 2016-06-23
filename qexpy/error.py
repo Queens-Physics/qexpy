@@ -307,7 +307,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import qexpy.error_operations as op
+        import error_operations as op
 
         op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan',
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
@@ -392,47 +392,47 @@ class ExperimentalValue:
 # Operations on measurement objects
 
     def __add__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.power, other, self)
 
     def __neg__(self):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -471,7 +471,7 @@ class ExperimentalValue:
         '''
         # 2D array
         import numpy as np
-        import qexpy.error_operations as op
+        import error_operations as op
 
         _np_func = {op.add: np.add, op.sub: np.subtract, op.mul: np.multiply,
                     op.div: np.divide, op.power: np.power, op.log: np.log,
@@ -582,52 +582,52 @@ class Constant(ExperimentalValue):
 
 
 def sin(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.sin, x, func_flag=True)
 
 
 def cos(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.cos, x, func_flag=True)
 
 
 def tan(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.tan, x, func_flag=True)
 
 
 def sec(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.sec, x, func_flag=True)
 
 
 def csc(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.csc, x, func_flag=True)
 
 
 def cot(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.cot, x, func_flag=True)
 
 
 def log(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.log, x, func_flag=True)
 
 
 def exp(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def e(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def atan(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     return op.operation_wrap(op.atan, x, func_flag=True)
 
 

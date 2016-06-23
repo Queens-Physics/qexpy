@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import qexpy.error as e
+import error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -86,6 +86,10 @@ class Plot:
         self.yres = None
         self.function_counter = 0
         self.manual_data = ()
+        self.x_range = [min(self.xdata)-2*max(self.xerr),
+                        max(self.xdata)+2*max(self.xerr)]
+        self.y_range = [min(self.ydata)-2*max(self.yerr),
+                        max(self.ydata)+2*max(self.yerr)]
 
     def residuals(self):
         '''Request residual output for plot.'''
@@ -99,7 +103,7 @@ class Plot:
 
         self.flag['residuals'] = True
 
-    def fit(self, model=None, guess=None):
+    def fit(self, model=None, guess=None, fit_range=None):
         '''Fit data, by least squares method, to a model. Model must be
         provided or specified from built in models. User specified models
         require and inital guess for the fit parameters.
@@ -136,8 +140,16 @@ class Plot:
 
         pars_guess = guess
 
+        if fit_range is None:
+            data_range = self.xdata
+        elif type(fit_range) in ARRAY and len(fit_range) is 2:
+            data_range = []
+            for i in self.xdata:
+                if i >= min(fit_range) and i <= max(fit_range):
+                    data_range.append(i)
+
         self.pars_fit, self.pcov = sp.curve_fit(
-                                    model, self.xdata, self.ydata,
+                                    model, data_range, self.ydata,
                                     sigma=self.yerr, p0=pars_guess)
         self.pars_err = np.sqrt(np.diag(self.pcov))
         for i in range(len(self.pars_fit)):
@@ -166,6 +178,19 @@ class Plot:
         '''
         self.attributes['function'] += (function,)
 
+    def plot_range(self, x_range=None, y_range=None):
+        if type(x_range) in ARRAY and len(x_range) is 2:
+            self.x_range = x_range
+        elif x_range is not None:
+            print('''X range must be a list containing a minimun and maximum
+            value for the range of the plot.''')
+
+        if type(y_range) in ARRAY and len(y_range) is 2:
+            self.y_range = y_range
+        elif y_range is not None:
+            print('''Y range must be a list containing a minimun and maximum
+            value for the range of the plot.''')
+
     def show(self, output='inline'):
         '''
         Method which creates and displays plot.
@@ -183,11 +208,9 @@ class Plot:
             tools="pan, box_zoom, reset, save, wheel_zoom",
             width=600, height=400,
             y_axis_type=self.plot_para['yscale'],
-            y_range=[min(self.ydata)-2*max(self.yerr),
-                     max(self.ydata)+2*max(self.yerr)],
+            y_range=self.y_range,
             x_axis_type=self.plot_para['xscale'],
-            x_range=[min(self.xdata)-2*max(self.xerr),
-                     max(self.xdata)+2*max(self.xerr)],
+            x_range=self.x_range,
             title=self.attributes['title'],
             x_axis_label=self.attributes['xaxis'],
             y_axis_label=self.attributes['yaxis'],
@@ -230,8 +253,7 @@ class Plot:
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
-                x_range=[min(self.xdata)-2*max(self.xerr),
-                         max(self.xdata)+2*max(self.xerr)],
+                x_range=self.x_range,
                 title="Residual Plot",
                 x_axis_label=self.attributes['xaxis'],
                 y_axis_label='Residuals'
@@ -350,6 +372,14 @@ class Plot:
             # plot y errorbars
             _error_bar(self, residual=True)
             return (self.p, self.p2)
+
+    def print_fit(self):
+        if self.flag['Fitted'] is False:
+            print('''Please create a fit of the data using .fit to find the
+            fit parameters.''')
+        else:
+            for par in self.fit_parameters:
+                print(par)
 
 
 def _error_bar(self, residual=False, xdata=None, ydata=None):
