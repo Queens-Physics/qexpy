@@ -2,11 +2,11 @@ Introduction
 ============
 
 QExPy is a package whose goal is to reduce the time required to produce
-lab reports for undergraduate students of Physics and Engineering Physics.
-To that end, the propagation of errors and plotting of results has been moved
-into the background of the code as much as possible. For example, a common lab
-preformed by first years is an analysis of the stress and strain in a steel
-beam as one end is deflected by a measured amount.
+lab reports for undergraduate students of physics and engineering physics.
+To that end, the propagation of errors and plotting of results has been
+moved into the background of the code as much as possible.  For example, a
+common lab preformed by first years is an analysis of the stress and strain
+in a steel beam as one end is deflected by a measured amount. 
 
 .. nbinput:: ipython3
    :execution-count: 1
@@ -24,7 +24,7 @@ beam as one end is deflected by a measured amount.
    dl = e.Measurement([185e-6, 250e-6, 305e-6, 378e-6, 460e-6, 515e-6,
 	573e-6, 659e-6, 733e-6, 799e-6, 1199e-6, 860e-6, 933e-6, 993e-6,
 	1060e-6, 1125e-6], [5e-6], name='Lengthening', units='m')
-   # This data is the amount that the cable streched for each applied mass
+   # This data is the amount that the cable stretched for each applied mass
    # As the error on each of these measurements is the same, we will use a 
    # single value of error instead of another list containing the error for
    # each point.
@@ -41,10 +41,10 @@ beam as one end is deflected by a measured amount.
 	m5+m5d+m2x, m5+m5d+m2x+m1,m5+m5d+m2x+m2i], [0.04],
 	name='Suspended Mass', units='m')
 
-   ''' This list is the combonation of weights that were used in each trial
-   As the error on each of these measurements is the same, we will use a
-   single value of error instead of another list containing the error for
-   each point.
+   ''' This list is the combination of weights that were used in each
+   trial.  As the error on each of these measurements is the same, we will
+   use a single value of error instead of another list containing the error
+   for each point.
    '''
 	
 .. nbinput:: ipython3

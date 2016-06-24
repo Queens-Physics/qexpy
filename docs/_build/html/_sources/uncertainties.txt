@@ -2,17 +2,17 @@ Error Propagation
 =================
 
 The propagation of measurements, including the propagation of errors is at
-the heart of this package. This section will describe how Measurement
-objects are created and used in calculations. Furthermore, features such as
+the heart of this package.  This section will describe how Measurement
+objects are created and used in calculations.  Furthermore, features such as
 the calculation of the exact numerical derivative of expressions will be
-outlined. While some aspects of this documentation will not neccesarily be
+outlined.  While some aspects of this documentation will not necessarily be
 required to work with the package itself, many of the methods used in the
 underlying code can be useful to understand.
 
 Creating Measurement Objects
 ----------------------------
 
-The method that will be used most commonly is the Measured class. This object
+The method that will be used most commonly is the Measured class.  This object
 can store the mean, standard deviation, original data, name, units, and other
 attributes which can be used by other elements of this package.
 
@@ -20,7 +20,7 @@ attributes which can be used by other elements of this package.
 
 The arguments, or \*args, of this class can be entered in several forms:
 
-A mean and standard deviation can be entred directly.
+A mean and standard deviation can be entered directly.
 
 .. nbinput:: ipython3
    
@@ -30,14 +30,15 @@ A mean and standard deviation can be entred directly.
    # deviation of 1.
 
 A list or numpy array of values can be provided, from which the mean and
-standard deviation of the values is calculated. These values can be outputted
-by calling for the mean and std attributes of whatever object is created.
+standard deviation of the values is calculated.  These values can be
+outputted by calling for the mean and std attributes of whatever object is
+created.
 
 .. nbinput:: ipython3
    
    x = e.Measurement([9, 10, 11])
    # This would also produce an object with a mean of 10 and a standard
-   # deviation of 1. This can be shown by calling for x.mean and x.std:
+   # deviation of 1.  This can be shown by calling for x.mean and x.std:
 	
    print(x.mean, x.std)
 	
@@ -46,8 +47,8 @@ by calling for the mean and std attributes of whatever object is created.
    10, 1
 
 If several measurements, each with an associated error needs to be entered,
-the data can be entered either as pairs of a value and error, or as two lists
-of data and error respectivly.
+the data can be entered either as pairs of a value and error, or as two
+lists of data and error respectively.
 
 For example, given measurements 10 +/- 1, 9 +/- 0.5 and 11 +/- 0.25, the
 data can be entered as either
@@ -60,13 +61,13 @@ data can be entered as either
    
 If the error associated with each measured value is the same, a single
 value can be entered into the second list in the *y* example shown above.
-This is done simply for efficientcy and is treated as a list of repeated
+This is done simply for efficiency and is treated as a list of repeated
 values by the module.
 
 .. nbinput:: ipython3
 
    x = e.Measurement([9, 10, 11], [1])
-   # This is equivilent to:
+   # This is equivalent to:
    y = e.Measurement([9, 10, 11], [1, 1, 1])
 
 In all cases, the optional arguments *name* and *units* can be used to
@@ -140,9 +141,9 @@ Methods of Propagating Error
 ----------------------------
 
 While the default method of propagating error is the derivative formula, there 
-are a number of other methods by which error can be calculated. In addition to
+are a number of other methods by which error can be calculated.  In addition to
 the derivative method, this package is also capible of calculating error by the
-Monte Carlo and min-max methods. While this documentation will not go into
+Monte Carlo and min-max methods.  While this documentation will not go into
 detail about how these methods work, the output of each method is available
 by default, and a specific method can be chosen as shown below.
 
@@ -165,10 +166,10 @@ by default, and a specific method can be chosen as shown below.
    [162.5, 53.24850160192128]
 
 While the Monte Carlo and min-max output of the default method are not as
-elegent as the derivative method, it does provide an easy avenue to check
+elegant as the derivative method, it does provide an easy avenue to check
 the error against another method to ensure accuracy.
 
-Furthermore, the output can be limited to a single method if desired. In this
+Furthermore, the output can be limited to a single method if desired.  In this
 case, the output seen in the *print(x)* line would be from whatever method is
 chosen.
 
@@ -202,9 +203,9 @@ Correlation
 -----------
 
 For many experiments, parameters may be correlated or may be expected to be
-correlated. Thus, there exists methods to define and, in the case that th
+correlated.  Thus, there exists methods to define and, in the case that th
 arrays of data used to create two Measurements are equal in length, return the
-covariance or correlation of some parameters. There are two methods which can
+covariance or correlation of some parameters.  There are two methods which can
 be used to set the correlation of two variables, or return the covariance of
 two variables.
 
@@ -225,22 +226,21 @@ Derivatives
 -----------
 
 The method by which numerical solutions to the derivative of expressions are
-evaluated is called automatic differentiation. This method relies on the chain
+evaluated is called automatic differentiation.  This method relies on the chain
 rule and the fact that the derivative of any expression can be reduced to some
-combonation of elementary functions and operations. Consider the following
+combination of elementary functions and operations.  Consider the following
 function.
 
 .. math::
 
-   f(x,y) = \cos(xy)
-   \implies \partial_x f(x,y) = \cos(xy)y
+   f(x,y) = \cos{xy}
+   \implies \partial_x f(x,y) = \cos{xy}y
    Let\ xy = z
-   \partial_x f(x,y) \= \cos(z) \frac{\partial(z)}{\partial(x)} \\
-   \= \cos(xy)y
+   \partial_x f(x,y) = \cos{z} \frac{\partial(z)}{\partial(x)} = \cos{xy}y
    
 What this example illustrates is how, by considering an expression as a series
 of elementary operations and functions, the exact numerical derivative can be
-calculated. All that is required is to be able to store the derivative of each
+calculated.  All that is required is to be able to store the derivative of each
 of these elementary operations with respect to whatever variables are involved.
 
 .. todo::

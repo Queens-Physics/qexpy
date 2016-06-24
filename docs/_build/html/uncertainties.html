@@ -1,54 +1,142 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Error Propagation &mdash; QExPy 0.1.1 documentation</title>
-    
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.1.1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="QExPy 0.1.1 documentation" href="index.html" />
-    <link rel="next" title="Formatting" href="operations.html" />
-    <link rel="prev" title="Introduction" href="intro.html" /> 
-  </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="operations.html" title="Formatting"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="intro.html" title="Introduction"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Error Propagation &mdash; QExPy 0.1.1 documentation</title>
+  
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="QExPy 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="Formatting" href="operations.html"/>
+        <link rel="prev" title="Introduction" href="intro.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> QExPy
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Error Propagation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#creating-measurement-objects">Creating Measurement Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#working-with-measurement-objects">Working with Measurement Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#methods-of-propagating-error">Methods of Propagating Error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#correlation">Correlation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#derivatives">Derivatives</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="operations.html">Formatting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">QExPy</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Error Propagation</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/uncertainties.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   
 <style>
@@ -182,19 +270,51 @@ div.nboutput  > :nth-child(2).stderr {
 .ansi-white-intense-bg { background-color: #A1A6B2; }
 
 .ansi-bold { font-weight: bold; }
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+/* nice headers on first paragraph of info/warning boxes */
+.admonition .first {
+    margin: -12px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    color: #fff;
+    line-height: 1;
+    display: block;
+}
+.admonition.warning .first {
+    background: #f0b37e;
+}
+.admonition.note .first {
+    background: #6ab0de;
+}
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
 </style>
 <div class="section" id="error-propagation">
 <h1>Error Propagation<a class="headerlink" href="#error-propagation" title="Permalink to this headline">¶</a></h1>
 <p>The propagation of measurements, including the propagation of errors is at
-the heart of this package. This section will describe how Measurement
-objects are created and used in calculations. Furthermore, features such as
+the heart of this package.  This section will describe how Measurement
+objects are created and used in calculations.  Furthermore, features such as
 the calculation of the exact numerical derivative of expressions will be
-outlined. While some aspects of this documentation will not neccesarily be
+outlined.  While some aspects of this documentation will not necessarily be
 required to work with the package itself, many of the methods used in the
 underlying code can be useful to understand.</p>
 <div class="section" id="creating-measurement-objects">
 <h2>Creating Measurement Objects<a class="headerlink" href="#creating-measurement-objects" title="Permalink to this headline">¶</a></h2>
-<p>The method that will be used most commonly is the Measured class. This object
+<p>The method that will be used most commonly is the Measured class.  This object
 can store the mean, standard deviation, original data, name, units, and other
 attributes which can be used by other elements of this package.</p>
 <dl class="class">
@@ -205,7 +325,7 @@ or arguments of functions when propagating error.</p>
 </dd></dl>
 
 <p>The arguments, or *args, of this class can be entered in several forms:</p>
-<p>A mean and standard deviation can be entred directly.</p>
+<p>A mean and standard deviation can be entered directly.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -220,8 +340,9 @@ or arguments of functions when propagating error.</p>
 </div>
 </div>
 <p>A list or numpy array of values can be provided, from which the mean and
-standard deviation of the values is calculated. These values can be outputted
-by calling for the mean and std attributes of whatever object is created.</p>
+standard deviation of the values is calculated.  These values can be
+outputted by calling for the mean and std attributes of whatever object is
+created.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -230,7 +351,7 @@ by calling for the mean and std attributes of whatever object is created.</p>
 <div class="highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
 <span class="c1"># This would also produce an object with a mean of 10 and a standard</span>
-<span class="c1"># deviation of 1. This can be shown by calling for x.mean and x.std:</span>
+<span class="c1"># deviation of 1.  This can be shown by calling for x.mean and x.std:</span>
 
 <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
 </pre></div>
@@ -245,8 +366,8 @@ by calling for the mean and std attributes of whatever object is created.</p>
 </div>
 </div>
 <p>If several measurements, each with an associated error needs to be entered,
-the data can be entered either as pairs of a value and error, or as two lists
-of data and error respectivly.</p>
+the data can be entered either as pairs of a value and error, or as two
+lists of data and error respectively.</p>
 <p>For example, given measurements 10 +/- 1, 9 +/- 0.5 and 11 +/- 0.25, the
 data can be entered as either</p>
 <div class="nbinput container">
@@ -263,7 +384,7 @@ data can be entered as either</p>
 </div>
 <p>If the error associated with each measured value is the same, a single
 value can be entered into the second list in the <em>y</em> example shown above.
-This is done simply for efficientcy and is treated as a list of repeated
+This is done simply for efficiency and is treated as a list of repeated
 values by the module.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
@@ -272,7 +393,7 @@ values by the module.</p>
 </div>
 <div class="highlight-ipython3"><div class="highlight"><pre>
 <span></span><span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-<span class="c1"># This is equivilent to:</span>
+<span class="c1"># This is equivalent to:</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -376,9 +497,9 @@ most cases.</p>
 <div class="section" id="methods-of-propagating-error">
 <h2>Methods of Propagating Error<a class="headerlink" href="#methods-of-propagating-error" title="Permalink to this headline">¶</a></h2>
 <p>While the default method of propagating error is the derivative formula, there
-are a number of other methods by which error can be calculated. In addition to
+are a number of other methods by which error can be calculated.  In addition to
 the derivative method, this package is also capible of calculating error by the
-Monte Carlo and min-max methods. While this documentation will not go into
+Monte Carlo and min-max methods.  While this documentation will not go into
 detail about how these methods work, the output of each method is available
 by default, and a specific method can be chosen as shown below.</p>
 <div class="nbinput container">
@@ -410,9 +531,9 @@ by default, and a specific method can be chosen as shown below.</p>
 </div>
 </div>
 <p>While the Monte Carlo and min-max output of the default method are not as
-elegent as the derivative method, it does provide an easy avenue to check
+elegant as the derivative method, it does provide an easy avenue to check
 the error against another method to ensure accuracy.</p>
-<p>Furthermore, the output can be limited to a single method if desired. In this
+<p>Furthermore, the output can be limited to a single method if desired.  In this
 case, the output seen in the <em>print(x)</em> line would be from whatever method is
 chosen.</p>
 <div class="nbinput container">
@@ -451,9 +572,9 @@ chosen.</p>
 <div class="section" id="correlation">
 <h2>Correlation<a class="headerlink" href="#correlation" title="Permalink to this headline">¶</a></h2>
 <p>For many experiments, parameters may be correlated or may be expected to be
-correlated. Thus, there exists methods to define and, in the case that th
+correlated.  Thus, there exists methods to define and, in the case that th
 arrays of data used to create two Measurements are equal in length, return the
-covariance or correlation of some parameters. There are two methods which can
+covariance or correlation of some parameters.  There are two methods which can
 be used to set the correlation of two variables, or return the covariance of
 two variables.</p>
 <dl class="method">
@@ -487,19 +608,18 @@ a generalized function.</p>
 <div class="section" id="derivatives">
 <h2>Derivatives<a class="headerlink" href="#derivatives" title="Permalink to this headline">¶</a></h2>
 <p>The method by which numerical solutions to the derivative of expressions are
-evaluated is called automatic differentiation. This method relies on the chain
+evaluated is called automatic differentiation.  This method relies on the chain
 rule and the fact that the derivative of any expression can be reduced to some
-combonation of elementary functions and operations. Consider the following
+combination of elementary functions and operations.  Consider the following
 function.</p>
 <div class="math">
-\[\begin{split}f(x,y) = \cos(xy)
-\implies \partial_x f(x,y) = \cos(xy)y
+\[f(x,y) = \cos{xy}
+\implies \partial_x f(x,y) = \cos{xy}y
 Let\ xy = z
-\partial_x f(x,y) \= \cos(z) \frac{\partial(z)}{\partial(x)} \\
-\= \cos(xy)y\end{split}\]</div>
+\partial_x f(x,y) = \cos{z} \frac{\partial(z)}{\partial(x)} = \cos{xy}y\]</div>
 <p>What this example illustrates is how, by considering an expression as a series
 of elementary operations and functions, the exact numerical derivative can be
-calculated. All that is required is to be able to store the derivative of each
+calculated.  All that is required is to be able to store the derivative of each
 of these elementary operations with respect to whatever variables are involved.</p>
 <div class="admonition-todo admonition" id="index-1">
 <p class="first admonition-title">Todo</p>
@@ -509,71 +629,72 @@ of these elementary operations with respect to whatever variables are involved.<
 </div>
 
 
+           </div>
           </div>
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Error Propagation</a><ul>
-<li><a class="reference internal" href="#creating-measurement-objects">Creating Measurement Objects</a></li>
-<li><a class="reference internal" href="#working-with-measurement-objects">Working with Measurement Objects</a></li>
-<li><a class="reference internal" href="#methods-of-propagating-error">Methods of Propagating Error</a></li>
-<li><a class="reference internal" href="#correlation">Correlation</a></li>
-<li><a class="reference internal" href="#derivatives">Derivatives</a></li>
-</ul>
-</li>
-</ul>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="operations.html" class="btn btn-neutral float-right" title="Formatting" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="intro.html" class="btn btn-neutral" title="Introduction" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="intro.html"
-                        title="previous chapter">Introduction</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="operations.html"
-                        title="next chapter">Formatting</a></p>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/uncertainties.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Connor Kapahi.
+
     </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="operations.html" title="Formatting"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="intro.html" title="Introduction"
-             >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">QExPy 0.1.1 documentation</a> &raquo;</li> 
-      </ul>
-    </div>
-    <div class="footer" role="contentinfo">
-        &copy; Copyright 2016, Connor Kapahi.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
-    </div>
-  </body>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
 </html>
