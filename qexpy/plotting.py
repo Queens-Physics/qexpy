@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-from . import error as e
+import error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -43,7 +43,7 @@ class Plot:
 
     def mgauss(x, pars):
         '''Altered gaussian function to handle measurement objects.'''
-        from . import error_operations as op
+        import error_operations as op
         mean, std = pars
         return (2*pi*std**2)**(-1/2)*op.exp(-(x-mean)**2/2/std**2)
 
@@ -91,6 +91,7 @@ class Plot:
                         max(self.xdata)+2*max(self.xerr)]
         self.y_range = [min(self.ydata)-2*max(self.yerr),
                         max(self.ydata)+2*max(self.yerr)]
+        self.dimensions = [600, 400]
 
     def residuals(self):
         '''Request residual output for plot.'''
@@ -207,7 +208,7 @@ class Plot:
         # create a new plot
         self.p = bp.figure(
             tools="pan, box_zoom, reset, save, wheel_zoom",
-            width=600, height=400,
+            width=self.dimensions[0], height=self.dimensions[1],
             y_axis_type=self.plot_para['yscale'],
             y_range=self.y_range,
             x_axis_type=self.plot_para['xscale'],
@@ -250,7 +251,7 @@ class Plot:
 
             self.p2 = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
-                width=600, height=200,
+                width=self.dimensions[0], height=self.dimensions[1]//2,
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
@@ -306,7 +307,7 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        from . import error_operations as op
+        import error_operations as op
         data, function = op.check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
@@ -320,7 +321,7 @@ class Plot:
         # create a new plot
         self.p = bp.figure(
             tools="pan, box_zoom, reset, save, wheel_zoom",
-            width=600, height=400,
+            width=self.dimensions[0], height=self.dimensions[1],
             y_axis_type=self.plot_para['yscale'],
             y_range=[min(self.ydata)-2*max(self.yerr),
                      max(self.ydata)+2*max(self.yerr)],
@@ -364,7 +365,7 @@ class Plot:
         else:
             self.p2 = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
-                width=600, height=200,
+                width=self.dimensions[0], height=self.dimensions[1]//2,
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
@@ -386,6 +387,13 @@ class Plot:
         else:
             for par in self.fit_parameters:
                 print(par)
+
+    def resize_plot(self, width=None, height=None):
+        if width is None:
+            width = 600
+        if height is None:
+            height = 400
+        self.dimensions[width, height]
 
 
 def _error_bar(self, residual=False, xdata=None, ydata=None):

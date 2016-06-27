@@ -204,7 +204,7 @@ Correlation
 -----------
 
 For many experiments, parameters may be correlated or may be expected to be
-correlated.  Thus, there exists methods to define and, in the case that th
+correlated.  Thus, there exists methods to define and, in the case that the
 arrays of data used to create two Measurements are equal in length, return
 the covariance or correlation of some parameters.  There are two methods
 which can be used to set the correlation of two variables, or return the

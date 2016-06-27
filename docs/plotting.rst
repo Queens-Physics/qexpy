@@ -1,10 +1,11 @@
 Plotting Module
 ===============
 
-This module is where QExPy and Bokeh combine.  The creation of plots and the
-tools used to interact with said plots are created using Bokeh.  The aim of
-the plotting module is to allow for the creation of plots and fits without
-the involved methods normally required to create an interactive plot.
+This module is where QExPy and Bokeh combine.  The creation of plots and
+the tools used to interact with said plots are created using Bokeh.
+The aim of the plotting module is to allow for the creation of plots and
+fits without the involved methods normally required to create an 
+interactive plot.
 
 The Plot Object
 ---------------
@@ -33,9 +34,9 @@ to the module, an initial guess of the fitting parameters.
 .. automethod:: qexpy.plotting.Plot.fit
 
 Note, for the guess argument, the expected input is a list of numbers which
-should be close to the true parameters.  If said values are not known, a list
-of ones, of the correct length will suffice, although the fitting algorithm
-may take longer to complete.  For example:
+should be close to the true parameters.  If said values are not known, a
+list of ones, of the correct length will suffice, although the fitting
+algorithm may take longer to complete.  For example:
 
 .. nbinput:: ipython3
 
@@ -45,8 +46,8 @@ may take longer to complete.  For example:
    # As this model requires two parameters a guess should be:
    guess = [1, 1]
 	
-Using these methods, a plot with a best fit line and residuals can easily be
-constructed.
+Using these methods, a plot with a best fit line and residuals can easily
+be constructed.
 
 .. nbinput:: ipython3
 
@@ -77,7 +78,8 @@ The included models for fitting include:
 
 Linear: :math:`y=m x+b`
 
-Gaussian: :math:`y=\frac{1}{\sqrt{2 \pi \sigma}}\exp{-\frac{(x-\mu)^2}{\sigma}}`
+Gaussian: :math:`y=\frac{1}{\sqrt{2 \pi \sigma}}\exp{
+	-\frac{(x-\mu)^2}{\sigma}}`
 
 Polynomial: :math:`\sum_{i=0}^{N} a_i x^i` with parameters :math:`a_i`
 
@@ -119,9 +121,9 @@ in the case of parameters with defined names, the name in a pretty format.
 User-Defined Functions
 ----------------------
 
-A user defined function can be plotted using the *.function* method as we have
-previously done for curve fits and residual outputs.  To add a theoretical
-curve, or any other curve:
+A user defined function can be plotted using the *.function* method as we
+have previously done for curve fits and residual outputs.
+To add a theoretical curve, or any other curve:
 
 .. nbinput:: ipython3
 
@@ -142,14 +144,15 @@ curve, or any other curve:
     
 .. automethod:: qexpy.plotting.Plot.function
 
-The final method relevant to Plot objects is the show method.  This, by default
-will output the Bokeh plot in a terminal, or output of a Jupyter notebook, if
-that is where the code is executed.  This method does have an optional
-argument that determines where the plot is shown, with options of 'inline' and
-'file'.  The 'inline' option is selected by default and refers to output
-in the console line itself, while 'file' creates an HTML file that should
-open in your default browser and save to whatever location your Python code
-file is currently in.
+The final method relevant to Plot objects is the show method.
+This, by default will output the Bokeh plot in a terminal, or output of a
+Jupyter notebook, if that is where the code is executed.
+This method does have an optional argument that determines where the plot
+is shown, with options of 'inline' and 'file'.  The 'inline' option is
+selected by default and refers to output in the console line itself,
+while 'file' creates an HTML file that should open in your default
+browser and save to whatever location your Python code file is currently
+in.
 
 .. nbinput:: ipython3
 
@@ -157,15 +160,16 @@ file is currently in.
    import qexpy.plotting as p
 
    x = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
-   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Applied Mass', units='g')
+   y = e.Measurement([5, 7, 11, 14, 17], [1], name='Applied Mass',
+	units='g')
 
    figure = p.Plot(x, y)
    figure.show('file')
 
 For this code, there is no output, as the plot will be saved in the working
-directory and opened in a browser.  For example, if the above code is located
-in *Diligent_Physics_Student/Documents/Python* then the HTML file will also
-be in said */Python* folder.
+directory and opened in a browser.  For example, if the above code is
+located in *Diligent_Physics_Student/Documents/Python* then the HTML file
+will also be in said */Python* folder.
 
 .. todo:::
 
