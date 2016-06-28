@@ -227,9 +227,11 @@ class Plot:
 
         if self.flag['fitted'] is True:
             self.mfit_function = Plot.mfits[self.fit_method]
+            data = [min(self.xdata)-max(self.xerr),
+                    max(self.xdata)+max(self.xerr)]
             _plot_function(
-                self, self.xdata,
-                lambda x: self.mfit_function(x, self.fit_parameters))
+                self, data,
+                lambda x: self.fit_function(x, self.fit_parameters))
 
             self.function_counter += 1
 
@@ -639,3 +641,12 @@ def _plot_function(self, xdata, theory, n=1000):
             fill_color=self.colors['Function'][self.function_counter],
             line_color=self.colors['Function'][self.function_counter],
             line_dash='dashed', line_alpha=0.3)
+
+
+def update_plot(self):
+    ''' Creates interactive sliders in Jupyter Notebook to adjust fit.
+    '''
+    for par in self.fit_parameters:
+        min_val = par.mean - 2*par.std
+        max_val = par.mean + 2*par.std
+        increment = (max_val-min_val)/100

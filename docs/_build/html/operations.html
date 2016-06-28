@@ -305,12 +305,13 @@ div.nboutput  > :nth-child(2).stderr {
 <h1>Formatting<a class="headerlink" href="#formatting" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="naming">
 <h2>Naming<a class="headerlink" href="#naming" title="Permalink to this headline">¶</a></h2>
-<p>In addition to containing a mean and standard deviation, Measurement objects
-can also have a string name and unit associated with it.  These can then be
-used both in printing values and in labelling any plots created with these
-values.  By default, Measured objects are named unnamed_var0, with a unique
-number assigned to each object.  The name and units of a Measured object can
-be declared either when the object is created or altered after.</p>
+<p>In addition to containing a mean and standard deviation, Measurement
+objects can also have a string name and unit associated with it.
+These can then be used both in printing values and in labelling any plots
+created with these values.  By default, Measured objects are named
+unnamed_var0, with a unique number assigned to each object.
+The name and units of a Measured object can be declared either when the
+object is created or altered after.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -342,10 +343,10 @@ be declared either when the object is created or altered after.</p>
 <div class="section" id="units">
 <h2>Units<a class="headerlink" href="#units" title="Permalink to this headline">¶</a></h2>
 <p>Values which have more complicated units can also be entered using the
-following syntax.  Consider a measurement of acceleration, with units of m/s^2
-or meters per second squared, this can be entered as a list of the unit letters
-followed by the exponent of the unit, for every base unit, such as meter order
-second:</p>
+following syntax.  Consider a measurement of acceleration, with units of
+m/s^2 or meters per second squared, this can be entered as a list of the
+unit letters followed by the exponent of the unit, for every base unit,
+such as meter order second:</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -360,8 +361,8 @@ second:</p>
 </div>
 </div>
 <p>This also allows for the units of values produced by operations such as
-multiplication to be generated automatically.  Consider the calculation of the
-velocity of some object that accelerates at a for t seconds:</p>
+multiplication to be generated automatically.  Consider the calculation of
+the velocity of some object that accelerates at a for t seconds:</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -409,13 +410,13 @@ velocity of some object that accelerates at a for t seconds:</p>
 </pre></div>
 </div>
 </div>
-<p>However, there are three ways of outputting a Measurement object.  Furthermore,
-each method also allows for a specific number of significant digits to be
-shown.</p>
+<p>However, there are three ways of outputting a Measurement object.
+Furthermore, each method also allows for a specific number of significant
+digits to be shown.</p>
 <p>One method is called scientific and will output the number in scientific
-notation with the error being shown as a value with only a single whole digit.
-In order to change between any printing method, the following function will
-change how the package prints a Measurement object:</p>
+notation with the error being shown as a value with only a single whole
+digit.  In order to change between any printing method, the following
+function will change how the package prints a Measurement object:</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -439,9 +440,9 @@ change how the package prints a Measurement object:</p>
 </div>
 </div>
 <p>The same process is used for a print style called Latex which, as the name
-suggests, is formatted for use in Latex documents.  This may be useful in the
-creation of labs by allowing variables to be copied and pasted directly into a
-Latex document.</p>
+suggests, is formatted for use in Latex documents.  This may be useful in
+the creation of labs by allowing variables to be copied and pasted
+directly into a Latex document.</p>
 <div class="nbinput container">
 <div class="highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:

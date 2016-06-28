@@ -6,7 +6,7 @@ class ExperimentalValue:
     measured values, called Funciton and Measured respectivly)
     '''
     error_method = "Default"  # Default error propogation method
-    default_style = "Default" # Default printing style
+    default_style = "Default"  # Default printing style
     mc_trial_number = 10000  # number of trial in Monte Carlo simulation
     figs = None
     register = {}
@@ -408,43 +408,103 @@ class ExperimentalValue:
 
     def __add__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.add, self, other)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.add, self, value))
+            return result
+        else:
+            return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.add, self, other)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.add, self, value))
+            return result
+        else:
+            return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.mul, self, other)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.mul, self, value))
+            return result
+        else:
+            return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.mul, self, other)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.mul, self, value))
+            return result
+        else:
+            return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.sub, self, other)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.sub, self, value))
+            return result
+        else:
+            return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.sub, other, self)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.sub, value, self))
+            return result
+        else:
+            return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.div, self, other)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.div, self, value))
+            return result
+        else:
+            return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.div, other, self)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.div, value, self))
+            return result
+        else:
+            return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.power, self, other)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.power, self, value))
+            return result
+        else:
+            return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
         import error_operations as op
-        return op.operation_wrap(op.power, other, self)
+        if type(other) in ExperimentalValue.ARRAY:
+            result = []
+            for value in other:
+                result.append(op.operation_wrap(op.power, value, self))
+            return result
+        else:
+            return op.operation_wrap(op.power, other, self)
 
     def __neg__(self):
         import error_operations as op
@@ -598,52 +658,113 @@ class Constant(ExperimentalValue):
 
 def sin(x):
     import error_operations as op
-    return op.operation_wrap(op.sin, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.sin, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.sin, x, func_flag=True)
 
 
 def cos(x):
     import error_operations as op
-    return op.operation_wrap(op.cos, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.cos, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.cos, x, func_flag=True)
 
 
 def tan(x):
     import error_operations as op
-    return op.operation_wrap(op.tan, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.tan, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.tan, x, func_flag=True)
 
 
 def sec(x):
     import error_operations as op
-    return op.operation_wrap(op.sec, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.sec, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.sec, x, func_flag=True)
 
 
 def csc(x):
     import error_operations as op
-    return op.operation_wrap(op.csc, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.csc, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.csc, x, func_flag=True)
 
 
 def cot(x):
     import error_operations as op
-    return op.operation_wrap(op.cot, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.cot, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.cot, x, func_flag=True)
 
 
 def log(x):
     import error_operations as op
-    return op.operation_wrap(op.log, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.log, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.log, x, func_flag=True)
 
 
 def exp(x):
     import error_operations as op
-    return op.operation_wrap(op.exp, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.exp, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def e(x):
     import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.exp, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.exp, x, func_flag=True)
     return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def atan(x):
     import error_operations as op
-    return op.operation_wrap(op.atan, x, func_flag=True)
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.atan, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.atan, x, func_flag=True)
 
 
 def f(function, *args):

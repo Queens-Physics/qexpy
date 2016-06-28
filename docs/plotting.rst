@@ -78,8 +78,7 @@ The included models for fitting include:
 
 Linear: :math:`y=m x+b`
 
-Gaussian: :math:`y=\frac{1}{\sqrt{2 \pi \sigma}}\exp{
-	-\frac{(x-\mu)^2}{\sigma}}`
+Gaussian: :math:`y=\frac{1}{\sqrt{2 \pi \sigma}}\exp{-\frac{(x-\mu)^2}{\sigma}}`
 
 Polynomial: :math:`\sum_{i=0}^{N} a_i x^i` with parameters :math:`a_i`
 

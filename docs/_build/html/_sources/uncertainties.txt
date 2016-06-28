@@ -3,8 +3,8 @@ Error Propagation
 
 The propagation of measurements, including the propagation of errors is at
 the heart of this package.  This section will describe how Measurement
-objects are created and used in calculations.  Furthermore, features such as
-the calculation of the exact numerical derivative of expressions will be
+objects are created and used in calculations.  Furthermore, features such
+as the calculation of the exact numerical derivative of expressions will be
 outlined.  While some aspects of this documentation will not necessarily be
 required to work with the package itself, many of the methods used in the
 underlying code can be useful to understand.
@@ -12,9 +12,9 @@ underlying code can be useful to understand.
 Creating Measurement Objects
 ----------------------------
 
-The method that will be used most commonly is the Measured class.  This object
-can store the mean, standard deviation, original data, name, units, and other
-attributes which can be used by other elements of this package.
+The method that will be used most commonly is the Measured class.  This
+object can store the mean, standard deviation, original data, name, units,
+and other attributes which can be used by other elements of this package.
 
 .. autoclass:: qexpy.error.Measurement
 
@@ -110,8 +110,8 @@ natural logarithm and exponential function can also be used:
    0.7 +/- 0.8
 
 Furthermore, the use of Measured objects in equations also allows for the
-calculation of the derivative of these expressions with respect to any of the
-Measured objects used.
+calculation of the derivative of these expressions with respect to any of
+the Measured objects used.
 
 .. nbinput:: ipython3
 
@@ -134,18 +134,19 @@ propagation formula.
    \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \
    + (\frac{\partial F}{\partial y} \sigma_y)^2
     
-This formula is the default method of error propagation and will be accurate in
-most cases.
+This formula is the default method of error propagation and will be
+accurate in most cases.
 
 Methods of Propagating Error
 ----------------------------
 
-While the default method of propagating error is the derivative formula, there 
-are a number of other methods by which error can be calculated.  In addition to
-the derivative method, this package is also capible of calculating error by the
-Monte Carlo and min-max methods.  While this documentation will not go into
-detail about how these methods work, the output of each method is available
-by default, and a specific method can be chosen as shown below.
+While the default method of propagating error is the derivative formula,
+there are a number of other methods by which error can be calculated.
+In addition to the derivative method, this package is also capible of
+calculating error by the Monte Carlo and min-max methods.  While this
+documentation will not go into detail about how these methods work, the
+output of each method is available by default, and a specific method can be
+chosen as shown below.
 
 .. nbinput:: ipython3
 
@@ -169,9 +170,9 @@ While the Monte Carlo and min-max output of the default method are not as
 elegant as the derivative method, it does provide an easy avenue to check
 the error against another method to ensure accuracy.
 
-Furthermore, the output can be limited to a single method if desired.  In this
-case, the output seen in the *print(x)* line would be from whatever method is
-chosen.
+Furthermore, the output can be limited to a single method if desired.
+In this case, the output seen in the *print(x)* line would be from whatever
+method is chosen.
 
 .. nbinput:: ipython3
 	
@@ -203,11 +204,11 @@ Correlation
 -----------
 
 For many experiments, parameters may be correlated or may be expected to be
-correlated.  Thus, there exists methods to define and, in the case that th
-arrays of data used to create two Measurements are equal in length, return the
-covariance or correlation of some parameters.  There are two methods which can
-be used to set the correlation of two variables, or return the covariance of
-two variables.
+correlated.  Thus, there exists methods to define and, in the case that the
+arrays of data used to create two Measurements are equal in length, return
+the covariance or correlation of some parameters.  There are two methods
+which can be used to set the correlation of two variables, or return the
+covariance of two variables.
 
 .. automethod:: qexpy.error.Measurement.set_correlation
 
@@ -225,23 +226,26 @@ by the *.fit* method in QExPy.plotting
 Derivatives
 -----------
 
-The method by which numerical solutions to the derivative of expressions are
-evaluated is called automatic differentiation.  This method relies on the chain
-rule and the fact that the derivative of any expression can be reduced to some
-combination of elementary functions and operations.  Consider the following
-function.
+The method by which numerical solutions to the derivative of expressions
+are evaluated is called automatic differentiation.  This method relies on
+the chain rule and the fact that the derivative of any expression can be
+reduced to some combination of elementary functions and operations.
+Consider the following function.
 
 .. math::
 
    f(x,y) = \cos{xy}
-   \implies \partial_x f(x,y) = \cos{xy}y
+   \implies \partial_x f(x,y) = y\cos{xy}
+
    Let\ xy = z
-   \partial_x f(x,y) = \cos{z} \frac{\partial(z)}{\partial(x)} = \cos{xy}y
+
+   \partial_x f(x,y) = \cos{z} \frac{\partial(z)}{\partial(x)} = y\cos{xy}
    
-What this example illustrates is how, by considering an expression as a series
-of elementary operations and functions, the exact numerical derivative can be
-calculated.  All that is required is to be able to store the derivative of each
-of these elementary operations with respect to whatever variables are involved.
+What this example illustrates is how, by considering an expression as a
+series of elementary operations and functions, the exact numerical
+derivative can be calculated.  All that is required is to be able to store
+the derivative of each of these elementary operations with respect to
+whatever variables are involved.
 
 .. todo::
 
