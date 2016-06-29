@@ -397,8 +397,118 @@ class Plot:
             height = 400
         self.dimensions[width, height]
 
+    def show_on(self, plot2, output='inline'):
+        '''
+        Method which creates and displays plot.
+        Previous methods sumply edit parameters which are used here, to
+        prevent run times increasing due to rebuilding the bokeh plot object.
+        '''
+        if output is 'inline':
+            bi.output_notebook()
+        elif output is 'file':
+            bi.output_file(self.plot_para['filename']+'.html',
+                           title=self.attributes['title'])
 
-def _error_bar(self, residual=False, xdata=None, ydata=None):
+        # create a new plot
+        self.p = bp.figure(
+            tools="pan, box_zoom, reset, save, wheel_zoom",
+            width=self.dimensions[0], height=self.dimensions[1],
+            y_axis_type=self.plot_para['yscale'],
+            y_range=self.y_range,
+            x_axis_type=self.plot_para['xscale'],
+            x_range=self.x_range,
+            title=self.attributes['title'],
+            x_axis_label=self.attributes['xaxis'],
+            y_axis_label=self.attributes['yaxis'],
+        )
+
+        # add datapoints with errorbars
+        _error_bar(self)
+        _error_bar(plot2, plot_object=self)
+
+        if self.flag['Manual'] is True:
+            _error_bar(self,
+                       xdata=self.manual_data[0], ydata=self.manual_data[1])
+
+        if plot2.flag['Manual'] is True:
+            _error_bar(plot2,
+                       xdata=plot2.manual_data[0], ydata=plot2.manual_data[1],
+                       plot_object=self)
+
+        if self.flag['fitted'] is True:
+            self.mfit_function = Plot.mfits[self.fit_method]
+            data = [min(self.xdata)-max(self.xerr),
+                    max(self.xdata)+max(self.xerr)]
+            _plot_function(
+                self, data,
+                lambda x: self.fit_function(x, self.fit_parameters))
+
+            self.function_counter += 1
+
+            if self.fit_parameters[1].mean > 0:
+                self.p.legend.location = "top_left"
+            else:
+                self.p.legend.location = "top_right"
+        else:
+            self.p.legend.location = 'top_right'
+
+        if plot2.flag['fitted'] is True:
+            plot2.mfit_function = Plot.mfits[plot2.fit_method]
+            data = [min(plot2.xdata)-max(plot2.xerr),
+                    max(plot2.xdata)+max(plot2.xerr)]
+            _plot_function(
+                self, data,
+                lambda x: plot2.fit_function(x, plot2.fit_parameters))
+
+            self.function_counter += 1
+
+        for func in self.attributes['function']:
+            _plot_function(
+                self, self.xdata, func)
+            self.function_counter += 1
+
+        if self.flag['residuals'] is False and\
+                plot2.flag['residuals'] is False:
+            bp.show(self.p)
+
+        elif self.flag['residuals'] is True and\
+                plot2.flag['residuals'] is True:
+
+            self.p2 = bp.figure(
+                tools="pan, box_zoom, reset, save, wheel_zoom",
+                width=self.dimensions[0], height=self.dimensions[1]//2,
+                y_axis_type='linear',
+                y_range=[min(self.yres)-2*max(self.yerr),
+                         max(self.yres)+2*max(self.yerr)],
+                x_range=self.x_range,
+                title="Residual Plot",
+                x_axis_label=self.attributes['xaxis'],
+                y_axis_label='Residuals'
+            )
+
+            # plot y errorbars
+            _error_bar(self, residual=True)
+
+            self.p3 = bp.figure(
+                tools="pan, box_zoom, reset, save, wheel_zoom",
+                width=self.dimensions[0], height=self.dimensions[1]//2,
+                y_axis_type='linear',
+                y_range=[min(plot2.yres)-2*max(plot2.yerr),
+                         max(plot2.yres)+2*max(plot2.yerr)],
+                x_range=plot2.x_range,
+                title="Residual Plot",
+                x_axis_label=plot2.attributes['xaxis'],
+                y_axis_label='Residuals'
+            )
+
+            # plot y errorbars
+            _error_bar(plot2, residual=True, plot_object=self)
+
+            gp_alt = bi.gridplot([[self.p], [self.p2], [self.p3]])
+            bp.show(gp_alt)
+
+
+def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None):
     '''Function to create a Bokeh glyph which appears to be a datapoint with
     an errorbar.
 
@@ -408,10 +518,16 @@ def _error_bar(self, residual=False, xdata=None, ydata=None):
     rectangles whose size is based on Bokeh 'size' which is based on screen
     size and thus does not get larger when zooming in on a plot.
     '''
-    if residual is False:
-        p = self.p
+    if plot_object is None:
+        if residual is False:
+            p = self.p
+        else:
+            p = self.p2
     else:
-        p = self.p2
+        if residual is False:
+            p = plot_object.p
+        else:
+            p = plot_object.p3
 
     err_x1 = []
     err_d1 = []
@@ -614,7 +730,7 @@ def _plot_function(self, xdata, theory, n=1000):
     except AttributeError:
         for i in range(n):
             x_mid.append(theory(xrange[i]))
-        self.p.line(
+        self.fit_line = self.p.line(
             xrange, x_mid, legend='Theoretical',
             line_color=self.colors['Function'][self.function_counter])
 
@@ -626,7 +742,7 @@ def _plot_function(self, xdata, theory, n=1000):
             x_mid.append(x_theory.mean)
             x_max.append(x_theory.mean+x_theory.std)
             x_min.append(x_theory.mean-x_theory.std)
-        self.p.line(
+        self.fit_line = self.p.line(
             xrange, x_mid, legend='Theoretical',
             line_color=self.colors['Function'][self.function_counter])
 
@@ -643,10 +759,21 @@ def _plot_function(self, xdata, theory, n=1000):
             line_dash='dashed', line_alpha=0.3)
 
 
-def update_plot(self):
+def update_plot(self, model='linear'):
     ''' Creates interactive sliders in Jupyter Notebook to adjust fit.
     '''
+    from ipywidgets import interact
+
+    range_argument = ()
     for par in self.fit_parameters:
         min_val = par.mean - 2*par.std
-        max_val = par.mean + 2*par.std
-        increment = (max_val-min_val)/100
+        increment = (par.mean-min_val)/100
+        range_argument += (min_val, par.mean, increment)
+
+    if model is 'linear':
+        @interact(b=range_argument[0], m=range_argument[1])
+        def update(m, b):
+            import numpy as np
+
+            self.fit_line.data_source.data['y'] = np.multiply(m, self.fit_line.data_source.data['x']) + b
+            bi.push_notebook()

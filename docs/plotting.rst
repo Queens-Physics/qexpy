@@ -170,8 +170,43 @@ directory and opened in a browser.  For example, if the above code is
 located in *Diligent_Physics_Student/Documents/Python* then the HTML file
 will also be in said */Python* folder.
 
+Plotting Multiple Datasets
+--------------------------
+
+In many cases, multiple sets of data must be shown on a single plot,
+possibly with multiple residuals. In this case, the *.show_on(figure)*
+method is used to show the arguement on the plot of whichever plot object
+is acted on. 
+
+.. automethod:: qexpy.plotting.Plot.show_on
+
+This method is used by creating two seperate plot objects and acting upon
+each as you would with any other plot. When showing the plot, instead of
+using the *.show* method, *.show_on(figure2)* is used, where figure2 is
+whatever you wish to add to the final plot.
+
+.. nbinput:: ipython3
+
+   import qexpy.error as e
+   import qexpy.plotting as p
+
+   x1 = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+   y1 = e.Measurement([5, 7, 11, 14, 17], [1], name='Applied Mass',
+	units='g')
+
+   figure1 = p.Plot(x1, y1)
+   figure1.fit('linear')
+   figure1.residual()
+
+   x2 = e.Measurement([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
+   y2 = e.Measurement([4, 8, 13, 12, 19], [1], name='Applied Mass',
+	units='g')
+   
+   figure2 = p.Plot(x2, y2)
+   figure2.fit('linear')
+   figure2.residual()
+
 .. todo:::
 
-   Add Bokeh object as attribute, allow return and entry of object
    Adjust _plot_function so that lines are plotted along x-xerr to x+xerr
    Test for compatibility with on ReadTheDocs
