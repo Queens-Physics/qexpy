@@ -614,8 +614,9 @@ the chain rule and the fact that the derivative of any expression can be
 reduced to some combination of elementary functions and operations.
 Consider the following function.</p>
 <div class="math">
-\[f(x,y) = \cos{xy}
-\implies \partial_x f(x,y) = y\cos{xy}\]\[Let\ xy = z\]\[\partial_x f(x,y) = \cos{z} \frac{\partial(z)}{\partial(x)} = y\cos{xy}\]</div>
+\[\begin{split}f(x,y) &amp;= \sin{xy} \\
+\implies \partial_x f(x,y) &amp;= y\cos{xy} \quad \textrm{Let} \quad z=xy \\
+\partial_x f(x,y) &amp;= \frac{\partial z}{\partial x} \cos{z} = y\cos{xy}\end{split}\]</div>
 <p>What this example illustrates is how, by considering an expression as a
 series of elementary operations and functions, the exact numerical
 derivative can be calculated.  All that is required is to be able to store

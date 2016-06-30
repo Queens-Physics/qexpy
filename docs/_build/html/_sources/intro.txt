@@ -14,7 +14,7 @@ in a steel beam as one end is deflected by a measured amount.
    import qexpy.error as e
    import qexpy.plotting as p
 
-   # This cell will load the package in a way that is shorter to type
+   # This cell will load the package
 	
 .. nbinput:: ipython3
    :execution-count: 2

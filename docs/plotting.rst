@@ -80,7 +80,7 @@ Linear: :math:`y=m x+b`
 
 Gaussian: :math:`y=\frac{1}{\sqrt{2 \pi \sigma}}\exp{-\frac{(x-\mu)^2}{\sigma}}`
 
-Polynomial: :math:`\sum_{i=0}^{N} a_i x^i` with parameters :math:`a_i`
+Polynomial: :math:`y=\sum_{i=0}^{N} a_i x^i` with parameters :math:`a_i`
 
 Once fitted, the parameters of a fit can be returned with the
 *.fit_parameters* method.
@@ -112,7 +112,7 @@ in the case of parameters with defined names, the name in a pretty format.
    figure.fit('linear')
    figure.print_fit()
 
-.. nbinput:: ipython3
+.. nboutput:: ipython3
 
    intercept = 3 +/- 1
    slope = 2 +/- 1
@@ -182,7 +182,7 @@ is acted on.
 
 This method is used by creating two seperate plot objects and acting upon
 each as you would with any other plot. When showing the plot, instead of
-using the *.show* method, *.show_on(figure2)* is used, where figure2 is
+using the *.show* method, *.show_on(figure2)* is used, where *figure2* is
 whatever you wish to add to the final plot.
 
 .. nbinput:: ipython3

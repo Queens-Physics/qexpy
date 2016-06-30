@@ -234,12 +234,9 @@ Consider the following function.
 
 .. math::
 
-   f(x,y) = \cos{xy}
-   \implies \partial_x f(x,y) = y\cos{xy}
-
-   Let\ xy = z
-
-   \partial_x f(x,y) = \cos{z} \frac{\partial(z)}{\partial(x)} = y\cos{xy}
+   f(x,y) &= \sin{xy} \\
+   \implies \partial_x f(x,y) &= y\cos{xy} \quad \textrm{Let} \quad z=xy \\
+   \partial_x f(x,y) &= \frac{\partial z}{\partial x} \cos{z} = y\cos{xy}
    
 What this example illustrates is how, by considering an expression as a
 series of elementary operations and functions, the exact numerical
