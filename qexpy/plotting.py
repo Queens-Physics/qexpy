@@ -6,6 +6,7 @@ import bokeh.plotting as bp
 import bokeh.io as bi
 
 ARRAY = (list, tuple, )
+CONSTANT = (int, float,)
 
 
 class Plot:
@@ -70,7 +71,8 @@ class Plot:
         data_transform(self, x, y, xerr, yerr)
 
         self.colors = {
-            'Data Points': 'red', 'Function': ['blue', 'green', 'orange'],
+            'Data Points': ['red', 'black'],
+            'Function': ['blue', 'green', 'orange'],
             'Error': 'red'}
         self.fit_method = 'linear'
         self.fit_function = Plot.fits[self.fit_method] # analysis:ignore
@@ -277,7 +279,12 @@ class Plot:
         different functions.
         '''
         if data is not None:
-            self.colors['Data Points'] = data
+            try:
+                len(data)
+            except TypeError:
+                self.colors['Data Points'][0] = data
+            else:
+                self.colors['Data Points'] = data
 
         if error is not None:
             self.colors['Error'] = error
@@ -414,9 +421,9 @@ class Plot:
             tools="pan, box_zoom, reset, save, wheel_zoom",
             width=self.dimensions[0], height=self.dimensions[1],
             y_axis_type=self.plot_para['yscale'],
-            y_range=self.y_range,
+            #  y_range=self.y_range,
             x_axis_type=self.plot_para['xscale'],
-            x_range=self.x_range,
+            #  x_range=self.x_range,
             title=self.attributes['title'],
             x_axis_label=self.attributes['xaxis'],
             y_axis_label=self.attributes['yaxis'],
@@ -502,13 +509,14 @@ class Plot:
             )
 
             # plot y errorbars
-            _error_bar(plot2, residual=True, plot_object=self)
+            _error_bar(plot2, residual=True, plot_object=self, color=1)
 
             gp_alt = bi.gridplot([[self.p], [self.p2], [self.p3]])
             bp.show(gp_alt)
 
 
-def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None):
+def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
+               color=None):
     '''Function to create a Bokeh glyph which appears to be a datapoint with
     an errorbar.
 
@@ -518,6 +526,15 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None):
     rectangles whose size is based on Bokeh 'size' which is based on screen
     size and thus does not get larger when zooming in on a plot.
     '''
+
+    if color is None:
+        data_color = self.colors['Data Points'][0]
+    elif type(color) is int:
+        data_color = self.colors['Data Points'][color]
+    else:
+        print('Color option must be an integer')
+        data_color = self.colors['Data Points'][0]
+
     if plot_object is None:
         if residual is False:
             p = self.p
@@ -559,7 +576,7 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None):
         y_data = [ydata.mean]
         _yerr = [ydata.std]
 
-    p.circle(_xdata, _ydata, color=self.colors['Data Points'], size=2)
+    p.circle(_xdata, _ydata, color=data_color, size=2)
 
     for _xdata, _ydata, _yerr in zip(_xdata, _ydata, _yerr):
         err_x1.append((_xdata, _xdata))
@@ -567,12 +584,12 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None):
         err_t1.append(_ydata+_yerr)
         err_b1.append(_ydata-_yerr)
 
-    p.multi_line(err_x1, err_d1, color=self.colors['Data Points'])
+    p.multi_line(err_x1, err_d1, color=data_color)
     p.rect(
         x=x_data*2, y=err_t1+err_b1,
         height=0.2, width=5,
         height_units='screen', width_units='screen',
-        color=self.colors['Data Points'])
+        color=data_color)
 
     if xdata is None:
         _xdata = list(self.xdata)
@@ -599,19 +616,19 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None):
         err_t2.append(_xdata+_xerr)
         err_b2.append(_xdata-_xerr)
 
-    p.multi_line(err_d2, err_y1, color=self.colors['Data Points'])
+    p.multi_line(err_d2, err_y1, color=data_color)
     if residual is True:
-        p.circle(x_data, y_res, color=self.colors['Data Points'], size=2)
+        p.circle(x_data, y_res, color=data_color, size=2)
 
         p.rect(
             x=err_t2+err_b2, y=y_res*2,
             height=5, width=0.2, height_units='screen', width_units='screen',
-            color=self.colors['Data Points'])
+            color=data_color)
     else:
         p.rect(
             x=err_t2+err_b2, y=y_data*2,
             height=5, width=0.2, height_units='screen', width_units='screen',
-            color=self.colors['Data Points'])
+            color=data_color)
 
 
 def show_bokeh(self, p, p2=None):
@@ -775,5 +792,6 @@ def update_plot(self, model='linear'):
         def update(m, b):
             import numpy as np
 
-            self.fit_line.data_source.data['y'] = np.multiply(m, self.fit_line.data_source.data['x']) + b
+            self.fit_line.data_source.data['y'] = np.multiply(
+                m, self.fit_line.data_source.data['x']) + b
             bi.push_notebook()
