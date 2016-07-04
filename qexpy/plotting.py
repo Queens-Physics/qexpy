@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import qexpy.error as e
+import error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -44,7 +44,7 @@ class Plot:
 
     def mgauss(x, pars):
         '''Altered gaussian function to handle measurement objects.'''
-        import qexpy.error_operations as op
+        import error_operations as op
         mean, std = pars
         return (2*pi*std**2)**(-1/2)*op.exp(-(x-mean)**2/2/std**2)
 
@@ -253,7 +253,7 @@ class Plot:
             bp.show(self.p)
         else:
 
-            self.p2 = bp.figure(
+            self.res = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=self.dimensions[0], height=self.dimensions[1]//2,
                 y_axis_type='linear',
@@ -268,7 +268,7 @@ class Plot:
             # plot y errorbars
             _error_bar(self, residual=True)
 
-            gp_alt = bi.gridplot([[self.p], [self.p2]])
+            gp_alt = bi.gridplot([[self.p], [self.res]])
             bp.show(gp_alt)
 
     def set_colors(self, data=None, error=None, line=None):
@@ -316,7 +316,7 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        import qexpy.error_operations as op
+        import error_operations as op
         data, function = op.check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
@@ -372,7 +372,7 @@ class Plot:
         if self.flag['residuals'] is False:
             return self.p
         else:
-            self.p2 = bp.figure(
+            self.res = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=self.dimensions[0], height=self.dimensions[1]//2,
                 y_axis_type='linear',
@@ -387,7 +387,7 @@ class Plot:
 
             # plot y errorbars
             _error_bar(self, residual=True)
-            return (self.p, self.p2)
+            return (self.p, self.res)
 
     def print_fit(self):
         if self.flag['Fitted'] is False:
@@ -431,7 +431,7 @@ class Plot:
 
         # add datapoints with errorbars
         _error_bar(self)
-        _error_bar(plot2, plot_object=self)
+        _error_bar(plot2, plot_object=self, color=1)
 
         if self.flag['Manual'] is True:
             _error_bar(self,
@@ -481,7 +481,7 @@ class Plot:
         elif self.flag['residuals'] is True and\
                 plot2.flag['residuals'] is True:
 
-            self.p2 = bp.figure(
+            self.res = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=self.dimensions[0], height=self.dimensions[1]//2,
                 y_axis_type='linear',
@@ -496,7 +496,7 @@ class Plot:
             # plot y errorbars
             _error_bar(self, residual=True)
 
-            self.p3 = bp.figure(
+            plot2.res = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=self.dimensions[0], height=self.dimensions[1]//2,
                 y_axis_type='linear',
@@ -509,9 +509,9 @@ class Plot:
             )
 
             # plot y errorbars
-            _error_bar(plot2, residual=True, plot_object=self, color=1)
+            _error_bar(plot2, residual=True, color=1)
 
-            gp_alt = bi.gridplot([[self.p], [self.p2], [self.p3]])
+            gp_alt = bi.gridplot([[self.p], [self.res], [plot2.res]])
             bp.show(gp_alt)
 
 
@@ -539,12 +539,12 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
         if residual is False:
             p = self.p
         else:
-            p = self.p2
+            p = self.res
     else:
         if residual is False:
             p = plot_object.p
         else:
-            p = plot_object.p3
+            p = plot_object.res
 
     err_x1 = []
     err_d1 = []
@@ -631,13 +631,13 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
             color=data_color)
 
 
-def show_bokeh(self, p, p2=None):
+def show_bokeh(self, p, res=None):
     self.p = p
-    if p2 is None:
+    if res is None:
         bp.show(p)
     else:
-        self.p2 = p2
-        gp_alt = bi.gridplot([[p], [p2]])
+        self.res = res
+        gp_alt = bi.gridplot([[p], [res]])
         bp.show(gp_alt)
 
 

@@ -142,7 +142,7 @@ Methods of Propagating Error
 
 While the default method of propagating error is the derivative formula,
 there are a number of other methods by which error can be calculated.
-In addition to the derivative method, this package is also capible of
+In addition to the derivative method, this package is also capable of
 calculating error by the Monte Carlo and min-max methods.  While this
 documentation will not go into detail about how these methods work, the
 output of each method is available by default, and a specific method can be

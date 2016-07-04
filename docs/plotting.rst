@@ -175,12 +175,12 @@ Plotting Multiple Datasets
 
 In many cases, multiple sets of data must be shown on a single plot,
 possibly with multiple residuals. In this case, the *.show_on(figure)*
-method is used to show the arguement on the plot of whichever plot object
+method is used to show the argument on the plot of whichever plot object
 is acted on. 
 
 .. automethod:: qexpy.plotting.Plot.show_on
 
-This method is used by creating two seperate plot objects and acting upon
+This method is used by creating two separate plot objects and acting upon
 each as you would with any other plot. When showing the plot, instead of
 using the *.show* method, *.show_on(figure2)* is used, where *figure2* is
 whatever you wish to add to the final plot.

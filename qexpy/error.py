@@ -328,7 +328,8 @@ class ExperimentalValue:
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
                      op.exp: 'exp', op.log: 'log', op.add: '+',
                      op.sub: '-', op.mul: '*', op.div: '/', op.power: '**',
-                     'neg': '-', atan: 'atan', }
+                     'neg': '-', op.asin: 'asin', op.acos: 'acos',
+                     op.atan: 'atan', }
 
         if func_flag is None and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
@@ -554,7 +555,9 @@ class ExperimentalValue:
                     op.tan: np.tan, op.atan: np.arctan,
                     op.csc: lambda x: np.divide(1, np.sin(x)),
                     op.sec: lambda x: np.divide(1, np.cos(x)),
-                    op.cot: lambda x: np.divide(1, np.tan(x)), }
+                    op.cot: lambda x: np.divide(1, np.tan(x)),
+                    op.asin: np.arcsin, op.acos: np.arccos, op.atan: np.arctan,
+                    }
 
         N = len(args)
         n = ExperimentalValue.mc_trial_number
@@ -754,6 +757,28 @@ def e(x):
     else:
         return op.operation_wrap(op.exp, x, func_flag=True)
     return op.operation_wrap(op.exp, x, func_flag=True)
+
+
+def asin(x):
+    import qexpy.error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.asin, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.asin, x, func_flag=True)
+
+
+def acos(x):
+    import qexpy.error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.acos, value, func_flag=True))
+        return result
+    else:
+        return op.operation_wrap(op.acos, x, func_flag=True)
 
 
 def atan(x):

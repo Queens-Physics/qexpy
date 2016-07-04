@@ -69,7 +69,9 @@ def check_formula(operation, a, b=None, func_flag=False):
     op_string = {
         sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
         cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
-        mul: '*', div: '/', power: '**', 'neg': '-', atan: 'atan', }
+        mul: '*', div: '/', power: '**', 'neg': '-', asin: 'asin',
+        acos: 'acos', atan: 'atan', }
+
     op = op_string[operation]
 
     # check_formula is not behanving properly, requires overwrite, disabled
@@ -214,6 +216,21 @@ def sin(x):
         return m.sin(x.mean)
 
 
+def asin(x):
+    '''Returns the arctangent of a measurement with propagated errors'''
+    import math as m
+
+    if type(x) in CONSTANT:
+        return m.asin(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.asin(x[i]))
+        return result
+    else:
+        return m.asin(x.mean)
+
+
 def cos(x):
     '''Returns the cosine of a measurement with propagated errors'''
     import math as m
@@ -229,6 +246,21 @@ def cos(x):
 
     else:
         return m.cos(x.mean)
+
+
+def acos(x):
+    '''Returns the arctangent of a measurement with propagated errors'''
+    import math as m
+
+    if type(x) in CONSTANT:
+        return m.acos(x)
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.acos(x[i]))
+        return result
+    else:
+        return m.acos(x.mean)
 
 
 def tan(x):
@@ -450,9 +482,12 @@ diff = {sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
         b.derivative[key]*m.log(abs(a.mean)) +
         b.mean/a.mean*a.derivative[key]),
 
-        atan: lambda key, x: 1/(1 + x.mean**2)*x.derivative[key]
+        asin: lambda key, x: (1-x.mean**2)**(-1/2)*x.derivative[key],
+        acos: lambda key, x: -(1-x.mean**2)**(-1/2)*x.derivative[key],
+        atan: lambda key, x: 1/(1 + x.mean**2)*x.derivative[key],
         }
 
 op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
              cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
-             mul: '*', div: '/', power: '**', }
+             mul: '*', div: '/', power: '**', asin: 'asin', acos: 'acos',
+             atan: 'atan', }
