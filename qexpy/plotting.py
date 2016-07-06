@@ -55,7 +55,7 @@ class Plot:
             'polynomial': polynomial,
             'gaussian': mgauss}
 
-    def __init__(self, x, y, xerr=None, yerr=None):
+    def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
         '''
         Constructor requiring two measeurement objects, or lists of data and
         error values.
@@ -83,8 +83,9 @@ class Plot:
                      'Manual': False} # analysis:ignore
         self.attributes = {
             'title': self.xname+' versus '+self.yname,
-            'xaxis': 'x '+self.xunits, 'yaxis': 'y '+self.yunits,
-            'data': 'Experiment', 'function': (), }
+            'xaxis': self.xname+' '+self.xunits,
+            'yaxis': self.yname+' '+self.yunits,
+            'data': data_name, 'function': (), }
         self.fit_parameters = ()
         self.yres = None
         self.function_counter = 0
@@ -180,6 +181,22 @@ class Plot:
         Functions are only plotted when a Bokeh object is created, thus user
         specified functions are stored to be plotted later.
         '''
+        if function(min(self.xdata)) > self.y_range[1] or\
+                function(max(self.xdata)) > self.y_range[1]:
+
+            if function(min(self.xdata)) > function(max(self.xdata)):
+                self.y_range[1] = function(min(self.xdata))
+            elif function(min(self.xdata)) < function(max(self.xdata)):
+                self.y_range[1] = function(max(self.xdata))
+
+        if function(min(self.xdata)) < self.y_range[0] or\
+                function(max(self.xdata)) < self.y_range[0]:
+
+            if function(min(self.xdata)) < function(max(self.xdata)):
+                self.y_range[0] = function(min(self.xdata))
+            elif function(min(self.xdata)) > function(max(self.xdata)):
+                self.y_range[0] = function(max(self.xdata))
+
         self.attributes['function'] += (function,)
 
     def plot_range(self, x_range=None, y_range=None):
@@ -353,7 +370,8 @@ class Plot:
             self.mfit_function = Plot.mfits[self.fit_method]
             _plot_function(
                 self, self.xdata,
-                lambda x: self.mfit_function(x, self.fit_parameters))
+                lambda x: self.mfit_function(x, self.fit_parameters),
+                legend_name='Fit')
 
             self.function_counter += 1
 
@@ -416,6 +434,12 @@ class Plot:
             bi.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
 
+        if min(plot2.xdata) < self.y_range[0]:
+            self.y_range[0] = min(plot2.xdata)
+
+        if max(plot2.xdata) > self.y_range[1]:
+            self.y_range[1] = max(plot2.xdata)
+
         # create a new plot
         self.p = bp.figure(
             tools="pan, box_zoom, reset, save, wheel_zoom",
@@ -448,7 +472,8 @@ class Plot:
                     max(self.xdata)+max(self.xerr)]
             _plot_function(
                 self, data,
-                lambda x: self.fit_function(x, self.fit_parameters))
+                lambda x: self.fit_function(x, self.fit_parameters),
+                legend_name='Fit')
 
             self.function_counter += 1
 
@@ -465,7 +490,8 @@ class Plot:
                     max(plot2.xdata)+max(plot2.xerr)]
             _plot_function(
                 self, data,
-                lambda x: plot2.fit_function(x, plot2.fit_parameters))
+                lambda x: plot2.fit_function(x, plot2.fit_parameters),
+                legend_name='Second Fit')
 
             self.function_counter += 1
 
@@ -546,6 +572,16 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
         else:
             p = plot_object.res
 
+    if residual is True:
+        data_name = None
+    elif type(self.attributes['data']) is str:
+        data_name = self.attributes['data']
+    else:
+        if plot_object is None:
+            data_name = 'Data'
+        else:
+            data_name = 'Second Data'
+
     err_x1 = []
     err_d1 = []
     err_y1 = []
@@ -576,7 +612,7 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
         y_data = [ydata.mean]
         _yerr = [ydata.std]
 
-    p.circle(_xdata, _ydata, color=data_color, size=2)
+    p.circle(_xdata, _ydata, color=data_color, size=2, legend=data_name)
 
     for _xdata, _ydata, _yerr in zip(_xdata, _ydata, _yerr):
         err_x1.append((_xdata, _xdata))
@@ -584,12 +620,13 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
         err_t1.append(_ydata+_yerr)
         err_b1.append(_ydata-_yerr)
 
-    p.multi_line(err_x1, err_d1, color=data_color)
+    p.multi_line(err_x1, err_d1, color=data_color, legend=data_name)
     p.rect(
         x=x_data*2, y=err_t1+err_b1,
         height=0.2, width=5,
         height_units='screen', width_units='screen',
-        color=data_color)
+        color=data_color,
+        legend=data_name)
 
     if xdata is None:
         _xdata = list(self.xdata)
@@ -616,7 +653,7 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
         err_t2.append(_xdata+_xerr)
         err_b2.append(_xdata-_xerr)
 
-    p.multi_line(err_d2, err_y1, color=data_color)
+    p.multi_line(err_d2, err_y1, color=data_color, legend=data_name)
     if residual is True:
         p.circle(x_data, y_res, color=data_color, size=2)
 
@@ -628,7 +665,7 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
         p.rect(
             x=err_t2+err_b2, y=y_data*2,
             height=5, width=0.2, height_units='screen', width_units='screen',
-            color=data_color)
+            color=data_color, legend=data_name)
 
 
 def show_bokeh(self, p, res=None):
@@ -731,7 +768,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
     self.yname = yname
 
 
-def _plot_function(self, xdata, theory, n=1000):
+def _plot_function(self, xdata, theory, n=1000, legend_name=None):
     '''Semi-privite function to plot a function over a given range of values.
 
     Curves are generated by creating a series of lines between points, the
@@ -748,7 +785,7 @@ def _plot_function(self, xdata, theory, n=1000):
         for i in range(n):
             x_mid.append(theory(xrange[i]))
         self.fit_line = self.p.line(
-            xrange, x_mid, legend='Theoretical',
+            xrange, x_mid, legend=legend_name,
             line_color=self.colors['Function'][self.function_counter])
 
     else:
@@ -760,7 +797,7 @@ def _plot_function(self, xdata, theory, n=1000):
             x_max.append(x_theory.mean+x_theory.std)
             x_min.append(x_theory.mean-x_theory.std)
         self.fit_line = self.p.line(
-            xrange, x_mid, legend='Theoretical',
+            xrange, x_mid, legend=legend_name,
             line_color=self.colors['Function'][self.function_counter])
 
         xrange_reverse = list(reversed(xrange))
@@ -773,7 +810,8 @@ def _plot_function(self, xdata, theory, n=1000):
             fill_alpha=0.3,
             fill_color=self.colors['Function'][self.function_counter],
             line_color=self.colors['Function'][self.function_counter],
-            line_dash='dashed', line_alpha=0.3)
+            line_dash='dashed', line_alpha=0.3,
+            legend=legend_name)
 
 
 def update_plot(self, model='linear'):
