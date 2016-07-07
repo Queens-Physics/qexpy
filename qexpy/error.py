@@ -14,8 +14,9 @@ class ExperimentalValue:
     id_register = {}
 
     # Defining common types under single arrayclear
-    CONSTANT = (int, float,)
-    ARRAY = (list, tuple,)
+    from numpy import int64, float64, ndarray, int32, float32
+    CONSTANT = (int, float, int64, float64, int32, float32)
+    ARRAY = (list, tuple, ndarray)
     try:
         import numpy
     except ImportError:
@@ -414,6 +415,9 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.add, self, value))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return other+self
         else:
             return op.operation_wrap(op.add, self, other)
 
@@ -424,6 +428,9 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.add, self, value))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return other+self
         else:
             return op.operation_wrap(op.add, self, other)
 
@@ -434,6 +441,9 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.mul, self, value))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return other*self
         else:
             return op.operation_wrap(op.mul, self, other)
 
@@ -444,6 +454,9 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.mul, self, value))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return other*self
         else:
             return op.operation_wrap(op.mul, self, other)
 
@@ -451,9 +464,13 @@ class ExperimentalValue:
         import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
+            print(other.mean)
             for value in other:
                 result.append(op.operation_wrap(op.sub, self, value))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return self-other
         else:
             return op.operation_wrap(op.sub, self, other)
 
@@ -464,6 +481,9 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.sub, value, self))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return other-self
         else:
             return op.operation_wrap(op.sub, other, self)
 
@@ -474,6 +494,9 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.div, self, value))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return self/other
         else:
             return op.operation_wrap(op.div, self, other)
 
@@ -484,6 +507,9 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.div, value, self))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return other/self
         else:
             return op.operation_wrap(op.div, other, self)
 
@@ -494,6 +520,9 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.power, self, value))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return self**other
         else:
             return op.operation_wrap(op.power, self, other)
 
@@ -504,8 +533,21 @@ class ExperimentalValue:
             for value in other:
                 result.append(op.operation_wrap(op.power, value, self))
             return result
+        elif type(self) in ExperimentalValue.CONSTANT and\
+                type(other) in ExperimentalValue.CONSTANT:
+            return other**self
         else:
             return op.operation_wrap(op.power, other, self)
+
+    def sqrt(x):
+        if x.mean < 0:
+            print('Imaginary numbers are no supported in QExPy.')
+        elif type(x) in ExperimentalValue.CONSTANT:
+            import math as m
+            return m.sqrt(x)
+        else:
+            import error_operations as op
+            return op.operation_wrap(op.power, x, 1/2)
 
     def __neg__(self):
         import error_operations as op
@@ -627,7 +669,7 @@ class Measurement(ExperimentalValue):
                 self.units[units] = 1
             else:
                 for i in range(len(units)//2):
-                    self.units[units[2*i]] = units[i+1]
+                    self.units[units[2*i]] = units[2*i+1]
         self.type = "ExperimentalValue"
         self.info['ID'] = 'var%d' % (Measurement.id_number)
         self.info['Formula'] = 'var%d' % (Measurement.id_number)
@@ -659,6 +701,17 @@ class Constant(ExperimentalValue):
         self.root = ()
 
 
+def sqrt(x):
+    if x.mean < 0:
+        print('Imaginary numbers are no supported in QExPy.')
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.sqrt(x)
+    else:
+        import error_operations as op
+        return op.operation_wrap(op.power, x, 1/2)
+
+
 def sin(x):
     import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
@@ -666,6 +719,9 @@ def sin(x):
         for value in x:
             result.append(op.operation_wrap(op.sin, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.sin(x)
     else:
         return op.operation_wrap(op.sin, x, func_flag=True)
 
@@ -677,6 +733,9 @@ def cos(x):
         for value in x:
             result.append(op.operation_wrap(op.cos, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.cos(x)
     else:
         return op.operation_wrap(op.cos, x, func_flag=True)
 
@@ -688,6 +747,9 @@ def tan(x):
         for value in x:
             result.append(op.operation_wrap(op.tan, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.tan(x)
     else:
         return op.operation_wrap(op.tan, x, func_flag=True)
 
@@ -699,6 +761,9 @@ def sec(x):
         for value in x:
             result.append(op.operation_wrap(op.sec, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return 1/m.cos(x)
     else:
         return op.operation_wrap(op.sec, x, func_flag=True)
 
@@ -710,6 +775,9 @@ def csc(x):
         for value in x:
             result.append(op.operation_wrap(op.csc, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return 1/m.sin(x)
     else:
         return op.operation_wrap(op.csc, x, func_flag=True)
 
@@ -721,6 +789,9 @@ def cot(x):
         for value in x:
             result.append(op.operation_wrap(op.cot, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return 1/m.tan(x)
     else:
         return op.operation_wrap(op.cot, x, func_flag=True)
 
@@ -732,6 +803,9 @@ def log(x):
         for value in x:
             result.append(op.operation_wrap(op.log, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.log(x)
     else:
         return op.operation_wrap(op.log, x, func_flag=True)
 
@@ -743,6 +817,9 @@ def exp(x):
         for value in x:
             result.append(op.operation_wrap(op.exp, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.exp(x)
     else:
         return op.operation_wrap(op.exp, x, func_flag=True)
 
@@ -754,9 +831,11 @@ def e(x):
         for value in x:
             result.append(op.operation_wrap(op.exp, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.exp(x)
     else:
         return op.operation_wrap(op.exp, x, func_flag=True)
-    return op.operation_wrap(op.exp, x, func_flag=True)
 
 
 def asin(x):
@@ -766,6 +845,9 @@ def asin(x):
         for value in x:
             result.append(op.operation_wrap(op.asin, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.asin(x)
     else:
         return op.operation_wrap(op.asin, x, func_flag=True)
 
@@ -777,6 +859,9 @@ def acos(x):
         for value in x:
             result.append(op.operation_wrap(op.acos, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.acos(x)
     else:
         return op.operation_wrap(op.acos, x, func_flag=True)
 
@@ -788,6 +873,9 @@ def atan(x):
         for value in x:
             result.append(op.operation_wrap(op.atan, value, func_flag=True))
         return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.atan(x)
     else:
         return op.operation_wrap(op.atan, x, func_flag=True)
 

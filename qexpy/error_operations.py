@@ -1,6 +1,6 @@
-from numpy import int64, float64, ndarray
+from numpy import int64, float64, ndarray, int32, float32
 import math as m
-CONSTANT = (int, float, int64, float64, )
+CONSTANT = (int, float, int64, float64, int32, float32)
 ARRAY = (list, tuple, ndarray)
 
 
@@ -118,7 +118,11 @@ def add(a, b):
     is also specifed by applying the chain rule to the input and the
     derivative of the inputs.
     '''
-    if type(a) in CONSTANT:
+    if type(a) in ARRAY or type(b) in ARRAY:
+        import numpy as np
+        return np.add(a, b)
+
+    elif type(a) in CONSTANT:
         if type(b) in CONSTANT:
             return a+b
         else:
@@ -141,6 +145,10 @@ def sub(a, b):
     '''
     Returns a measurement object that is the subtraction of two measurements.
     '''
+    if type(a) in ARRAY or type(b) in ARRAY:
+        import numpy as np
+        return np.subtract(a, b)
+
     if type(a) in CONSTANT:
         if type(b) in CONSTANT:
             return a-b
@@ -156,6 +164,10 @@ def sub(a, b):
 
 def mul(a, b):
     '''Returns the product of two values with propagated errors.'''
+    if type(a) in ARRAY or type(b) in ARRAY:
+        import numpy as np
+        return np.multiply(a, b)
+
     if type(a) in CONSTANT:
         if type(b) in CONSTANT:
             return a*b
@@ -171,6 +183,10 @@ def mul(a, b):
 
 def div(a, b):
     '''Returns the quotient of two values with propagated errors.'''
+    if type(a) in ARRAY or type(b) in ARRAY:
+        import numpy as np
+        return np.divide(a, b)
+
     if type(a) in CONSTANT:
         if type(b) in CONSTANT:
             return a/b
@@ -186,6 +202,10 @@ def div(a, b):
 
 def power(a, b):
     '''Returns the power of two values with propagated errors.'''
+    if type(a) in ARRAY or type(b) in ARRAY:
+        import numpy as np
+        return np.power(a, b)
+
     if type(a) in CONSTANT:
         if type(b) in CONSTANT:
             return a**b
@@ -448,11 +468,13 @@ def operation_wrap(operation, *args, func_flag=False):
             and args[1].info['Data'] is not None\
             and len(args[0].info['Data']) == len(args[1].info['Data']):
         for i in range(len(args[0].info['Data'])):
+            result.info['Data'] = []
             result.info["Data"].append(
                         operation(args[0].info["Data"][i],
                                   args[1].info["Data"][i]))
 
     elif args[0].info["Data"] is not None and func_flag is True:
+        result.info['Data'] = []
         result.info["Data"].append(operation(args[0].info["Data"]))
 
     result.derivative.update(df)

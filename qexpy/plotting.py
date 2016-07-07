@@ -4,9 +4,10 @@ import error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
+from numpy import int64, float64, ndarray, int32, float32
 
-ARRAY = (list, tuple, )
-CONSTANT = (int, float,)
+CONSTANT = (int, float, int64, float64, int32, float32)
+ARRAY = (list, tuple, ndarray)
 
 
 class Plot:
@@ -32,7 +33,7 @@ class Plot:
 
     def gauss(x, pars):
         '''Fucntion of gaussian distribution'''
-        from numpy import exp
+        from error import exp
         mean, std = pars
         return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
 
@@ -102,7 +103,7 @@ class Plot:
             Plot.fit(self.fit_function)
 
         # Calculate residual values
-        yfit = self.fit_function(self.xdata, self.pars_fit)
+        yfit = self.fit_function(self.xdata, *self.pars_fit)
         # Generate a set of residuals for the fit
         self.yres = self.ydata-yfit
 
@@ -131,17 +132,27 @@ class Plot:
 
         if model is not None:
             if type(model) is not str:
-                self.fit_function = model
                 self.flag['Unknown Function'] = True
+                self.fit_function = model
+
             elif model[0] is 'p' and model[1] is 'o':
-                model = 'polynomial'
+                self.fit_function = Plot.fits['polynomial']
+
+                def model(x, *pars):
+                    return self.fit_function(x, pars)
+
             else:
                 self.fit_method = model
+                self.fit_function = Plot.fits[model]
 
-        self.fit_function = Plot.fits[self.fit_method]
+                def model(x, *pars):
+                    return self.fit_function(x, pars)
+        else:
+            self.fit_method = 'linear'
+            self.fit_function = Plot.fits[model]
 
-        def model(x, *pars):
-            return self.fit_function(x, pars)
+            def model(x, *pars):
+                return self.fit_function(x, pars)
 
         pars_guess = guess
 
@@ -250,7 +261,7 @@ class Plot:
                     max(self.xdata)+max(self.xerr)]
             _plot_function(
                 self, data,
-                lambda x: self.fit_function(x, self.fit_parameters))
+                lambda x: self.fit_function(x, *self.fit_parameters))
 
             self.function_counter += 1
 
@@ -277,7 +288,6 @@ class Plot:
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
                 x_range=self.x_range,
-                title="Residual Plot",
                 x_axis_label=self.attributes['xaxis'],
                 y_axis_label='Residuals'
             )
@@ -398,7 +408,6 @@ class Plot:
                          max(self.yres)+2*max(self.yerr)],
                 x_range=[min(self.xdata)-2*max(self.xerr),
                          max(self.xdata)+2*max(self.xerr)],
-                title="Residual Plot",
                 x_axis_label=self.attributes['xaxis'],
                 y_axis_label='Residuals'
             )
@@ -514,9 +523,8 @@ class Plot:
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
                 x_range=self.x_range,
-                title="Residual Plot",
                 x_axis_label=self.attributes['xaxis'],
-                y_axis_label='Residuals'
+                y_axis_label='Residuals',
             )
 
             # plot y errorbars
@@ -529,7 +537,6 @@ class Plot:
                 y_range=[min(plot2.yres)-2*max(plot2.yerr),
                          max(plot2.yres)+2*max(plot2.yerr)],
                 x_range=plot2.x_range,
-                title="Residual Plot",
                 x_axis_label=plot2.attributes['xaxis'],
                 y_axis_label='Residuals'
             )
@@ -689,7 +696,10 @@ def data_transform(self, x, y, xerr=None, yerr=None):
     and the name of datasets are stored.'''
     if xerr is None:
         xdata = x.info['Data']
-        x_error = x.info['Error']
+        if x.info['Error'] is not None:
+            x_error = x.info['Error']
+        else:
+            x_error = [0]*len(xdata)
     else:
         try:
             x.type
@@ -704,7 +714,10 @@ def data_transform(self, x, y, xerr=None, yerr=None):
 
     if yerr is None:
         ydata = y.info['Data']
-        y_error = y.info['Error']
+        if y.info['Error'] is not None:
+            y_error = y.info['Error']
+        else:
+            y_error = [0]*len(ydata)
     else:
         try:
             y.type
