@@ -4,6 +4,7 @@ import error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
+import bokeh.models as mo
 from numpy import int64, float64, ndarray, int32, float32
 
 CONSTANT = (int, float, int64, float64, int32, float32)
@@ -43,19 +44,6 @@ class Plot:
             'polynomial': polynomial,
             'gaussian': gauss}
 
-    def mgauss(x, pars):
-        '''Altered gaussian function to handle measurement objects.'''
-        import error_operations as op
-        mean, std = pars
-        return (2*pi*std**2)**(-1/2)*op.exp(-(x-mean)**2/2/std**2)
-
-    mfits = {
-            # 'linear': lambda x, pars: pars[0]+pars[1]*x,
-            'linear': lambda x, pars: pars[0]+np.multiply(pars[1], x),
-            'exponential': lambda x, pars: np.exp(pars[0]+pars[1]*x),
-            'polynomial': polynomial,
-            'gaussian': mgauss}
-
     def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
         '''
         Constructor requiring two measeurement objects, or lists of data and
@@ -77,7 +65,6 @@ class Plot:
             'Error': 'red'}
         self.fit_method = 'linear'
         self.fit_function = Plot.fits[self.fit_method] # analysis:ignore
-        self.mfit_function = Plot.mfits[self.fit_method]
         self.plot_para = {
             'xscale': 'linear', 'yscale': 'linear', 'filename': 'Plot'}
         self.flag = {'fitted': False, 'residuals': False,
@@ -133,6 +120,7 @@ class Plot:
         if model is not None:
             if type(model) is not str:
                 self.flag['Unknown Function'] = True
+                self.fit_method = None
                 self.fit_function = model
 
             elif model[0] is 'p' and model[1] is 'o':
@@ -180,7 +168,7 @@ class Plot:
                 elif i is 1:
                     name = 'slope'
             else:
-                name = 'parameter %d' % (i)
+                name = 'par %d' % (i)
 
             self.fit_parameters += (
                 e.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
@@ -222,81 +210,6 @@ class Plot:
         elif y_range is not None:
             print('''Y range must be a list containing a minimun and maximum
             value for the range of the plot.''')
-
-    def show(self, output='inline'):
-        '''
-        Method which creates and displays plot.
-        Previous methods sumply edit parameters which are used here, to
-        prevent run times increasing due to rebuilding the bokeh plot object.
-        '''
-        if output is 'inline':
-            bi.output_notebook()
-        elif output is 'file':
-            bi.output_file(self.plot_para['filename']+'.html',
-                           title=self.attributes['title'])
-
-        # create a new plot
-        self.p = bp.figure(
-            tools="pan, box_zoom, reset, save, wheel_zoom",
-            width=self.dimensions[0], height=self.dimensions[1],
-            y_axis_type=self.plot_para['yscale'],
-            y_range=self.y_range,
-            x_axis_type=self.plot_para['xscale'],
-            x_range=self.x_range,
-            title=self.attributes['title'],
-            x_axis_label=self.attributes['xaxis'],
-            y_axis_label=self.attributes['yaxis'],
-        )
-
-        # add datapoints with errorbars
-        _error_bar(self)
-
-        if self.flag['Manual'] is True:
-            _error_bar(self,
-                       xdata=self.manual_data[0], ydata=self.manual_data[1])
-
-        if self.flag['fitted'] is True:
-            self.mfit_function = Plot.mfits[self.fit_method]
-            data = [min(self.xdata)-max(self.xerr),
-                    max(self.xdata)+max(self.xerr)]
-            _plot_function(
-                self, data,
-                lambda x: self.fit_function(x, *self.fit_parameters))
-
-            self.function_counter += 1
-
-            if self.fit_parameters[1].mean > 0:
-                self.p.legend.location = "top_left"
-            else:
-                self.p.legend.location = "top_right"
-        else:
-            self.p.legend.location = 'top_right'
-
-        for func in self.attributes['function']:
-            _plot_function(
-                self, self.xdata, func)
-            self.function_counter += 1
-
-        if self.flag['residuals'] is False:
-            bp.show(self.p)
-        else:
-
-            self.res = bp.figure(
-                tools="pan, box_zoom, reset, save, wheel_zoom",
-                width=self.dimensions[0], height=self.dimensions[1]//2,
-                y_axis_type='linear',
-                y_range=[min(self.yres)-2*max(self.yerr),
-                         max(self.yres)+2*max(self.yerr)],
-                x_range=self.x_range,
-                x_axis_label=self.attributes['xaxis'],
-                y_axis_label='Residuals'
-            )
-
-            # plot y errorbars
-            _error_bar(self, residual=True)
-
-            gp_alt = bi.gridplot([[self.p], [self.res]])
-            bp.show(gp_alt)
 
     def set_colors(self, data=None, error=None, line=None):
         '''Method to changes colors of data or function lines.
@@ -348,6 +261,21 @@ class Plot:
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
 
+    def print_fit(self):
+        if self.flag['Fitted'] is False:
+            print('''Please create a fit of the data using .fit to find the
+            fit parameters.''')
+        else:
+            for par in self.fit_parameters:
+                print(par)
+
+    def resize_plot(self, width=None, height=None):
+        if width is None:
+            width = 600
+        if height is None:
+            height = 400
+        self.dimensions[width, height]
+
     def return_bokeh(self):
         '''Return Bokeh plot object for the plot acted upon.
 
@@ -377,10 +305,9 @@ class Plot:
                        xdata=self.manual_data[0], ydata=self.manual_data[1])
 
         if self.flag['fitted'] is True:
-            self.mfit_function = Plot.mfits[self.fit_method]
             _plot_function(
                 self, self.xdata,
-                lambda x: self.mfit_function(x, self.fit_parameters),
+                lambda x: self.fit_function(x, self.fit_parameters),
                 legend_name='Fit')
 
             self.function_counter += 1
@@ -416,20 +343,90 @@ class Plot:
             _error_bar(self, residual=True)
             return (self.p, self.res)
 
-    def print_fit(self):
-        if self.flag['Fitted'] is False:
-            print('''Please create a fit of the data using .fit to find the
-            fit parameters.''')
-        else:
-            for par in self.fit_parameters:
-                print(par)
+    def show(self, output='inline'):
+        '''
+        Method which creates and displays plot.
+        Previous methods sumply edit parameters which are used here, to
+        prevent run times increasing due to rebuilding the bokeh plot object.
+        '''
+        if output is 'inline':
+            bi.output_notebook()
+        elif output is 'file':
+            bi.output_file(self.plot_para['filename']+'.html',
+                           title=self.attributes['title'])
 
-    def resize_plot(self, width=None, height=None):
-        if width is None:
-            width = 600
-        if height is None:
-            height = 400
-        self.dimensions[width, height]
+        # create a new plot
+        self.p = bp.figure(
+            width=self.dimensions[0], height=self.dimensions[1],
+            y_axis_type=self.plot_para['yscale'],
+            y_range=self.y_range,
+            x_axis_type=self.plot_para['xscale'],
+            x_range=self.x_range,
+            title=self.attributes['title'],
+            x_axis_label=self.attributes['xaxis'],
+            y_axis_label=self.attributes['yaxis'],
+        )
+
+        # add datapoints with errorbars
+        _error_bar(self)
+
+        if self.flag['Manual'] is True:
+            _error_bar(self,
+                       xdata=self.manual_data[0], ydata=self.manual_data[1])
+
+        if self.flag['fitted'] is True:
+            data = [min(self.xdata)-max(self.xerr),
+                    max(self.xdata)+max(self.xerr)]
+            _plot_function(
+                self, data,
+                lambda x: self.fit_function(x, *self.fit_parameters))
+
+            for i in range(len(self.fit_parameters)):
+                citation = mo.Label(x=590, y=320+20*i,
+                                    text_align='right',
+                                    text_baseline='top',
+                                    text_font_size='11pt',
+                                    x_units='screen',
+                                    y_units='screen',
+                                    text=self.fit_parameters[i].__str__(),
+                                    render_mode='css',
+                                    background_fill_color='white',
+                                    background_fill_alpha=1.0)
+                self.p.add_layout(citation)
+
+            self.function_counter += 1
+
+            if self.fit_parameters[1].mean > 0:
+                self.p.legend.location = "top_left"
+            else:
+                self.p.legend.location = "top_right"
+        else:
+            self.p.legend.location = 'top_right'
+
+        for func in self.attributes['function']:
+            _plot_function(
+                self, self.xdata, func)
+            self.function_counter += 1
+
+        if self.flag['residuals'] is False:
+            bp.show(self.p)
+        else:
+
+            self.res = bp.figure(
+                width=self.dimensions[0], height=self.dimensions[1]//3,
+                y_axis_type='linear',
+                y_range=[min(self.yres)-2*max(self.yerr),
+                         max(self.yres)+2*max(self.yerr)],
+                x_range=self.x_range,
+                x_axis_label=self.attributes['xaxis'],
+                y_axis_label='Residuals'
+            )
+
+            # plot y errorbars
+            _error_bar(self, residual=True)
+
+            gp_alt = bi.gridplot([[self.p], [self.res]])
+            bp.show(gp_alt)
 
     def show_on(self, plot2, output='inline'):
         '''
@@ -451,7 +448,6 @@ class Plot:
 
         # create a new plot
         self.p = bp.figure(
-            tools="pan, box_zoom, reset, save, wheel_zoom",
             width=self.dimensions[0], height=self.dimensions[1],
             y_axis_type=self.plot_para['yscale'],
             #  y_range=self.y_range,
@@ -476,7 +472,6 @@ class Plot:
                        plot_object=self)
 
         if self.flag['fitted'] is True:
-            self.mfit_function = Plot.mfits[self.fit_method]
             data = [min(self.xdata)-max(self.xerr),
                     max(self.xdata)+max(self.xerr)]
             _plot_function(
@@ -494,7 +489,6 @@ class Plot:
             self.p.legend.location = 'top_right'
 
         if plot2.flag['fitted'] is True:
-            plot2.mfit_function = Plot.mfits[plot2.fit_method]
             data = [min(plot2.xdata)-max(plot2.xerr),
                     max(plot2.xdata)+max(plot2.xerr)]
             _plot_function(
@@ -517,7 +511,6 @@ class Plot:
                 plot2.flag['residuals'] is True:
 
             self.res = bp.figure(
-                tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=self.dimensions[0], height=self.dimensions[1]//2,
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
@@ -531,7 +524,6 @@ class Plot:
             _error_bar(self, residual=True)
 
             plot2.res = bp.figure(
-                tools="pan, box_zoom, reset, save, wheel_zoom",
                 width=self.dimensions[0], height=self.dimensions[1]//2,
                 y_axis_type='linear',
                 y_range=[min(plot2.yres)-2*max(plot2.yerr),
@@ -673,16 +665,6 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
             x=err_t2+err_b2, y=y_data*2,
             height=5, width=0.2, height_units='screen', width_units='screen',
             color=data_color, legend=data_name)
-
-
-def show_bokeh(self, p, res=None):
-    self.p = p
-    if res is None:
-        bp.show(p)
-    else:
-        self.res = res
-        gp_alt = bi.gridplot([[p], [res]])
-        bp.show(gp_alt)
 
 
 def data_transform(self, x, y, xerr=None, yerr=None):
