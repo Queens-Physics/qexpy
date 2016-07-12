@@ -206,6 +206,8 @@ whatever you wish to add to the final plot.
    figure2.fit('linear')
    figure2.residual()
 
+   figure1.show_on(figure2)
+
 .. todo:::
 
    Adjust _plot_function so that lines are plotted along x-xerr to x+xerr

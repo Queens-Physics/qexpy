@@ -22,7 +22,7 @@ class Plot:
     which mimic errorbars and data points.
     '''
 
-    def polynomial(x, pars):
+    def polynomial(x, *pars):
         '''Function for a polynomial of nth order, requiring n pars.'''
         poly = 0
         n = 0
@@ -32,15 +32,14 @@ class Plot:
             n += 1
         return poly
 
-    def gauss(x, pars):
+    def gauss(x, mean, std):
         '''Fucntion of gaussian distribution'''
         from error import exp
-        mean, std = pars
         return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
 
     fits = {
-            'linear': lambda x, pars: pars[0]+np.multiply(pars[1], x),
-            'exponential': lambda x, pars: np.exp(pars[0]+pars[1]*x),
+            'linear': lambda x, b, m: b+np.multiply(m, x),
+            'exponential': lambda x, b, m: np.exp(b+m*x),
             'polynomial': polynomial,
             'gaussian': gauss}
 
@@ -108,6 +107,8 @@ class Plot:
         parameters, an inital guess of the parameters in the form of a
         list of values must be provided.
         '''
+        import numpy as np
+
         if guess is None:
             if model == 'linear':
                 guess = [1, 1]
@@ -127,20 +128,20 @@ class Plot:
                 self.fit_function = Plot.fits['polynomial']
 
                 def model(x, *pars):
-                    return self.fit_function(x, pars)
+                    return self.fit_function(x, *pars)
 
             else:
                 self.fit_method = model
                 self.fit_function = Plot.fits[model]
 
                 def model(x, *pars):
-                    return self.fit_function(x, pars)
+                    return self.fit_function(x, *pars)
         else:
             self.fit_method = 'linear'
             self.fit_function = Plot.fits[model]
 
             def model(x, *pars):
-                return self.fit_function(x, pars)
+                return self.fit_function(x, *pars)
 
         pars_guess = guess
 
@@ -156,6 +157,21 @@ class Plot:
                                     model, data_range, self.ydata,
                                     sigma=self.yerr, p0=pars_guess)
         self.pars_err = np.sqrt(np.diag(self.pcov))
+        print(self.pars_fit)
+
+        if self.xerr is not None:
+            yerr_eff = np.power(
+                (np.power(self.yerr, 2) +
+                np.power(np.multiply(self.xerr, #analysis:ignore
+                num_der(lambda x: model(x, *self.pars_fit) , #analysis:ignore
+                self.xdata)), 2)), 1/2) #analysis:ignore
+
+            self.pars_fit, self.pcov = sp.curve_fit(
+                                        model, data_range, self.ydata,
+                                        sigma=yerr_eff, p0=pars_guess)
+            self.pars_err = np.sqrt(np.diag(self.pcov))
+            print(self.pars_fit)
+
         for i in range(len(self.pars_fit)):
             if self.fit_method is 'gaussian':
                 if i is 0:
@@ -307,7 +323,7 @@ class Plot:
         if self.flag['fitted'] is True:
             _plot_function(
                 self, self.xdata,
-                lambda x: self.fit_function(x, self.fit_parameters),
+                lambda x: self.fit_function(x, *self.fit_parameters),
                 legend_name='Fit')
 
             self.function_counter += 1
@@ -329,7 +345,7 @@ class Plot:
         else:
             self.res = bp.figure(
                 tools="pan, box_zoom, reset, save, wheel_zoom",
-                width=self.dimensions[0], height=self.dimensions[1]//2,
+                width=self.dimensions[0], height=self.dimensions[1]//3,
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
@@ -476,7 +492,7 @@ class Plot:
                     max(self.xdata)+max(self.xerr)]
             _plot_function(
                 self, data,
-                lambda x: self.fit_function(x, self.fit_parameters),
+                lambda x: self.fit_function(x, *self.fit_parameters),
                 legend_name='Fit')
 
             self.function_counter += 1
@@ -493,7 +509,7 @@ class Plot:
                     max(plot2.xdata)+max(plot2.xerr)]
             _plot_function(
                 self, data,
-                lambda x: plot2.fit_function(x, plot2.fit_parameters),
+                lambda x: plot2.fit_function(x, *plot2.fit_parameters),
                 legend_name='Second Fit')
 
             self.function_counter += 1
@@ -511,7 +527,7 @@ class Plot:
                 plot2.flag['residuals'] is True:
 
             self.res = bp.figure(
-                width=self.dimensions[0], height=self.dimensions[1]//2,
+                width=self.dimensions[0], height=self.dimensions[1]//3,
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
@@ -524,7 +540,7 @@ class Plot:
             _error_bar(self, residual=True)
 
             plot2.res = bp.figure(
-                width=self.dimensions[0], height=self.dimensions[1]//2,
+                width=self.dimensions[0], height=self.dimensions[1]//3,
                 y_axis_type='linear',
                 y_range=[min(plot2.yres)-2*max(plot2.yerr),
                          max(plot2.yres)+2*max(plot2.yerr)],
@@ -828,3 +844,12 @@ def update_plot(self, model='linear'):
             self.fit_line.data_source.data['y'] = np.multiply(
                 m, self.fit_line.data_source.data['x']) + b
             bi.push_notebook()
+
+
+def num_der(function, point, dx=1e-10):
+    '''
+    Returns the first order derivative of a function.
+    '''
+    import numpy as np
+    point = np.array(point)
+    return np.divide(function(point+dx)-function(point), dx)
