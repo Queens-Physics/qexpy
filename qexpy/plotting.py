@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import error as e
+import qexpy.error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -157,7 +157,6 @@ class Plot:
                                     model, data_range, self.ydata,
                                     sigma=self.yerr, p0=pars_guess)
         self.pars_err = np.sqrt(np.diag(self.pcov))
-        print(self.pars_fit)
 
         if self.xerr is not None:
             yerr_eff = np.power(
@@ -170,7 +169,6 @@ class Plot:
                                         model, data_range, self.ydata,
                                         sigma=yerr_eff, p0=pars_guess)
             self.pars_err = np.sqrt(np.diag(self.pcov))
-            print(self.pars_fit)
 
         for i in range(len(self.pars_fit)):
             if self.fit_method is 'gaussian':
@@ -272,7 +270,7 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        import error_operations as op
+        import qexpy.error_operations as op
         data, function = op.check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
@@ -300,7 +298,7 @@ class Plot:
         in that order is returned.'''
         # create a new plot
         self.p = bp.figure(
-            tools="pan, box_zoom, reset, save, wheel_zoom",
+            tools='save, pan, box_zoom, wheel_zoom, reset',
             width=self.dimensions[0], height=self.dimensions[1],
             y_axis_type=self.plot_para['yscale'],
             y_range=[min(self.ydata)-2*max(self.yerr),
@@ -344,7 +342,7 @@ class Plot:
             return self.p
         else:
             self.res = bp.figure(
-                tools="pan, box_zoom, reset, save, wheel_zoom",
+                tools='save, pan, box_zoom, wheel_zoom, reset',
                 width=self.dimensions[0], height=self.dimensions[1]//3,
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
@@ -374,6 +372,8 @@ class Plot:
         # create a new plot
         self.p = bp.figure(
             width=self.dimensions[0], height=self.dimensions[1],
+            toolbar_location='above',
+            tools='save, pan, box_zoom, wheel_zoom, reset',
             y_axis_type=self.plot_para['yscale'],
             y_range=self.y_range,
             x_axis_type=self.plot_para['xscale'],
@@ -430,6 +430,7 @@ class Plot:
 
             self.res = bp.figure(
                 width=self.dimensions[0], height=self.dimensions[1]//3,
+                tools='save, pan, box_zoom, wheel_zoom, reset',
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
@@ -465,6 +466,8 @@ class Plot:
         # create a new plot
         self.p = bp.figure(
             width=self.dimensions[0], height=self.dimensions[1],
+            toolbar_location='above',
+            tools='save, pan, box_zoom, wheel_zoom, reset',
             y_axis_type=self.plot_para['yscale'],
             #  y_range=self.y_range,
             x_axis_type=self.plot_para['xscale'],
