@@ -1150,6 +1150,37 @@ def sci_print(self, method=None):
             return "(%d +/- %d)" % (round(mean), round(std))
 
 
+def Measurement_Array(data, error, name=None, units=None):
+    ''' Creates an array of measurements from inputted mean and standard
+    deviation arrays.
+    '''
+    if type(data) not in ExperimentalValue.ARRAY:
+        print('Data array must be a list, tuple, or numpy array.')
+        return None
+
+    if type(error) not in ExperimentalValue.ARRAY:
+        print('Error array must be a list, tuple, or numpy array.')
+        return None
+
+    if len(error) is 1:
+        error = len(data)*[error[0]]
+
+    if len(data) != len(error):
+        print('''Data and error array must be of the same length, or the
+        error array should be of length 1.''')
+        return None
+
+    data_name = name
+    data_units = units
+
+    measurement = []
+    for i in range(len(data)):
+        measurement.append(Measurement(data[i], error[i], name=data_name,
+                                       units=data_units))
+
+    return measurement
+
+
 def reset_variables():
     '''
     Resets the ID number, directories and methods to their original values.

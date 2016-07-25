@@ -87,6 +87,7 @@ class Plot:
         '''Request residual output for plot.'''
         if self.flag['fitted'] is False:
             Plot.fit(self.fit_function)
+            # throw error
 
         # Calculate residual values
         yfit = self.fit_function(self.xdata, *self.pars_fit)
