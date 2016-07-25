@@ -697,11 +697,19 @@ def data_transform(self, x, y, xerr=None, yerr=None):
     inputted, are stored as object attributes. Information such as data units,
     and the name of datasets are stored.'''
     if xerr is None:
-        xdata = x.info['Data']
-        if x.info['Error'] is not None:
-            x_error = x.info['Error']
-        else:
-            x_error = [0]*len(xdata)
+        if type(x) is e.Measurement:
+            xdata = x.info['Data']
+            if x.info['Error'] is not None:
+                x_error = x.info['Error']
+            else:
+                x_error = [0]*len(xdata)
+        elif type(x) is np.ndarray and\
+                all(isinstance(n, e.Measurement) for n in x):
+            xdata = []
+            x_error = []
+            for arg in x:
+                xdata.append(arg.mean)
+                x_error.append(arg.std)
     else:
         try:
             x.type
@@ -709,17 +717,26 @@ def data_transform(self, x, y, xerr=None, yerr=None):
             xdata = x
         else:
             xdata = x.info['Data']
+
         if type(xerr) in (int, float, ):
             x_error = [xerr]*len(xdata)
         else:
             x_error = xerr
 
     if yerr is None:
-        ydata = y.info['Data']
-        if y.info['Error'] is not None:
-            y_error = y.info['Error']
-        else:
-            y_error = [0]*len(ydata)
+        if type(y) is e.Measurement:
+            ydata = y.info['Data']
+            if y.info['Error'] is not None:
+                y_error = y.info['Error']
+            else:
+                y_error = [0]*len(ydata)
+        elif type(y) is np.ndarray and\
+                all(isinstance(n, e.Measurement) for n in y):
+            ydata = []
+            y_error = []
+            for arg in y:
+                ydata.append(arg.mean)
+                y_error.append(arg.std)
     else:
         try:
             y.type
@@ -736,6 +753,15 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         x.units
     except AttributeError:
         xunits = ''
+    if type(x) is np.ndarray and\
+            all(isinstance(n, e.Measurement) for n in x):
+        if len(x[0].units) is not 0:
+            xunits = ''
+            for key in x[0].units:
+                xunits += key+'^%d' % (x[0].units[key])
+            xunits = '['+xunits+']'
+        else:
+            xunits = ''
     else:
         if len(x.units) is not 0:
             xunits = ''
@@ -749,6 +775,15 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         y.units
     except AttributeError:
         yunits = ''
+    if type(y) is np.ndarray and\
+            all(isinstance(n, e.Measurement) for n in y):
+        if len(y[0].units) is not 0:
+            yunits = ''
+            for key in y[0].units:
+                yunits += key+'^%d' % (y[0].units[key])
+            yunits = '['+yunits+']'
+        else:
+            yunits = ''
     else:
         if len(y.units) is not 0:
             yunits = ''
@@ -762,6 +797,9 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         x.name
     except AttributeError:
         xname = 'x'
+    if type(x) is np.ndarray and\
+            all(isinstance(n, e.Measurement) for n in x):
+        xname = x[0].name
     else:
         xname = x.name
 
@@ -769,6 +807,9 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         y.name
     except AttributeError:
         yname = 'y'
+    if type(y) is np.ndarray and\
+            all(isinstance(n, e.Measurement) for n in y):
+        yname = y[0].name
     else:
         yname = y.name
 

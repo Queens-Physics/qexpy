@@ -1154,6 +1154,8 @@ def Measurement_Array(data, error, name=None, units=None):
     ''' Creates an array of measurements from inputted mean and standard
     deviation arrays.
     '''
+    import numpy as np
+
     if type(data) not in ExperimentalValue.ARRAY:
         print('Data array must be a list, tuple, or numpy array.')
         return None
@@ -1178,7 +1180,7 @@ def Measurement_Array(data, error, name=None, units=None):
         measurement.append(Measurement(data[i], error[i], name=data_name,
                                        units=data_units))
 
-    return measurement
+    return np.array(measurement)
 
 
 def reset_variables():
