@@ -1,12 +1,20 @@
 Introduction
 ============
 
-QExPy is a package whose goal is to reduce the time required to produce
-lab reports for undergraduate students of physics and engineering physics.
-To that end, the propagation of errors and plotting of results has been
-moved into the background of the code as much as possible.  For example, a
-common lab preformed by first years is an analysis of the stress and strain
-in a steel beam as one end is deflected by a measured amount. 
+QExPy (Queen's Experimental Physics) is a python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, as we well a module that provides an intuitive interface to plot and fit data in a visually esthetic manner (using bokeh for the plots and scipy.optimize for the fitting). The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow students to produce high quality reports directly from their browser. 
+
+Highlights:
+ - Easily propagate uncertainties in measured quantities
+ - Compare different uncertainty calculations (e.g. Min-Max, Derivatives with quadrature errors, Monte Carlo error propagation)
+ - Correctly include correlations between quantities
+ - Track units in calculations
+ - Handle ensembles of measurements (e.g. combining multiple measurements with errors of a single quantity)
+ - Produce interactive plots of data in the browser
+ - Fit data to common functions (polynomials, gaussians) or provide custom functions
+ - Examine residual plots after fits
+ - Plot confidence bands from the errors in fitted parameters
+
+
 
 .. nbinput:: ipython3
    :execution-count: 1
