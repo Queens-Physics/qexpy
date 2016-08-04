@@ -8,6 +8,8 @@ Highlights:
  * Compare different uncertainty calculations (e.g. Min-Max, Derivatives with quadrature errors, Monte Carlo error propagation)
  * Correctly include correlations between quantities
  * Track units in calculations
+ * Choose display format (standard, Latex)
+ * Control the number of significant figures
  * Handle ensembles of measurements (e.g. combining multiple measurements with errors of a single quantity)
  * Produce interactive plots of data in the browser
  * Fit data to common functions (polynomials, gaussians) or provide custom functions
