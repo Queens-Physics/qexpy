@@ -11,6 +11,7 @@ Highlights:
  * Choose display format (standard, Latex)
  * Control the number of significant figures
  * Handle ensembles of measurements (e.g. combining multiple measurements with errors of a single quantity)
+ * Naturally integrated with numpy
  * Produce interactive plots of data in the browser
  * Fit data to common functions (polynomials, gaussians) or provide custom functions
  * Examine residual plots after fits
@@ -33,11 +34,16 @@ We can create "Measurement" objects to represent quantities with uncertainties, 
    z = (x+y)/(x-y)
    #print z, with the correct error
    print(z)
+   
+.. nboutput:: ipython3
 
+   10, 1
+   
+   
 The example below shows a case of plotting data and fitting them to a straight line:
 
 .. nbinput:: ipython3
-   :execution-count: 1
+   :execution-count: 2
 
    import qexpy.error as e
    import qexpy.plotting as p
@@ -45,7 +51,7 @@ The example below shows a case of plotting data and fitting them to a straight l
    # This cell will load the modules
 	
 .. nbinput:: ipython3
-   :execution-count: 2
+   :execution-count: 3
 
    # We can now enter the data gathered in the lab itself
 
