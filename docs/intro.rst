@@ -37,13 +37,13 @@ We can create "Measurement" objects to represent quantities with uncertainties, 
    
 .. nboutput:: ipython3
 
-   10, 1
+   3.0 +/- 0.6
    
    
 The example below shows a case of plotting data and fitting them to a straight line:
 
 .. nbinput:: ipython3
-   :execution-count: 2
+   :execution-count: 1
 
    import qexpy.error as e
    import qexpy.plotting as p
@@ -51,7 +51,7 @@ The example below shows a case of plotting data and fitting them to a straight l
    # This cell will load the modules
 	
 .. nbinput:: ipython3
-   :execution-count: 3
+   :execution-count: 2
 
    # We can now enter the data gathered in the lab itself
 
