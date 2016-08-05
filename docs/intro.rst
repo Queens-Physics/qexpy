@@ -5,17 +5,18 @@ QExPy (Queen's Experimental Physics) is a python 3 package designed to facilitat
 
 Highlights:
  * Easily propagate uncertainties in measured quantities
- * Compare different uncertainty calculations (e.g. Min-Max, Derivatives with quadrature errors, Monte Carlo error propagation)
- * Correctly include correlations between quantities
- * Track units in calculations
- * Choose display format (standard, Latex)
+ * Compare different uncertainty calculations (e.g. Min-Max, quadrature errors, Monte Carlo errors)
+ * Correctly include correlations between quantities when propagating uncertainties (e.g. the uncertainty on x-x should always be 0!)
+ * Calculate exact numerical values of derivatives
+ * Choose display format (standard, Latex, scientific notation)
  * Control the number of significant figures
- * Handle ensembles of measurements (e.g. combining multiple measurements with errors of a single quantity)
- * Naturally integrated with numpy
+ * Handle ensembles of measurements (e.g. combining multiple measurements, with uncertainties, of a single quantity)
  * Produce interactive plots of data in the browser
  * Fit data to common functions (polynomials, gaussians) or provide custom functions
  * Examine residual plots after fits
- * Plot confidence bands from the errors in fitted parameters
+ * Track units in calculations (still in development)
+ * Plot confidence bands from the errors in fitted parameters (still in development)
+ * Integrates with Jupyter notebooks, numpy, bokeh
 
 Examples
 --------
