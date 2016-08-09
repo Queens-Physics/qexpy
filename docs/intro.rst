@@ -1,12 +1,47 @@
 Introduction
 ============
 
-QExPy is a package whose goal is to reduce the time required to produce
-lab reports for undergraduate students of physics and engineering physics.
-To that end, the propagation of errors and plotting of results has been
-moved into the background of the code as much as possible.  For example, a
-common lab preformed by first years is an analysis of the stress and strain
-in a steel beam as one end is deflected by a measured amount. 
+QExPy (Queen's Experimental Physics) is a python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser. 
+
+Highlights:
+ * Easily propagate uncertainties in measured quantities
+ * Compare different uncertainty calculations (e.g. Min-Max, quadrature errors, Monte Carlo errors)
+ * Correctly include correlations between quantities when propagating uncertainties (e.g. the uncertainty on x-x should always be 0!)
+ * Calculate exact numerical values of derivatives
+ * Choose display format (standard, Latex, scientific notation)
+ * Control the number of significant figures
+ * Handle ensembles of measurements (e.g. combine multiple measurements, with uncertainties, of a single quantity)
+ * Produce interactive plots of data in the browser
+ * Fit data to common functions (polynomials, gaussians) or provide custom functions
+ * Examine residual plots after fits
+ * Track units in calculations (still in development)
+ * Plot confidence bands from the errors in fitted parameters (still in development)
+ * Integrates with Jupyter notebooks, numpy, bokeh
+
+Examples
+--------
+
+We can create "Measurement" objects to represent quantities with uncertainties, and propagate the error in those quantities.
+
+.. nbinput:: ipython3
+   :execution-count: 1
+   
+   #import the error propagation module
+   import qexpy.error as e
+   #declare 2 Measurements, x and y
+   x = e.Measurement(10,1)
+   y = e.Measurement(5,3)
+   #define a quantitiy that depends on x and y:
+   z = (x+y)/(x-y)
+   #print z, with the correct error
+   print(z)
+   
+.. nboutput:: ipython3
+
+   3.0 +/- 0.6
+   
+   
+The example below shows a case of plotting data and fitting them to a straight line:
 
 .. nbinput:: ipython3
    :execution-count: 1
@@ -14,7 +49,7 @@ in a steel beam as one end is deflected by a measured amount.
    import qexpy.error as e
    import qexpy.plotting as p
 
-   # This cell will load the package
+   # This cell will load the modules
 	
 .. nbinput:: ipython3
    :execution-count: 2
