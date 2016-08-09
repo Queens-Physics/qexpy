@@ -600,6 +600,32 @@ class ExperimentalValue:
             else:
                 return self.mean == other.mean
 
+    def show_MC_histogram(self, title=None):
+        '''Creates and shows a Bokeh plot of a histogram of the values
+        calculated by a Monte Carlo error propagation.
+        '''
+        import numpy as np
+        from bokeh.plotting import figure, show, output_file
+
+        if type(title) is str:
+            hist_title = title
+        elif title is None:
+            hist_title = self.name+' Histogram'
+        else:
+            print('Histogram title must be a string.')
+            hist_title = self.name+' Histogram'
+
+        p1 = figure(title=hist_title, tools="save",
+                    background_fill_color="#E8DDCB")
+
+        hist, edges = np.histogram(self.MC_list, bins=50)
+
+        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                fill_color="#036564", line_color="#033649")
+
+        output_file(self.name+' histogram.html', title=hist_title)
+        show(p1)
+
 
 def set_print_style(style=None, figs=None):
     '''Change style of printout for Measurement objects.

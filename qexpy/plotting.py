@@ -322,6 +322,7 @@ class Plot:
             height = 400
         self.dimensions[width, height]
 
+
     def return_bokeh(self):
         '''Return Bokeh plot object for the plot acted upon.
 
