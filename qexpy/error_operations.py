@@ -425,7 +425,6 @@ def find_minmax(function, *args):
     and error on a given function
     '''
     import numpy as np
-    import error as e
 
     if len(args) is 1:
         x = args[0]
@@ -438,16 +437,59 @@ def find_minmax(function, *args):
         a = args[0]
         b = args[1]
         results = []
-        a_vals = np.linspace(a.mean-a.std, a.mean + a.std, 10)
-        b_vals = np.linspace(b.mean-b.std, b.mean + b.std, 10)
-        for i in range(10):
+        a_vals = np.linspace(a.mean-a.std, a.mean + a.std, 100)
+        b_vals = np.linspace(b.mean-b.std, b.mean + b.std, 100)
+        for i in range(100):
             results.append(function(a_vals[i], b_vals[i]))
 
     min_val = min(results)
     max_val = max(results)
     mid_val = (max_val + min_val)/2
     err = (max_val-min_val)/2
-    return e.Function(mid_val, err)
+    return [mid_val, err]
+
+
+def monte_carlo(func, *args):
+    '''
+    Uses a Monte Carlo simulation to determine the mean and standard
+    deviation of a function.
+
+    Inputted arguments must be measurement type. Constants can be used
+    as 'normalized' quantities which produce a constant row in the
+    matrix of normally randomized values.
+    '''
+    # 2D array
+    import numpy as np
+    import error as e
+
+    _np_func = {add: np.add, sub: np.subtract, mul: np.multiply,
+                div: np.divide, power: np.power, log: np.log,
+                exp: np.exp, sin: np.sin, cos: np.cos,
+                tan: np.tan, atan: np.arctan,
+                csc: lambda x: np.divide(1, np.sin(x)),
+                sec: lambda x: np.divide(1, np.cos(x)),
+                cot: lambda x: np.divide(1, np.tan(x)),
+                asin: np.arcsin, acos: np.arccos, atan: np.arctan,
+                }
+
+    N = len(args)
+    n = e.ExperimentalValue.mc_trial_number
+    value = np.zeros((N, n))
+    result = np.zeros(n)
+    for i in range(N):
+        if args[i].MC_list is not None:
+            value[i] = args[i].MC_list
+        elif args[i].std == 0:
+            value[i] = args[i].mean
+            args[i].MC_list = value[i]
+        else:
+            value[i] = np.random.normal(args[i].mean, args[i].std, n)
+            args[i].MC_list = value[i]
+
+    result = _np_func[func](*value)
+    data = np.mean(result)
+    error = np.std(result, ddof=1)
+    return ([data, error], result,)
 
 
 def operation_wrap(operation, *args, func_flag=False):
@@ -471,29 +513,28 @@ def operation_wrap(operation, *args, func_flag=False):
     if check_formula(operation, *args, func_flag=func_flag) is not None:
         return check_formula(op_string[operation], *args, func_flag=func_flag)
 
+    mean = operation(*args)
+    std = dev(*args, der=df)
+    result = e.Function(mean, std)
+    result.Derr = [mean, std]
+    result.MinMax = find_minmax(operation, *args)
+    result.MC, result.MC_list = monte_carlo(operation, *args)
+
     # Derivative Method
     if e.ExperimentalValue.error_method == "Derivative":
-        mean = operation(*args)
-        std = dev(*args, der=df)
-        result = e.Function(mean, std)
+        pass
 
     # By Min-Max method
     elif e.ExperimentalValue.error_method == "Min Max":
-        return find_minmax(operation, *args)
+        (mean, std, ) = result.MinMax
 
     # Monte Carlo Method
     elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        (mean, std, ) = e.ExperimentalValue.monte_carlo(operation, *args)
+        (mean, std, ) = result.MC
 
-    # Default method with all above method calculations
     else:
-        mean = operation(*args)
-        std = dev(*args, der=df)
-        result = e.Function(mean, std)
-        MM = find_minmax(operation, *args)
-        result.MinMax = [MM.mean, MM.std]
-        MC = e.ExperimentalValue.monte_carlo(operation, *args)
-        result.MC = [MC[0], MC[1]]
+        print('''Error method not properly set, please set to derivatie, Monte
+        Carlo, or Min-Max. Derivative method used by default.''')
 
     if func_flag is False and args[0].info["Data"] is not None\
             and args[1].info['Data'] is not None\

@@ -86,8 +86,8 @@ class Plot:
     def residuals(self):
         '''Request residual output for plot.'''
         if self.flag['fitted'] is False:
-            Plot.fit(self.fit_function)
-            # throw error
+            self.fit(model='linear')
+            print('Fit not defined, using linear fit by default.')
 
         # Calculate residual values
         yfit = self.fit_function(self.xdata, *self.pars_fit)
@@ -110,13 +110,19 @@ class Plot:
         '''
         import numpy as np
 
+        linear = ('linear', 'Linear', 'line', 'Line',)
+        gaussian = ('gaussian', 'Gaussian', 'Gauss', 'gauss', 'normal',)
+        exponential = ('exponential', 'Exponential', 'exp', 'Exp',)
+
         if guess is None:
-            if model == 'linear':
+            if model in linear:
                 guess = [1, 1]
             elif model[0] is 'p':
                 degree = int(model[len(model)-1]) + 1
                 guess = [1]*degree
-            elif model is 'gaussian':
+            elif model in gaussian:
+                guess = [1]*2
+            elif model in exponential:
                 guess = [1]*2
 
         if model is not None:
@@ -131,13 +137,35 @@ class Plot:
                 def model(x, *pars):
                     return self.fit_function(x, *pars)
 
-            else:
-                self.fit_method = model
-                self.fit_function = Plot.fits[model]
+            elif model in linear:
+                self.fit_method = 'linear'
+                self.fit_function = Plot.fits['linear']
 
                 def model(x, *pars):
                     return self.fit_function(x, *pars)
+
+            elif model in exponential:
+                self.fit_method = 'exponential'
+                self.fit_function = Plot.fits['exponential']
+
+                def model(x, *pars):
+                    return self.fit_function(x, *pars)
+
+            elif model in gaussian:
+                self.fit_method = 'gaussian'
+                self.fit_function = Plot.fits['gaussian']
+
+                def model(x, *pars):
+                    return self.fit_function(x, *pars)
+
+            else:
+                raise TypeError('''Input must be string, either 'linear',
+                                'gaussian', 'exponential', 'polyn' for a
+                                polynomial of order n, or a custom
+                                function.''')
+
         else:
+            print('Using a linear fit by default.')
             self.fit_method = 'linear'
             self.fit_function = Plot.fits[model]
 
@@ -159,12 +187,15 @@ class Plot:
                                     sigma=self.yerr, p0=pars_guess)
         self.pars_err = np.sqrt(np.diag(self.pcov))
 
+        # Use derivative method to factor x error into fit
         if self.xerr is not None:
             yerr_eff = np.power(
-                (np.power(self.yerr, 2) +
-                np.power(np.multiply(self.xerr, #analysis:ignore
-                num_der(lambda x: model(x, *self.pars_fit) , #analysis:ignore
-                self.xdata)), 2)), 1/2) #analysis:ignore
+                (np.power(self.yerr,
+                          2) + np.power(np.multiply(self.xerr, num_der
+                                                    (lambda x: model
+                                                     (x, *self.pars_fit
+                                                      ), self.xdata
+                                                     )), 2)), 1/2)
 
             self.pars_fit, self.pcov = sp.curve_fit(
                                         model, data_range, self.ydata,
@@ -559,6 +590,182 @@ class Plot:
             gp_alt = bi.gridplot([[self.p], [self.res], [plot2.res]])
             bp.show(gp_alt)
 
+###############################################################################
+# First Year Methods
+###############################################################################
+
+    def first_year_fit(self, model=None, guess=None, fit_range=None):
+        '''Fit data, by least squares method, to a model. Model must be
+        provided or specified from built in models. User specified models
+        require and inital guess for the fit parameters.
+
+        By default a linear fit is used, if the user enters a string
+        for another fit model which is built-in, that model is used.
+        If the user provides a fit function, with two arguments, the first
+        for the independent variable, and the second for the list of
+        parameters, an inital guess of the parameters in the form of a
+        list of values must be provided.
+        '''
+        import numpy as np
+
+        linear = ('linear', 'Linear', 'line', 'Line',)
+        gaussian = ('gaussian', 'Gaussian', 'Gauss', 'gauss', 'normal',)
+        exponential = ('exponential', 'Exponential', 'exp', 'Exp',)
+
+        if guess is None:
+            if model in linear:
+                guess = [1, 1]
+            elif model[0] is 'p':
+                degree = int(model[len(model)-1]) + 1
+                guess = [1]*degree
+            elif model in gaussian:
+                guess = [1]*2
+            elif model in exponential:
+                guess = [1]*2
+
+        if model is not None:
+            if type(model) is not str:
+                self.flag['Unknown Function'] = True
+                self.fit_method = None
+                self.fit_function = model
+
+            elif model in linear:
+                self.fit_method = 'linear'
+                self.fit_function = Plot.fits['linear']
+
+            else:
+                raise TypeError('''Input must be string, either 'linear',
+                                'gaussian', 'exponential', 'polyn' for a
+                                polynomial of order n, or a custom
+                                function.''')
+
+        else:
+            print('Using a linear fit by default.')
+            self.fit_method = 'linear'
+            self.fit_function = Plot.fits[model]
+
+            def model(x, *pars):
+                return self.fit_function(x, *pars)
+
+        pars_guess = guess
+
+        if fit_range is None:
+            data_range = self.xdata
+        elif type(fit_range) in ARRAY and len(fit_range) is 2:
+            data_range = []
+            for i in self.xdata:
+                if i >= min(fit_range) and i <= max(fit_range):
+                    data_range.append(i)
+
+        self.pars_fit, self.pcov = sp.curve_fit(
+                                    model, data_range, self.ydata,
+                                    sigma=self.yerr, p0=pars_guess)
+        self.pars_err = np.sqrt(np.diag(self.pcov))
+
+        if self.xerr is not None:
+            yerr_eff = np.power(
+                (np.power(self.yerr, 2) +
+                np.power(np.multiply(self.xerr, #analysis:ignore
+                num_der(lambda x: model(x, *self.pars_fit) , #analysis:ignore
+                self.xdata)), 2)), 1/2) #analysis:ignore
+
+            self.pars_fit, self.pcov = sp.curve_fit(
+                                        model, data_range, self.ydata,
+                                        sigma=yerr_eff, p0=pars_guess)
+            self.pars_err = np.sqrt(np.diag(self.pcov))
+
+        for i in range(len(self.pars_fit)):
+            if self.fit_method is 'gaussian':
+                if i is 0:
+                    name = 'mean'
+                elif i is 1:
+                    name = 'standard deviation'
+            elif self.fit_method is 'linear':
+                if i is 0:
+                    name = 'intercept'
+                elif i is 1:
+                    name = 'slope'
+            else:
+                name = 'par %d' % (i)
+
+            self.fit_parameters += (
+                e.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
+        self.flag['fitted'] = True
+
+    def first_year_show(self, output='inline'):
+        '''
+        Method which creates and displays plot.
+        Previous methods sumply edit parameters which are used here, to
+        prevent run times increasing due to rebuilding the bokeh plot object.
+        '''
+        if output is 'inline':
+            bi.output_notebook()
+        elif output is 'file':
+            bi.output_file(self.plot_para['filename']+'.html',
+                           title=self.attributes['title'])
+
+        # create a new plot
+        self.p = bp.figure(
+            width=self.dimensions[0], height=self.dimensions[1],
+            toolbar_location='above',
+            tools='save, pan, box_zoom, wheel_zoom, reset',
+            y_axis_type=self.plot_para['yscale'],
+            y_range=self.y_range,
+            x_axis_type=self.plot_para['xscale'],
+            x_range=self.x_range,
+            title=self.attributes['title'],
+            x_axis_label=self.attributes['xaxis'],
+            y_axis_label=self.attributes['yaxis'],
+        )
+
+        # add datapoints with errorbars
+        _error_bar(self)
+
+        if self.flag['Manual'] is True:
+            _error_bar(self,
+                       xdata=self.manual_data[0], ydata=self.manual_data[1])
+
+        if self.flag['fitted'] is True:
+            data = [0, max(self.xdata)+max(self.xerr)]
+            _plot_function(
+                self, data,
+                lambda x: self.fit_function(x, *self.pars_fit))
+
+            self.function_counter += 1
+
+            if self.fit_parameters[1].mean > 0:
+                self.p.legend.location = "top_left"
+            else:
+                self.p.legend.location = "top_right"
+        else:
+            self.p.legend.location = 'top_right'
+
+        for func in self.attributes['function']:
+            _plot_function(
+                self, self.xdata, func)
+            self.function_counter += 1
+
+        if self.flag['residuals'] is False:
+            bp.show(self.p)
+        else:
+
+            self.res = bp.figure(
+                width=self.dimensions[0], height=self.dimensions[1]//3,
+                tools='save, pan, box_zoom, wheel_zoom, reset',
+                y_axis_type='linear',
+                y_range=[min(self.yres)-2*max(self.yerr),
+                         max(self.yres)+2*max(self.yerr)],
+                x_range=self.x_range,
+                x_axis_label=self.attributes['xaxis'],
+                y_axis_label='Residuals'
+            )
+
+            # plot y errorbars
+            _error_bar(self, residual=True)
+
+            gp_alt = bi.gridplot([[self.p], [self.res]])
+            bp.show(gp_alt)
+
 
 def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
                color=None):
@@ -696,132 +903,72 @@ def data_transform(self, x, y, xerr=None, yerr=None):
     any values included in measurement objects, should those objects be
     inputted, are stored as object attributes. Information such as data units,
     and the name of datasets are stored.'''
-    if xerr is None:
-        if type(x) is e.Measurement:
-            xdata = x.info['Data']
-            if x.info['Error'] is not None:
-                x_error = x.info['Error']
+
+    def _plot_arguments(arg, arg_err=None):
+        '''Creates data and error for various inputs.
+        '''
+        if type(arg) is e.Measurement:
+            # For input of Measurement object
+            arg_measurement = arg
+
+        elif type(arg) is np.ndarray and\
+                all(isinstance(n, e.Measurement) for n in arg):
+            # For input of array of Measurement objects
+            arg_data = []
+            arg_error = []
+            for val in arg:
+                arg_data.append(val.mean)
+                arg_error.append(val.std)
+            arg_measurement = e.Measurement(arg_data, arg_error)
+
+        elif type(arg) in ARRAY and\
+                all(isinstance(n, CONSTANT) for n in arg):
+            # For input of array of values to be plotted
+            arg_data = []
+            for val in arg:
+                arg_data.append(val)
+
+            if arg_err is not None:
+                arg_error = []
+                for val in arg_err:
+                    arg_error.append(val)
             else:
-                x_error = [0]*len(xdata)
-        elif type(x) is np.ndarray and\
-                all(isinstance(n, e.Measurement) for n in x):
-            xdata = []
-            x_error = []
-            for arg in x:
-                xdata.append(arg.mean)
-                x_error.append(arg.std)
-    else:
-        try:
-            x.type
-        except AttributeError:
-            xdata = x
+                arg_error = [0]*len(arg)
+            arg_measurement = e.Measurement(arg_data, arg_error)
         else:
-            xdata = x.info['Data']
+            raise TypeError('Input method not recognized.')
 
-        if type(xerr) in (int, float, ):
-            x_error = [xerr]*len(xdata)
+        arg_data = arg_measurement.info['Data']
+        if arg_measurement.info['Error'] is not None:
+            arg_error = arg_measurement.info['Error']
         else:
-            x_error = xerr
+            arg_error = [0]*len(arg_data)
 
-    if yerr is None:
-        if type(y) is e.Measurement:
-            ydata = y.info['Data']
-            if y.info['Error'] is not None:
-                y_error = y.info['Error']
-            else:
-                y_error = [0]*len(ydata)
-        elif type(y) is np.ndarray and\
-                all(isinstance(n, e.Measurement) for n in y):
-            ydata = []
-            y_error = []
-            for arg in y:
-                ydata.append(arg.mean)
-                y_error.append(arg.std)
-    else:
-        try:
-            y.type
-        except AttributeError:
-            ydata = y
+        return (arg_data, arg_error, arg_measurement)
+
+    def _plot_labels(arg):
+        unit_string = ''
+        if arg.units != {}:
+            for key in arg.units:
+                if arg.units[key] == 1 and len(arg.units.keys()) is 1:
+                    unit_string = key + unit_string
+                else:
+                    unit_string += key+'^%d' % (arg.units[key])
+                    unit_string += ' '
+            unit_string = '['+unit_string+']'
+
+        if type(arg) is np.ndarray and\
+                all(isinstance(n, e.Measurement) for n in arg):
+            arg_name = arg[0].name
         else:
-            ydata = y.info['Data']
-        if type(yerr) in (int, float, ):
-            y_error = [yerr]*len(ydata)
-        else:
-            y_error = yerr
+            arg_name = arg.name
 
-    try:
-        x.units
-    except AttributeError:
-        xunits = ''
-    if type(x) is np.ndarray and\
-            all(isinstance(n, e.Measurement) for n in x):
-        if len(x[0].units) is not 0:
-            xunits = ''
-            for key in x[0].units:
-                xunits += key+'^%d' % (x[0].units[key])
-            xunits = '['+xunits+']'
-        else:
-            xunits = ''
-    else:
-        if len(x.units) is not 0:
-            xunits = ''
-            for key in x.units:
-                xunits += key+'^%d' % (x.units[key])
-            xunits = '['+xunits+']'
-        else:
-            xunits = ''
+        return (unit_string, arg_name,)
 
-    try:
-        y.units
-    except AttributeError:
-        yunits = ''
-    if type(y) is np.ndarray and\
-            all(isinstance(n, e.Measurement) for n in y):
-        if len(y[0].units) is not 0:
-            yunits = ''
-            for key in y[0].units:
-                yunits += key+'^%d' % (y[0].units[key])
-            yunits = '['+yunits+']'
-        else:
-            yunits = ''
-    else:
-        if len(y.units) is not 0:
-            yunits = ''
-            for key in y.units:
-                yunits += key+'^%d' % (y.units[key])
-            yunits = '['+yunits+']'
-        else:
-            yunits = ''
-
-    try:
-        x.name
-    except AttributeError:
-        xname = 'x'
-    if type(x) is np.ndarray and\
-            all(isinstance(n, e.Measurement) for n in x):
-        xname = x[0].name
-    else:
-        xname = x.name
-
-    try:
-        y.name
-    except AttributeError:
-        yname = 'y'
-    if type(y) is np.ndarray and\
-            all(isinstance(n, e.Measurement) for n in y):
-        yname = y[0].name
-    else:
-        yname = y.name
-
-    self.xdata = xdata
-    self.ydata = ydata
-    self.xerr = x_error
-    self.yerr = y_error
-
-    self.xunits = xunits
-    self.yunits = yunits
-    self.xname = xname
-    self.yname = yname
+    self.xdata, self.xerr, x = _plot_arguments(x, xerr)
+    self.ydata, self.yerr, y = _plot_arguments(y, yerr)
+    self.xunits, self.xname = _plot_labels(x)
+    self.yunits, self.yname = _plot_labels(y)
 
 
 def _plot_function(self, xdata, theory, n=1000, legend_name=None):
@@ -832,37 +979,37 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None):
     attribute containing a list of colors which are assigned uniquly to a
     curve.'''
     xrange = np.linspace(min(xdata), max(xdata), n)
-    x_theory = theory(min(xdata))
-    x_mid = []
+    y_theory = theory(min(xdata))
+    y_mid = []
 
     try:
-        x_theory.type
+        y_theory.type
     except AttributeError:
         for i in range(n):
-            x_mid.append(theory(xrange[i]))
+            y_mid.append(theory(xrange[i]))
         self.fit_line = self.p.line(
-            xrange, x_mid, legend=legend_name,
+            xrange, y_mid, legend=legend_name,
             line_color=self.colors['Function'][self.function_counter])
 
     else:
-        x_max = []
-        x_min = []
+        y_max = []
+        y_min = []
         for i in range(n):
-            x_theory = theory(xrange[i])
-            x_mid.append(x_theory.mean)
-            x_max.append(x_theory.mean+x_theory.std)
-            x_min.append(x_theory.mean-x_theory.std)
+            y_theory = theory(xrange[i])
+            y_mid.append(y_theory.mean)
+            y_max.append(y_theory.mean+y_theory.std)
+            y_min.append(y_theory.mean-y_theory.std)
         self.fit_line = self.p.line(
-            xrange, x_mid, legend=legend_name,
+            xrange, y_mid, legend=legend_name,
             line_color=self.colors['Function'][self.function_counter])
 
         xrange_reverse = list(reversed(xrange))
-        x_min_reverse = list(reversed(x_min))
+        y_min_reverse = list(reversed(y_min))
         xrange = list(xrange)
-        x_max = list(x_max)
+        y_max = list(y_max)
 
         self.p.patch(
-            x=xrange+xrange_reverse, y=x_max+x_min_reverse,
+            x=xrange+xrange_reverse, y=y_max+y_min_reverse,
             fill_alpha=0.3,
             fill_color=self.colors['Function'][self.function_counter],
             line_color=self.colors['Function'][self.function_counter],
@@ -882,8 +1029,9 @@ def update_plot(self, model='linear'):
         range_argument += (min_val, par.mean, increment)
 
     if model is 'linear':
-        @interact(b=range_argument[0], m=range_argument[1])
-        def update(m, b):
+        @interact(b=self.fit_parameters[0].mean, m=self.fit_parameters[1].mean)
+        def update(b=self.fit_parameters[0].mean,
+                   m=self.fit_parameters[1].mean):
             import numpy as np
 
             self.fit_line.data_source.data['y'] = np.multiply(
@@ -894,6 +1042,7 @@ def update_plot(self, model='linear'):
 def num_der(function, point, dx=1e-10):
     '''
     Returns the first order derivative of a function.
+    Used in combining xerr and yerr.
     '''
     import numpy as np
     point = np.array(point)

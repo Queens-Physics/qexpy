@@ -5,8 +5,8 @@ class ExperimentalValue:
     formulation can be instanced. (ie. the result of an operation of
     measured values, called Funciton and Measured respectivly)
     '''
-    error_method = "Default"  # Default error propogation method
-    default_style = "Default"  # Default printing style
+    error_method = "Derivative"  # Default error propogation method
+    print_style = "Default"  # Default printing style
     mc_trial_number = 10000  # number of trial in Monte Carlo simulation
     figs = None
     register = {}
@@ -17,14 +17,6 @@ class ExperimentalValue:
     from numpy import int64, float64, ndarray, int32, float32
     CONSTANT = (int, float, int64, float64, int32, float32)
     ARRAY = (list, tuple, ndarray)
-    try:
-        import numpy
-    except ImportError:
-        print("Please install numpy for full features.")
-        numpy_installed = False
-    else:
-        ARRAY += (numpy.ndarray,)
-        numpy_installed = True
 
     def __init__(self, *args, name=None):
         '''
@@ -41,26 +33,29 @@ class ExperimentalValue:
             self.mean = args[0]
             self.std = args[1]
 
+        # If an array and single value are entered, then error is uniform for
+        # first array.
         elif len(args) == 2 and type(args[0]) in ExperimentalValue.ARRAY and\
                 type(args[1]) in ExperimentalValue.CONSTANT:
 
             mean_vals = args[0]
             std_vals = [args[1]]*len(args[0])
-            (self.mean, self.std) = weighted_variance(mean_vals, std_vals)
+            (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
             data = mean_vals
             error_data = std_vals
 
+        # Checks that all arguments are array type
         elif all(isinstance(n, ExperimentalValue.ARRAY) for n in args):
 
-            # Sample mean and std talen from list of values
+            # Sample mean and std talen from single array of values
             if len(args) == 1 and\
                     all(isinstance(n, ExperimentalValue.CONSTANT)
                         for n in args[0]):
                 args = args[0]
-                (self.mean, self.std) = variance(args)
+                (self.mean, self.std) = _variance(args)
                 data = list(args)
 
-            # List of Measurements, weighted mean and std taken
+            # Single array of Measurements, weighted mean and std taken
             elif len(args) == 1 and \
                     all(isinstance(n, ExperimentalValue) for n in args[0]):
                 mean_vals = []
@@ -68,11 +63,11 @@ class ExperimentalValue:
                 for arg in args[0]:
                     mean_vals.append(arg.mean)
                     std_vals.append(arg.std)
-                (self.mean, self.std) = weighted_variance(mean_vals, std_vals)
+                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
                 data = mean_vals
                 error_data = std_vals
 
-            # Mean and std taken from list of values and associated errors
+            # Mean and std taken from array of values and array of errors
             elif len(args) == 2 and \
                     all(
                     isinstance(n, ExperimentalValue.CONSTANT)for n in args[0]
@@ -84,15 +79,30 @@ class ExperimentalValue:
                     std_vals = args[1]*len(args[0])
                 else:
                     std_vals = args[1]
-                (self.mean, self.std) = weighted_variance(mean_vals, std_vals)
+                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
                 data = mean_vals
                 error_data = std_vals
 
-        elif len(args) > 2:
+            # For series of arrays of length 2, element 0 is mean, 1 is std.
+            elif len(args) > 2 and all(len(n) is 2 for n in args):
+                mean_vals = []
+                std_vals = []
+                for arg in args:
+                    mean_vals.append(arg[0])
+                    std_vals.append(arg[1])
+                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
+                data = mean_vals
+                error_data = std_vals
 
+            else:
+                raise TypeError('''Measurement input must be either a single
+                array of values, or two arrays with mean values and error
+                values respectivly.''')
+
+        elif len(args) > 2:
             # Series of values entered, mean and std taken from said values
             if all(isinstance(n, ExperimentalValue.CONSTANT) for n in args):
-                (self.mean, self.std) = variance(args)
+                (self.mean, self.std) = _variance(args)
                 data = list(args)
 
             # Series of Measurements, weighted mean and std taken
@@ -102,20 +112,9 @@ class ExperimentalValue:
                 for arg in args:
                     mean_vals.append(arg.mean)
                     std_vals.append(arg.std)
-                (self.mean, self.std) = weighted_variance(mean_vals, std_vals)
+                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
                 data = mean_vals
                 error_data = std_vals
-
-        # Series of lists with mean and std in each, mean and std calculated
-        elif all(len(arg) == 2 for arg in args):
-            mean_vals = []
-            std_vals = []
-            for i in len(args):
-                mean_vals.append(args[i][0])
-                std_vals.append(args[i][1])
-            (self.mean, self.std) = weighted_variance(mean_vals, std_vals)
-            data = mean_vals
-            error_data = std_vals
 
         # If that fails, where than will you go
         else:
@@ -129,7 +128,7 @@ class ExperimentalValue:
                         'operation': (), 'variables': ()}, }
 
         ExperimentalValue.id_register[id(self)] = self
-        self.style = ExperimentalValue.default_style
+        self.print_style = ExperimentalValue.print_style
         if name is not None:
             self.user_name = True
         else:
@@ -137,35 +136,6 @@ class ExperimentalValue:
 
         self.units = {}
         self.MC_list = None
-
-    def set_method(chosen_method):
-        '''
-        Choose the method of error propagation to be used. Enter a string.
-
-        Function to change default error propogation method used in
-        measurement functions.
-        '''
-        mc_list = (
-            'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
-            'monte carlo',)
-        min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
-        derr_list = ('Derivative', 'derivative', 'diff', 'der',)
-        default_list = ('Default', 'default',)
-
-        if chosen_method in mc_list:
-            if ExperimentalValue.numpy_installed:
-                ExperimentalValue.error_method = "Monte Carlo"
-            else:
-                ExperimentalValue.error_method = "Monte Carlo"
-        elif chosen_method in min_max_list:
-            ExperimentalValue.error_method = "Min Max"
-        elif chosen_method in derr_list:
-            ExperimentalValue.error_method = "Derivative"
-        elif chosen_method in default_list:
-            ExperimentalValue.error_method = "Default"
-        else:
-            print("Method not recognized, using default method.")
-            ExperimentalValue.error_method = "Default"
 
     def __str__(self):
         '''
@@ -176,46 +146,53 @@ class ExperimentalValue:
         else:
             string = ''
 
-        if self.style == "Latex":
-            string += tex_print(self)
-        elif self.style == "Default":
-            string += def_print(self)
-        elif self.style == "Scientific":
-            string += sci_print(self)
-        try:
-            self.error_flag
-        except AttributeError:
-            return string
-        if self.error_flag is True:
-            string = string + '\nErrors may be inacurate, '\
-                + ' Monte Carlo method recommended.'
-            return string
-        else:
-            return string
+        if ExperimentalValue.print_style == "Latex":
+            string += _tex_print(self)
+        elif ExperimentalValue.print_style == "Default":
+            string += _def_print(self)
+        elif ExperimentalValue.print_style == "Scientific":
+            string += _sci_print(self)
 
-    def print_style(self, style, figs=None):
+        unit_string = ''
+        if self.units != {}:
+            for key in self.units:
+                if self.units[key] == 1 and len(self.units.keys()) is 1:
+                    unit_string = key + unit_string
+                else:
+                    unit_string += key+'^%d' % (self.units[key])
+                    unit_string += ' '
+            unit_string = '['+unit_string+']'
+            string += unit_string
+
+        return string
+
+    def Monte_Carlo_print(self):
+        '''Prints the result of a Monte Carlo error propagation.
+
+        The purpose of this method is to easily compare the results of a
+        Monte Carlo propagation with whatever method is chosen.
         '''
-        Set the style of printing and number of significant figures for the
-        output of a printing a measurement object.
+        if self.print_style == "Latex":
+            string = _tex_print(self, method=self.MC)
+        elif self.print_style == "Default":
+            string = _def_print(self, method=self.MC)
+        elif self.print_style == "Scientific":
+            string = _sci_print(self, method=self.MC)
+        print(string)
+
+    def min_max_print(self):
+        '''Prints the result of a Min-Max method error propagation.
+
+        The purpose of this method is to easily compare the results of a
+        Min-Max propagation with whatever method is chosen to confirm that
+        the Min-Max is the upper bound of the error.
         '''
-        latex = ("Latex", "latex", 'Tex', 'tex',)
-        Sci = ("Scientific", "Sci", 'scientific', 'sci', 'sigfigs',)
-        ExperimentalValue.figs = figs
-
-        if style in latex:
-            self.style = "Latex"
-        elif style in Sci:
-            self.style = "Scientific"
-        else:
-            self.style = "Default"
-
-    def MC_print(self):
-        if ExperimentalValue.style == "Latex":
-            string = tex_print(self, method=self.MC)
-        elif ExperimentalValue.style == "Default":
-            string = def_print(self, method=self.MC)
-        elif ExperimentalValue.style == "Scientific":
-            string = sci_print(self, method=self.MC)
+        if self.print_style == "Latex":
+            string = _tex_print(self, method=self.MinMax)
+        elif self.print_style == "Default":
+            string = _def_print(self, method=self.MinMax)
+        elif self.print_style == "Scientific":
+            string = _sci_print(self, method=self.MinMax)
         print(string)
 
     def _find_covariance(x, y):
@@ -321,7 +298,7 @@ class ExperimentalValue:
                 for i in range(len(units)//2):
                     self.units[units[2*i]] = units[i+1]
 
-    def _update_info(self, operation, var1, var2=None, func_flag=None):
+    def _update_info(self, operation, *args, func_flag=False):
         '''
         Update the formula, name and method of an object.
 
@@ -334,6 +311,13 @@ class ExperimentalValue:
         '''
         import error_operations as op
 
+        if len(args) is 1:
+            var1 = args[0]
+            var2 = None
+        elif len(args) is 2:
+            var1 = args[0]
+            var2 = args[1]
+
         op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan',
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
                      op.exp: 'exp', op.log: 'log', op.add: '+',
@@ -341,7 +325,7 @@ class ExperimentalValue:
                      'neg': '-', op.asin: 'asin', op.acos: 'acos',
                      op.atan: 'atan', }
 
-        if func_flag is None and var2 is not None:
+        if func_flag is False and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
             self.user_name = False
             self.info['Formula'] = var1.info['Formula'] + \
@@ -359,7 +343,35 @@ class ExperimentalValue:
                 if root not in self.root:
                     self.root += var2.root
 
-        elif func_flag is not None:
+            if var1.units == var2.units and op_string[operation] in ('+', '-'):
+                self.units = var1.units
+
+            elif op_string[operation] is '*':
+                for key in var1.units:
+                    self.units[key] = var1.units[key]
+                for key in var2.units:
+                    if key in var1.units:
+                        self.units[key] = var1.units[key] + var2.units[key]
+                        if self.units[key] == 0:
+                            del self.units[key]
+                    else:
+                        self.units[key] = var2.units[key]
+
+            elif op_string[operation] is '/':
+                for key in var1.units:
+                    self.units[key] = var1.units[key]
+                for key in var2.units:
+                    if key in var1.units:
+                        self.units[key] = var1.units[key] - var2.units[key]
+                        if self.units[key] == 0:
+                            del self.units[key]
+                    else:
+                        self.units[key] = -var2.units[key]
+
+            if self.units == {}:
+                self.units = ''
+
+        elif func_flag is True:
             self.rename(op_string[operation]+'('+var1.name+')')
             self.user_name = False
             self.info['Formula'] = op_string[operation] + '(' + \
@@ -373,6 +385,7 @@ class ExperimentalValue:
             for root in var1.root:
                 if root not in self.root:
                     self.root += var1.root
+            self.units = ''
 
         else:
             print('Something went wrong in update_info')
@@ -587,55 +600,58 @@ class ExperimentalValue:
             else:
                 return self.mean == other.mean
 
-    def monte_carlo(func, *args):
-        '''
-        Uses a Monte Carlo simulation to determine the mean and standard
-        deviation of a function.
 
-        Inputted arguments must be measurement type. Constants can be used
-        as 'normalized' quantities which produce a constant row in the
-        matrix of normally randomized values.
-        '''
-        # 2D array
-        import numpy as np
-        import error_operations as op
+def set_print_style(style=None, figs=None):
+    '''Change style of printout for Measurement objects.
 
-        _np_func = {op.add: np.add, op.sub: np.subtract, op.mul: np.multiply,
-                    op.div: np.divide, op.power: np.power, op.log: np.log,
-                    op.exp: np.exp, op.sin: np.sin, op.cos: np.cos,
-                    op.tan: np.tan, op.atan: np.arctan,
-                    op.csc: lambda x: np.divide(1, np.sin(x)),
-                    op.sec: lambda x: np.divide(1, np.cos(x)),
-                    op.cot: lambda x: np.divide(1, np.tan(x)),
-                    op.asin: np.arcsin, op.acos: np.arccos, op.atan: np.arctan,
-                    }
+    The default style prints as the user might write a value, that is
+    'x = 10 +/- 1'.
 
-        N = len(args)
-        n = ExperimentalValue.mc_trial_number
-        value = np.zeros((N, n))
-        result = np.zeros(n)
-        for i in range(N):
-            if args[i].MC_list is not None:
-                value[i] = args[i].MC_list
-            elif args[i].std == 0:
-                value[i] = args[i].mean
-                args[i].MC_list = value[i]
-            else:
-                value[i] = np.random.normal(args[i].mean, args[i].std, n)
-                args[i].MC_list = value[i]
+    Latex style prints in the form of 'x = (10\pm 1)\e0' which is ideal for
+    pasting values into a Latex document as will be the case for lab reports.
 
-        result = _np_func[func](*value)
-        data = np.mean(result)
-        error = np.std(result, ddof=1)
-        return (data, error,)
+    The scientific style prints the value in reduced scientific notation
+    such that the error is a single digit, 'x = (10 +/- 1)*10**0'.
+    '''
+    latex = ("Latex", "latex", 'Tex', 'tex',)
+    Sci = ("Scientific", "Sci", 'scientific', 'sci', 'sigfigs',)
+    Default = ('default', 'Default',)
+    ExperimentalValue.figs = figs
 
-
-def set_default_print_style(style=None):
-    if type(style) is str:
-        ExperimentalValue.default_style(style)
+    if style in latex:
+        ExperimentalValue.print_style = "Latex"
+    elif style in Sci:
+        ExperimentalValue.print_style = "Scientific"
+    elif style in Default:
+        ExperimentalValue.print_style = "Default"
     else:
         print('''A style must be a string of either: Scientific notation,
-        Latex, or the default style.''')
+        Latex, or the default style. Using ''')
+
+
+def set_error_method(chosen_method):
+    '''
+    Choose the method of error propagation to be used. Enter a string.
+
+    Function to change default error propogation method used in
+    measurement functions.
+    '''
+    mc_list = (
+        'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
+        'monte carlo',)
+    min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
+    derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
+                 'default',)
+
+    if chosen_method in mc_list:
+        ExperimentalValue.error_method = "Monte Carlo"
+    elif chosen_method in min_max_list:
+        ExperimentalValue.error_method = "Min Max"
+    elif chosen_method in derr_list:
+        ExperimentalValue.error_method = "Derivative"
+    else:
+        print("Method not recognized, using derivative method.")
+        ExperimentalValue.error_method = "Derivative"
 
 
 class Function(ExperimentalValue):
@@ -889,27 +905,6 @@ def atan(x):
         return op.operation_wrap(op.atan, x, func_flag=True)
 
 
-def f(function, *args):
-    '''
-    Function wrapper for any defined function to operate with arbitrary
-    measurement type objects arguments. Returns a Function type measurement
-    object.
-    '''
-    N = len(args)
-    mean = function(args)
-    std_squared = 0
-    for i in range(N):
-        for arg in args:
-            std_squared += arg.std**2*numerical_partial_derivative(
-                function, i, args)**2
-    std = (std_squared)**(1/2)
-    argName = ""
-    for i in range(N):
-        argName += ', '+args[i].name
-    name = function.__name__+"("+argName+")"
-    return Function(mean, std, name=name)
-
-
 def numerical_partial_derivative(func, var, *args):
     '''
     Returns the parital derivative of a dunction with respect to var.
@@ -932,7 +927,7 @@ def numerical_derivative(function, point, dx=1e-10):
     return (function(point+dx)-function(point))/dx
 
 
-def variance(*args, ddof=1):
+def _variance(*args, ddof=1):
     '''
     Returns a tuple of the mean and standard deviation of a data array.
 
@@ -951,7 +946,7 @@ def variance(*args, ddof=1):
     return (mean, std)
 
 
-def weighted_variance(mean, std, ddof=1):
+def _weighted_variance(mean, std, ddof=1):
     import numpy as np
     from math import sqrt
 
@@ -961,20 +956,29 @@ def weighted_variance(mean, std, ddof=1):
     return (w_mean, w_std)
 
 
-def tex_print(self, method=None):
+def _tex_print(self, method=None):
     '''
     Creates string used by __str__ in a style useful for printing in Latex,
     as a value with error, in brackets multiplied by a power of ten. (ie.
     15+/-0.3 is (150 \pm 3)\e-1. Where Latex parses \pm as +\- and \e as
     *10**-1)
     '''
-    if method is None:
+    if ExperimentalValue.error_method is 'Derivative':
         mean = self.mean
         std = self.std
-    elif method == 'MC':
+    elif ExperimentalValue.error_method is 'Monte Carlo':
         [mean, std] = self.MC
-    elif method == 'MinMax':
+    elif ExperimentalValue.error_method is 'Min Max':
         [mean, std] = self.MinMax
+
+    if method is not None:
+        if ExperimentalValue.error_method is 'Derivative':
+            mean = self.mean
+            std = self.std
+        elif ExperimentalValue.error_method is 'Monte Carlo':
+            [mean, std] = self.MC
+        elif ExperimentalValue.error_method is 'Min Max':
+            [mean, std] = self.MinMax
 
     flag = True
     i = 0
@@ -986,7 +990,9 @@ def tex_print(self, method=None):
                 std = int(std/10**i//1)
                 mean = int(mean/10**i//1)
                 return "(%d \pm %d)\e%d" % (mean, std, i)
-            if value < 1:
+            elif value == float('inf'):
+                return "inf"
+            elif value < 1:
                 value *= 10
                 i -= 1
             elif value >= 10:
@@ -1009,6 +1015,8 @@ def tex_print(self, method=None):
                 std = int(std)
                 mean = int(mean)
                 return "(%d \pm %d)\e%d" % (mean, std, i)
+            elif value == float('inf'):
+                return "%d \pm inf" % (mean)
             elif value < 1:
                 value *= 10
                 i -= 1
@@ -1025,7 +1033,7 @@ def tex_print(self, method=None):
             return "(%d \pm %d)" % (mean, std)
 
 
-def def_print(self, method=None):
+def _def_print(self, method=None):
     '''
     Returns string used by __str__ as two numbers representing mean and error
     to either the first non-zero digit of error or to a specified number of
@@ -1033,19 +1041,31 @@ def def_print(self, method=None):
     '''
     flag = True
     i = 0
-    if method is None:
+
+    if ExperimentalValue.error_method is 'Derivative':
         mean = self.mean
         std = self.std
-    elif method == 'MC':
+    elif ExperimentalValue.error_method is 'Monte Carlo':
         [mean, std] = self.MC
-    elif method == 'MinMax':
+    elif ExperimentalValue.error_method is 'Min Max':
         [mean, std] = self.MinMax
+
+    if method is not None:
+        if ExperimentalValue.error_method is 'Derivative':
+            mean = self.mean
+            std = self.std
+        elif ExperimentalValue.error_method is 'Monte Carlo':
+            [mean, std] = self.MC
+        elif ExperimentalValue.error_method is 'Min Max':
+            [mean, std] = self.MinMax
 
     if ExperimentalValue.figs is not None:
         value = abs(mean)
         while(flag):
             if value == 0:
                 flag = False
+            elif value == float('inf'):
+                return "inf"
             elif value < 1:
                 value *= 10
                 i += 1
@@ -1069,6 +1089,8 @@ def def_print(self, method=None):
         while(flag):
             if value == 0:
                 flag = False
+            elif value == float('inf'):
+                return "%d \pm inf" % (mean)
             elif value < 1:
                 value *= 10
                 i += 1
@@ -1087,19 +1109,28 @@ def def_print(self, method=None):
         return n % (mean)+" +/- "+n % (std)
 
 
-def sci_print(self, method=None):
+def _sci_print(self, method=None):
     '''
     Returns string used by __str__ as two numbers representing mean and
     error, each in scientific notation to a specified numebr of significant
     figures, or 3 if none is given.
     '''
-    if method is None:
+    if ExperimentalValue.error_method is 'Derivative':
         mean = self.mean
         std = self.std
-    elif method == 'MC':
+    elif ExperimentalValue.error_method is 'Monte Carlo':
         [mean, std] = self.MC
-    elif method == 'MinMax':
+    elif ExperimentalValue.error_method is 'Min Max':
         [mean, std] = self.MinMax
+
+    if method is not None:
+        if ExperimentalValue.error_method is 'Derivative':
+            mean = self.mean
+            std = self.std
+        elif ExperimentalValue.error_method is 'Monte Carlo':
+            [mean, std] = self.MC
+        elif ExperimentalValue.error_method is 'Min Max':
+            [mean, std] = self.MinMax
 
     flag = True
     i = 0
@@ -1111,6 +1142,8 @@ def sci_print(self, method=None):
                 std = int(std/10**i//1)
                 mean = int(mean/10**i//1)
                 return "(%d \pm %d)\e%d" % (mean, std, i)
+            elif value == float('inf'):
+                return "inf"
             if value < 1:
                 value *= 10
                 i -= 1
@@ -1134,6 +1167,8 @@ def sci_print(self, method=None):
                 std = int(std)
                 mean = int(mean)
                 return "(%d \pm %d)\e%d" % (mean, std, i)
+            elif value == float('inf'):
+                return "%d \pm inf" % (mean)
             elif value < 1:
                 value *= 10
                 i -= 1
@@ -1194,5 +1229,5 @@ def reset_variables():
     ExperimentalValue.formula_register = {}
     ExperimentalValue.error_method = "Derivative"
     ExperimentalValue.mc_trial_number = 10000
-    ExperimentalValue.default_style = "Default"
+    ExperimentalValue.print_style = "Default"
     ExperimentalValue.figs = 3
