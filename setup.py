@@ -3,14 +3,14 @@ from distutils.core import setup
 setup(
     name='qexpy',
     packages=['qexpy'],
-    version='0.1.6',
+    version='0.2.0',
     description='''Package to handle error analysis and data plotting aimed
     at undergraduate physics.''',
     author='Connor Kapahi and Prof. Ryan Martin',
     author_email='connorkapahi@gmail.com',
     license='GNU GLP v3',
     url='https://github.com/Queens-Physics/QExPy',
-    download_url='https://github.com/Queens-Physics/QExPy/tarball/0.1.5',
+    download_url='https://github.com/Queens-Physics/QExPy/tarball/0.2.0',
     keywords=['physics', 'laboratories', 'labs', 'undergraduate',
               'data analysis', 'uncertainties', 'plotting', 'error analysis',
               'error propagation', 'uncertainty propagation'],
