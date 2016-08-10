@@ -1,6 +1,4 @@
 *.spyderworkspace
-test_*.py
-*_test.py
 *.pyc
 Run Test*
 WorkList.txt
