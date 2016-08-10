@@ -21,5 +21,5 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Programming Language :: Python',
     ],
-    install_requires=['numpy', 'scipy>=0.17', 'bokeh==0.12'],
+    install_requires=['numpy', 'scipy>=0.17', 'bokeh>=0.12.1'],
 )

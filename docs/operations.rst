@@ -43,7 +43,7 @@ such as meter order second:
    import qexpy.error as e
 	
    t = e.Measurement(3,0.25, name='Time', units='s')
-   a = e.Measurement(10, 1, name='Acceleration', units=['m',1,'s',-1])
+   a = e.Measurement(10, 1, name='Acceleration', units=['m',1,'s',-2])
 
 This also allows for the units of values produced by operations such as
 multiplication to be generated automatically.  Consider the calculation of
@@ -56,7 +56,7 @@ the velocity of some object that accelerates at a for t seconds:
 	
 .. nboutput:: ipython3
 
-	['m',1,'s','1']
+	['m',1,'s','-1']
 	
 This unit list, when used in a plot will appear as:
 
