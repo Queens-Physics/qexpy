@@ -1,6 +1,21 @@
-# QExPy
-Scientific analysis package for Queen's Physics and Engineering Physics Students
+#Introduction
 
-QExPy or the Queen's Experimental Physics package is designed for Python 3 as well as in a iPython environment, specifically in a Jupyter Notebook environment. The aim of this package is to simplify the analysis of Physics labs by combining a measurement and the associated uncertainty into a single object, called a measurement. This object can then be operated on and used in a function while error propigation is handled by either the derivative formula, the min-max method, or the Monte Carlo method. Errors are propagated automatically and without any intervention by the user, other than creating a measurement object and using the appropriate function in the case of a sine, cosine, or any other elementary function.
+QExPy (Queen’s Experimental Physics) is a python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser.
 
-Furthermore, datasets can be plotted easily using the fitting module by providing a list of x and y data coordinates, or simply a measurement object. The user can then request a fit of this data, as well as a residual plot, and any other functions that should be shown on this plot. The plot is then created using Bokeh and displayed either in an iPython console or saved as a .html and shown on the default broswer.
+**Highlights**:  
+  * Easily propagate uncertainties in measured quantities  
+  * Compare different uncertainty calculations (e.g. Min-Max, quadrature errors, Monte Carlo errors)  
+  * Correctly include correlations between quantities when propagating uncertainties (e.g. the uncertainty on x-x should always be 0!)  
+  * Calculate exact numerical values of derivatives  
+  * Choose display format (standard, Latex, scientific notation)  
+  * Control the number of significant figures  
+  * Handle ensembles of measurements (e.g. combine multiple measurements, with uncertainties, of a single quantity)  
+  * Produce interactive plots of data in the browser  
+  * Fit data to common functions (polynomials, gaussians) or provide custom functions  
+  * Examine residual plots after fits  
+  * Track units in calculations (still in development)  
+  * Plot confidence bands from the errors in fitted parameters (still in development)  
+  * Integrates with Jupyter notebooks, numpy, bokeh  
+
+#More information
+Read the documentation at http://qexpy.readthedocs.io/en/latest/
