@@ -909,7 +909,14 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         '''
         if type(arg) is e.Measurement:
             # For input of Measurement object
-            arg_measurement = arg
+            arg_measurement = e.Measurement_Array(arg.info['Data'],
+                                                  arg.info['Error'],
+                                                  name=arg.name,
+                                                  units=arg.units)
+            arg_data = arg_measurement.info['Data']
+            arg_error = arg_measurement.info['Error']
+            if arg_error is None:
+                arg_error = [0]*len(arg_data)
 
         elif type(arg) is np.ndarray and\
                 all(isinstance(n, e.Measurement) for n in arg):
@@ -919,7 +926,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
             for val in arg:
                 arg_data.append(val.mean)
                 arg_error.append(val.std)
-            arg_measurement = e.Measurement(arg_data, arg_error)
+            arg_measurement = e.Measurement_Array(arg_data, arg_error)
 
         elif type(arg) in ARRAY and\
                 all(isinstance(n, CONSTANT) for n in arg):
@@ -934,26 +941,20 @@ def data_transform(self, x, y, xerr=None, yerr=None):
                     arg_error.append(val)
             else:
                 arg_error = [0]*len(arg)
-            arg_measurement = e.Measurement(arg_data, arg_error)
+            arg_measurement = e.Measurement_Array(arg_data, arg_error)
         else:
             raise TypeError('Input method not recognized.')
-
-        arg_data = arg_measurement.info['Data']
-        if arg_measurement.info['Error'] is not None:
-            arg_error = arg_measurement.info['Error']
-        else:
-            arg_error = [0]*len(arg_data)
 
         return (arg_data, arg_error, arg_measurement)
 
     def _plot_labels(arg):
         unit_string = ''
-        if arg.units != {}:
-            for key in arg.units:
-                if arg.units[key] == 1 and len(arg.units.keys()) is 1:
+        if arg[0].units != {}:
+            for key in arg[0].units:
+                if arg[0].units[key] == 1 and len(arg[0].units.keys()) is 1:
                     unit_string = key + unit_string
                 else:
-                    unit_string += key+'^%d' % (arg.units[key])
+                    unit_string += key+'^%d' % (arg[0].units[key])
                     unit_string += ' '
             unit_string = '['+unit_string+']'
 
@@ -961,7 +962,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
                 all(isinstance(n, e.Measurement) for n in arg):
             arg_name = arg[0].name
         else:
-            arg_name = arg.name
+            arg_name = arg[0].name
 
         return (unit_string, arg_name,)
 
@@ -1008,7 +1009,7 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None):
         xrange = list(xrange)
         y_max = list(y_max)
 
-        self.p.patch(
+        self.fit_range = self.p.patch(
             x=xrange+xrange_reverse, y=y_max+y_min_reverse,
             fill_alpha=0.3,
             fill_color=self.colors['Function'][self.function_counter],
@@ -1017,7 +1018,7 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None):
             legend=legend_name)
 
 
-def update_plot(self, model='linear'):
+def update_plot(self):
     ''' Creates interactive sliders in Jupyter Notebook to adjust fit.
     '''
     from ipywidgets import interact
@@ -1028,15 +1029,30 @@ def update_plot(self, model='linear'):
         increment = (par.mean-min_val)/100
         range_argument += (min_val, par.mean, increment)
 
-    if model is 'linear':
-        @interact(b=self.fit_parameters[0].mean, m=self.fit_parameters[1].mean)
-        def update(b=self.fit_parameters[0].mean,
-                   m=self.fit_parameters[1].mean):
-            import numpy as np
+    for par in self.fit_parameters:
+        increment = (par.std)/100
+        range_argument += (0, par.std, increment)
 
-            self.fit_line.data_source.data['y'] = np.multiply(
-                m, self.fit_line.data_source.data['x']) + b
-            bi.push_notebook()
+    @interact(b=self.fit_parameters[0].mean, m=self.fit_parameters[1].mean,
+              b_error=self.fit_parameters[0].std,
+              m_error=self.fit_parameters[1].std)
+    def update(b=self.fit_parameters[0].mean,
+               m=self.fit_parameters[1].mean,
+               b_error=self.fit_parameters[0].std,
+               m_error=self.fit_parameters[1].std):
+        import numpy as np
+
+        self.fit_line.data_source.data['y'] = np.multiply(
+            m, self.fit_line.data_source.data['x']) + b
+
+        error_top_line = np.multiply(
+            m+m_error, self.fit_line.data_source.data['x']) + b+b_error
+        error_bottom_line = np.multiply(
+            m-m_error, self.fit_line.data_source.data['x']) + b-b_error
+
+        self.fit_range.data_source.data['y'] = list(error_top_line) +\
+            list(error_bottom_line)
+        bi.push_notebook()
 
 
 def num_der(function, point, dx=1e-10):
