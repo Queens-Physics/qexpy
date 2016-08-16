@@ -368,9 +368,6 @@ class ExperimentalValue:
                     else:
                         self.units[key] = -var2.units[key]
 
-            if self.units == {}:
-                self.units = ''
-
         elif func_flag is True:
             self.rename(op_string[operation]+'('+var1.name+')')
             self.user_name = False
@@ -996,12 +993,12 @@ def _tex_print(self, method=None):
     15+/-0.3 is (150 \pm 3)\e-1. Where Latex parses \pm as +\- and \e as
     *10**-1)
     '''
-    if ExperimentalValue.error_method is 'Derivative':
+    if ExperimentalValue.error_method == 'Derivative':
         mean = self.mean
         std = self.std
-    elif ExperimentalValue.error_method is 'Monte Carlo':
+    elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
-    elif ExperimentalValue.error_method is 'Min Max':
+    elif ExperimentalValue.error_method == 'Min Max':
         [mean, std] = self.MinMax
 
     if method is not None:
@@ -1075,21 +1072,21 @@ def _def_print(self, method=None):
     flag = True
     i = 0
 
-    if ExperimentalValue.error_method is 'Derivative':
+    if ExperimentalValue.error_method == 'Derivative':
         mean = self.mean
         std = self.std
-    elif ExperimentalValue.error_method is 'Monte Carlo':
+    elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
-    elif ExperimentalValue.error_method is 'Min Max':
+    elif ExperimentalValue.error_method == 'Min Max':
         [mean, std] = self.MinMax
 
     if method is not None:
-        if ExperimentalValue.error_method is 'Derivative':
+        if ExperimentalValue.error_method == 'Derivative':
             mean = self.mean
             std = self.std
-        elif ExperimentalValue.error_method is 'Monte Carlo':
+        elif ExperimentalValue.error_method == 'Monte Carlo':
             [mean, std] = self.MC
-        elif ExperimentalValue.error_method is 'Min Max':
+        elif ExperimentalValue.error_method == 'Min Max':
             [mean, std] = self.MinMax
 
     if ExperimentalValue.figs is not None:
@@ -1148,21 +1145,21 @@ def _sci_print(self, method=None):
     error, each in scientific notation to a specified numebr of significant
     figures, or 3 if none is given.
     '''
-    if ExperimentalValue.error_method is 'Derivative':
+    if ExperimentalValue.error_method == 'Derivative':
         mean = self.mean
         std = self.std
-    elif ExperimentalValue.error_method is 'Monte Carlo':
+    elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
-    elif ExperimentalValue.error_method is 'Min Max':
+    elif ExperimentalValue.error_method == 'Min Max':
         [mean, std] = self.MinMax
 
     if method is not None:
-        if ExperimentalValue.error_method is 'Derivative':
+        if ExperimentalValue.error_method == 'Derivative':
             mean = self.mean
             std = self.std
-        elif ExperimentalValue.error_method is 'Monte Carlo':
+        elif ExperimentalValue.error_method == 'Monte Carlo':
             [mean, std] = self.MC
-        elif ExperimentalValue.error_method is 'Min Max':
+        elif ExperimentalValue.error_method == 'Min Max':
             [mean, std] = self.MinMax
 
     flag = True
