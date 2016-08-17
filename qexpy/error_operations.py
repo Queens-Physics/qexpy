@@ -14,7 +14,7 @@ def dev(*args, der=None, manual_args=None):
     of variables. The derivative dictionary of a function must be passes by
     the der argument.
     '''
-    import error as e
+    import qexpy.error as e
 
     if manual_args is None:
         std = 0
@@ -76,7 +76,7 @@ def check_values(*args):
     converted,  this is done by calling the normalize function,  which
     outputs a measurement object with no standard deviation.
     '''
-    import error as e
+    import qexpy.error as e
 
     val = ()
     for arg in args:
@@ -95,7 +95,7 @@ def check_formula(operation, a, b=None, func_flag=False):
     register of previously calculated operations is checked. If the
     quantity does exist,  the previously calculated object is returned.
     '''
-    import error as e
+    import qexpy.error as e
 
     op_string = {
         sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
@@ -127,7 +127,7 @@ def neg(x):
     '''
     Returns the negitive of a measurement object
     '''
-    import error as e
+    import qexpy.error as e
 
     x, = check_values(x)
     result_derivative = {}
@@ -460,7 +460,7 @@ def monte_carlo(func, *args):
     '''
     # 2D array
     import numpy as np
-    import error as e
+    import qexpy.error as e
 
     _np_func = {add: np.add, sub: np.subtract, mul: np.multiply,
                 div: np.divide, power: np.power, log: np.log,
@@ -486,6 +486,10 @@ def monte_carlo(func, *args):
             value[i] = np.random.normal(args[i].mean, args[i].std, n)
             args[i].MC_list = value[i]
 
+    if len(args) == 2:
+        rho = args[0]._return_correlation(args[1])
+        value[1] = rho*value[1] + np.sqrt(1-rho*rho)*value[1]
+
     result = _np_func[func](*value)
     data = np.mean(result)
     error = np.std(result, ddof=1)
@@ -498,7 +502,7 @@ def operation_wrap(operation, *args, func_flag=False):
     which can handle measurement objects and return an error propagated by
     derivative,  min-max,  or Monte Carlo method.
     '''
-    import error as e
+    import qexpy.error as e
 
     args = check_values(*args)
 

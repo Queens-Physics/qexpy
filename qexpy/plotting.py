@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import error as e
+import qexpy.error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -82,6 +82,7 @@ class Plot:
         self.y_range = [min(self.ydata)-2*max(self.yerr),
                         max(self.ydata)+2*max(self.yerr)]
         self.dimensions = [600, 400]
+        self.sigma = 1
 
     def residuals(self):
         '''Request residual output for plot.'''
@@ -95,6 +96,11 @@ class Plot:
         self.yres = self.ydata-yfit
 
         self.flag['residuals'] = True
+
+    def set_errorband_sigma(self, sigma=1):
+        '''Change the confidance bounds of the error range on a fit.
+        '''
+        self.sigma = sigma
 
     def fit(self, model=None, guess=None, fit_range=None):
         '''Fit data, by least squares method, to a model. Model must be
@@ -182,9 +188,12 @@ class Plot:
                 if i >= min(fit_range) and i <= max(fit_range):
                     data_range.append(i)
 
+        data_range = np.array(data_range)
+        ydata = np.array(self.ydata)
+        yerr = np.array(self.yerr)
         self.pars_fit, self.pcov = sp.curve_fit(
-                                    model, data_range, self.ydata,
-                                    sigma=self.yerr, p0=pars_guess)
+                                    model, data_range, ydata,
+                                    sigma=yerr, p0=pars_guess)
         self.pars_err = np.sqrt(np.diag(self.pcov))
 
         # Use derivative method to factor x error into fit
@@ -218,6 +227,10 @@ class Plot:
 
             self.fit_parameters += (
                 e.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
+
+            for i in range(len(self.fit_parameters)-1):
+                self.fit_parameters[0].set_covariance(self.fit_parameters[i+1],
+                                                      self.pcov[0][i+1])
         self.flag['fitted'] = True
 
     def function(self, function):
@@ -302,7 +315,7 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        import error_operations as op
+        import qexpy.error_operations as op
         data, function = op.check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
@@ -907,7 +920,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
     def _plot_arguments(arg, arg_err=None):
         '''Creates data and error for various inputs.
         '''
-        if type(arg) is e.Measurement:
+        if type(arg) is e.ExperimentalValue:
             # For input of Measurement object
             arg_measurement = e.Measurement_Array(arg.info['Data'],
                                                   arg.info['Error'],
@@ -919,7 +932,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
                 arg_error = [0]*len(arg_data)
 
         elif type(arg) is np.ndarray and\
-                all(isinstance(n, e.Measurement) for n in arg):
+                all(isinstance(n, e.ExperimentalValue) for n in arg):
             # For input of array of Measurement objects
             arg_data = []
             arg_error = []
@@ -959,7 +972,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
             unit_string = '['+unit_string+']'
 
         if type(arg) is np.ndarray and\
-                all(isinstance(n, e.Measurement) for n in arg):
+                all(isinstance(n, e.ExperimentalValue) for n in arg):
             arg_name = arg[0].name
         else:
             arg_name = arg[0].name
@@ -998,8 +1011,8 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None):
         for i in range(n):
             y_theory = theory(xrange[i])
             y_mid.append(y_theory.mean)
-            y_max.append(y_theory.mean+y_theory.std)
-            y_min.append(y_theory.mean-y_theory.std)
+            y_max.append(y_theory.mean+self.sigma*y_theory.std)
+            y_min.append(y_theory.mean-self.sigma*y_theory.std)
         self.fit_line = self.p.line(
             xrange, y_mid, legend=legend_name,
             line_color=self.colors['Function'][self.function_counter])

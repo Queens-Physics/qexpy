@@ -166,7 +166,7 @@ class ExperimentalValue:
 
         return string
 
-    def Monte_Carlo_print(self):
+    def print_mc_error(self):
         '''Prints the result of a Monte Carlo error propagation.
 
         The purpose of this method is to easily compare the results of a
@@ -180,7 +180,7 @@ class ExperimentalValue:
             string = _sci_print(self, method=self.MC)
         print(string)
 
-    def min_max_print(self):
+    def print_min_mix_error(self):
         '''Prints the result of a Min-Max method error propagation.
 
         The purpose of this method is to easily compare the results of a
@@ -189,6 +189,21 @@ class ExperimentalValue:
         '''
         if self.print_style == "Latex":
             string = _tex_print(self, method=self.MinMax)
+        elif self.print_style == "Default":
+            string = _def_print(self, method=self.MinMax)
+        elif self.print_style == "Scientific":
+            string = _sci_print(self, method=self.MinMax)
+        print(string)
+
+    def print_deriv_error(self):
+        '''Prints the result of a Min-Max method error propagation.
+
+        The purpose of this method is to easily compare the results of a
+        Min-Max propagation with whatever method is chosen to confirm that
+        the Min-Max is the upper bound of the error.
+        '''
+        if self.print_style == "Latex":
+            string = _tex_print(self, method=self.Derivative)
         elif self.print_style == "Default":
             string = _def_print(self, method=self.MinMax)
         elif self.print_style == "Scientific":
@@ -229,6 +244,10 @@ class ExperimentalValue:
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
 
+        factor = sigma_xy/x.std/y.std
+        x.correlation[y.info['ID']] = factor
+        y.correlation[x.info['ID']] = factor
+
     def set_correlation(self, y, factor):
         '''
         Manually set the correlation between two quantities
@@ -239,6 +258,25 @@ class ExperimentalValue:
         x = self
         ro_xy = factor
         sigma_xy = ro_xy*x.std*y.std
+
+        x.correlation[y.info['ID']] = factor
+        y.correlation[x.info['ID']] = factor
+
+        x.covariance[y.info['ID']] = sigma_xy
+        y.covariance[x.info['ID']] = sigma_xy
+
+    def set_covariance(self, y, sigma_xy):
+        '''
+        Manually set the covariance between two quantities
+
+        Given a covariance value, the covariance and correlation
+        between two variables is added to both objects.
+        '''
+        x = self
+        factor = sigma_xy/x.std/y.std
+
+        x.correlation[y.info['ID']] = factor
+        y.correlation[x.info['ID']] = factor
 
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
@@ -266,17 +304,19 @@ class ExperimentalValue:
         else:
             return 0
 
-    def _return_correlation(x, y):
+    def _return_correlation(self, y):
         '''
         Returns the correlation factor of two measurements.
 
         Using the covariance, or finding the covariance if not defined,
         the correlation factor of two measurements is returned.
         '''
+        x = self
         if y.name in x.covariance:
             pass
         else:
-            ExperimentalValue._find_covariance(x, y)
+            # ExperimentalValue._find_covariance(x, y)
+            return 0
 
         sigma_xy = x.covariance[y.info['ID']]
         sigma_x = x.std
@@ -309,7 +349,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import error_operations as op
+        import qexpy.error_operations as op
 
         if len(args) is 1:
             var1 = args[0]
@@ -428,7 +468,7 @@ class ExperimentalValue:
 # Operations on measurement objects
 
     def __add__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -441,7 +481,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -454,7 +494,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -467,7 +507,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -480,7 +520,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             print(other.mean)
@@ -494,7 +534,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -507,7 +547,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -520,7 +560,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -533,7 +573,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -546,7 +586,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -565,11 +605,11 @@ class ExperimentalValue:
             import math as m
             return m.sqrt(x)
         else:
-            import error_operations as op
+            import qexpy.error_operations as op
             return op.operation_wrap(op.power, x, 1/2)
 
     def __neg__(self):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -596,6 +636,9 @@ class ExperimentalValue:
                 raise TypeError
             else:
                 return self.mean == other.mean
+
+    def log(x):
+        return log(x)
 
     def show_MC_histogram(self, title=None):
         '''Creates and shows a Bokeh plot of a histogram of the values
@@ -699,7 +742,8 @@ class Function(ExperimentalValue):
         Function.id_number += 1
         self.derivative = {self.info['ID']: 1}
         ExperimentalValue.register.update({self.info["ID"]: self})
-        self.covariance = {self.name: self.std**2}
+        self.covariance = {self.info['ID']: self.std**2}
+        self.correlation = {self.info['ID']: 1}
         self.root = ()
         self.MC = None
         self.MinMax = None
@@ -730,7 +774,8 @@ class Measurement(ExperimentalValue):
         self.info['Formula'] = 'var%d' % (Measurement.id_number)
         Measurement.id_number += 1
         self.derivative = {self.info['ID']: 1}
-        self.covariance = {self.name: self.std**2}
+        self.covariance = {self.info['ID']: self.std**2}
+        self.correlation = {self.info['ID']: 1}
         ExperimentalValue.register.update({self.info["ID"]: self})
         self.root = (self.info["ID"],)
 
@@ -763,12 +808,12 @@ def sqrt(x):
         import math as m
         return m.sqrt(x)
     else:
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.operation_wrap(op.power, x, 1/2)
 
 
 def sin(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -782,7 +827,7 @@ def sin(x):
 
 
 def cos(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -796,7 +841,7 @@ def cos(x):
 
 
 def tan(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -810,7 +855,7 @@ def tan(x):
 
 
 def sec(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -824,7 +869,7 @@ def sec(x):
 
 
 def csc(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -838,7 +883,7 @@ def csc(x):
 
 
 def cot(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -852,7 +897,7 @@ def cot(x):
 
 
 def log(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -866,7 +911,7 @@ def log(x):
 
 
 def exp(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -880,7 +925,7 @@ def exp(x):
 
 
 def e(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -894,7 +939,7 @@ def e(x):
 
 
 def asin(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -908,7 +953,7 @@ def asin(x):
 
 
 def acos(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -922,7 +967,7 @@ def acos(x):
 
 
 def atan(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
