@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import qexpy.error as e
+import error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -315,7 +315,7 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        import qexpy.error_operations as op
+        import error_operations as op
         data, function = op.check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True

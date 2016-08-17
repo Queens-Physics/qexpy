@@ -100,3 +100,11 @@ def test6():
 
     L = v*t
     assert L.units == {'m': 1}
+
+
+def test7():
+    '''Test of printing methods and sigfigs.
+    '''
+    e.set_print_style('Default', 3)
+    x = e.Measurement(10, 1, name='x')
+    assert x.__str__ == 'x = 10.0 +/- 1.0'

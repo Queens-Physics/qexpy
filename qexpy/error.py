@@ -166,6 +166,11 @@ class ExperimentalValue:
 
         return string
 
+    def set_sigfigs(self, figs=3):
+        '''Change the number of significant figures shown in print()
+        '''
+        ExperimentalValue.figs = figs
+
     def print_mc_error(self):
         '''Prints the result of a Monte Carlo error propagation.
 
@@ -349,7 +354,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import qexpy.error_operations as op
+        import error_operations as op
 
         if len(args) is 1:
             var1 = args[0]
@@ -468,7 +473,7 @@ class ExperimentalValue:
 # Operations on measurement objects
 
     def __add__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -481,7 +486,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -494,7 +499,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -507,7 +512,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -520,7 +525,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             print(other.mean)
@@ -534,7 +539,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -547,7 +552,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -560,7 +565,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -573,7 +578,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -586,7 +591,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -605,11 +610,11 @@ class ExperimentalValue:
             import math as m
             return m.sqrt(x)
         else:
-            import qexpy.error_operations as op
+            import error_operations as op
             return op.operation_wrap(op.power, x, 1/2)
 
     def __neg__(self):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -675,7 +680,8 @@ class ExperimentalValue:
 
 
 def set_print_style(style=None, figs=None):
-    '''Change style ("default","latex","scientific") of printout for Measurement objects.
+    '''Change style ("default","latex","scientific") of printout for
+    Measurement objects.
 
     The default style prints as the user might write a value, that is
     'x = 10 +/- 1'.
@@ -745,6 +751,7 @@ class Function(ExperimentalValue):
         self.covariance = {self.info['ID']: self.std**2}
         self.correlation = {self.info['ID']: 1}
         self.root = ()
+        self.der = None
         self.MC = None
         self.MinMax = None
         self.error_flag = False
@@ -778,6 +785,9 @@ class Measurement(ExperimentalValue):
         self.correlation = {self.info['ID']: 1}
         ExperimentalValue.register.update({self.info["ID"]: self})
         self.root = (self.info["ID"],)
+        self.der = [self.mean, self.std]
+        self.MC = [self.mean, self.std]
+        self.MinMax = [self.mean, self.std]
 
 
 class Constant(ExperimentalValue):
@@ -808,12 +818,12 @@ def sqrt(x):
         import math as m
         return m.sqrt(x)
     else:
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.operation_wrap(op.power, x, 1/2)
 
 
 def sin(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -827,7 +837,7 @@ def sin(x):
 
 
 def cos(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -841,7 +851,7 @@ def cos(x):
 
 
 def tan(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -855,7 +865,7 @@ def tan(x):
 
 
 def sec(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -869,7 +879,7 @@ def sec(x):
 
 
 def csc(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -883,7 +893,7 @@ def csc(x):
 
 
 def cot(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -897,7 +907,7 @@ def cot(x):
 
 
 def log(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -911,7 +921,7 @@ def log(x):
 
 
 def exp(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -925,7 +935,7 @@ def exp(x):
 
 
 def e(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -939,7 +949,7 @@ def e(x):
 
 
 def asin(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -953,7 +963,7 @@ def asin(x):
 
 
 def acos(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -967,7 +977,7 @@ def acos(x):
 
 
 def atan(x):
-    import qexpy.error_operations as op
+    import error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1039,8 +1049,7 @@ def _tex_print(self, method=None):
     *10**-1)
     '''
     if ExperimentalValue.error_method == 'Derivative':
-        mean = self.mean
-        std = self.std
+        [mean, std] = self.der
     elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
     elif ExperimentalValue.error_method == 'Min Max':
@@ -1048,8 +1057,7 @@ def _tex_print(self, method=None):
 
     if method is not None:
         if ExperimentalValue.error_method is 'Derivative':
-            mean = self.mean
-            std = self.std
+            [mean, std] = self.der
         elif ExperimentalValue.error_method is 'Monte Carlo':
             [mean, std] = self.MC
         elif ExperimentalValue.error_method is 'Min Max':
@@ -1118,8 +1126,7 @@ def _def_print(self, method=None):
     i = 0
 
     if ExperimentalValue.error_method == 'Derivative':
-        mean = self.mean
-        std = self.std
+        [mean, std] = self.der
     elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
     elif ExperimentalValue.error_method == 'Min Max':
@@ -1127,8 +1134,7 @@ def _def_print(self, method=None):
 
     if method is not None:
         if ExperimentalValue.error_method == 'Derivative':
-            mean = self.mean
-            std = self.std
+            [mean, std] = self.der
         elif ExperimentalValue.error_method == 'Monte Carlo':
             [mean, std] = self.MC
         elif ExperimentalValue.error_method == 'Min Max':
@@ -1155,8 +1161,8 @@ def _def_print(self, method=None):
             n = "%."+n+"f"
         else:
             n = '%.0f'
-        std = float(round(std, i))
-        mean = float(round(mean, i))
+        std = float(round(std, i+ExperimentalValue.figs))
+        mean = float(round(mean, i+ExperimentalValue.figs))
         return n % (mean)+" +/- "+n % (std)
 
     else:
@@ -1191,8 +1197,7 @@ def _sci_print(self, method=None):
     figures, or 3 if none is given.
     '''
     if ExperimentalValue.error_method == 'Derivative':
-        mean = self.mean
-        std = self.std
+        [mean, std] = self.der
     elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
     elif ExperimentalValue.error_method == 'Min Max':
@@ -1200,8 +1205,7 @@ def _sci_print(self, method=None):
 
     if method is not None:
         if ExperimentalValue.error_method == 'Derivative':
-            mean = self.mean
-            std = self.std
+            [mean, std] = self.der
         elif ExperimentalValue.error_method == 'Monte Carlo':
             [mean, std] = self.MC
         elif ExperimentalValue.error_method == 'Min Max':
