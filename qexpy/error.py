@@ -675,7 +675,7 @@ class ExperimentalValue:
 
 
 def set_print_style(style=None, figs=None):
-    '''Change style of printout for Measurement objects.
+    '''Change style ("default","latex","scientific") of printout for Measurement objects.
 
     The default style prints as the user might write a value, that is
     'x = 10 +/- 1'.
