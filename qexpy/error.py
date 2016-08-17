@@ -354,7 +354,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import error_operations as op
+        import qexpy.error_operations as op
 
         if len(args) is 1:
             var1 = args[0]
@@ -473,7 +473,7 @@ class ExperimentalValue:
 # Operations on measurement objects
 
     def __add__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -486,7 +486,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -499,7 +499,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -512,7 +512,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -525,7 +525,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             print(other.mean)
@@ -539,7 +539,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -552,7 +552,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -565,7 +565,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -578,7 +578,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -591,7 +591,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
-        import error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -610,11 +610,11 @@ class ExperimentalValue:
             import math as m
             return m.sqrt(x)
         else:
-            import error_operations as op
+            import qexpy.error_operations as op
             return op.operation_wrap(op.power, x, 1/2)
 
     def __neg__(self):
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -818,12 +818,12 @@ def sqrt(x):
         import math as m
         return m.sqrt(x)
     else:
-        import error_operations as op
+        import qexpy.error_operations as op
         return op.operation_wrap(op.power, x, 1/2)
 
 
 def sin(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -837,7 +837,7 @@ def sin(x):
 
 
 def cos(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -851,7 +851,7 @@ def cos(x):
 
 
 def tan(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -865,7 +865,7 @@ def tan(x):
 
 
 def sec(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -879,7 +879,7 @@ def sec(x):
 
 
 def csc(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -893,7 +893,7 @@ def csc(x):
 
 
 def cot(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -907,7 +907,7 @@ def cot(x):
 
 
 def log(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -921,7 +921,7 @@ def log(x):
 
 
 def exp(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -935,7 +935,7 @@ def exp(x):
 
 
 def e(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -949,7 +949,7 @@ def e(x):
 
 
 def asin(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -963,7 +963,7 @@ def asin(x):
 
 
 def acos(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -977,7 +977,7 @@ def acos(x):
 
 
 def atan(x):
-    import error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
