@@ -24,8 +24,8 @@ def dev(*args, der=None, manual_args=None):
             for i in range(len(arg.root)):
                 if arg.root[i] not in roots:
                     roots += (arg.root[i], )
-            for root in roots:
-                std += (der[root]*e.ExperimentalValue.register[root].std)**2
+        for root in roots:
+            std += (der[root]*e.ExperimentalValue.register[root].std)**2
 
         for i in range(len(roots)):
             for j in range(len(roots)-i-1):
@@ -486,6 +486,10 @@ def monte_carlo(func, *args):
             value[i] = np.random.normal(args[i].mean, args[i].std, n)
             args[i].MC_list = value[i]
 
+    if len(args) == 2:
+        rho = args[0]._return_correlation(args[1])
+        value[1] = rho*value[1] + np.sqrt(1-rho*rho)*value[1]
+
     result = _np_func[func](*value)
     data = np.mean(result)
     error = np.std(result, ddof=1)
@@ -516,7 +520,7 @@ def operation_wrap(operation, *args, func_flag=False):
     mean = operation(*args)
     std = dev(*args, der=df)
     result = e.Function(mean, std)
-    result.Derr = [mean, std]
+    result.der = [mean, std]
     result.MinMax = find_minmax(operation, *args)
     result.MC, result.MC_list = monte_carlo(operation, *args)
 

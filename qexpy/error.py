@@ -9,6 +9,7 @@ class ExperimentalValue:
     print_style = "Default"  # Default printing style
     mc_trial_number = 10000  # number of trial in Monte Carlo simulation
     figs = None
+    figs_on_uncertainty = False
     register = {}
     formula_register = {}
     id_register = {}
@@ -166,7 +167,7 @@ class ExperimentalValue:
 
         return string
 
-    def Monte_Carlo_print(self):
+    def print_mc_error(self):
         '''Prints the result of a Monte Carlo error propagation.
 
         The purpose of this method is to easily compare the results of a
@@ -180,7 +181,7 @@ class ExperimentalValue:
             string = _sci_print(self, method=self.MC)
         print(string)
 
-    def min_max_print(self):
+    def print_min_mix_error(self):
         '''Prints the result of a Min-Max method error propagation.
 
         The purpose of this method is to easily compare the results of a
@@ -189,6 +190,21 @@ class ExperimentalValue:
         '''
         if self.print_style == "Latex":
             string = _tex_print(self, method=self.MinMax)
+        elif self.print_style == "Default":
+            string = _def_print(self, method=self.MinMax)
+        elif self.print_style == "Scientific":
+            string = _sci_print(self, method=self.MinMax)
+        print(string)
+
+    def print_deriv_error(self):
+        '''Prints the result of a Min-Max method error propagation.
+
+        The purpose of this method is to easily compare the results of a
+        Min-Max propagation with whatever method is chosen to confirm that
+        the Min-Max is the upper bound of the error.
+        '''
+        if self.print_style == "Latex":
+            string = _tex_print(self, method=self.Derivative)
         elif self.print_style == "Default":
             string = _def_print(self, method=self.MinMax)
         elif self.print_style == "Scientific":
@@ -229,6 +245,10 @@ class ExperimentalValue:
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
 
+        factor = sigma_xy/x.std/y.std
+        x.correlation[y.info['ID']] = factor
+        y.correlation[x.info['ID']] = factor
+
     def set_correlation(self, y, factor):
         '''
         Manually set the correlation between two quantities
@@ -239,6 +259,25 @@ class ExperimentalValue:
         x = self
         ro_xy = factor
         sigma_xy = ro_xy*x.std*y.std
+
+        x.correlation[y.info['ID']] = factor
+        y.correlation[x.info['ID']] = factor
+
+        x.covariance[y.info['ID']] = sigma_xy
+        y.covariance[x.info['ID']] = sigma_xy
+
+    def set_covariance(self, y, sigma_xy):
+        '''
+        Manually set the covariance between two quantities
+
+        Given a covariance value, the covariance and correlation
+        between two variables is added to both objects.
+        '''
+        x = self
+        factor = sigma_xy/x.std/y.std
+
+        x.correlation[y.info['ID']] = factor
+        y.correlation[x.info['ID']] = factor
 
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
@@ -266,17 +305,19 @@ class ExperimentalValue:
         else:
             return 0
 
-    def _return_correlation(x, y):
+    def _return_correlation(self, y):
         '''
         Returns the correlation factor of two measurements.
 
         Using the covariance, or finding the covariance if not defined,
         the correlation factor of two measurements is returned.
         '''
+        x = self
         if y.name in x.covariance:
             pass
         else:
-            ExperimentalValue._find_covariance(x, y)
+            # ExperimentalValue._find_covariance(x, y)
+            return 0
 
         sigma_xy = x.covariance[y.info['ID']]
         sigma_x = x.std
@@ -425,7 +466,9 @@ class ExperimentalValue:
             else:
                 self.derivative[key] = 0
 
+###############################################################################
 # Operations on measurement objects
+###############################################################################
 
     def __add__(self, other):
         import error_operations as op
@@ -597,6 +640,42 @@ class ExperimentalValue:
             else:
                 return self.mean == other.mean
 
+    def log(x):
+        return log(x)
+
+    def exp(x):
+        return exp(x)
+
+    def e(x):
+        return exp(x)
+
+    def sin(x):
+        return sin(x)
+
+    def cos(x):
+        return cos(x)
+
+    def tan(x):
+        return tan(x)
+
+    def csc(x):
+        return csc(x)
+
+    def sec(x):
+        return sec(x)
+
+    def cot(x):
+        return cot(x)
+
+    def asin(x):
+        return asin(x)
+
+    def acos(x):
+        return acos(x)
+
+    def atan(x):
+        return atan(x)
+
     def show_MC_histogram(self, title=None):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
@@ -631,79 +710,9 @@ class ExperimentalValue:
         show(p1)
 
 
-def set_print_style(style=None, figs=None):
-    '''Change style of printout for Measurement objects.
-
-    The default style prints as the user might write a value, that is
-    'x = 10 +/- 1'.
-
-    Latex style prints in the form of 'x = (10\pm 1)\e0' which is ideal for
-    pasting values into a Latex document as will be the case for lab reports.
-
-    The scientific style prints the value in reduced scientific notation
-    such that the error is a single digit, 'x = (10 +/- 1)*10**0'.
-    '''
-    latex = ("Latex", "latex", 'Tex', 'tex',)
-    Sci = ("Scientific", "Sci", 'scientific', 'sci', 'sigfigs',)
-    Default = ('default', 'Default',)
-    ExperimentalValue.figs = figs
-
-    if style in latex:
-        ExperimentalValue.print_style = "Latex"
-    elif style in Sci:
-        ExperimentalValue.print_style = "Scientific"
-    elif style in Default:
-        ExperimentalValue.print_style = "Default"
-    else:
-        print('''A style must be a string of either: Scientific notation,
-        Latex, or the default style. Using ''')
-
-
-def set_error_method(chosen_method):
-    '''
-    Choose the method of error propagation to be used. Enter a string.
-
-    Function to change default error propogation method used in
-    measurement functions.
-    '''
-    mc_list = (
-        'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
-        'monte carlo',)
-    min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
-    derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
-                 'default',)
-
-    if chosen_method in mc_list:
-        ExperimentalValue.error_method = "Monte Carlo"
-    elif chosen_method in min_max_list:
-        ExperimentalValue.error_method = "Min Max"
-    elif chosen_method in derr_list:
-        ExperimentalValue.error_method = "Derivative"
-    else:
-        print("Method not recognized, using derivative method.")
-        ExperimentalValue.error_method = "Derivative"
-
-
-class Function(ExperimentalValue):
-    '''
-    Subclass of objects, which are measurements created by operations or
-    functions of other measurement type objects.
-    '''
-    id_number = 0
-
-    def __init__(self, *args, name=None):
-        super().__init__(*args, name=name)
-        self.name = 'obj%d' % (Function.id_number)
-        self.info['ID'] = 'obj%d' % (Function.id_number)
-        self.type = "Function"
-        Function.id_number += 1
-        self.derivative = {self.info['ID']: 1}
-        ExperimentalValue.register.update({self.info["ID"]: self})
-        self.covariance = {self.name: self.std**2}
-        self.root = ()
-        self.MC = None
-        self.MinMax = None
-        self.error_flag = False
+###############################################################################
+# Measurement Sub-Classes
+###############################################################################
 
 
 class Measurement(ExperimentalValue):
@@ -730,9 +739,37 @@ class Measurement(ExperimentalValue):
         self.info['Formula'] = 'var%d' % (Measurement.id_number)
         Measurement.id_number += 1
         self.derivative = {self.info['ID']: 1}
-        self.covariance = {self.name: self.std**2}
+        self.covariance = {self.info['ID']: self.std**2}
+        self.correlation = {self.info['ID']: 1}
         ExperimentalValue.register.update({self.info["ID"]: self})
         self.root = (self.info["ID"],)
+        self.der = [self.mean, self.std]
+        self.MC = [self.mean, self.std]
+        self.MinMax = [self.mean, self.std]
+
+
+class Function(ExperimentalValue):
+    '''
+    Subclass of objects, which are measurements created by operations or
+    functions of other measurement type objects.
+    '''
+    id_number = 0
+
+    def __init__(self, *args, name=None):
+        super().__init__(*args, name=name)
+        self.name = 'obj%d' % (Function.id_number)
+        self.info['ID'] = 'obj%d' % (Function.id_number)
+        self.type = "Function"
+        Function.id_number += 1
+        self.derivative = {self.info['ID']: 1}
+        ExperimentalValue.register.update({self.info["ID"]: self})
+        self.covariance = {self.info['ID']: self.std**2}
+        self.correlation = {self.info['ID']: 1}
+        self.root = ()
+        self.der = None
+        self.MC = None
+        self.MinMax = None
+        self.error_flag = False
 
 
 class Constant(ExperimentalValue):
@@ -754,6 +791,44 @@ class Constant(ExperimentalValue):
         self.type = "Constant"
         self.covariance = {self.name: 0}
         self.root = ()
+
+
+def MeasurementArray(data, error, name=None, units=None):
+    ''' Creates an array of measurements from inputted mean and standard
+    deviation arrays.
+    '''
+    import numpy as np
+
+    if type(data) not in ExperimentalValue.ARRAY:
+        print('Data array must be a list, tuple, or numpy array.')
+        return None
+
+    if type(error) not in ExperimentalValue.ARRAY:
+        print('Error array must be a list, tuple, or numpy array.')
+        return None
+
+    if len(error) is 1:
+        error = len(data)*[error[0]]
+
+    if len(data) != len(error):
+        print('''Data and error array must be of the same length, or the
+        error array should be of length 1.''')
+        return None
+
+    data_name = name
+    data_units = units
+
+    measurement = []
+    for i in range(len(data)):
+        measurement.append(Measurement(data[i], error[i], name=data_name,
+                                       units=data_units))
+
+    return np.array(measurement)
+
+
+###############################################################################
+# Mathematical Functions
+###############################################################################
 
 
 def sqrt(x):
@@ -935,55 +1010,100 @@ def atan(x):
         return op.operation_wrap(op.atan, x, func_flag=True)
 
 
-def numerical_partial_derivative(func, var, *args):
+###############################################################################
+# Printing Methods
+###############################################################################
+
+
+def set_print_style(style=None, sigfigs=None):
+    '''Change style ("default","latex","scientific") of printout for
+    Measurement objects.
+
+    The default style prints as the user might write a value, that is
+    'x = 10 +/- 1'.
+
+    Latex style prints in the form of 'x = (10\pm 1)\e0' which is ideal for
+    pasting values into a Latex document as will be the case for lab reports.
+
+    The scientific style prints the value in reduced scientific notation
+    such that the error is a single digit, 'x = (10 +/- 1)*10**0'.
     '''
-    Returns the parital derivative of a dunction with respect to var.
+    latex = ("Latex", "latex", 'Tex', 'tex',)
+    Sci = ("Scientific", "Sci", 'scientific', 'sci', 'sigfigs',)
+    Default = ('default', 'Default',)
+    ExperimentalValue.figs = sigfigs
 
-    This function wraps the inputted function to become a function
-    of only one variable, the derivative is taken with respect to said
-    variable.
+    if style in latex:
+        ExperimentalValue.print_style = "Latex"
+    elif style in Sci:
+        ExperimentalValue.print_style = "Scientific"
+    elif style in Default:
+        ExperimentalValue.print_style = "Default"
+    else:
+        print('''A style must be a string of either: Scientific notation,
+        Latex, or the default style. Using ''')
+
+
+def set_error_method(chosen_method):
     '''
-    def restrict_dimension(x):
-        partial_args = list(args)
-        partial_args[var] = x
-        return func(*partial_args)
-    return numerical_derivative(restrict_dimension, args[var])
+    Choose the method of error propagation to be used. Enter a string.
 
-
-def numerical_derivative(function, point, dx=1e-10):
+    Function to change default error propogation method used in
+    measurement functions.
     '''
-    Returns the first order derivative of a function.
+    mc_list = (
+        'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
+        'monte carlo',)
+    min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
+    derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
+                 'default',)
+
+    if chosen_method in mc_list:
+        ExperimentalValue.error_method = "Monte Carlo"
+    elif chosen_method in min_max_list:
+        ExperimentalValue.error_method = "Min Max"
+    elif chosen_method in derr_list:
+        ExperimentalValue.error_method = "Derivative"
+    else:
+        print("Method not recognized, using derivative method.")
+        ExperimentalValue.error_method = "Derivative"
+
+
+def set_sigfigs_error(figs=3):
+    '''Change the number of significant figures shown in print()
     '''
-    return (function(point+dx)-function(point))/dx
+    ExperimentalValue.figs = figs
+    ExperimentalValue.figs_on_uncertainty = False
 
 
-def _variance(*args, ddof=1):
+def set_sigfigs_centralvalue(figs=3):
+    '''Change the number of significant figures shown in print()
     '''
-    Returns a tuple of the mean and standard deviation of a data array.
+    ExperimentalValue.figs = figs
+    ExperimentalValue.figs_on_uncertainty = True
 
-    Uses a more sophisticated variance calculation to speed up calculation of
-    mean and standard deviation.
+
+def _return_exponent(value):
+    '''Returns the exponent of the argument in reduced scientific notation.
     '''
-    args = args[0]
-    Sum = 0
-    SumSq = 0
-    N = len(args)
-    mean = sum(args)/len(args)
-    for i in range(N):
-        Sum += args[i]
-        SumSq += args[i]*args[i]
-    std = ((SumSq-Sum**2/N)/(N-1))**(1/2)
-    return (mean, std)
+    value = abs(value)
+    flag = True
+    i = 0
 
-
-def _weighted_variance(mean, std, ddof=1):
-    import numpy as np
-    from math import sqrt
-
-    w = np.power(std, -2)
-    w_mean = sum(np.multiply(w, mean))/sum(w)
-    w_std = 1/sqrt(sum(w))
-    return (w_mean, w_std)
+    while(flag):
+        if value == 0:
+            flag = False
+        elif value == float('inf'):
+            return float("inf")
+        elif value < 1:
+            value *= 10
+            i -= 1
+        elif value >= 10:
+            value /= 10
+            i += 1
+        elif value >= 1 and value < 10:
+            flag = False
+        return i
 
 
 def _tex_print(self, method=None):
@@ -994,8 +1114,7 @@ def _tex_print(self, method=None):
     *10**-1)
     '''
     if ExperimentalValue.error_method == 'Derivative':
-        mean = self.mean
-        std = self.std
+        [mean, std] = self.der
     elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
     elif ExperimentalValue.error_method == 'Min Max':
@@ -1003,62 +1122,51 @@ def _tex_print(self, method=None):
 
     if method is not None:
         if ExperimentalValue.error_method is 'Derivative':
-            mean = self.mean
-            std = self.std
+            [mean, std] = self.der
         elif ExperimentalValue.error_method is 'Monte Carlo':
             [mean, std] = self.MC
         elif ExperimentalValue.error_method is 'Min Max':
             [mean, std] = self.MinMax
 
-    flag = True
-    i = 0
+    if ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is False:
 
-    if ExperimentalValue.figs is not None:
-        value = abs(mean)
-        while(flag):
-            if value == 0:
-                std = int(std/10**i//1)
-                mean = int(mean/10**i//1)
-                return "(%d \pm %d)\e%d" % (mean, std, i)
-            elif value == float('inf'):
-                return "inf"
-            elif value < 1:
-                value *= 10
-                i -= 1
-            elif value >= 10:
-                value /= 10
-                i += 1
-            elif value >= 1 and value < 10:
-                flag = False
-        std = std*10**-i*10**(ExperimentalValue.figs-1)
-        mean = mean*10**-i*10**(ExperimentalValue.figs-1)
-        if i-ExperimentalValue.figs is not -1:
-            return "(%d \pm %d)\e%d" % (mean, std,
-                                        i-ExperimentalValue.figs + 1)
+        if mean == float('inf'):
+            return "inf"
+
+        figs = ExperimentalValue.figs - 1
+        i = _return_exponent(mean)
+        mean = int(round(mean*10**(figs - i), 0))
+        std = int(round(std*10**(figs - i), 0))
+
+        if figs - i is not 0:
+            return "(%d \pm %d)*10^{%d}" % (mean, std, figs - i)
+        else:
+            return "(%d \pm %d)" % (mean, std)
+
+    elif ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is True:
+
+        if mean == float('inf'):
+            return "inf"
+
+        figs = ExperimentalValue.figs - 1
+        i = _return_exponent(std)
+        mean = int(round(mean*10**(figs - i), 0))
+        std = int(round(std*10**(figs - i), 0))
+
+        if figs - i is not 0:
+            return "(%d \pm %d)*10^{%d}" % (mean, std, figs - i)
         else:
             return "(%d \pm %d)" % (mean, std)
 
     else:
-        value = abs(std)
-        while(flag):
-            if value == 0:
-                std = int(std)
-                mean = int(mean)
-                return "(%d \pm %d)\e%d" % (mean, std, i)
-            elif value == float('inf'):
-                return "%d \pm inf" % (mean)
-            elif value < 1:
-                value *= 10
-                i -= 1
-            elif value >= 10:
-                value /= 10
-                i += 1
-            elif value >= 1 and value < 10:
-                flag = False
-        std = int(std/10**i)
-        mean = int(mean/10**i)
+        i = _return_exponent(std)
+        mean = int(round(mean*10**-i, 0))
+        std = int(round(std*10**-i, 0))
+
         if i is not 0:
-            return "(%d \pm %d)\e%d" % (mean, std, (i))
+            return "(%d \pm %d)*10^{%d}" % (mean, std, i)
         else:
             return "(%d \pm %d)" % (mean, std)
 
@@ -1073,8 +1181,7 @@ def _def_print(self, method=None):
     i = 0
 
     if ExperimentalValue.error_method == 'Derivative':
-        mean = self.mean
-        std = self.std
+        [mean, std] = self.der
     elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
     elif ExperimentalValue.error_method == 'Min Max':
@@ -1082,14 +1189,14 @@ def _def_print(self, method=None):
 
     if method is not None:
         if ExperimentalValue.error_method == 'Derivative':
-            mean = self.mean
-            std = self.std
+            [mean, std] = self.der
         elif ExperimentalValue.error_method == 'Monte Carlo':
             [mean, std] = self.MC
         elif ExperimentalValue.error_method == 'Min Max':
             [mean, std] = self.MinMax
 
-    if ExperimentalValue.figs is not None:
+    if ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is False:
         value = abs(mean)
         while(flag):
             if value == 0:
@@ -1110,8 +1217,8 @@ def _def_print(self, method=None):
             n = "%."+n+"f"
         else:
             n = '%.0f'
-        std = float(round(std, i))
-        mean = float(round(mean, i))
+        std = float(round(std, i+ExperimentalValue.figs))
+        mean = float(round(mean, i+ExperimentalValue.figs))
         return n % (mean)+" +/- "+n % (std)
 
     else:
@@ -1146,8 +1253,7 @@ def _sci_print(self, method=None):
     figures, or 3 if none is given.
     '''
     if ExperimentalValue.error_method == 'Derivative':
-        mean = self.mean
-        std = self.std
+        [mean, std] = self.der
     elif ExperimentalValue.error_method == 'Monte Carlo':
         [mean, std] = self.MC
     elif ExperimentalValue.error_method == 'Min Max':
@@ -1155,8 +1261,7 @@ def _sci_print(self, method=None):
 
     if method is not None:
         if ExperimentalValue.error_method == 'Derivative':
-            mean = self.mean
-            std = self.std
+            [mean, std] = self.der
         elif ExperimentalValue.error_method == 'Monte Carlo':
             [mean, std] = self.MC
         elif ExperimentalValue.error_method == 'Min Max':
@@ -1165,7 +1270,8 @@ def _sci_print(self, method=None):
     flag = True
     i = 0
 
-    if ExperimentalValue.figs is not None:
+    if ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is False:
         value = abs(mean)
         while(flag):
             if value == 0:
@@ -1215,37 +1321,60 @@ def _sci_print(self, method=None):
             return "(%d +/- %d)" % (round(mean), round(std))
 
 
-def Measurement_Array(data, error, name=None, units=None):
-    ''' Creates an array of measurements from inputted mean and standard
-    deviation arrays.
+###############################################################################
+# Random Methods
+###############################################################################
+
+
+def numerical_partial_derivative(func, var, *args):
     '''
+    Returns the parital derivative of a dunction with respect to var.
+
+    This function wraps the inputted function to become a function
+    of only one variable, the derivative is taken with respect to said
+    variable.
+    '''
+    def restrict_dimension(x):
+        partial_args = list(args)
+        partial_args[var] = x
+        return func(*partial_args)
+    return numerical_derivative(restrict_dimension, args[var])
+
+
+def numerical_derivative(function, point, dx=1e-10):
+    '''
+    Returns the first order derivative of a function.
+    '''
+    return (function(point+dx)-function(point))/dx
+
+
+def _variance(*args, ddof=1):
+    '''
+    Returns a tuple of the mean and standard deviation of a data array.
+
+    Uses a more sophisticated variance calculation to speed up calculation of
+    mean and standard deviation.
+    '''
+    args = args[0]
+    Sum = 0
+    SumSq = 0
+    N = len(args)
+    mean = sum(args)/len(args)
+    for i in range(N):
+        Sum += args[i]
+        SumSq += args[i]*args[i]
+    std = ((SumSq-Sum**2/N)/(N-1))**(1/2)
+    return (mean, std)
+
+
+def _weighted_variance(mean, std, ddof=1):
     import numpy as np
+    from math import sqrt
 
-    if type(data) not in ExperimentalValue.ARRAY:
-        print('Data array must be a list, tuple, or numpy array.')
-        return None
-
-    if type(error) not in ExperimentalValue.ARRAY:
-        print('Error array must be a list, tuple, or numpy array.')
-        return None
-
-    if len(error) is 1:
-        error = len(data)*[error[0]]
-
-    if len(data) != len(error):
-        print('''Data and error array must be of the same length, or the
-        error array should be of length 1.''')
-        return None
-
-    data_name = name
-    data_units = units
-
-    measurement = []
-    for i in range(len(data)):
-        measurement.append(Measurement(data[i], error[i], name=data_name,
-                                       units=data_units))
-
-    return np.array(measurement)
+    w = np.power(std, -2)
+    w_mean = sum(np.multiply(w, mean))/sum(w)
+    w_std = 1/sqrt(sum(w))
+    return (w_mean, w_std)
 
 
 def reset_variables():
