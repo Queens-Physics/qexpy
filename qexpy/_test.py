@@ -1,6 +1,6 @@
 import math as m
-import error as e
-import plotting as p
+import QExPy.error as e
+import QExPy.plotting as p
 
 
 def test1():
@@ -73,8 +73,8 @@ def test4():
 def test5():
     ''' Test of plotting fit
     '''
-    X = e.Measurement_Array([1, 2, 3, 4, 5], [0.1])
-    Y = e.Measurement_Array([3, 5, 7, 9, 11], [0.05])
+    X = e.MeasurementArray([1, 2, 3, 4, 5], [0.1])
+    Y = e.MeasurementArray([3, 5, 7, 9, 11], [0.05])
 
     figure = p.Plot(X, Y)
     figure.fit('linear')
@@ -105,6 +105,44 @@ def test6():
 def test7():
     '''Test of printing methods and sigfigs.
     '''
+    # Test of standard printing without figs ##################################
+    x = e.Measurement(12563.2, 1.637)
+    e.set_print_style('Latex')
+    assert x.__str__() == '(12563 \pm 2)'
+
+    x = e.Measurement(156.2, 12)
+    e.set_print_style('Default')
+    assert x.__str__() == '160 +/- 10'
+
+    x = e.Measurement(1360.2, 16.9)
+    e.set_print_style('Sci')
+    assert x.__str__() == '(136 +/- 2)*10^(1)'
+
+    # Test of figs set on central value #######################################
     e.set_print_style('Default', 3)
-    x = e.Measurement(10, 1, name='x')
-    assert x.__str__ == 'x = 10.0 +/- 1.0'
+    x = e.Measurement(12.3, 0.1, name='x')
+    assert x.__str__() == 'x = 12.3 +/- 0.1'
+
+    e.set_print_style('Latex', 4)
+    x = e.Measurement(12.3, 0.156, name='x')
+    assert x.__str__() == 'x = (1230 \pm 16)*10^{-2}'
+
+    e.set_print_style('Sci', 5)
+    x = e.Measurement(123.456, 0.789, name='x')
+    assert x.__str__() == 'x = (12346 +/- 79)*10^(-2)'
+
+    # Test of figs set on uncertainty #########################################
+    x = e.Measurement(12.35, 0.1237)
+    e.set_print_style('Default')
+    e.set_sigfigs_error()
+    assert x.__str__() == '12.350 +/- 0.124'
+
+    x = e.Measurement(120, 0.1237795)
+    e.set_print_style('Latex')
+    e.set_sigfigs_error(5)
+    assert x.__str__() == '(12000000 \pm 12378)*10^{-5}'
+
+    x = e.Measurement(12.38, 0.1237)
+    e.set_print_style('Sci')
+    e.set_sigfigs_error(1)
+    assert x.__str__() == '(124 +/- 1)*10^(-1)'

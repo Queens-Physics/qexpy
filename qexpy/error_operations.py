@@ -4,130 +4,16 @@ CONSTANT = (int, float, int64, float64, int32, float32)
 ARRAY = (list, tuple, ndarray)
 
 
-def dev(*args, der=None, manual_args=None):
-    '''
-    Returns the standard deviation of a function of N arguments.
-
-    Using the tuple of variables,  passed in each operation that composes a
-    function,  the standard deviation is calculated by the derivative error
-    propagation formula,  including the covariance factor between each pair
-    of variables. The derivative dictionary of a function must be passes by
-    the der argument.
-    '''
-    import error as e
-
-    if manual_args is None:
-        std = 0
-        roots = ()
-
-        for arg in args:
-            for i in range(len(arg.root)):
-                if arg.root[i] not in roots:
-                    roots += (arg.root[i], )
-        for root in roots:
-            std += (der[root]*e.ExperimentalValue.register[root].std)**2
-
-        for i in range(len(roots)):
-            for j in range(len(roots)-i-1):
-                cov = e.ExperimentalValue.register[roots[i]].return_covariance(
-                    e.ExperimentalValue.register[roots[j + 1 + i]])
-                std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
-        std = std**(1/2)
-
-        return std
-
-    elif manual_args is True:
-        error = []
-
-        for k in range(len(args[0].info['Error'])):
-            std = 0
-            roots = ()
-
-            for arg in args:
-                for i in range(len(arg.root)):
-                    if arg.root[i] not in roots:
-                        roots += (arg.root[i], )
-                for root in roots:
-                    std += (der[root] *
-                            e.ExperimentalValue.register[root].info['Error'][k]
-                            )**2
-
-            for i in range(len(roots)):
-                for j in range(len(roots)-i-1):
-                    cov = e.ExperimentalValue.register[roots[i]
-                                                       ].return_covariance(
-                        e.ExperimentalValue.register[roots[j + 1 + i]])
-                    std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
-            std = std**(1/2)
-            error += [std]
-
-        return error
-
-    else:
-        print('Invaid input in error_operator devs() function.')
-
-
-def check_values(*args):
-    '''
-    Checks that the arguments are measurement type,  otherwise a measurement
-    is returned.
-
-    All returned values are of measurement type,  if values need to be
-    converted,  this is done by calling the normalize function,  which
-    outputs a measurement object with no standard deviation.
-    '''
-    import error as e
-
-    val = ()
-    for arg in args:
-        if type(arg) in CONSTANT:
-            val += (e.Constant(arg), )
-        else:
-            val += (arg, )
-    return val
-
-
-def check_formula(operation, a, b=None, func_flag=False):
-    '''
-    Checks if quantity being calculated is already in memory
-
-    Using the formula string created for each operation as a key,  the
-    register of previously calculated operations is checked. If the
-    quantity does exist,  the previously calculated object is returned.
-    '''
-    import error as e
-
-    op_string = {
-        sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
-        cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
-        mul: '*', div: '/', power: '**', 'neg': '-', asin: 'asin',
-        acos: 'acos', atan: 'atan', }
-
-    op = op_string[operation]
-
-    # check_formula is not behanving properly, requires overwrite, disabled
-    return None
-
-    if func_flag is False:
-        if a.info["Formula"] + op + b.info["Formula"] in \
-                e.ExperimentalValue.formula_register:
-            ID = e.ExperimentalValue.formula_register[
-                a.info["Formula"] + op + b.info["Formula"]]
-            return e.ExperimentalValue.register[ID]
-
-    else:
-        if op + '(' + a.info["Formula"] + ')' in\
-                    e.ExperimentalValue.formula_register:
-            ID = e.ExperimentalValue.formula_register[
-                op + '(' + a.info["Formula"] + ')']
-            return e.ExperimentalValue.register[ID]
+###############################################################################
+# Mathematical operations
+###############################################################################
 
 
 def neg(x):
     '''
     Returns the negitive of a measurement object
     '''
-    import error as e
+    import QExPy.error as e
 
     x, = check_values(x)
     result_derivative = {}
@@ -248,6 +134,11 @@ def power(a, b):
             return a.mean**b
         else:
             return a.mean**b.mean
+
+
+###############################################################################
+# Mathematical Functions
+###############################################################################
 
 
 def sin(x):
@@ -419,6 +310,11 @@ def log(x):
         return m.log(x.mean)
 
 
+###############################################################################
+# Error Propagation Methods
+###############################################################################
+
+
 def find_minmax(function, *args):
     '''
     e.Function to use Min-Max method to find the best estimate value
@@ -460,7 +356,7 @@ def monte_carlo(func, *args):
     '''
     # 2D array
     import numpy as np
-    import error as e
+    import QExPy.error as e
 
     _np_func = {add: np.add, sub: np.subtract, mul: np.multiply,
                 div: np.divide, power: np.power, log: np.log,
@@ -496,13 +392,18 @@ def monte_carlo(func, *args):
     return ([data, error], result,)
 
 
+###############################################################################
+# Methods for Propagation
+###############################################################################
+
+
 def operation_wrap(operation, *args, func_flag=False):
     '''
     e.Function wrapper to convert existing,  constant functions into functions
     which can handle measurement objects and return an error propagated by
     derivative,  min-max,  or Monte Carlo method.
     '''
-    import error as e
+    import QExPy.error as e
 
     args = check_values(*args)
 
@@ -591,3 +492,122 @@ op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
              cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
              mul: '*', div: '/', power: '**', asin: 'asin', acos: 'acos',
              atan: 'atan', }
+
+
+def dev(*args, der=None, manual_args=None):
+    '''
+    Returns the standard deviation of a function of N arguments.
+
+    Using the tuple of variables,  passed in each operation that composes a
+    function,  the standard deviation is calculated by the derivative error
+    propagation formula,  including the covariance factor between each pair
+    of variables. The derivative dictionary of a function must be passes by
+    the der argument.
+    '''
+    import QExPy.error as e
+
+    if manual_args is None:
+        std = 0
+        roots = ()
+
+        for arg in args:
+            for i in range(len(arg.root)):
+                if arg.root[i] not in roots:
+                    roots += (arg.root[i], )
+        for root in roots:
+            std += (der[root]*e.ExperimentalValue.register[root].std)**2
+
+        for i in range(len(roots)):
+            for j in range(len(roots)-i-1):
+                cov = e.ExperimentalValue.register[roots[i]].return_covariance(
+                    e.ExperimentalValue.register[roots[j + 1 + i]])
+                std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
+        std = std**(1/2)
+
+        return std
+
+    elif manual_args is True:
+        error = []
+
+        for k in range(len(args[0].info['Error'])):
+            std = 0
+            roots = ()
+
+            for arg in args:
+                for i in range(len(arg.root)):
+                    if arg.root[i] not in roots:
+                        roots += (arg.root[i], )
+                for root in roots:
+                    std += (der[root] *
+                            e.ExperimentalValue.register[root].info['Error'][k]
+                            )**2
+
+            for i in range(len(roots)):
+                for j in range(len(roots)-i-1):
+                    cov = e.ExperimentalValue.register[roots[i]
+                                                       ].return_covariance(
+                        e.ExperimentalValue.register[roots[j + 1 + i]])
+                    std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
+            std = std**(1/2)
+            error += [std]
+
+        return error
+
+    else:
+        print('Invaid input in error_operator devs() function.')
+
+
+def check_values(*args):
+    '''
+    Checks that the arguments are measurement type,  otherwise a measurement
+    is returned.
+
+    All returned values are of measurement type,  if values need to be
+    converted,  this is done by calling the normalize function,  which
+    outputs a measurement object with no standard deviation.
+    '''
+    import QExPy.error as e
+
+    val = ()
+    for arg in args:
+        if type(arg) in CONSTANT:
+            val += (e.Constant(arg), )
+        else:
+            val += (arg, )
+    return val
+
+
+def check_formula(operation, a, b=None, func_flag=False):
+    '''
+    Checks if quantity being calculated is already in memory
+
+    Using the formula string created for each operation as a key,  the
+    register of previously calculated operations is checked. If the
+    quantity does exist,  the previously calculated object is returned.
+    '''
+    import QExPy.error as e
+
+    op_string = {
+        sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
+        cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
+        mul: '*', div: '/', power: '**', 'neg': '-', asin: 'asin',
+        acos: 'acos', atan: 'atan', }
+
+    op = op_string[operation]
+
+    # check_formula is not behanving properly, requires overwrite, disabled
+    return None
+
+    if func_flag is False:
+        if a.info["Formula"] + op + b.info["Formula"] in \
+                e.ExperimentalValue.formula_register:
+            ID = e.ExperimentalValue.formula_register[
+                a.info["Formula"] + op + b.info["Formula"]]
+            return e.ExperimentalValue.register[ID]
+
+    else:
+        if op + '(' + a.info["Formula"] + ')' in\
+                    e.ExperimentalValue.formula_register:
+            ID = e.ExperimentalValue.formula_register[
+                op + '(' + a.info["Formula"] + ')']
+            return e.ExperimentalValue.register[ID]

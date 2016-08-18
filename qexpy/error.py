@@ -350,7 +350,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import error_operations as op
+        import QExPy.error_operations as op
 
         if len(args) is 1:
             var1 = args[0]
@@ -471,7 +471,7 @@ class ExperimentalValue:
 ###############################################################################
 
     def __add__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -484,7 +484,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -497,7 +497,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -510,7 +510,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -523,7 +523,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             print(other.mean)
@@ -537,7 +537,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -550,7 +550,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -563,7 +563,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -576,7 +576,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -589,7 +589,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
-        import error_operations as op
+        import QExPy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -608,11 +608,11 @@ class ExperimentalValue:
             import math as m
             return m.sqrt(x)
         else:
-            import error_operations as op
+            import QExPy.error_operations as op
             return op.operation_wrap(op.power, x, 1/2)
 
     def __neg__(self):
-        import error_operations as op
+        import QExPy.error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -838,12 +838,12 @@ def sqrt(x):
         import math as m
         return m.sqrt(x)
     else:
-        import error_operations as op
+        import QExPy.error_operations as op
         return op.operation_wrap(op.power, x, 1/2)
 
 
 def sin(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -857,7 +857,7 @@ def sin(x):
 
 
 def cos(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -871,7 +871,7 @@ def cos(x):
 
 
 def tan(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -885,7 +885,7 @@ def tan(x):
 
 
 def sec(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -899,7 +899,7 @@ def sec(x):
 
 
 def csc(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -913,7 +913,7 @@ def csc(x):
 
 
 def cot(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -927,7 +927,7 @@ def cot(x):
 
 
 def log(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -941,7 +941,7 @@ def log(x):
 
 
 def exp(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -955,7 +955,7 @@ def exp(x):
 
 
 def e(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -969,7 +969,7 @@ def e(x):
 
 
 def asin(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -983,7 +983,7 @@ def asin(x):
 
 
 def acos(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -997,7 +997,7 @@ def acos(x):
 
 
 def atan(x):
-    import error_operations as op
+    import QExPy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1031,7 +1031,9 @@ def set_print_style(style=None, sigfigs=None):
     latex = ("Latex", "latex", 'Tex', 'tex',)
     Sci = ("Scientific", "Sci", 'scientific', 'sci', 'sigfigs',)
     Default = ('default', 'Default',)
-    ExperimentalValue.figs = sigfigs
+
+    if sigfigs is not None:
+        set_sigfigs_centralvalue(sigfigs)
 
     if style in latex:
         ExperimentalValue.print_style = "Latex"
@@ -1069,18 +1071,30 @@ def set_error_method(chosen_method):
         ExperimentalValue.error_method = "Derivative"
 
 
-def set_sigfigs_error(figs=3):
+def set_sigfigs_error(sigfigs=3):
     '''Change the number of significant figures shown in print()
     '''
-    ExperimentalValue.figs = figs
-    ExperimentalValue.figs_on_uncertainty = False
+    if type(sigfigs) is None:
+        ExperimentalValue.figs = None
+    elif type(sigfigs) is int and sigfigs > 0:
+        ExperimentalValue.figs = sigfigs
+        ExperimentalValue.figs_on_uncertainty = True
+    else:
+        raise TypeError('''Specified number of significant figures must be
+                        and interger greater than zero.''')
 
 
-def set_sigfigs_centralvalue(figs=3):
+def set_sigfigs_centralvalue(sigfigs=3):
     '''Change the number of significant figures shown in print()
     '''
-    ExperimentalValue.figs = figs
-    ExperimentalValue.figs_on_uncertainty = True
+    if type(sigfigs) is None:
+        ExperimentalValue.figs = None
+    elif sigfigs > 0 and type(sigfigs) is int:
+        ExperimentalValue.figs = sigfigs
+        ExperimentalValue.figs_on_uncertainty = False
+    else:
+        raise TypeError('''Specified number of significant figures must be
+                        and interger greater than zero.''')
 
 
 def _return_exponent(value):
@@ -1103,7 +1117,29 @@ def _return_exponent(value):
             i += 1
         elif value >= 1 and value < 10:
             flag = False
-        return i
+    return i
+
+
+def _return_print_values(variable, method):
+    '''Function for returning the correct mean and std for the method
+    selected.
+    '''
+    if ExperimentalValue.error_method == 'Derivative':
+        [mean, std] = variable.der
+    elif ExperimentalValue.error_method == 'Monte Carlo':
+        [mean, std] = variable.MC
+    elif ExperimentalValue.error_method == 'Min Max':
+        [mean, std] = variable.MinMax
+
+    if method is not None:
+        if ExperimentalValue.error_method is 'Derivative':
+            [mean, std] = variable.der
+        elif ExperimentalValue.error_method is 'Monte Carlo':
+            [mean, std] = variable.MC
+        elif ExperimentalValue.error_method is 'Min Max':
+            [mean, std] = variable.MinMax
+
+    return (mean, std,)
 
 
 def _tex_print(self, method=None):
@@ -1113,20 +1149,7 @@ def _tex_print(self, method=None):
     15+/-0.3 is (150 \pm 3)\e-1. Where Latex parses \pm as +\- and \e as
     *10**-1)
     '''
-    if ExperimentalValue.error_method == 'Derivative':
-        [mean, std] = self.der
-    elif ExperimentalValue.error_method == 'Monte Carlo':
-        [mean, std] = self.MC
-    elif ExperimentalValue.error_method == 'Min Max':
-        [mean, std] = self.MinMax
-
-    if method is not None:
-        if ExperimentalValue.error_method is 'Derivative':
-            [mean, std] = self.der
-        elif ExperimentalValue.error_method is 'Monte Carlo':
-            [mean, std] = self.MC
-        elif ExperimentalValue.error_method is 'Min Max':
-            [mean, std] = self.MinMax
+    mean, std = _return_print_values(self, method)
 
     if ExperimentalValue.figs is not None and\
             ExperimentalValue.figs_on_uncertainty is False:
@@ -1139,8 +1162,8 @@ def _tex_print(self, method=None):
         mean = int(round(mean*10**(figs - i), 0))
         std = int(round(std*10**(figs - i), 0))
 
-        if figs - i is not 0:
-            return "(%d \pm %d)*10^{%d}" % (mean, std, figs - i)
+        if i - figs != 0:
+            return "(%d \pm %d)*10^{%d}" % (mean, std, i - figs)
         else:
             return "(%d \pm %d)" % (mean, std)
 
@@ -1155,8 +1178,8 @@ def _tex_print(self, method=None):
         mean = int(round(mean*10**(figs - i), 0))
         std = int(round(std*10**(figs - i), 0))
 
-        if figs - i is not 0:
-            return "(%d \pm %d)*10^{%d}" % (mean, std, figs - i)
+        if i - figs != 0:
+            return "(%d \pm %d)*10^{%d}" % (mean, std, i - figs)
         else:
             return "(%d \pm %d)" % (mean, std)
 
@@ -1165,7 +1188,7 @@ def _tex_print(self, method=None):
         mean = int(round(mean*10**-i, 0))
         std = int(round(std*10**-i, 0))
 
-        if i is not 0:
+        if i != 0:
             return "(%d \pm %d)*10^{%d}" % (mean, std, i)
         else:
             return "(%d \pm %d)" % (mean, std)
@@ -1177,72 +1200,60 @@ def _def_print(self, method=None):
     to either the first non-zero digit of error or to a specified number of
     significant figures.
     '''
-    flag = True
-    i = 0
-
-    if ExperimentalValue.error_method == 'Derivative':
-        [mean, std] = self.der
-    elif ExperimentalValue.error_method == 'Monte Carlo':
-        [mean, std] = self.MC
-    elif ExperimentalValue.error_method == 'Min Max':
-        [mean, std] = self.MinMax
-
-    if method is not None:
-        if ExperimentalValue.error_method == 'Derivative':
-            [mean, std] = self.der
-        elif ExperimentalValue.error_method == 'Monte Carlo':
-            [mean, std] = self.MC
-        elif ExperimentalValue.error_method == 'Min Max':
-            [mean, std] = self.MinMax
+    mean, std = _return_print_values(self, method)
 
     if ExperimentalValue.figs is not None and\
             ExperimentalValue.figs_on_uncertainty is False:
-        value = abs(mean)
-        while(flag):
-            if value == 0:
-                flag = False
-            elif value == float('inf'):
-                return "inf"
-            elif value < 1:
-                value *= 10
-                i += 1
-            elif value >= 10:
-                value /= 10
-                i -= 1
-            elif value >= 1 and value <= 10:
-                flag = False
-        figs = ExperimentalValue.figs+i-1
-        if figs > 0:
-            n = '%d' % (figs)
+
+        if mean == float('inf'):
+            return "inf"
+
+        figs = ExperimentalValue.figs - 1
+        i = _return_exponent(mean)
+
+        decimal_places = figs - i
+        if decimal_places > 0:
+            n = '%d' % (decimal_places)
             n = "%."+n+"f"
         else:
             n = '%.0f'
-        std = float(round(std, i+ExperimentalValue.figs))
-        mean = float(round(mean, i+ExperimentalValue.figs))
+        std = float(round(std, decimal_places))
+        mean = float(round(mean, decimal_places))
+        return n % (mean)+" +/- "+n % (std)
+
+    elif ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is True:
+
+        if mean == float('inf'):
+            return "inf"
+
+        figs = ExperimentalValue.figs - 1
+        i = _return_exponent(std)
+
+        decimal_places = figs - i
+        if decimal_places > 0:
+            n = '%d' % (decimal_places)
+            n = "%."+n+"f"
+        else:
+            n = '%.0f'
+        std = float(round(std, decimal_places))
+        mean = float(round(mean, decimal_places))
         return n % (mean)+" +/- "+n % (std)
 
     else:
-        value = abs(std)
-        while(flag):
-            if value == 0:
-                flag = False
-            elif value == float('inf'):
-                return "%d \pm inf" % (mean)
-            elif value < 1:
-                value *= 10
-                i += 1
-            elif value >= 10:
-                value /= 10
-                i -= 1
-            elif value >= 1 and value < 10:
-                flag = False
-        if i > 0:
-            n = '%d' % (i)
+
+        if mean == float('inf'):
+            return "inf"
+
+        i = _return_exponent(std)
+
+        if i < 0:
+            n = '%d' % (-i)
             n = "%."+n+"f"
         else:
             n = '%.0f'
-        std = float(round(std, i))
-        mean = float(round(mean, i))
+        std = float(round(std, -i))
+        mean = float(round(mean, -i))
         return n % (mean)+" +/- "+n % (std)
 
 
@@ -1252,73 +1263,49 @@ def _sci_print(self, method=None):
     error, each in scientific notation to a specified numebr of significant
     figures, or 3 if none is given.
     '''
-    if ExperimentalValue.error_method == 'Derivative':
-        [mean, std] = self.der
-    elif ExperimentalValue.error_method == 'Monte Carlo':
-        [mean, std] = self.MC
-    elif ExperimentalValue.error_method == 'Min Max':
-        [mean, std] = self.MinMax
-
-    if method is not None:
-        if ExperimentalValue.error_method == 'Derivative':
-            [mean, std] = self.der
-        elif ExperimentalValue.error_method == 'Monte Carlo':
-            [mean, std] = self.MC
-        elif ExperimentalValue.error_method == 'Min Max':
-            [mean, std] = self.MinMax
-
-    flag = True
-    i = 0
+    mean, std = _return_print_values(self, method)
 
     if ExperimentalValue.figs is not None and\
             ExperimentalValue.figs_on_uncertainty is False:
-        value = abs(mean)
-        while(flag):
-            if value == 0:
-                std = int(std/10**i//1)
-                mean = int(mean/10**i//1)
-                return "(%d \pm %d)\e%d" % (mean, std, i)
-            elif value == float('inf'):
-                return "inf"
-            if value < 1:
-                value *= 10
-                i -= 1
-            elif value >= 10:
-                value /= 10
-                i += 1
-            elif value >= 1 and value < 10:
-                flag = False
-        std = std*10**-i*10**(ExperimentalValue.figs-1)
-        mean = mean*10**-i*10**(ExperimentalValue.figs-1)
-        if i-ExperimentalValue.figs is not -1:
-            return "(%d +/- %d)*10**%d" % (round(mean), round(std),
-                                           i-ExperimentalValue.figs + 1)
+
+        if mean == float('inf'):
+            return "inf"
+
+        figs = ExperimentalValue.figs - 1
+        i = _return_exponent(mean)
+        mean = int(round(mean*10**(figs - i), 0))
+        std = int(round(std*10**(figs - i), 0))
+
+        if i - figs != 0:
+            return "(%d +/- %d)*10^(%d)" % (mean, std, i - figs)
         else:
-            return "(%d +/- %d)" % (round(mean), round(std))
+            return "(%d +/- %d)" % (mean, std)
+
+    elif ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is True:
+
+        if mean == float('inf'):
+            return "inf"
+
+        figs = ExperimentalValue.figs - 1
+        i = _return_exponent(std)
+        mean = int(round(mean*10**(figs - i), 0))
+        std = int(round(std*10**(figs - i), 0))
+
+        if i - figs != 0:
+            return "(%d +/- %d)*10^(%d)" % (mean, std, i - figs)
+        else:
+            return "(%d +/- %d)" % (mean, std)
 
     else:
-        value = abs(std)
-        while(flag):
-            if value == 0:
-                std = int(std)
-                mean = int(mean)
-                return "(%d \pm %d)\e%d" % (mean, std, i)
-            elif value == float('inf'):
-                return "%d \pm inf" % (mean)
-            elif value < 1:
-                value *= 10
-                i -= 1
-            elif value >= 10:
-                value /= 10
-                i += 1
-            elif value >= 1 and value < 10:
-                flag = False
-        std = int(std/10**i)
-        mean = int(mean/10**i)
-        if i is not 0:
-            return "(%d +/- %d)*10**%d" % (round(mean), round(std), (i))
+        i = _return_exponent(std)
+        mean = int(round(mean*10**-i, 0))
+        std = int(round(std*10**-i, 0))
+
+        if i != 0:
+            return "(%d +/- %d)*10^(%d)" % (mean, std, i)
         else:
-            return "(%d +/- %d)" % (round(mean), round(std))
+            return "(%d +/- %d)" % (mean, std)
 
 
 ###############################################################################
