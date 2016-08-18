@@ -1028,15 +1028,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         return (arg_data, arg_error, arg_measurement)
 
     def _plot_labels(arg):
-        unit_string = ''
-        if arg[0].units != {}:
-            for key in arg[0].units:
-                if arg[0].units[key] == 1 and len(arg[0].units.keys()) is 1:
-                    unit_string = key + unit_string
-                else:
-                    unit_string += key+'^%d' % (arg[0].units[key])
-                    unit_string += ' '
-            unit_string = '['+unit_string+']'
+        unit_string = arg.get_units()
 
         if type(arg) is np.ndarray and\
                 all(isinstance(n, e.ExperimentalValue) for n in arg):

@@ -138,6 +138,10 @@ class ExperimentalValue:
         self.units = {}
         self.MC_list = None
 
+###############################################################################
+# Methods for printing or returning Measurement paramters
+###############################################################################
+
     def __str__(self):
         '''
         Method called when printing measurement objects.
@@ -154,16 +158,9 @@ class ExperimentalValue:
         elif ExperimentalValue.print_style == "Scientific":
             string += _sci_print(self)
 
-        unit_string = ''
-        if self.units != {}:
-            for key in self.units:
-                if self.units[key] == 1 and len(self.units.keys()) is 1:
-                    unit_string = key + unit_string
-                else:
-                    unit_string += key+'^%d' % (self.units[key])
-                    unit_string += ' '
-            unit_string = '['+unit_string+']'
-            string += unit_string
+        unit_string = self.get_units()
+        if unit_string != '':
+            string += '['+unit_string+']'
 
         return string
 
@@ -210,6 +207,72 @@ class ExperimentalValue:
         elif self.print_style == "Scientific":
             string = _sci_print(self, method=self.MinMax)
         print(string)
+
+    def get_derivative(self, variable=None):
+        '''
+        Returns the numerical value of the derivative with respect to an
+        inputed variable.
+
+        Function to find the derivative of a measurement or measurement like
+        object. By default, derivative is with respect to itself, which will
+        always yeild 1. Operator acts by acessing the self.derivative
+        dictionary and returning the value stored there under the specific
+        variable inputted (ie. deriving with respect to variable = ???)
+        '''
+        if variable is not None \
+                and type(variable) is not Measurement:
+            print('''The derivative of a Measurement with respect to anything
+                  other than a Measuremnt is zero.''')
+            return 0
+
+        elif variable is None:
+            raise TypeError('''The object must be derived with respect to another
+            Measurement.''')
+
+        if variable.info['ID'] not in self.derivative:
+            self.derivative[variable.info['ID']] = 0
+
+        derivative = self.derivative[variable.info["ID"]]
+        return derivative
+
+    def get_error(self):
+        '''Returns the error associated the Measurement for whatever error
+        propagation method is selected.
+        '''
+        return self.std
+
+    def get_mean(self):
+        ''' Returns the central value associated with the Measurement object
+        using whatever error propagation method is selected.
+        '''
+        return self.mean
+
+    def get_name(self):
+        '''Returns the name of the associated object, whether user-specified
+        or auto-generated.
+        '''
+        return self.name
+
+    def get_units(self):
+        '''Returns the units of the associated Measurement.
+        '''
+        unit_string = ''
+        if self.units != {}:
+            for key in self.units:
+                if self.units[key] == 1 and len(self.units.keys()) is 1:
+                    unit_string = key + unit_string
+                else:
+                    unit_string += key+'^%d' % (self.units[key])
+                    unit_string += ' '
+
+                if unit_string == '':
+                    unit_string = 'unitless'
+        return unit_string
+
+
+###############################################################################
+# Methods for Correlation and Covariance
+###############################################################################
 
     def _find_covariance(x, y):
         '''
@@ -324,6 +387,10 @@ class ExperimentalValue:
         sigma_y = y.std
         return sigma_xy/sigma_x/sigma_y
 
+###############################################################################
+# Methods for Naming and Units
+###############################################################################
+
     def rename(self, newName=None, units=None):
         '''
         Renames an object, requires a string.
@@ -427,44 +494,6 @@ class ExperimentalValue:
 
         else:
             print('Something went wrong in update_info')
-
-    def return_derivative(self, variable=None):
-        '''
-        Returns the numerical value of the derivative with respect to an
-        inputed variable.
-
-        Function to find the derivative of a measurement or measurement like
-        object. By default, derivative is with respect to itself, which will
-        always yeild 1. Operator acts by acessing the self.derivative
-        dictionary and returning the value stored there under the specific
-        variable inputted (ie. deriving with respect to variable = ???)
-        '''
-        if variable is not None \
-                and not hasattr(variable, 'type'):
-            return 'Only measurement objects can be derived.'
-        elif variable is None:
-            return self.derivative
-        if variable.info['ID'] not in self.derivative:
-            self.derivative[variable.info['ID']] = 0
-        derivative = self.derivative[variable.info["ID"]]
-        return derivative
-
-    def _check_der(self, b):
-        '''
-        Checks for a derivative with respect to b, else zero is defined as
-        the derivative.
-
-        Checks the existance of the derivative of an object in the
-        dictionary of said object with respect to another variable, given
-        the variable itself, then checking for the ID of said variable
-        in the .derivative dictionary. If non exists, the deriviative is
-        assumed to be zero.
-        '''
-        for key in b.derivative:
-            if key in self.derivative:
-                pass
-            else:
-                self.derivative[key] = 0
 
 ###############################################################################
 # Operations on measurement objects
@@ -675,6 +704,27 @@ class ExperimentalValue:
 
     def atan(x):
         return atan(x)
+
+###############################################################################
+# Miscellaneous Methods
+###############################################################################
+
+    def _check_der(self, b):
+        '''
+        Checks for a derivative with respect to b, else zero is defined as
+        the derivative.
+
+        Checks the existance of the derivative of an object in the
+        dictionary of said object with respect to another variable, given
+        the variable itself, then checking for the ID of said variable
+        in the .derivative dictionary. If non exists, the deriviative is
+        assumed to be zero.
+        '''
+        for key in b.derivative:
+            if key in self.derivative:
+                pass
+            else:
+                self.derivative[key] = 0
 
     def show_MC_histogram(self, title=None):
         '''Creates and shows a Bokeh plot of a histogram of the values

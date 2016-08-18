@@ -59,15 +59,15 @@ def test4():
     x = e.Measurement(3, 0.4)
     y = e.Measurement(12, 1)
 
-    assert (x+y).return_derivative(y) == 1
-    assert (x-y).return_derivative(x) == 1
-    assert (x*y).return_derivative(y) == x.mean
-    assert (x/y).return_derivative(x) == 1/y.mean
-    assert (x**y).return_derivative(x) == y.mean*x.mean**(y.mean-1)
-    assert e.sin(x).return_derivative(x) == m.cos(x.mean)
-    assert e.cos(x).return_derivative(x) == -m.sin(x.mean)
-    assert e.tan(x).return_derivative(x) == m.cos(x.mean)**-2
-    assert e.exp(x).return_derivative(x) == m.exp(x.mean)
+    assert (x+y).get_derivative(y) == 1
+    assert (x-y).get_derivative(x) == 1
+    assert (x*y).get_derivative(y) == x.mean
+    assert (x/y).get_derivative(x) == 1/y.mean
+    assert (x**y).get_derivative(x) == y.mean*x.mean**(y.mean-1)
+    assert e.sin(x).get_derivative(x) == m.cos(x.mean)
+    assert e.cos(x).get_derivative(x) == -m.sin(x.mean)
+    assert e.tan(x).get_derivative(x) == m.cos(x.mean)**-2
+    assert e.exp(x).get_derivative(x) == m.exp(x.mean)
 
 
 def test5():
@@ -146,3 +146,22 @@ def test7():
     e.set_print_style('Sci')
     e.set_sigfigs_error(1)
     assert x.__str__() == '(124 +/- 1)*10^(-1)'
+
+
+def test8():
+    '''Test of public methods to return Measurement object attributes.
+    '''
+    x = e.Measurement(10, 1, name='x', units='m')
+    y = e.Measurement(13, 2, name='y', units=['m', 1])
+    a = x+y
+
+    d = e.Measurement(21, 1, name='Distance', units='m')
+    t = e.Measurement(7, 2, name='Interval', units='s')
+    v = d/t
+
+    assert x.get_mean() == 10
+    assert y.get_error() == 2
+    assert a.get_derivative(x) == 1
+    assert a.get_name() == 'x+y'
+    assert a.get_units() == 'm'
+    assert v.get_units() == 'm^1 s^-1 ' or v.get_units() == 's^-1 m^1 '
