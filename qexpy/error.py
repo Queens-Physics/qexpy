@@ -9,6 +9,7 @@ class ExperimentalValue:
     print_style = "Default"  # Default printing style
     mc_trial_number = 10000  # number of trial in Monte Carlo simulation
     figs = None
+    figs_on_uncertainty = False
     register = {}
     formula_register = {}
     id_register = {}
@@ -165,11 +166,6 @@ class ExperimentalValue:
             string += unit_string
 
         return string
-
-    def set_sigfigs(self, figs=3):
-        '''Change the number of significant figures shown in print()
-        '''
-        ExperimentalValue.figs = figs
 
     def print_mc_error(self):
         '''Prints the result of a Monte Carlo error propagation.
@@ -354,7 +350,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import qexpy.error_operations as op
+        import error_operations as op
 
         if len(args) is 1:
             var1 = args[0]
@@ -470,10 +466,12 @@ class ExperimentalValue:
             else:
                 self.derivative[key] = 0
 
+###############################################################################
 # Operations on measurement objects
+###############################################################################
 
     def __add__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -486,7 +484,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -499,7 +497,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -512,7 +510,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -525,7 +523,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             print(other.mean)
@@ -539,7 +537,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -552,7 +550,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -565,7 +563,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -578,7 +576,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -591,7 +589,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
-        import qexpy.error_operations as op
+        import error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -610,11 +608,11 @@ class ExperimentalValue:
             import math as m
             return m.sqrt(x)
         else:
-            import qexpy.error_operations as op
+            import error_operations as op
             return op.operation_wrap(op.power, x, 1/2)
 
     def __neg__(self):
-        import qexpy.error_operations as op
+        import error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -644,6 +642,39 @@ class ExperimentalValue:
 
     def log(x):
         return log(x)
+
+    def exp(x):
+        return exp(x)
+
+    def e(x):
+        return exp(x)
+
+    def sin(x):
+        return sin(x)
+
+    def cos(x):
+        return cos(x)
+
+    def tan(x):
+        return tan(x)
+
+    def csc(x):
+        return csc(x)
+
+    def sec(x):
+        return sec(x)
+
+    def cot(x):
+        return cot(x)
+
+    def asin(x):
+        return asin(x)
+
+    def acos(x):
+        return acos(x)
+
+    def atan(x):
+        return atan(x)
 
     def show_MC_histogram(self, title=None):
         '''Creates and shows a Bokeh plot of a histogram of the values
@@ -679,7 +710,312 @@ class ExperimentalValue:
         show(p1)
 
 
-def set_print_style(style=None, figs=None):
+###############################################################################
+# Measurement Sub-Classes
+###############################################################################
+
+
+class Measurement(ExperimentalValue):
+    '''
+    Subclass of measurements, specified by the user and treated as variables
+    or arguments of functions when propagating error.
+    '''
+    id_number = 0
+
+    def __init__(self, *args, name=None, units=None):
+        super().__init__(*args, name=name)
+        if name is not None:
+            self.name = name
+        else:
+            self.name = 'unnamed_var%d' % (Measurement.id_number)
+        if units is not None:
+            if type(units) is str:
+                self.units[units] = 1
+            else:
+                for i in range(len(units)//2):
+                    self.units[units[2*i]] = units[2*i+1]
+        self.type = "ExperimentalValue"
+        self.info['ID'] = 'var%d' % (Measurement.id_number)
+        self.info['Formula'] = 'var%d' % (Measurement.id_number)
+        Measurement.id_number += 1
+        self.derivative = {self.info['ID']: 1}
+        self.covariance = {self.info['ID']: self.std**2}
+        self.correlation = {self.info['ID']: 1}
+        ExperimentalValue.register.update({self.info["ID"]: self})
+        self.root = (self.info["ID"],)
+        self.der = [self.mean, self.std]
+        self.MC = [self.mean, self.std]
+        self.MinMax = [self.mean, self.std]
+
+
+class Function(ExperimentalValue):
+    '''
+    Subclass of objects, which are measurements created by operations or
+    functions of other measurement type objects.
+    '''
+    id_number = 0
+
+    def __init__(self, *args, name=None):
+        super().__init__(*args, name=name)
+        self.name = 'obj%d' % (Function.id_number)
+        self.info['ID'] = 'obj%d' % (Function.id_number)
+        self.type = "Function"
+        Function.id_number += 1
+        self.derivative = {self.info['ID']: 1}
+        ExperimentalValue.register.update({self.info["ID"]: self})
+        self.covariance = {self.info['ID']: self.std**2}
+        self.correlation = {self.info['ID']: 1}
+        self.root = ()
+        self.der = None
+        self.MC = None
+        self.MinMax = None
+        self.error_flag = False
+
+
+class Constant(ExperimentalValue):
+    '''
+    Subclass of measurement objects, not neccesarily specified by the user,
+    called when a consant (int, float, etc.) is used in operation with a
+    measurement. This class is called before calculating operations to
+    ensure objects can be combined. The mean of a constant is the specified
+    value, the standard deviation is zero, and the derivarive with respect
+    to anything is zero.
+    '''
+    def __init__(self, arg):
+        super().__init__(arg, 0)
+        self.name = '%d' % (arg)
+        self.info['ID'] = 'Constant'
+        self.info["Formula"] = '%f' % arg
+        self.derivative = {}
+        self.info["Data"] = [arg]
+        self.type = "Constant"
+        self.covariance = {self.name: 0}
+        self.root = ()
+
+
+def MeasurementArray(data, error, name=None, units=None):
+    ''' Creates an array of measurements from inputted mean and standard
+    deviation arrays.
+    '''
+    import numpy as np
+
+    if type(data) not in ExperimentalValue.ARRAY:
+        print('Data array must be a list, tuple, or numpy array.')
+        return None
+
+    if type(error) not in ExperimentalValue.ARRAY:
+        print('Error array must be a list, tuple, or numpy array.')
+        return None
+
+    if len(error) is 1:
+        error = len(data)*[error[0]]
+
+    if len(data) != len(error):
+        print('''Data and error array must be of the same length, or the
+        error array should be of length 1.''')
+        return None
+
+    data_name = name
+    data_units = units
+
+    measurement = []
+    for i in range(len(data)):
+        measurement.append(Measurement(data[i], error[i], name=data_name,
+                                       units=data_units))
+
+    return np.array(measurement)
+
+
+###############################################################################
+# Mathematical Functions
+###############################################################################
+
+
+def sqrt(x):
+    if x.mean < 0:
+        print('Imaginary numbers are no supported in QExPy.')
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.sqrt(x)
+    else:
+        import error_operations as op
+        return op.operation_wrap(op.power, x, 1/2)
+
+
+def sin(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.sin, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.sin(x)
+    else:
+        return op.operation_wrap(op.sin, x, func_flag=True)
+
+
+def cos(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.cos, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.cos(x)
+    else:
+        return op.operation_wrap(op.cos, x, func_flag=True)
+
+
+def tan(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.tan, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.tan(x)
+    else:
+        return op.operation_wrap(op.tan, x, func_flag=True)
+
+
+def sec(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.sec, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return 1/m.cos(x)
+    else:
+        return op.operation_wrap(op.sec, x, func_flag=True)
+
+
+def csc(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.csc, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return 1/m.sin(x)
+    else:
+        return op.operation_wrap(op.csc, x, func_flag=True)
+
+
+def cot(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.cot, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return 1/m.tan(x)
+    else:
+        return op.operation_wrap(op.cot, x, func_flag=True)
+
+
+def log(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.log, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.log(x)
+    else:
+        return op.operation_wrap(op.log, x, func_flag=True)
+
+
+def exp(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.exp, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.exp(x)
+    else:
+        return op.operation_wrap(op.exp, x, func_flag=True)
+
+
+def e(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.exp, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.exp(x)
+    else:
+        return op.operation_wrap(op.exp, x, func_flag=True)
+
+
+def asin(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.asin, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.asin(x)
+    else:
+        return op.operation_wrap(op.asin, x, func_flag=True)
+
+
+def acos(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.acos, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.acos(x)
+    else:
+        return op.operation_wrap(op.acos, x, func_flag=True)
+
+
+def atan(x):
+    import error_operations as op
+    if type(x) in ExperimentalValue.ARRAY:
+        result = []
+        for value in x:
+            result.append(op.operation_wrap(op.atan, value, func_flag=True))
+        return result
+    elif type(x) in ExperimentalValue.CONSTANT:
+        import math as m
+        return m.atan(x)
+    else:
+        return op.operation_wrap(op.atan, x, func_flag=True)
+
+
+###############################################################################
+# Printing Methods
+###############################################################################
+
+
+def set_print_style(style=None, sigfigs=None):
     '''Change style ("default","latex","scientific") of printout for
     Measurement objects.
 
@@ -695,7 +1031,7 @@ def set_print_style(style=None, figs=None):
     latex = ("Latex", "latex", 'Tex', 'tex',)
     Sci = ("Scientific", "Sci", 'scientific', 'sci', 'sigfigs',)
     Default = ('default', 'Default',)
-    ExperimentalValue.figs = figs
+    ExperimentalValue.figs = sigfigs
 
     if style in latex:
         ExperimentalValue.print_style = "Latex"
@@ -733,312 +1069,41 @@ def set_error_method(chosen_method):
         ExperimentalValue.error_method = "Derivative"
 
 
-class Function(ExperimentalValue):
+def set_sigfigs_error(figs=3):
+    '''Change the number of significant figures shown in print()
     '''
-    Subclass of objects, which are measurements created by operations or
-    functions of other measurement type objects.
+    ExperimentalValue.figs = figs
+    ExperimentalValue.figs_on_uncertainty = False
+
+
+def set_sigfigs_centralvalue(figs=3):
+    '''Change the number of significant figures shown in print()
     '''
-    id_number = 0
-
-    def __init__(self, *args, name=None):
-        super().__init__(*args, name=name)
-        self.name = 'obj%d' % (Function.id_number)
-        self.info['ID'] = 'obj%d' % (Function.id_number)
-        self.type = "Function"
-        Function.id_number += 1
-        self.derivative = {self.info['ID']: 1}
-        ExperimentalValue.register.update({self.info["ID"]: self})
-        self.covariance = {self.info['ID']: self.std**2}
-        self.correlation = {self.info['ID']: 1}
-        self.root = ()
-        self.der = None
-        self.MC = None
-        self.MinMax = None
-        self.error_flag = False
+    ExperimentalValue.figs = figs
+    ExperimentalValue.figs_on_uncertainty = True
 
 
-class Measurement(ExperimentalValue):
+def _return_exponent(value):
+    '''Returns the exponent of the argument in reduced scientific notation.
     '''
-    Subclass of measurements, specified by the user and treated as variables
-    or arguments of functions when propagating error.
-    '''
-    id_number = 0
+    value = abs(value)
+    flag = True
+    i = 0
 
-    def __init__(self, *args, name=None, units=None):
-        super().__init__(*args, name=name)
-        if name is not None:
-            self.name = name
-        else:
-            self.name = 'unnamed_var%d' % (Measurement.id_number)
-        if units is not None:
-            if type(units) is str:
-                self.units[units] = 1
-            else:
-                for i in range(len(units)//2):
-                    self.units[units[2*i]] = units[2*i+1]
-        self.type = "ExperimentalValue"
-        self.info['ID'] = 'var%d' % (Measurement.id_number)
-        self.info['Formula'] = 'var%d' % (Measurement.id_number)
-        Measurement.id_number += 1
-        self.derivative = {self.info['ID']: 1}
-        self.covariance = {self.info['ID']: self.std**2}
-        self.correlation = {self.info['ID']: 1}
-        ExperimentalValue.register.update({self.info["ID"]: self})
-        self.root = (self.info["ID"],)
-        self.der = [self.mean, self.std]
-        self.MC = [self.mean, self.std]
-        self.MinMax = [self.mean, self.std]
-
-
-class Constant(ExperimentalValue):
-    '''
-    Subclass of measurement objects, not neccesarily specified by the user,
-    called when a consant (int, float, etc.) is used in operation with a
-    measurement. This class is called before calculating operations to
-    ensure objects can be combined. The mean of a constant is the specified
-    value, the standard deviation is zero, and the derivarive with respect
-    to anything is zero.
-    '''
-    def __init__(self, arg):
-        super().__init__(arg, 0)
-        self.name = '%d' % (arg)
-        self.info['ID'] = 'Constant'
-        self.info["Formula"] = '%f' % arg
-        self.derivative = {}
-        self.info["Data"] = [arg]
-        self.type = "Constant"
-        self.covariance = {self.name: 0}
-        self.root = ()
-
-
-def sqrt(x):
-    if x.mean < 0:
-        print('Imaginary numbers are no supported in QExPy.')
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.sqrt(x)
-    else:
-        import qexpy.error_operations as op
-        return op.operation_wrap(op.power, x, 1/2)
-
-
-def sin(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.sin, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.sin(x)
-    else:
-        return op.operation_wrap(op.sin, x, func_flag=True)
-
-
-def cos(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.cos, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.cos(x)
-    else:
-        return op.operation_wrap(op.cos, x, func_flag=True)
-
-
-def tan(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.tan, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.tan(x)
-    else:
-        return op.operation_wrap(op.tan, x, func_flag=True)
-
-
-def sec(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.sec, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return 1/m.cos(x)
-    else:
-        return op.operation_wrap(op.sec, x, func_flag=True)
-
-
-def csc(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.csc, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return 1/m.sin(x)
-    else:
-        return op.operation_wrap(op.csc, x, func_flag=True)
-
-
-def cot(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.cot, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return 1/m.tan(x)
-    else:
-        return op.operation_wrap(op.cot, x, func_flag=True)
-
-
-def log(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.log, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.log(x)
-    else:
-        return op.operation_wrap(op.log, x, func_flag=True)
-
-
-def exp(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.exp, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.exp(x)
-    else:
-        return op.operation_wrap(op.exp, x, func_flag=True)
-
-
-def e(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.exp, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.exp(x)
-    else:
-        return op.operation_wrap(op.exp, x, func_flag=True)
-
-
-def asin(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.asin, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.asin(x)
-    else:
-        return op.operation_wrap(op.asin, x, func_flag=True)
-
-
-def acos(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.acos, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.acos(x)
-    else:
-        return op.operation_wrap(op.acos, x, func_flag=True)
-
-
-def atan(x):
-    import qexpy.error_operations as op
-    if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.atan, value, func_flag=True))
-        return result
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.atan(x)
-    else:
-        return op.operation_wrap(op.atan, x, func_flag=True)
-
-
-def numerical_partial_derivative(func, var, *args):
-    '''
-    Returns the parital derivative of a dunction with respect to var.
-
-    This function wraps the inputted function to become a function
-    of only one variable, the derivative is taken with respect to said
-    variable.
-    '''
-    def restrict_dimension(x):
-        partial_args = list(args)
-        partial_args[var] = x
-        return func(*partial_args)
-    return numerical_derivative(restrict_dimension, args[var])
-
-
-def numerical_derivative(function, point, dx=1e-10):
-    '''
-    Returns the first order derivative of a function.
-    '''
-    return (function(point+dx)-function(point))/dx
-
-
-def _variance(*args, ddof=1):
-    '''
-    Returns a tuple of the mean and standard deviation of a data array.
-
-    Uses a more sophisticated variance calculation to speed up calculation of
-    mean and standard deviation.
-    '''
-    args = args[0]
-    Sum = 0
-    SumSq = 0
-    N = len(args)
-    mean = sum(args)/len(args)
-    for i in range(N):
-        Sum += args[i]
-        SumSq += args[i]*args[i]
-    std = ((SumSq-Sum**2/N)/(N-1))**(1/2)
-    return (mean, std)
-
-
-def _weighted_variance(mean, std, ddof=1):
-    import numpy as np
-    from math import sqrt
-
-    w = np.power(std, -2)
-    w_mean = sum(np.multiply(w, mean))/sum(w)
-    w_std = 1/sqrt(sum(w))
-    return (w_mean, w_std)
+    while(flag):
+        if value == 0:
+            flag = False
+        elif value == float('inf'):
+            return float("inf")
+        elif value < 1:
+            value *= 10
+            i -= 1
+        elif value >= 10:
+            value /= 10
+            i += 1
+        elif value >= 1 and value < 10:
+            flag = False
+        return i
 
 
 def _tex_print(self, method=None):
@@ -1063,55 +1128,45 @@ def _tex_print(self, method=None):
         elif ExperimentalValue.error_method is 'Min Max':
             [mean, std] = self.MinMax
 
-    flag = True
-    i = 0
+    if ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is False:
 
-    if ExperimentalValue.figs is not None:
-        value = abs(mean)
-        while(flag):
-            if value == 0:
-                std = int(std/10**i//1)
-                mean = int(mean/10**i//1)
-                return "(%d \pm %d)\e%d" % (mean, std, i)
-            elif value == float('inf'):
-                return "inf"
-            elif value < 1:
-                value *= 10
-                i -= 1
-            elif value >= 10:
-                value /= 10
-                i += 1
-            elif value >= 1 and value < 10:
-                flag = False
-        std = std*10**-i*10**(ExperimentalValue.figs-1)
-        mean = mean*10**-i*10**(ExperimentalValue.figs-1)
-        if i-ExperimentalValue.figs is not -1:
-            return "(%d \pm %d)\e%d" % (mean, std,
-                                        i-ExperimentalValue.figs + 1)
+        if mean == float('inf'):
+            return "inf"
+
+        figs = ExperimentalValue.figs - 1
+        i = _return_exponent(mean)
+        mean = int(round(mean*10**(figs - i), 0))
+        std = int(round(std*10**(figs - i), 0))
+
+        if figs - i is not 0:
+            return "(%d \pm %d)*10^{%d}" % (mean, std, figs - i)
+        else:
+            return "(%d \pm %d)" % (mean, std)
+
+    elif ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is True:
+
+        if mean == float('inf'):
+            return "inf"
+
+        figs = ExperimentalValue.figs - 1
+        i = _return_exponent(std)
+        mean = int(round(mean*10**(figs - i), 0))
+        std = int(round(std*10**(figs - i), 0))
+
+        if figs - i is not 0:
+            return "(%d \pm %d)*10^{%d}" % (mean, std, figs - i)
         else:
             return "(%d \pm %d)" % (mean, std)
 
     else:
-        value = abs(std)
-        while(flag):
-            if value == 0:
-                std = int(std)
-                mean = int(mean)
-                return "(%d \pm %d)\e%d" % (mean, std, i)
-            elif value == float('inf'):
-                return "%d \pm inf" % (mean)
-            elif value < 1:
-                value *= 10
-                i -= 1
-            elif value >= 10:
-                value /= 10
-                i += 1
-            elif value >= 1 and value < 10:
-                flag = False
-        std = int(std/10**i)
-        mean = int(mean/10**i)
+        i = _return_exponent(std)
+        mean = int(round(mean*10**-i, 0))
+        std = int(round(std*10**-i, 0))
+
         if i is not 0:
-            return "(%d \pm %d)\e%d" % (mean, std, (i))
+            return "(%d \pm %d)*10^{%d}" % (mean, std, i)
         else:
             return "(%d \pm %d)" % (mean, std)
 
@@ -1140,7 +1195,8 @@ def _def_print(self, method=None):
         elif ExperimentalValue.error_method == 'Min Max':
             [mean, std] = self.MinMax
 
-    if ExperimentalValue.figs is not None:
+    if ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is False:
         value = abs(mean)
         while(flag):
             if value == 0:
@@ -1214,7 +1270,8 @@ def _sci_print(self, method=None):
     flag = True
     i = 0
 
-    if ExperimentalValue.figs is not None:
+    if ExperimentalValue.figs is not None and\
+            ExperimentalValue.figs_on_uncertainty is False:
         value = abs(mean)
         while(flag):
             if value == 0:
@@ -1264,37 +1321,60 @@ def _sci_print(self, method=None):
             return "(%d +/- %d)" % (round(mean), round(std))
 
 
-def Measurement_Array(data, error, name=None, units=None):
-    ''' Creates an array of measurements from inputted mean and standard
-    deviation arrays.
+###############################################################################
+# Random Methods
+###############################################################################
+
+
+def numerical_partial_derivative(func, var, *args):
     '''
+    Returns the parital derivative of a dunction with respect to var.
+
+    This function wraps the inputted function to become a function
+    of only one variable, the derivative is taken with respect to said
+    variable.
+    '''
+    def restrict_dimension(x):
+        partial_args = list(args)
+        partial_args[var] = x
+        return func(*partial_args)
+    return numerical_derivative(restrict_dimension, args[var])
+
+
+def numerical_derivative(function, point, dx=1e-10):
+    '''
+    Returns the first order derivative of a function.
+    '''
+    return (function(point+dx)-function(point))/dx
+
+
+def _variance(*args, ddof=1):
+    '''
+    Returns a tuple of the mean and standard deviation of a data array.
+
+    Uses a more sophisticated variance calculation to speed up calculation of
+    mean and standard deviation.
+    '''
+    args = args[0]
+    Sum = 0
+    SumSq = 0
+    N = len(args)
+    mean = sum(args)/len(args)
+    for i in range(N):
+        Sum += args[i]
+        SumSq += args[i]*args[i]
+    std = ((SumSq-Sum**2/N)/(N-1))**(1/2)
+    return (mean, std)
+
+
+def _weighted_variance(mean, std, ddof=1):
     import numpy as np
+    from math import sqrt
 
-    if type(data) not in ExperimentalValue.ARRAY:
-        print('Data array must be a list, tuple, or numpy array.')
-        return None
-
-    if type(error) not in ExperimentalValue.ARRAY:
-        print('Error array must be a list, tuple, or numpy array.')
-        return None
-
-    if len(error) is 1:
-        error = len(data)*[error[0]]
-
-    if len(data) != len(error):
-        print('''Data and error array must be of the same length, or the
-        error array should be of length 1.''')
-        return None
-
-    data_name = name
-    data_units = units
-
-    measurement = []
-    for i in range(len(data)):
-        measurement.append(Measurement(data[i], error[i], name=data_name,
-                                       units=data_units))
-
-    return np.array(measurement)
+    w = np.power(std, -2)
+    w_mean = sum(np.multiply(w, mean))/sum(w)
+    w_std = 1/sqrt(sum(w))
+    return (w_mean, w_std)
 
 
 def reset_variables():

@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import qexpy.error as e
+import error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -315,7 +315,7 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        import qexpy.error_operations as op
+        import error_operations as op
         data, function = op.check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
@@ -922,7 +922,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         '''
         if type(arg) is e.ExperimentalValue:
             # For input of Measurement object
-            arg_measurement = e.Measurement_Array(arg.info['Data'],
+            arg_measurement = e.MeasurementArray(arg.info['Data'],
                                                   arg.info['Error'],
                                                   name=arg.name,
                                                   units=arg.units)
@@ -939,7 +939,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
             for val in arg:
                 arg_data.append(val.mean)
                 arg_error.append(val.std)
-            arg_measurement = e.Measurement_Array(arg_data, arg_error)
+            arg_measurement = e.MeasurementArray(arg_data, arg_error)
 
         elif type(arg) in ARRAY and\
                 all(isinstance(n, CONSTANT) for n in arg):
@@ -954,7 +954,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
                     arg_error.append(val)
             else:
                 arg_error = [0]*len(arg)
-            arg_measurement = e.Measurement_Array(arg_data, arg_error)
+            arg_measurement = e.MeasurementArray(arg_data, arg_error)
         else:
             raise TypeError('Input method not recognized.')
 
