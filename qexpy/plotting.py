@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import QExPy.error as e
+import qexpy.error as e
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -258,7 +258,7 @@ class Plot:
 
     def manual_errorbar(self, data, function):
         '''Manually specify the location of a datapoint with errorbars.'''
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         data, function = op.check_values(data, function)
         self.manual_data = (data, function(data))
         self.flag['Manual'] = True
@@ -347,7 +347,7 @@ class Plot:
             for par in self.fit_parameters:
                 print(par)
 
-    def return_bokeh(self):
+    def get_bokeh(self):
         '''Return Bokeh plot object for the plot acted upon.
 
         If no residual plot exists, a single Bokeh object, containing the
@@ -1028,7 +1028,7 @@ def data_transform(self, x, y, xerr=None, yerr=None):
         return (arg_data, arg_error, arg_measurement)
 
     def _plot_labels(arg):
-        unit_string = arg.get_units()
+        unit_string = arg[0].get_units()
 
         if type(arg) is np.ndarray and\
                 all(isinstance(n, e.ExperimentalValue) for n in arg):

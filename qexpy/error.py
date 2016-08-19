@@ -338,7 +338,7 @@ class ExperimentalValue:
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
 
-        output_file(self.name+' histogram.html', title=hist_title)
+        output_file(hist_title+' histogram.html', title=hist_title)
         show(p1)
 
 ###############################################################################
@@ -419,7 +419,7 @@ class ExperimentalValue:
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
 
-    def return_covariance(self, variable):
+    def get_covariance(self, variable):
         '''
         Returns the covariance of the object and a specified variable.
 
@@ -442,7 +442,7 @@ class ExperimentalValue:
         else:
             return 0
 
-    def _return_correlation(self, y):
+    def _get_correlation(self, y):
         '''
         Returns the correlation factor of two measurements.
 
@@ -491,7 +491,7 @@ class ExperimentalValue:
         for functions like sine and cosine. Method is updated by acessing
         the class property.
         '''
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
 
         if len(args) is 1:
             var1 = args[0]
@@ -574,7 +574,7 @@ class ExperimentalValue:
 ###############################################################################
 
     def __add__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -587,7 +587,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -600,7 +600,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -613,7 +613,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -626,7 +626,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             print(other.mean)
@@ -640,7 +640,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -653,7 +653,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -666,7 +666,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -679,7 +679,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -692,7 +692,7 @@ class ExperimentalValue:
             return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
             for value in other:
@@ -706,16 +706,16 @@ class ExperimentalValue:
 
     def sqrt(x):
         if x.mean < 0:
-            print('Imaginary numbers are no supported in QExPy.')
+            print('Imaginary numbers are no supported in qexpy.')
         elif type(x) in ExperimentalValue.CONSTANT:
             import math as m
             return m.sqrt(x)
         else:
-            import QExPy.error_operations as op
+            import qexpy.error_operations as op
             return op.operation_wrap(op.power, x, 1/2)
 
     def __neg__(self):
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         return op.neg(self)
 
     def __len__(self):
@@ -900,7 +900,7 @@ class Constant(ExperimentalValue):
         self.root = ()
 
 
-def MeasurementArray(data, error, name=None, units=None):
+def MeasurementArray(data, error=None, name=None, units=None):
     ''' Creates an array of measurements from inputted mean and standard
     deviation arrays.
     '''
@@ -910,12 +910,17 @@ def MeasurementArray(data, error, name=None, units=None):
         print('Data array must be a list, tuple, or numpy array.')
         return None
 
-    if type(error) not in ExperimentalValue.ARRAY:
-        print('Error array must be a list, tuple, or numpy array.')
+    if type(error) not in ExperimentalValue.ARRAY and\
+            type(error) not in ExperimentalValue.CONSTANT:
+        print('Error array must be a list, tuple, numpy array or constant.')
         return None
 
     if len(error) is 1:
-        error = len(data)*[error[0]]
+        error = len(data)*error
+    elif error is None:
+        error = len(data)*[0]
+    elif type(error) in ExperimentalValue.CONSTANT:
+        error = len(data)*[error]
 
     if len(data) != len(error):
         print('''Data and error array must be of the same length, or the
@@ -940,17 +945,17 @@ def MeasurementArray(data, error, name=None, units=None):
 
 def sqrt(x):
     if x.mean < 0:
-        print('Imaginary numbers are no supported in QExPy.')
+        print('Imaginary numbers are no supported in qexpy.')
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
         return m.sqrt(x)
     else:
-        import QExPy.error_operations as op
+        import qexpy.error_operations as op
         return op.operation_wrap(op.power, x, 1/2)
 
 
 def sin(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -964,7 +969,7 @@ def sin(x):
 
 
 def cos(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -978,7 +983,7 @@ def cos(x):
 
 
 def tan(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -992,7 +997,7 @@ def tan(x):
 
 
 def sec(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1006,7 +1011,7 @@ def sec(x):
 
 
 def csc(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1020,7 +1025,7 @@ def csc(x):
 
 
 def cot(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1034,7 +1039,7 @@ def cot(x):
 
 
 def log(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1048,7 +1053,7 @@ def log(x):
 
 
 def exp(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1062,7 +1067,7 @@ def exp(x):
 
 
 def e(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1076,7 +1081,7 @@ def e(x):
 
 
 def asin(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1090,7 +1095,7 @@ def asin(x):
 
 
 def acos(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
@@ -1104,7 +1109,7 @@ def acos(x):
 
 
 def atan(x):
-    import QExPy.error_operations as op
+    import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
         result = []
         for value in x:
