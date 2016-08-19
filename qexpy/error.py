@@ -269,6 +269,77 @@ class ExperimentalValue:
                     unit_string = 'unitless'
         return unit_string
 
+    def get_data_array(self):
+        '''Returns the array of data used to create this Measurement.
+        '''
+        if self.info['Data'] is None:
+            print('No data array exists.')
+        return self.info['Data']
+
+    def show_histogram(self, title=None):
+        '''Creates a histogram of the inputted data using Bokeh.
+        '''
+        import numpy as np
+        from bokeh.plotting import figure, show, output_file
+
+        if type(title) is str:
+            hist_title = title
+        elif title is None:
+            hist_title = self.name+' Histogram'
+        else:
+            print('Histogram title must be a string.')
+            hist_title = self.name+' Histogram'
+
+        p1 = figure(title=hist_title, tools="save",
+                    background_fill_color="#E8DDCB")
+
+        hist, edges = np.histogram(self.info['Data'], bins=50)
+
+        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                fill_color="#036564", line_color="#033649")
+
+        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
+                line_dash='dashed')
+        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
+                line_dash='dashed')
+        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
+                line_dash='dashed')
+
+        output_file(self.name+' histogram.html', title=hist_title)
+        show(p1)
+
+    def show_MC_histogram(self, title=None):
+        '''Creates and shows a Bokeh plot of a histogram of the values
+        calculated by a Monte Carlo error propagation.
+        '''
+        import numpy as np
+        from bokeh.plotting import figure, show, output_file
+
+        if type(title) is str:
+            hist_title = title
+        elif title is None:
+            hist_title = self.name+' Histogram'
+        else:
+            print('Histogram title must be a string.')
+            hist_title = self.name+' Histogram'
+
+        p1 = figure(title=hist_title, tools="save",
+                    background_fill_color="#E8DDCB")
+
+        hist, edges = np.histogram(self.MC_list, bins=50)
+
+        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                fill_color="#036564", line_color="#033649")
+
+        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
+                line_dash='dashed')
+        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
+                line_dash='dashed')
+        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
+                line_dash='dashed')
+
+        output_file(self.name+' histogram.html', title=hist_title)
+        show(p1)
 
 ###############################################################################
 # Methods for Correlation and Covariance
@@ -319,6 +390,9 @@ class ExperimentalValue:
         Given a correlation factor, the covariance and correlation
         between two variables is added to both objects.
         '''
+        if factor > 1 or factor < -1:
+            raise ValueError('Correlation factor must be between -1 and 1.')
+
         x = self
         ro_xy = factor
         sigma_xy = ro_xy*x.std*y.std
@@ -726,39 +800,6 @@ class ExperimentalValue:
             else:
                 self.derivative[key] = 0
 
-    def show_MC_histogram(self, title=None):
-        '''Creates and shows a Bokeh plot of a histogram of the values
-        calculated by a Monte Carlo error propagation.
-        '''
-        import numpy as np
-        from bokeh.plotting import figure, show, output_file
-
-        if type(title) is str:
-            hist_title = title
-        elif title is None:
-            hist_title = self.name+' Histogram'
-        else:
-            print('Histogram title must be a string.')
-            hist_title = self.name+' Histogram'
-
-        p1 = figure(title=hist_title, tools="save",
-                    background_fill_color="#E8DDCB")
-
-        hist, edges = np.histogram(self.MC_list, bins=50)
-
-        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                fill_color="#036564", line_color="#033649")
-
-        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
-                line_dash='dashed')
-        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
-        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
-
-        output_file(self.name+' histogram.html', title=hist_title)
-        show(p1)
-
 
 ###############################################################################
 # Measurement Sub-Classes
@@ -774,16 +815,19 @@ class Measurement(ExperimentalValue):
 
     def __init__(self, *args, name=None, units=None):
         super().__init__(*args, name=name)
+
         if name is not None:
             self.name = name
         else:
             self.name = 'unnamed_var%d' % (Measurement.id_number)
+
         if units is not None:
             if type(units) is str:
                 self.units[units] = 1
             else:
                 for i in range(len(units)//2):
                     self.units[units[2*i]] = units[2*i+1]
+
         self.type = "ExperimentalValue"
         self.info['ID'] = 'var%d' % (Measurement.id_number)
         self.info['Formula'] = 'var%d' % (Measurement.id_number)
@@ -807,6 +851,7 @@ class Function(ExperimentalValue):
 
     def __init__(self, *args, name=None):
         super().__init__(*args, name=name)
+
         self.name = 'obj%d' % (Function.id_number)
         self.info['ID'] = 'obj%d' % (Function.id_number)
         self.type = "Function"
@@ -831,9 +876,21 @@ class Constant(ExperimentalValue):
     value, the standard deviation is zero, and the derivarive with respect
     to anything is zero.
     '''
-    def __init__(self, arg):
+    def __init__(self, arg, name=None, units=None):
         super().__init__(arg, 0)
-        self.name = '%d' % (arg)
+
+        if name is not None:
+            self.name = name
+        else:
+            self.name = '%d' % (arg)
+
+        if units is not None:
+            if type(units) is str:
+                self.units[units] = 1
+            else:
+                for i in range(len(units)//2):
+                    self.units[units[2*i]] = units[2*i+1]
+
         self.info['ID'] = 'Constant'
         self.info["Formula"] = '%f' % arg
         self.derivative = {}
