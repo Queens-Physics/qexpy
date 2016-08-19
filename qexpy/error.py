@@ -629,7 +629,6 @@ class ExperimentalValue:
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = []
-            print(other.mean)
             for value in other:
                 result.append(op.operation_wrap(op.sub, self, value))
             return result
