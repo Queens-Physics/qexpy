@@ -41,7 +41,8 @@ class Plot:
             'linear': lambda x, b, m: b+np.multiply(m, x),
             'exponential': lambda x, b, m: np.exp(b+m*x),
             'polynomial': polynomial,
-            'gaussian': gauss}
+            'gaussian': gauss,
+            }
 
     def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
         '''
@@ -60,7 +61,8 @@ class Plot:
 
         self.colors = {
             'Data Points': ['red', 'black'],
-            'Function': ['blue', 'green', 'orange'],
+            'Fit': ['blue', 'green'],
+            'Function': ['orange', 'navy'],
             'Error': 'red'}
         self.fit_method = 'linear'
         self.fit_function = Plot.fits[self.fit_method] # analysis:ignore
@@ -177,6 +179,12 @@ class Plot:
             def model(x, *pars):
                 return self.fit_function(x, *pars)
 
+        if self.flag['fitted'] is True:
+            print('''A fit of the data already exists, overwriting previous
+                  fit.''')
+            self.fit_parameters = ()
+            self.function_counter -= 1
+
         pars_guess = guess
 
         if fit_range is None:
@@ -280,7 +288,7 @@ class Plot:
             print('''Y range must be a list containing a minimun and maximum
             value for the range of the plot.''')
 
-    def set_colors(self, data=None, error=None, line=None):
+    def set_colors(self, data=None, error=None, fit=None):
         '''Method to changes colors of data or function lines.
 
         User can specify a list or tuple of color strings for the data points
@@ -298,13 +306,8 @@ class Plot:
         if error is not None:
             self.colors['Error'] = error
 
-        if type(line) is str:
-            self.colors['Function'][0] = line
-            if len(line) <= 3:
-                for i in range(len(line)):
-                    self.colors['Function'][i] = line
-            elif len(line) > 3 and type(line) in ARRAY:
-                self.colors['Function'] = list(line)
+        if type(fit) is str:
+            self.colors['Fit'] = fit
 
     def set_name(self, title=None, xlabel=None, ylabel=None, data_name=None, ):
         '''Change the labels for plot axis, datasets, or the plot itself.
@@ -452,7 +455,8 @@ class Plot:
                     max(self.xdata)+max(self.xerr)]
             _plot_function(
                 self, data,
-                lambda x: self.fit_function(x, *self.fit_parameters))
+                lambda x: self.fit_function(x, *self.fit_parameters),
+                color=self.colors['Fit'][0])
 
             for i in range(len(self.fit_parameters)):
                 citation = mo.Label(x=590, y=320+20*i,
@@ -491,7 +495,7 @@ class Plot:
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
-                x_range=self.x_range,
+                x_range=self.p.x_range,
                 x_axis_label=self.attributes['xaxis'],
                 y_axis_label='Residuals'
             )
@@ -553,7 +557,7 @@ class Plot:
             _plot_function(
                 self, data,
                 lambda x: self.fit_function(x, *self.fit_parameters),
-                legend_name='Fit')
+                legend_name='Fit', color=plot2.colors['Fit'][0])
 
             self.function_counter += 1
 
@@ -570,7 +574,7 @@ class Plot:
             _plot_function(
                 self, data,
                 lambda x: plot2.fit_function(x, *plot2.fit_parameters),
-                legend_name='Second Fit')
+                legend_name='Second Fit', color=plot2.colors['Fit'][1])
 
             self.function_counter += 1
 
@@ -591,7 +595,7 @@ class Plot:
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
-                x_range=self.x_range,
+                x_range=self.p.x_range,
                 x_axis_label=self.attributes['xaxis'],
                 y_axis_label='Residuals',
             )
@@ -604,7 +608,7 @@ class Plot:
                 y_axis_type='linear',
                 y_range=[min(plot2.yres)-2*max(plot2.yerr),
                          max(plot2.yres)+2*max(plot2.yerr)],
-                x_range=plot2.x_range,
+                x_range=self.p.x_range,
                 x_axis_label=plot2.attributes['xaxis'],
                 y_axis_label='Residuals'
             )
@@ -780,7 +784,7 @@ class Plot:
                 y_axis_type='linear',
                 y_range=[min(self.yres)-2*max(self.yerr),
                          max(self.yres)+2*max(self.yerr)],
-                x_range=self.x_range,
+                x_range=self.p.x_range,
                 x_axis_label=self.attributes['xaxis'],
                 y_axis_label='Residuals'
             )
@@ -814,7 +818,7 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
     elif type(color) is int:
         data_color = self.colors['Data Points'][color]
     else:
-        print('Color option must be an integer')
+        print('color option must be an integer')
         data_color = self.colors['Data Points'][0]
 
     if plot_object is None:
@@ -924,7 +928,7 @@ def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
             color=data_color, legend=data_name)
 
 
-def _plot_function(self, xdata, theory, n=1000, legend_name=None):
+def _plot_function(self, xdata, theory, n=1000, legend_name=None, color=None):
     '''Semi-privite function to plot a function over a given range of values.
 
     Curves are generated by creating a series of lines between points, the
@@ -935,6 +939,11 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None):
     y_theory = theory(min(xdata))
     y_mid = []
 
+    if type(color) is str:
+        func_color = color
+    else:
+        func_color = self.colors['Function'][self.function_counter]
+
     try:
         y_theory.type
     except AttributeError:
@@ -942,7 +951,7 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None):
             y_mid.append(theory(xrange[i]))
         self.fit_line = self.p.line(
             xrange, y_mid, legend=legend_name,
-            line_color=self.colors['Function'][self.function_counter])
+            line_color=func_color)
 
     else:
         y_max = []
@@ -954,7 +963,7 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None):
             y_min.append(y_theory.mean-self.sigma*y_theory.std)
         self.fit_line = self.p.line(
             xrange, y_mid, legend=legend_name,
-            line_color=self.colors['Function'][self.function_counter])
+            line_color=func_color)
 
         xrange_reverse = list(reversed(xrange))
         y_min_reverse = list(reversed(y_min))
@@ -964,8 +973,8 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None):
         self.fit_range = self.p.patch(
             x=xrange+xrange_reverse, y=y_max+y_min_reverse,
             fill_alpha=0.3,
-            fill_color=self.colors['Function'][self.function_counter],
-            line_color=self.colors['Function'][self.function_counter],
+            fill_color=func_color,
+            line_color=func_color,
             line_dash='dashed', line_alpha=0.3,
             legend=legend_name)
 
