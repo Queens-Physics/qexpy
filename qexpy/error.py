@@ -1,5 +1,24 @@
 import numpy as np
 
+#from bokeh.plotting import figure, show, output_file, output_notebook
+import bokeh.plotting as bp
+
+def in_notebook():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
+    
+if in_notebook():
+    bp.output_notebook()
+
+    #This hack is required as there is a bug in bokeh preventing it
+    #from knowing that it was in fact loaded
+    import bokeh.io
+    bokeh.io._nb_loaded=True
+
+
 
 class ExperimentalValue:
     '''
@@ -27,6 +46,7 @@ class ExperimentalValue:
         Creates a variable that contains a mean, standard deviation,
         and name for inputted data.
         '''
+        
         data = None
         error_data = None
 
@@ -36,6 +56,7 @@ class ExperimentalValue:
                 ):
             self.mean = args[0]
             self.std = args[1]
+            data = args[0]
 
         # If an array and single value are entered, then error is uniform for
         # first array.
@@ -213,7 +234,7 @@ class ExperimentalValue:
 
     def get_derivative(self, variable=None):
         '''
-        Returns the numerical value of the derivative with respect to an
+        Returns the numerical value of the derivative with respect to the
         inputed variable.
 
         Function to find the derivative of a measurement or measurement like
@@ -229,7 +250,7 @@ class ExperimentalValue:
             return 0
 
         elif variable is None:
-            raise TypeError('''The object must be derived with respect to another
+            raise TypeError('''The object must be differentiated with respect to another
             Measurement.''')
 
         if variable.info['ID'] not in self.derivative:
@@ -279,10 +300,11 @@ class ExperimentalValue:
             print('No data array exists.')
         return self.info['Data']
 
-    def show_histogram(self, title=None):
+        
+    def show_histogram(self, title=None, output='inline'):
         '''Creates a histogram of the inputted data using Bokeh.
         '''
-        from bokeh.plotting import figure, show, output_file
+        #from bokeh.plotting import figure, show, output_file
 
         if type(title) is str:
             hist_title = title
@@ -292,7 +314,7 @@ class ExperimentalValue:
             print('Histogram title must be a string.')
             hist_title = self.name+' Histogram'
 
-        p1 = figure(title=hist_title, tools="save",
+        p1 = bp.figure(title=hist_title, tools="save",
                     background_fill_color="#E8DDCB")
 
         hist, edges = np.histogram(self.info['Data'], bins=50)
@@ -306,15 +328,20 @@ class ExperimentalValue:
                 line_dash='dashed')
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
+        
+        if output =='file' or not in_notebook():
+            bp.output_file(self.name+' histogram.html', title=hist_title)
+        bp.show(p1)
 
-        output_file(self.name+' histogram.html', title=hist_title)
-        show(p1)
-
-    def show_MC_histogram(self, title=None):
+    def show_MC_histogram(self, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
         '''
-        from bokeh.plotting import figure, show, output_file
+        if self.MC_list == None:
+            print("no MC data to histogram")
+            return
+        
+        #from bokeh.plotting import figure, show, output_file
 
         if type(title) is str:
             hist_title = title
@@ -324,7 +351,7 @@ class ExperimentalValue:
             print('Histogram title must be a string.')
             hist_title = self.name+' Histogram'
 
-        p1 = figure(title=hist_title, tools="save",
+        p1 = bp.figure(title=hist_title, tools="save",
                     background_fill_color="#E8DDCB")
 
         hist, edges = np.histogram(self.MC_list, bins=50)
@@ -338,9 +365,10 @@ class ExperimentalValue:
                 line_dash='dashed')
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
-
-        output_file(hist_title+' histogram.html', title=hist_title)
-        show(p1)
+        
+        if output =='file' or not in_notebook():  
+            bp.output_file(hist_title+' histogram.html', title=hist_title)
+        bp.show(p1)
 
 ###############################################################################
 # Methods for Correlation and Covariance
