@@ -2,6 +2,22 @@ import numpy as np
 import bokeh.plotting as bp
 
 
+def in_notebook():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
+
+if in_notebook():
+    bp.output_notebook()
+    '''This hack is required as there is a bug in bokeh preventing it
+    from knowing that it was in fact loaded.
+    '''
+    import bokeh.io
+    bokeh.io._nb_loaded = True
+
+
 class ExperimentalValue:
     '''
     Root class of objects which containt a mean and standard deviation.
@@ -910,14 +926,15 @@ def MeasurementArray(data, error=None, name=None, units=None):
         return None
 
     if type(error) not in ExperimentalValue.ARRAY and\
-            type(error) not in ExperimentalValue.CONSTANT:
+            type(error) not in ExperimentalValue.CONSTANT and\
+            error is not None:
         print('Error array must be a list, tuple, numpy array or constant.')
         return None
 
-    if len(error) is 1:
-        error = len(data)*error
-    elif error is None:
+    if error is None:
         error = len(data)*[0]
+    elif len(error) is 1:
+        error = len(data)*error
     elif type(error) in ExperimentalValue.CONSTANT:
         error = len(data)*[error]
 

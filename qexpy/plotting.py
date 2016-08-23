@@ -11,6 +11,22 @@ CONSTANT = (int, float, int64, float64, int32, float32)
 ARRAY = (list, tuple, ndarray)
 
 
+def in_notebook():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
+
+if in_notebook():
+    bp.output_notebook()
+    '''This hack is required as there is a bug in bokeh preventing it
+    from knowing that it was in fact loaded.
+    '''
+    import bokeh.io
+    bokeh.io._nb_loaded = True
+
+
 class Plot:
     '''Objects which contain a dataset and any number of fuctions which can
     be shown on a Bokeh plot
