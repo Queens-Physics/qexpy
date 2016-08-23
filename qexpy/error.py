@@ -2,23 +2,6 @@ import numpy as np
 import bokeh.plotting as bp
 
 
-def in_notebook():
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
-
-
-if in_notebook():
-    bp.output_notebook()
-
-    # This hack is required as there is a bug in bokeh preventing it
-    # from knowing that it was in fact loaded
-    import bokeh.io
-    bokeh.io._nb_loaded = True
-
-
 class ExperimentalValue:
     '''
     Root class of objects which containt a mean and standard deviation.
@@ -54,7 +37,6 @@ class ExperimentalValue:
                 ):
             self.mean = args[0]
             self.std = args[1]
-            data = args[0]
 
         # If an array and single value are entered, then error is uniform for
         # first array.
@@ -298,7 +280,7 @@ class ExperimentalValue:
             print('No data array exists.')
         return self.info['Data']
 
-    def show_histogram(self, title=None, output='inline'):
+    def show_histogram(self, title=None):
         '''Creates a histogram of the inputted data using Bokeh.
         '''
         if type(title) is str:
@@ -324,8 +306,7 @@ class ExperimentalValue:
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
 
-        if output == 'file' or not in_notebook():
-            bp.output_file(self.name+' histogram.html', title=hist_title)
+        bp.output_file(self.name+' histogram.html', title=hist_title)
         bp.show(p1)
 
     def show_MC_histogram(self, title=None, output='inline'):
@@ -359,8 +340,7 @@ class ExperimentalValue:
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
 
-        if output == 'file' or not in_notebook():
-            bp.output_file(hist_title+' histogram.html', title=hist_title)
+        bp.output_file(hist_title+' histogram.html', title=hist_title)
         bp.show(p1)
 
 ###############################################################################
@@ -925,8 +905,6 @@ def MeasurementArray(data, error=None, name=None, units=None):
     ''' Creates an array of measurements from inputted mean and standard
     deviation arrays.
     '''
-    import numpy as np
-
     if type(data) not in ExperimentalValue.ARRAY:
         print('Data array must be a list, tuple, or numpy array.')
         return None
@@ -957,6 +935,17 @@ def MeasurementArray(data, error=None, name=None, units=None):
                                        units=data_units))
 
     return np.array(measurement)
+
+
+class Measurement_Array(np.ndarray):
+    ''' Creates an array of measurements from inputted mean and standard
+    deviation arrays.
+
+    Subclass of numpy arrays, which have properties relating to Measurement
+    objects, and weighted statistical analysis of unique measured values.
+    '''
+    def __init__(self, *args):
+        self.mean = 1
 
 
 ###############################################################################
@@ -1488,7 +1477,6 @@ def _variance(*args, ddof=1):
 
 
 def _weighted_variance(mean, std, ddof=1):
-    import numpy as np
     from math import sqrt
 
     w = np.power(std, -2)
