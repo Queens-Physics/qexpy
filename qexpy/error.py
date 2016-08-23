@@ -1,7 +1,8 @@
 import numpy as np
 
-#from bokeh.plotting import figure, show, output_file, output_notebook
+# from bokeh.plotting import figure, show, output_file, output_notebook
 import bokeh.plotting as bp
+
 
 def in_notebook():
     try:
@@ -9,15 +10,15 @@ def in_notebook():
         return True
     except NameError:
         return False
-    
+
+
 if in_notebook():
     bp.output_notebook()
 
-    #This hack is required as there is a bug in bokeh preventing it
-    #from knowing that it was in fact loaded
+    # This hack is required as there is a bug in bokeh preventing it
+    # from knowing that it was in fact loaded
     import bokeh.io
-    bokeh.io._nb_loaded=True
-
+    bokeh.io._nb_loaded = True
 
 
 class ExperimentalValue:
@@ -46,7 +47,6 @@ class ExperimentalValue:
         Creates a variable that contains a mean, standard deviation,
         and name for inputted data.
         '''
-        
         data = None
         error_data = None
 
@@ -300,11 +300,10 @@ class ExperimentalValue:
             print('No data array exists.')
         return self.info['Data']
 
-        
     def show_histogram(self, title=None, output='inline'):
         '''Creates a histogram of the inputted data using Bokeh.
         '''
-        #from bokeh.plotting import figure, show, output_file
+        # from bokeh.plotting import figure, show, output_file
 
         if type(title) is str:
             hist_title = title
@@ -315,7 +314,7 @@ class ExperimentalValue:
             hist_title = self.name+' Histogram'
 
         p1 = bp.figure(title=hist_title, tools="save",
-                    background_fill_color="#E8DDCB")
+                       background_fill_color="#E8DDCB")
 
         hist, edges = np.histogram(self.info['Data'], bins=50)
 
@@ -328,8 +327,8 @@ class ExperimentalValue:
                 line_dash='dashed')
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
-        
-        if output =='file' or not in_notebook():
+
+        if output == 'file' or not in_notebook():
             bp.output_file(self.name+' histogram.html', title=hist_title)
         bp.show(p1)
 
@@ -337,11 +336,11 @@ class ExperimentalValue:
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
         '''
-        if self.MC_list == None:
+        if self.MC_list is None:
             print("no MC data to histogram")
             return
-        
-        #from bokeh.plotting import figure, show, output_file
+
+        # from bokeh.plotting import figure, show, output_file
 
         if type(title) is str:
             hist_title = title
@@ -352,7 +351,7 @@ class ExperimentalValue:
             hist_title = self.name+' Histogram'
 
         p1 = bp.figure(title=hist_title, tools="save",
-                    background_fill_color="#E8DDCB")
+                       background_fill_color="#E8DDCB")
 
         hist, edges = np.histogram(self.MC_list, bins=50)
 
@@ -365,8 +364,8 @@ class ExperimentalValue:
                 line_dash='dashed')
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
-        
-        if output =='file' or not in_notebook():  
+
+        if output == 'file' or not in_notebook():
             bp.output_file(hist_title+' histogram.html', title=hist_title)
         bp.show(p1)
 

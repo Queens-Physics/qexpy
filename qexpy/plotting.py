@@ -17,14 +17,14 @@ def in_notebook():
         return True
     except NameError:
         return False
-    
+
 if in_notebook():
     bp.output_notebook()
 
-    #This hack is required as there is a bug in bokeh preventing it
-    #from knowing that it was in fact loaded
+    # This hack is required as there is a bug in bokeh preventing it
+    # from knowing that it was in fact loaded
     import bokeh.io
-    bokeh.io._nb_loaded=True
+    bokeh.io._nb_loaded = True
 
 
 class Plot:
@@ -439,16 +439,16 @@ class Plot:
         Previous methods simply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        #if output is 'inline':
+        # if output is 'inline':
         #    bi.output_notebook()
-        #elif output is 'file':
+        # elif output is 'file':
         #    bi.output_file(self.plot_para['filename']+'.html',
         #                   title=self.attributes['title'])
 
-        if output =='file' or not in_notebook():
+        if output == 'file' or not in_notebook():
             bp.output_file(self.plot_para['filename']+'.html',
-                          title=self.attributes['title'])
-                           
+                           title=self.attributes['title'])
+
         # create a new plot
         self.p = bp.figure(
             width=self.dimensions[0], height=self.dimensions[1],
@@ -532,16 +532,16 @@ class Plot:
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        #if output is 'inline':
+        # if output is 'inline':
         #    bi.output_notebook()
-        #elif output is 'file':
+        # elif output is 'file':
         #    bi.output_file(self.plot_para['filename']+'.html',
         #                   title=self.attributes['title'])
 
-        if output =='file' or not in_notebook():    
+        if output == 'file' or not in_notebook():
             bp.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
-            
+
         if min(plot2.xdata) < self.y_range[0]:
             self.y_range[0] = min(plot2.xdata)
 
@@ -751,16 +751,16 @@ class Plot:
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        #if output is 'inline':
+        # if output is 'inline':
         #    bi.output_notebook()
-        #elif output is 'file':
+        # elif output is 'file':
         #    bi.output_file(self.plot_para['filename']+'.html',
         #                   title=self.attributes['title'])
-            
-        if output =='file' or not in_notebook():    
+
+        if output == 'file' or not in_notebook():
             bp.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
-            
+
         # create a new plot
         self.p = bp.figure(
             width=self.dimensions[0], height=self.dimensions[1],
