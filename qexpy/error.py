@@ -1,6 +1,4 @@
 import numpy as np
-
-# from bokeh.plotting import figure, show, output_file, output_notebook
 import bokeh.plotting as bp
 
 
@@ -303,8 +301,6 @@ class ExperimentalValue:
     def show_histogram(self, title=None, output='inline'):
         '''Creates a histogram of the inputted data using Bokeh.
         '''
-        # from bokeh.plotting import figure, show, output_file
-
         if type(title) is str:
             hist_title = title
         elif title is None:
@@ -339,8 +335,6 @@ class ExperimentalValue:
         if self.MC_list is None:
             print("no MC data to histogram")
             return
-
-        # from bokeh.plotting import figure, show, output_file
 
         if type(title) is str:
             hist_title = title
@@ -931,6 +925,8 @@ def MeasurementArray(data, error=None, name=None, units=None):
     ''' Creates an array of measurements from inputted mean and standard
     deviation arrays.
     '''
+    import numpy as np
+
     if type(data) not in ExperimentalValue.ARRAY:
         print('Data array must be a list, tuple, or numpy array.')
         return None
@@ -961,17 +957,6 @@ def MeasurementArray(data, error=None, name=None, units=None):
                                        units=data_units))
 
     return np.array(measurement)
-
-
-class Measurement_Array(np.ndarray):
-    ''' Creates an array of measurements from inputted mean and standard
-    deviation arrays.
-
-    Subclass of numpy arrays, which have properties relating to Measurement
-    objects, and weighted statistical analysis of unique measured values.
-    '''
-    def __init__(self, *args):
-        self.mean = 1
 
 
 ###############################################################################
@@ -1503,6 +1488,7 @@ def _variance(*args, ddof=1):
 
 
 def _weighted_variance(mean, std, ddof=1):
+    import numpy as np
     from math import sqrt
 
     w = np.power(std, -2)
