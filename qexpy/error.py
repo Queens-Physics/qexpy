@@ -1,22 +1,7 @@
 import numpy as np
 import bokeh.plotting as bp
-
-
-def in_notebook():
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
-
-if in_notebook():
-    bp.output_notebook()
-    '''This hack is required as there is a bug in bokeh preventing it
-    from knowing that it was in fact loaded.
-    '''
-    import bokeh.io
-    bokeh.io._nb_loaded = True
-
+import bokeh.io as bi
+import qexpy.utils as qu
 
 class ExperimentalValue:
     '''
@@ -53,6 +38,7 @@ class ExperimentalValue:
                 ):
             self.mean = args[0]
             self.std = args[1]
+            data = [args[0]]
 
         # If an array and single value are entered, then error is uniform for
         # first array.
@@ -295,8 +281,46 @@ class ExperimentalValue:
         if self.info['Data'] is None:
             print('No data array exists.')
         return self.info['Data']
+    
+    def show_histogram(self, nbins=50, title=None, output='inline'):
+        '''Creates a histogram of the inputted data using Bokeh.
+        '''
+        #from bokeh.plotting import figure, show, output_file
 
-    def show_MC_histogram(self, title=None, output='inline'):
+        if type(title) is str:
+            hist_title = title
+        elif title is None:
+            hist_title = self.name+' Histogram'
+        else:
+            print('Histogram title must be a string.')
+            hist_title = self.name+' Histogram'
+
+        p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
+                    background_fill_color="#E8DDCB")
+
+        hist, edges = np.histogram(self.info['Data'], bins=nbins)
+
+        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                fill_color="#036564", line_color="#033649")
+
+        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
+                line_dash='dashed')
+        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
+                line_dash='dashed')
+        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
+                line_dash='dashed')
+        
+        if output =='file' or not qu.in_notebook():
+            bi.output_file(self.name+' histogram.html', title=hist_title)
+        elif not qu.bokeh_ouput_notebook_called:
+            bi.output_notebook()
+            #This must be the first time calling output_notebook, keep track that it's been called:
+            qu.bokeh_ouput_notebook_called = True
+            
+        bp.show(p1)
+        return p1
+        
+    def show_MC_histogram(self, nbins=50, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
         '''
@@ -312,10 +336,10 @@ class ExperimentalValue:
             print('Histogram title must be a string.')
             hist_title = self.name+' Histogram'
 
-        p1 = bp.figure(title=hist_title, tools="save",
+        p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
                        background_fill_color="#E8DDCB")
 
-        hist, edges = np.histogram(self.MC_list, bins=50)
+        hist, edges = np.histogram(self.MC_list, bins=nbins)
 
         p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                 fill_color="#036564", line_color="#033649")
@@ -326,16 +350,16 @@ class ExperimentalValue:
                 line_dash='dashed')
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
-
-        if output == 'inline':
-            bp.output_notebook()
-        elif output == 'file':
-            bp.output_file(hist_title+' histogram.html', title=hist_title)
-        else:
-            print('''Output must be either "file" or "inline", using "file"
-                  by default.''')
-            bp.output_file(hist_title+' histogram.html', title=hist_title)
+          
+        if output =='file' or not qu.in_notebook():
+            bi.output_file(self.name+' histogram.html', title=hist_title)
+        elif not qu.bokeh_ouput_notebook_called:
+            bi.output_notebook()
+            #This must be the first time calling output_notebook, keep track that it's been called:
+            qu.bokeh_ouput_notebook_called = True
+  
         bp.show(p1)
+        return p1
 
 ###############################################################################
 # Methods for Correlation and Covariance
@@ -1502,7 +1526,7 @@ def _variance(*args, ddof=1):
     Sum = 0
     SumSq = 0
     N = len(args)
-    mean = sum(args)/(len(args) - ddof)
+    mean = sum(args)/N
     for i in range(N):
         Sum += args[i]
         SumSq += args[i]*args[i]
