@@ -296,35 +296,6 @@ class ExperimentalValue:
             print('No data array exists.')
         return self.info['Data']
 
-    def show_histogram(self, title=None):
-        '''Creates a histogram of the inputted data using Bokeh.
-        '''
-        if type(title) is str:
-            hist_title = title
-        elif title is None:
-            hist_title = self.name+' Histogram'
-        else:
-            print('Histogram title must be a string.')
-            hist_title = self.name+' Histogram'
-
-        p1 = bp.figure(title=hist_title, tools="save",
-                       background_fill_color="#E8DDCB")
-
-        hist, edges = np.histogram(self.info['Data'], bins=50)
-
-        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                fill_color="#036564", line_color="#033649")
-
-        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
-                line_dash='dashed')
-        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
-        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
-
-        bp.output_file(self.name+' histogram.html', title=hist_title)
-        bp.show(p1)
-
     def show_MC_histogram(self, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
@@ -356,7 +327,14 @@ class ExperimentalValue:
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
 
-        bp.output_file(hist_title+' histogram.html', title=hist_title)
+        if output == 'inline':
+            bp.output_notebook()
+        elif output == 'file':
+            bp.output_file(hist_title+' histogram.html', title=hist_title)
+        else:
+            print('''Output must be either "file" or "inline", using "file"
+                  by default.''')
+            bp.output_file(hist_title+' histogram.html', title=hist_title)
         bp.show(p1)
 
 ###############################################################################
@@ -1452,6 +1430,45 @@ def _sci_print(self, method=None):
 ###############################################################################
 
 
+def show_histogram(data, title=None, output='inline'):
+    '''Creates a histogram of the inputted data using Bokeh.
+    '''
+    if type(title) is str:
+        hist_title = title
+    elif title is None:
+        hist_title = 'Histogram'
+    else:
+        print('Histogram title must be a string.')
+        hist_title = 'Histogram'
+
+    mean, std = _variance(data)
+
+    p1 = bp.figure(title=hist_title, tools="save",
+                   background_fill_color="#E8DDCB")
+
+    hist, edges = np.histogram(data, bins=50)
+
+    p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+            fill_color="#036564", line_color="#033649")
+
+    p1.line([mean]*2, [0, hist.max()*1.05], line_color='red',
+            line_dash='dashed')
+    p1.line([mean-std]*2, [0, hist.max()*1.1], line_color='red',
+            line_dash='dashed')
+    p1.line([mean+std]*2, [0, hist.max()*1.1], line_color='red',
+            line_dash='dashed')
+
+    if output == 'inline':
+        bp.output_notebook()
+    elif output == 'file':
+        bp.output_file(hist_title+' histogram.html', title=hist_title)
+    else:
+        print('''Output must be either "file" or "inline", using "file"
+              by default.''')
+        bp.output_file(hist_title+' histogram.html', title=hist_title)
+    bp.show(p1)
+
+
 def numerical_partial_derivative(func, var, *args):
     '''
     Returns the parital derivative of a dunction with respect to var.
@@ -1485,7 +1502,7 @@ def _variance(*args, ddof=1):
     Sum = 0
     SumSq = 0
     N = len(args)
-    mean = sum(args)/len(args)
+    mean = sum(args)/(len(args) - ddof)
     for i in range(N):
         Sum += args[i]
         SumSq += args[i]*args[i]
