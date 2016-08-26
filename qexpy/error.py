@@ -1042,7 +1042,68 @@ class Measurement_Array(np.ndarray):
         return Measurement(self.error_weighted_mean, self.error_weighted_std)
 
         
+def MA(data, error=None, name=None, units=None):
+    '''Function to construct a Measurement_Array'''
+    array = Measurement_Array(0)
+    
+    if error is None: #MA(data)
+        if isinstance(data, (tuple, list)): #MA([...])
+            n = len(data)       
+            array.resize(n)
+            if isinstance(data[0], (tuple, list)) and len (data[0]) == 2: #MA([ (,), (,), (,)])
+                for i in range(n):
+                    array[i]=Measurement(data[i][0],data[i][1])
+            elif isinstance(data[0], (int, float)): #MA([,,,])
+                for i in range(n):
+                    array[i]=Measurement(float(data[i]),0.)
+            else:
+                print("unsupported type for data")
+             
+        elif isinstance(data, int): #MA(n)
+            array.resize(data)
+            for i in range(data):
+                array[i]=Measurement(0.,0.)
+        else:
+            print("unsupported type for data")
+            
+    else: #error is not None
         
+        if isinstance(data, (tuple, list)): #MA([], error = ...)
+            n = len(data)       
+            array.resize(n)
+            
+            if isinstance(data[0], (int, float)):#MA([,,,,], error = ...)
+                
+                if isinstance(error, (int, float)):#MA([,,,,], error = x)
+                    for i in range(n):
+                         array[i]=Measurement(float(data[i]),error)
+                elif isinstance(error, (tuple,list)):#MA([,,,,], error = [])
+                    if len(error)==len(data):#MA([,,,,], error = [,,,,])
+                        for i in range(n):
+                            array[i]=Measurement(float(data[i]),error[i])    
+                    elif len(error)==1: #MA([,,,,], error = [x])
+                        for i in range(n):
+                            array[i]=Measurement(float(data[i]),error[0])
+                    else:
+                        print("error array must be same length as data")
+                else:
+                    print("unsupported type for error")
+                    
+            else: # data[0] must be a float
+                print("unsupported type for data")
+                
+        elif isinstance(data, (int,float)): #MA(x,error=...)
+            array.resize(1)
+            if isinstance(error, (int, float)):#MA(x, error = y)
+                array[0]=Measurement(float(data),error)
+            elif isinstance(error, (tuple,list)) and len(error)==1:#MA(x, error = [u])
+                array[0]=Measurement(float(data),error[0])
+            else:
+                print("unsupported type for error")
+        else:
+            print("unsupported type of data")
+        
+    return array        
         
         
 
