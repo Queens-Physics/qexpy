@@ -959,15 +959,92 @@ def MeasurementArray(data, error=None, name=None, units=None):
 
 
 class Measurement_Array(np.ndarray):
-    ''' Creates an array of measurements from inputted mean and standard
-    deviation arrays.
+    ''' A numpy-based array of Measurement objects'''
+    
+    def __new__(subtype, shape, dtype=Measurement, buffer=None, offset=0,
+          strides=None, order=None):
+        obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
+                         order)
+        return obj
 
-    Subclass of numpy arrays, which have properties relating to Measurement
-    objects, and weighted statistical analysis of unique measured values.
-    '''
-    def __init__(self, *args):
-        self.mean = 1
+    def __array_finalize__(self, obj):
+        if obj is None: return
 
+    def __array_wrap__(self, out_arr, context=None):
+        # then just call the parent
+        return np.ndarray.__array_wrap__(self, out_arr, context)
+ 
+    def get_means(self):
+        '''Returns a numpy array with the means of the measurements'''
+        if self.size == 0:
+            return np.ndarray(0)
+        
+        means = np.ndarray(shape=self.shape)
+        
+        for index, item in np.ndenumerate(self):
+            if item is not None:
+                means[index] = item.mean
+            else:
+                means[index] = 0
+        return means
+    
+    def get_stds(self):
+        '''Returns an array with the standard deviations of the measurements'''
+        if self.size == 0:
+            return np.ndarray(0)
+        
+        stds = np.ndarray(shape=self.shape)
+        
+        for index, item in np.ndenumerate(self):
+            if item is not None:
+                stds[index] = item.std
+            else:
+                stds[index] = 0
+        return stds
+    
+    def mean(self):
+        '''Return mean of the means of the measurements'''
+        #overides numpy mean()
+        nparr = self.get_means()
+        self.mean = nparr.mean()
+        return self.mean
+
+    def get_mean(self):
+        '''Return mean of the means of the measurements'''
+        return self.mean()
+    
+    def std(self, ddof=1):
+        '''Return standard deviation of the means of each measurement'''
+        nparr = self.get_means()
+        self.std = nparr.std(ddof=ddof)
+        return self.std 
+    
+    def get_std(self, ddof=1):
+        '''Return standard deviation of the means of each measurement'''
+        return self.std()
+
+   
+    def get_error_weighted_mean(self):
+        '''Return error weighted mean and error of the measurements, as a measurement'''
+        sumw2=2
+        mean=0
+        for mes in self:
+            if mes is not None:           
+                if mes.std == 0.0:
+                    continue
+                w2=1./(mes.std**2)
+                mean+=w2*mes.mean
+                sumw2+=w2
+            
+        self.error_weighted_mean =  (0. if sumw2==0 else mean/sumw2)
+        self.error_weighted_std =  (0. if sumw2==0 else np.sqrt(1./sumw2))
+            
+        return Measurement(self.error_weighted_mean, self.error_weighted_std)
+
+        
+        
+        
+        
 
 ###############################################################################
 # Mathematical Functions
