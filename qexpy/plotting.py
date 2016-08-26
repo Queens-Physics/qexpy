@@ -1,6 +1,7 @@
 import scipy.optimize as sp
 import numpy as np
 import qexpy.error as e
+import qexpy.utils as qu
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
@@ -9,22 +10,6 @@ from numpy import int64, float64, ndarray, int32, float32
 
 CONSTANT = (int, float, int64, float64, int32, float32)
 ARRAY = (list, tuple, ndarray)
-
-
-def in_notebook():
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
-
-if in_notebook():
-    bp.output_notebook()
-    '''This hack is required as there is a bug in bokeh preventing it
-    from knowing that it was in fact loaded.
-    '''
-    import bokeh.io
-    bokeh.io._nb_loaded = True
 
 
 class Plot:
@@ -439,11 +424,15 @@ class Plot:
         Previous methods simply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        if output is 'inline':
-            bi.output_notebook()
-        elif output is 'file':
+
+        if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
+        elif not qu.bokeh_ouput_notebook_called:
+            bi.output_notebook()
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
+            qu.bokeh_ouput_notebook_called = True
 
         # create a new plot
         self.p = bp.figure(
@@ -503,6 +492,7 @@ class Plot:
 
         if self.flag['residuals'] is False:
             bp.show(self.p)
+            return self.p
         else:
 
             self.res = bp.figure(
@@ -521,6 +511,7 @@ class Plot:
 
             gp_alt = bi.gridplot([[self.p], [self.res]])
             bp.show(gp_alt)
+            return gp_alt
 
     def show_on(self, plot2, output='inline'):
         '''
@@ -528,11 +519,15 @@ class Plot:
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        if output is 'inline':
-            bi.output_notebook()
-        elif output is 'file':
+
+        if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
+        elif not qu.bokeh_ouput_notebook_called:
+            bi.output_notebook()
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
+            qu.bokeh_ouput_notebook_called = True
 
         if min(plot2.xdata) < self.y_range[0]:
             self.y_range[0] = min(plot2.xdata)
@@ -602,6 +597,7 @@ class Plot:
         if self.flag['residuals'] is False and\
                 plot2.flag['residuals'] is False:
             bp.show(self.p)
+            return self.p
 
         elif self.flag['residuals'] is True and\
                 plot2.flag['residuals'] is True:
@@ -634,6 +630,7 @@ class Plot:
 
             gp_alt = bi.gridplot([[self.p], [self.res], [plot2.res]])
             bp.show(gp_alt)
+            return gp_alt
 
 ###############################################################################
 # First Year Methods
@@ -743,11 +740,15 @@ class Plot:
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        if output is 'inline':
-            bi.output_notebook()
-        elif output is 'file':
+
+        if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
+        elif not qu.bokeh_ouput_notebook_called:
+            bi.output_notebook()
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
+            qu.bokeh_ouput_notebook_called = True
 
         # create a new plot
         self.p = bp.figure(
@@ -792,6 +793,7 @@ class Plot:
 
         if self.flag['residuals'] is False:
             bp.show(self.p)
+            return self.p
         else:
 
             self.res = bp.figure(
@@ -810,6 +812,7 @@ class Plot:
 
             gp_alt = bi.gridplot([[self.p], [self.res]])
             bp.show(gp_alt)
+            return gp_alt
 
 
 ###############################################################################

@@ -1,21 +1,7 @@
 import numpy as np
 import bokeh.plotting as bp
-
-
-def in_notebook():
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
-
-if in_notebook():
-    bp.output_notebook()
-    '''This hack is required as there is a bug in bokeh preventing it
-    from knowing that it was in fact loaded.
-    '''
-    import bokeh.io
-    bokeh.io._nb_loaded = True
+import bokeh.io as bi
+import qexpy.utils as qu
 
 
 class ExperimentalValue:
@@ -53,6 +39,7 @@ class ExperimentalValue:
                 ):
             self.mean = args[0]
             self.std = args[1]
+            # data = [args[0]]
 
         # If an array and single value are entered, then error is uniform for
         # first array.
@@ -296,13 +283,13 @@ class ExperimentalValue:
             print('No data array exists.')
         return self.info['Data']
 
-    def show_MC_histogram(self, title=None, output='inline'):
+    def show_MC_histogram(self, nbins=50, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
         '''
         if self.MC_list is None:
             print("no MC data to histogram")
-            return
+            return None
 
         if type(title) is str:
             hist_title = title
@@ -312,10 +299,11 @@ class ExperimentalValue:
             print('Histogram title must be a string.')
             hist_title = self.name+' Histogram'
 
-        p1 = bp.figure(title=hist_title, tools="save",
+        p1 = bp.figure(title=hist_title, tools='''save, pan, box_zoom,
+                       wheel_zoom, reset''',
                        background_fill_color="#E8DDCB")
 
-        hist, edges = np.histogram(self.MC_list, bins=50)
+        hist, edges = np.histogram(self.MC_list, bins=nbins)
 
         p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                 fill_color="#036564", line_color="#033649")
@@ -327,15 +315,16 @@ class ExperimentalValue:
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
 
-        if output == 'inline':
-            bp.output_notebook()
-        elif output == 'file':
-            bp.output_file(hist_title+' histogram.html', title=hist_title)
-        else:
-            print('''Output must be either "file" or "inline", using "file"
-                  by default.''')
-            bp.output_file(hist_title+' histogram.html', title=hist_title)
+        if output == 'file' or not qu.in_notebook():
+            bi.output_file(self.name+' histogram.html', title=hist_title)
+        elif not qu.bokeh_ouput_notebook_called:
+            bi.output_notebook()
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
+            qu.bokeh_ouput_notebook_called = True
+
         bp.show(p1)
+        return p1
 
 ###############################################################################
 # Methods for Correlation and Covariance
@@ -1150,7 +1139,8 @@ def set_print_style(style=None, sigfigs=None):
     Default = ('default', 'Default',)
 
     if sigfigs is not None:
-        set_sigfigs_centralvalue(sigfigs)
+        set_sigfigs(sigfigs)
+        ExperimentalValue.figs_on_uncertainty = False
 
     if style in latex:
         ExperimentalValue.print_style = "Latex"
@@ -1190,6 +1180,7 @@ def set_error_method(chosen_method):
 
 def set_sigfigs_error(sigfigs=3):
     '''Change the number of significant figures shown in print()
+    based on the number of sig figs in the error
     '''
     if type(sigfigs) is None:
         ExperimentalValue.figs = None
@@ -1203,6 +1194,7 @@ def set_sigfigs_error(sigfigs=3):
 
 def set_sigfigs_centralvalue(sigfigs=3):
     '''Change the number of significant figures shown in print()
+    based on the number of sig figs in the central value
     '''
     if type(sigfigs) is None:
         ExperimentalValue.figs = None
@@ -1212,6 +1204,13 @@ def set_sigfigs_centralvalue(sigfigs=3):
     else:
         raise TypeError('''Specified number of significant figures must be
                         and interger greater than zero.''')
+
+
+def set_sigfigs(sigfigs=3):
+    '''Change the number of significant figures shown in print()
+    based on the number of sig figs in the error
+    '''
+    set_sigfigs_error(sigfigs)
 
 
 def _return_exponent(value):
@@ -1502,12 +1501,14 @@ def _variance(*args, ddof=1):
     Sum = 0
     SumSq = 0
     N = len(args)
-    mean = sum(args)/(len(args) - ddof)
     for i in range(N):
         Sum += args[i]
         SumSq += args[i]*args[i]
+
     std = ((SumSq-Sum**2/N)/(N-1))**(1/2)
-    return (mean, std)
+    mean = Sum/N
+
+    return (mean, std, )
 
 
 def _weighted_variance(mean, std, ddof=1):
