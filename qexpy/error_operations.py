@@ -142,7 +142,22 @@ def power(a, b):
 # Mathematical Functions
 ###############################################################################
 
+def sqrt(x):
+    '''Returns the square root of a measurement with propagated errors'''
+    import math as m
 
+    if type(x) in CONSTANT:
+        return m.sqrt(x)
+
+    elif type(x) in ARRAY:
+        result = []
+        for i in range(len(x)):
+            result.append(m.sqrt(x[i]))
+        return result
+
+    else:
+        return m.sqrt(x.mean)
+    
 def sin(x):
     '''Returns the sine of a measurement with propagated errors'''
     import math as m
@@ -362,7 +377,7 @@ def monte_carlo(func, *args):
 
     _np_func = {add: np.add, sub: np.subtract, mul: np.multiply,
                 div: np.divide, power: np.power, log: np.log,
-                exp: np.exp, sin: np.sin, cos: np.cos,
+                exp: np.exp, sin: np.sin, cos: np.cos, #sqrt: np.sqrt,
                 tan: np.tan, atan: np.arctan,
                 csc: lambda x: np.divide(1, np.sin(x)),
                 sec: lambda x: np.divide(1, np.cos(x)),
@@ -463,7 +478,9 @@ def operation_wrap(operation, *args, func_flag=False):
     return result
 
 
-diff = {sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
+diff = {
+        #sqrt: lambda key, x: (0. if x.mean ==0 else -0.5/m.sqrt(x.mean)*x.derivative[key]),
+        sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
         cos: lambda key, x: -m.sin(x.mean)*x.derivative[key],
         tan: lambda key, x: m.cos(x.mean)**-2*x.derivative[key],
         sec: lambda key, x: m.tan(x.mean)*m.cos(x.mean)**-1*x.derivative[key],
@@ -490,7 +507,7 @@ diff = {sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
         atan: lambda key, x: 1/(1 + x.mean**2)*x.derivative[key],
         }
 
-op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
+op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec', #sqrt: 'sqrt',
              cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
              mul: '*', div: '/', power: '**', asin: 'asin', acos: 'acos',
              atan: 'atan', }

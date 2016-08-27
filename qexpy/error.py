@@ -757,6 +757,8 @@ class ExperimentalValue:
             import qexpy.error_operations as op
             return op.operation_wrap(op.power, x, 1/2)
 
+    #def sqrt(x):
+    #    return sqrt(x)
     def __neg__(self):
         import qexpy.error_operations as op
         return op.neg(self)
@@ -1133,10 +1135,25 @@ def MA(data, error=None, name=None, units=None):
 # Mathematical Functions
 ###############################################################################
 
+ExperimentalValue.ARRAY = ExperimentalValue.ARRAY +(Measurement_Array,)
 
 def sqrt(x):
+    #import qexpy.error_operations as op      
+    #if type(x) in ExperimentalValue.ARRAY:
+    #    if len(x) <1:
+    #        return []
+    #    if isinstance(x[0],Measurement):
+    #        result = Measurement_Array(len(x))
+    #        for index in range(len(x)):
+    #            result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)
+    #    else:
+    #        result = np.ndarray(len(x), dtype=type(x[0]))
+    #        for index in range(len(x)):
+    #            result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)  
+    #else:
+    #    return op.operation_wrap(op.sqrt, x, func_flag=True)
     if x.mean < 0:
-        print('Imaginary numbers are no supported in qexpy.')
+        print('Imaginary numbers are no supported in qexpy.')     
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
         return m.sqrt(x)
@@ -1147,10 +1164,22 @@ def sqrt(x):
 
 def sin(x):
     import qexpy.error_operations as op
+    
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.sin, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sin, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sin, x[index], func_flag=True)    
+        #result = []      
+        #for value in x:
+            #result.append(op.operation_wrap(op.sin, value, func_flag=True))
+        
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1162,9 +1191,20 @@ def sin(x):
 def cos(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.cos, value, func_flag=True))
+          
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.cos, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.cos, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.cos, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1176,9 +1216,19 @@ def cos(x):
 def tan(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.tan, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.tan, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.tan, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.tan, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1190,9 +1240,19 @@ def tan(x):
 def sec(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.sec, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sec, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sec, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.sec, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1204,9 +1264,19 @@ def sec(x):
 def csc(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.csc, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.csc, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.csc, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.csc, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1218,9 +1288,19 @@ def csc(x):
 def cot(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.cot, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.cot, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.cot, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.cot, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1232,9 +1312,19 @@ def cot(x):
 def log(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.log, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.log, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.log, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.log, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1246,9 +1336,19 @@ def log(x):
 def exp(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.exp, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.exp, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1260,9 +1360,19 @@ def exp(x):
 def e(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.exp, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.exp, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1274,9 +1384,19 @@ def e(x):
 def asin(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.asin, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.asin, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.asin, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.asin, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1288,9 +1408,19 @@ def asin(x):
 def acos(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.acos, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.acos, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.acos, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.acos, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1302,9 +1432,19 @@ def acos(x):
 def atan(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.atan, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.atan, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.atan, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.atan, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
