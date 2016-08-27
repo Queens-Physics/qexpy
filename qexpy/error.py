@@ -3,6 +3,15 @@ import bokeh.plotting as bp
 import bokeh.io as bi
 import qexpy.utils as qu
 
+
+#These are used for checking whether something is an instance of
+#an array or a number. Used in MA():
+number_types = (int, float, np.int8, np.int16, np.int32, np.int64,\
+                np.uint8, np.uint16, np.uint32, np.uint64,\
+                np.float16, np.float32, np.float64\
+                )
+array_types = (tuple, list, np.ndarray)
+
 class ExperimentalValue:
     '''
     Root class of objects which containt a mean and standard deviation.
@@ -21,16 +30,16 @@ class ExperimentalValue:
 
     # Defining common types under single arrayclear
     from numpy import int64, float64, ndarray, int32, float32
-    CONSTANT = (int, float, int64, float64, int32, float32)
-    ARRAY = (list, tuple, ndarray)
+    CONSTANT = number_types #(int, float, int64, float64, int32, float32)
+    ARRAY = array_types #(list, tuple, ndarray)
 
     def __init__(self, *args, name=None):
         '''
         Creates a variable that contains a mean, standard deviation,
         and name for inputted data.
         '''
-        data = None
-        error_data = None
+        data =  [] #None
+        error_data = [] #None
 
         # If two values eneterd first value is mean and second value is std
         if len(args) == 2 and all(
@@ -38,6 +47,8 @@ class ExperimentalValue:
                 ):
             self.mean = args[0]
             self.std = args[1]
+            data.append(args[0])
+            error_data.append(args[1])
             #data = [args[0]]
 
         # If an array and single value are entered, then error is uniform for
@@ -394,14 +405,20 @@ class ExperimentalValue:
             raise TypeError('Lengths of data arrays must be equal to\
                       define a covariance')
         sigma_xy = 0
+        nmin1 = len(data_x)-1
         for i in range(len(data_x)):
             sigma_xy += (data_x[i]-x.mean)*(data_y[i]-y.mean)
-        sigma_xy /= (len(data_x)-1)
-
+        sigma_xy /= nmin1 if nmin1!= 0 else 1
+        
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
 
-        factor = sigma_xy/x.std/y.std
+        factor = sigma_xy
+        if x.std != 0:
+            factor /= x.std
+        if y.std != 0:
+            factor /= y.std
+              
         x.correlation[y.info['ID']] = factor
         y.correlation[x.info['ID']] = factor
 
@@ -433,7 +450,11 @@ class ExperimentalValue:
         between two variables is added to both objects.
         '''
         x = self
-        factor = sigma_xy/x.std/y.std
+        factor = sigma_xy
+        if x.std != 0:
+            factor /= x.std
+        if y.std != 0:
+            factor /= y.std
 
         x.correlation[y.info['ID']] = factor
         y.correlation[x.info['ID']] = factor
@@ -481,7 +502,14 @@ class ExperimentalValue:
         sigma_xy = x.covariance[y.info['ID']]
         sigma_x = x.std
         sigma_y = y.std
-        return sigma_xy/sigma_x/sigma_y
+        
+        factor = sigma_xy
+        if x.std != 0:
+            factor /= x.std
+        if y.std != 0:
+            factor /= y.std
+            
+        return factor
 
 ###############################################################################
 # Methods for Naming and Units
@@ -1046,14 +1074,15 @@ def MA(data, error=None, name=None, units=None):
     '''Function to construct a Measurement_Array'''
     array = Measurement_Array(0)
     
+    
     if error is None: #MA(data)
-        if isinstance(data, (tuple, list)): #MA([...])
+        if isinstance(data, array_types): #MA([...])
             n = len(data)       
             array.resize(n)
-            if isinstance(data[0], (tuple, list)) and len (data[0]) == 2: #MA([ (,), (,), (,)])
+            if isinstance(data[0], array_types) and len (data[0]) == 2: #MA([ (,), (,), (,)])
                 for i in range(n):
                     array[i]=Measurement(data[i][0],data[i][1])
-            elif isinstance(data[0], (int, float)): #MA([,,,])
+            elif isinstance(data[0], number_types): #MA([,,,])
                 for i in range(n):
                     array[i]=Measurement(float(data[i]),0.)
             else:
@@ -1068,16 +1097,16 @@ def MA(data, error=None, name=None, units=None):
             
     else: #error is not None
         
-        if isinstance(data, (tuple, list)): #MA([], error = ...)
+        if isinstance(data, array_types): #MA([], error = ...)
             n = len(data)       
             array.resize(n)
             
-            if isinstance(data[0], (int, float)):#MA([,,,,], error = ...)
+            if isinstance(data[0], number_types):#MA([,,,,], error = ...)
                 
-                if isinstance(error, (int, float)):#MA([,,,,], error = x)
+                if isinstance(error, number_types):#MA([,,,,], error = x)
                     for i in range(n):
                          array[i]=Measurement(float(data[i]),error)
-                elif isinstance(error, (tuple,list)):#MA([,,,,], error = [])
+                elif isinstance(error, array_types):#MA([,,,,], error = [])
                     if len(error)==len(data):#MA([,,,,], error = [,,,,])
                         for i in range(n):
                             array[i]=Measurement(float(data[i]),error[i])    
@@ -1090,13 +1119,13 @@ def MA(data, error=None, name=None, units=None):
                     print("unsupported type for error")
                     
             else: # data[0] must be a float
-                print("unsupported type for data")
+                print("unsupported type for data:", type(data[0]))
                 
-        elif isinstance(data, (int,float)): #MA(x,error=...)
+        elif isinstance(data, number_types): #MA(x,error=...)
             array.resize(1)
-            if isinstance(error, (int, float)):#MA(x, error = y)
+            if isinstance(error, number_types):#MA(x, error = y)
                 array[0]=Measurement(float(data),error)
-            elif isinstance(error, (tuple,list)) and len(error)==1:#MA(x, error = [u])
+            elif isinstance(error, array_types) and len(error)==1:#MA(x, error = [u])
                 array[0]=Measurement(float(data),error[0])
             else:
                 print("unsupported type for error")

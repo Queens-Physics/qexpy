@@ -106,15 +106,15 @@ def div(a, b):
 
     if type(a) in CONSTANT:
         if type(b) in CONSTANT:
-            return a/b
+            return a if b ==0 else a/b
         else:
-            return a/b.mean
+            return a if b ==0 else a/b.mean
 
     else:
         if type(b) in CONSTANT:
-            return a.mean/b
+            return a.mean if b ==0 else a.mean/b
         else:
-            return a.mean/b.mean
+            return a.mean if b.mean ==0 else a.mean/b.mean
 
 
 def power(a, b):
@@ -240,14 +240,14 @@ def sec(x):
     import math as m
 
     if type(x) in CONSTANT:
-        return 1/m.cos(x)
+        return 0. if m.cos(x) ==0 else 1./m.cos(x)
     elif type(x) in ARRAY:
         result = []
         for i in range(len(x)):
-            result.append(1/m.cos(x[i]))
+            result.append(0. if m.cos(x) ==0 else 1./m.cos(x[i]))
         return result
     else:
-        return 1/m.cos(x.mean)
+        return 0. if m.cos(x.mean) ==0 else 1./m.cos(x.mean)
 
 
 def csc(x):
@@ -255,14 +255,14 @@ def csc(x):
     import math as m
 
     if type(x) in CONSTANT:
-        return 1/m.sin(x)
+        return 0. if m.sin(x) ==0 else 1./m.sin(x)
     elif type(x) in ARRAY:
         result = []
         for i in range(len(x)):
-            result.append(1/m.sin(x[i]))
+            result.append(0. if m.sin(x) ==0 else 1./m.sin(x[i]))
         return result
     else:
-        return 1/m.sin(x.mean)
+        return 0. if m.sin(x.mean) ==0 else 1./m.sin(x.mean)
 
 
 def cot(x):
@@ -270,14 +270,14 @@ def cot(x):
     import math as m
 
     if type(x) in CONSTANT:
-        return 1/m.tan(x)
+        return 0. if m.tan(x) ==0 else 1./m.tan(x)
     elif type(x) in ARRAY:
         result = []
         for i in range(len(x)):
-            result.append(1/m.tan(x[i]))
+            result.append(0. if m.tan(x) ==0 else 1./m.tan(x[i]))
         return result
     else:
-        return 1/m.tan(x.mean)
+        return 0. if m.tan(x.mean) ==0 else 1./m.tan(x.mean)
 
 
 def exp(x):
@@ -340,8 +340,8 @@ def find_minmax(function, *args):
 
     min_val = min(results)
     max_val = max(results)
-    mid_val = (max_val + min_val)/2
-    err = (max_val-min_val)/2
+    mid_val = (max_val + min_val)/2.
+    err = (max_val-min_val)/2.
     return [mid_val, err]
 
 
@@ -470,18 +470,18 @@ diff = {sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
 
         cot: lambda key, x: -m.sin(x.mean)**-2*x.derivative[key],
         exp: lambda key, x: m.exp(x.mean)*x.derivative[key],
-        log: lambda key, x: 1/x.mean*x.derivative[key],
+        log: lambda key, x: (0. if x.mean ==0 else 1./x.mean*x.derivative[key]),
         add: lambda key, a, b: a.derivative[key] + b.derivative[key],
         sub: lambda key, a, b: a.derivative[key] - b.derivative[key],
         mul: lambda key, a, b: a.derivative[key]*b.mean +
         b.derivative[key]*a.mean,
 
         div: lambda key, a, b: (a.derivative[key]*b.mean -
-        b.derivative[key]*a.mean) / b.mean**2,
+        b.derivative[key]*a.mean) / (1. if b.mean==0 else b.mean**2),
 
         power: lambda key, a, b: a.mean**b.mean*(
-        b.derivative[key]*m.log(abs(a.mean)) +
-        b.mean/a.mean*a.derivative[key]),
+        b.derivative[key]*( 0. if a.mean<=0. else m.log(a.mean) ) +
+        b.mean/(1. if a.mean ==0 else a.mean)*a.derivative[key]),
 
         asin: lambda key, x: (1-x.mean**2)**(-1/2)*x.derivative[key],
         acos: lambda key, x: -(1-x.mean**2)**(-1/2)*x.derivative[key],

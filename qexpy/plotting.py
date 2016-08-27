@@ -37,7 +37,7 @@ class Plot:
     def gauss(x, mean, std):
         '''Fucntion of gaussian distribution'''
         from error import exp
-        return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
+        return (0 if std==0 else (2*pi*std**2)**(-0.5)*exp(-0.5*(x-mean)**2/std**2))
 
     fits = {
             'linear': lambda x, b, m: b+np.multiply(m, x),
@@ -213,7 +213,7 @@ class Plot:
                                                     (lambda x: model
                                                      (x, *self.pars_fit
                                                       ), self.xdata
-                                                     )), 2)), 1/2)
+                                                     )), 2)), 0.5)
 
             self.pars_fit, self.pcov = sp.curve_fit(
                                         model, data_range, self.ydata,
@@ -710,7 +710,7 @@ class Plot:
                 (np.power(self.yerr, 2) +
                 np.power(np.multiply(self.xerr, #analysis:ignore
                 num_der(lambda x: model(x, *self.pars_fit) , #analysis:ignore
-                self.xdata)), 2)), 1/2) #analysis:ignore
+                self.xdata)), 2)), 0.5) #analysis:ignore
 
             self.pars_fit, self.pcov = sp.curve_fit(
                                         model, data_range, self.ydata,
@@ -1082,11 +1082,11 @@ def update_plot(self):
     range_argument = ()
     for par in self.fit_parameters:
         min_val = par.mean - 2*par.std
-        increment = (par.mean-min_val)/100
+        increment = (par.mean-min_val)*0.01
         range_argument += (min_val, par.mean, increment)
 
     for par in self.fit_parameters:
-        increment = (par.std)/100
+        increment = (par.std)*0.01
         range_argument += (0, par.std, increment)
 
     @interact(b=self.fit_parameters[0].mean, m=self.fit_parameters[1].mean,
