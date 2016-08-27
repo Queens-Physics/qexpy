@@ -1,7 +1,9 @@
 from numpy import int64, float64, ndarray, int32, float32
 import math as m
-CONSTANT = (int, float, int64, float64, int32, float32)
-ARRAY = (list, tuple, ndarray)
+import qexpy.utils as qu
+from qexpy.error import Measurement_Array
+CONSTANT = qu.number_types #(int, float, int64, float64, int32, float32)
+ARRAY = qu.array_types +(Measurement_Array,)# (list, tuple, ndarray, Measurement_Array)
 
 
 ###############################################################################

@@ -4,13 +4,7 @@ import bokeh.io as bi
 import qexpy.utils as qu
 
 
-#These are used for checking whether something is an instance of
-#an array or a number. Used in MA():
-number_types = (int, float, np.int8, np.int16, np.int32, np.int64,\
-                np.uint8, np.uint16, np.uint32, np.uint64,\
-                np.float16, np.float32, np.float64\
-                )
-array_types = (tuple, list, np.ndarray)
+
 
 class ExperimentalValue:
     '''
@@ -30,8 +24,8 @@ class ExperimentalValue:
 
     # Defining common types under single arrayclear
     from numpy import int64, float64, ndarray, int32, float32
-    CONSTANT = number_types #(int, float, int64, float64, int32, float32)
-    ARRAY = array_types #(list, tuple, ndarray)
+    CONSTANT = qu.number_types #(int, float, int64, float64, int32, float32)
+    ARRAY = qu.array_types #(list, tuple, ndarray)
 
     def __init__(self, *args, name=None):
         '''
@@ -1068,27 +1062,26 @@ class Measurement_Array(np.ndarray):
         self.error_weighted_std =  (0. if sumw2==0 else np.sqrt(1./sumw2))
             
         return Measurement(self.error_weighted_mean, self.error_weighted_std)
-
-        
+            
 def MA(data, error=None, name=None, units=None):
     '''Function to construct a Measurement_Array'''
     array = Measurement_Array(0)
     
     
     if error is None: #MA(data)
-        if isinstance(data, array_types): #MA([...])
+        if isinstance(data, qu.array_types): #MA([...])
             n = len(data)       
             array.resize(n)
-            if isinstance(data[0], array_types) and len (data[0]) == 2: #MA([ (,), (,), (,)])
+            if isinstance(data[0], qu.array_types) and len (data[0]) == 2: #MA([ (,), (,), (,)])
                 for i in range(n):
                     array[i]=Measurement(data[i][0],data[i][1])
-            elif isinstance(data[0], number_types): #MA([,,,])
+            elif isinstance(data[0], qu.number_types): #MA([,,,])
                 for i in range(n):
                     array[i]=Measurement(float(data[i]),0.)
             else:
                 print("unsupported type for data")
              
-        elif isinstance(data, int): #MA(n)
+        elif isinstance(data, qu.int_types): #MA(n)
             array.resize(data)
             for i in range(data):
                 array[i]=Measurement(0.,0.)
@@ -1097,16 +1090,16 @@ def MA(data, error=None, name=None, units=None):
             
     else: #error is not None
         
-        if isinstance(data, array_types): #MA([], error = ...)
+        if isinstance(data, qu.array_types): #MA([], error = ...)
             n = len(data)       
             array.resize(n)
             
-            if isinstance(data[0], number_types):#MA([,,,,], error = ...)
+            if isinstance(data[0], qu.number_types):#MA([,,,,], error = ...)
                 
-                if isinstance(error, number_types):#MA([,,,,], error = x)
+                if isinstance(error, qu.number_types):#MA([,,,,], error = x)
                     for i in range(n):
                          array[i]=Measurement(float(data[i]),error)
-                elif isinstance(error, array_types):#MA([,,,,], error = [])
+                elif isinstance(error, qu.array_types):#MA([,,,,], error = [])
                     if len(error)==len(data):#MA([,,,,], error = [,,,,])
                         for i in range(n):
                             array[i]=Measurement(float(data[i]),error[i])    
@@ -1121,11 +1114,11 @@ def MA(data, error=None, name=None, units=None):
             else: # data[0] must be a float
                 print("unsupported type for data:", type(data[0]))
                 
-        elif isinstance(data, number_types): #MA(x,error=...)
+        elif isinstance(data, qu.number_types): #MA(x,error=...)
             array.resize(1)
-            if isinstance(error, number_types):#MA(x, error = y)
+            if isinstance(error, qu.number_types):#MA(x, error = y)
                 array[0]=Measurement(float(data),error)
-            elif isinstance(error, array_types) and len(error)==1:#MA(x, error = [u])
+            elif isinstance(error, qu.array_types) and len(error)==1:#MA(x, error = [u])
                 array[0]=Measurement(float(data),error[0])
             else:
                 print("unsupported type for error")

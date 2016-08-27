@@ -10,4 +10,14 @@ def in_notebook():
 #Global variable to keep track of whether the output_notebook command was run    
 bokeh_ouput_notebook_called = False
     
-    
+#These are used for checking whether something is an instance of
+#an array or a number.
+import numpy as np
+number_types = (int, float, np.int8, np.int16, np.int32, np.int64,\
+                np.uint8, np.uint16, np.uint32, np.uint64,\
+                np.float16, np.float32, np.float64\
+                )
+int_types = (int, np.int8, np.int16, np.int32, np.int64,\
+                np.uint8, np.uint16, np.uint32, np.uint64\
+                )
+array_types = (tuple, list, np.ndarray)
