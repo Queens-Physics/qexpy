@@ -1,4 +1,4 @@
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 
 from qexpy.error import Measurement, MeasurementArray, Measurement_Array, MA,\
                         set_print_style, set_sigfigs_centralvalue, set_sigfigs_error, set_sigfigs, set_error_method,\
