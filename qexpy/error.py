@@ -470,7 +470,7 @@ class ExperimentalValue:
             var1 = args[0]
             var2 = args[1]
 
-        op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan',
+        op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan', op.sqrt: 'sqrt',
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
                      op.exp: 'exp', op.log: 'log', op.add: '+',
                      op.sub: '-', op.mul: '*', op.div: '/', op.power: '**',
@@ -672,19 +672,7 @@ class ExperimentalValue:
             return other**self
         else:
             return op.operation_wrap(op.power, other, self)
-
-    def sqrt(x):
-        if x.mean < 0:
-            print('Imaginary numbers are no supported in qexpy.')
-        elif type(x) in ExperimentalValue.CONSTANT:
-            import math as m
-            return m.sqrt(x)
-        else:
-            import qexpy.error_operations as op
-            return op.operation_wrap(op.power, x, 1/2)
-
-    #def sqrt(x):
-    #    return sqrt(x)
+    
     def __neg__(self):
         import qexpy.error_operations as op
         return op.neg(self)
@@ -713,7 +701,10 @@ class ExperimentalValue:
                 raise TypeError
             else:
                 return self.mean == other.mean
-
+            
+    def sqrt(x):
+        return sqrt(x)
+    
     def log(x):
         return log(x)
 
@@ -1100,29 +1091,21 @@ def MA(data, error=None, name=None, units=None):
 ExperimentalValue.ARRAY = ExperimentalValue.ARRAY +(Measurement_Array,)
 
 def sqrt(x):
-    #import qexpy.error_operations as op      
-    #if type(x) in ExperimentalValue.ARRAY:
-    #    if len(x) <1:
-    #        return []
-    #    if isinstance(x[0],Measurement):
-    #        result = Measurement_Array(len(x))
-    #        for index in range(len(x)):
-    #            result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)
-    #    else:
-    #        result = np.ndarray(len(x), dtype=type(x[0]))
-    #        for index in range(len(x)):
-    #            result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)  
-    #else:
-    #    return op.operation_wrap(op.sqrt, x, func_flag=True)
-    if x.mean < 0:
-        print('Imaginary numbers are no supported in qexpy.')     
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.sqrt(x)
+    import qexpy.error_operations as op      
+    if type(x) in ExperimentalValue.ARRAY:
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)  
+        return result
     else:
-        import qexpy.error_operations as op
-        return op.operation_wrap(op.power, x, 1/2)
-
+        return op.operation_wrap(op.sqrt, x, func_flag=True)
 
 def sin(x):
     import qexpy.error_operations as op

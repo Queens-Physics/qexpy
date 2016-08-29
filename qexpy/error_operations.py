@@ -377,7 +377,7 @@ def monte_carlo(func, *args):
 
     _np_func = {add: np.add, sub: np.subtract, mul: np.multiply,
                 div: np.divide, power: np.power, log: np.log,
-                exp: np.exp, sin: np.sin, cos: np.cos, #sqrt: np.sqrt,
+                exp: np.exp, sin: np.sin, cos: np.cos, sqrt: np.sqrt,
                 tan: np.tan, atan: np.arctan,
                 csc: lambda x: np.divide(1, np.sin(x)),
                 sec: lambda x: np.divide(1, np.cos(x)),
@@ -479,7 +479,7 @@ def operation_wrap(operation, *args, func_flag=False):
 
 
 diff = {
-        #sqrt: lambda key, x: (0. if x.mean ==0 else -0.5/m.sqrt(x.mean)*x.derivative[key]),
+        sqrt: lambda key, x: (0. if x.mean ==0 else -0.5/m.sqrt(x.mean)*x.derivative[key]),
         sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
         cos: lambda key, x: -m.sin(x.mean)*x.derivative[key],
         tan: lambda key, x: m.cos(x.mean)**-2*x.derivative[key],
@@ -507,7 +507,7 @@ diff = {
         atan: lambda key, x: 1/(1 + x.mean**2)*x.derivative[key],
         }
 
-op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec', #sqrt: 'sqrt',
+op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec', sqrt: 'sqrt',
              cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
              mul: '*', div: '/', power: '**', asin: 'asin', acos: 'acos',
              atan: 'atan', }
@@ -579,7 +579,7 @@ def check_formula(operation, a, b=None, func_flag=False):
     import qexpy.error as e
 
     op_string = {
-        sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
+        sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec', sqrt: 'sqrt',
         cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
         mul: '*', div: '/', power: '**', 'neg': '-', asin: 'asin',
         acos: 'acos', atan: 'atan', }
