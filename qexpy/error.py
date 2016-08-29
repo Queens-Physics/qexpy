@@ -29,114 +29,41 @@ class ExperimentalValue:
         Creates a variable that contains a mean, standard deviation,
         and name for inputted data.
         '''
-        data =  [] #None
-        error_data = [] #None
-
-        # If two values eneterd first value is mean and second value is std
-        if len(args) == 2 and all(
-                isinstance(n, ExperimentalValue.CONSTANT)for n in args
-                ):
-            self.mean = args[0]
-            self.std = args[1]
-            data.append(args[0])
-            error_data.append(args[1])
-
-        # If an array and single value are entered, then error is uniform for
-        # first array.
-        elif len(args) == 2 and type(args[0]) in ExperimentalValue.ARRAY and\
-                type(args[1]) in ExperimentalValue.CONSTANT:
-
-            mean_vals = args[0]
-            std_vals = [args[1]]*len(args[0])
-            (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-            data = mean_vals
-            error_data = std_vals
-
-        # Checks that all arguments are array type
-        elif all(isinstance(n, ExperimentalValue.ARRAY) for n in args):
-
-            # Sample mean and std talen from single array of values
-            if len(args) == 1 and\
-                    all(isinstance(n, ExperimentalValue.CONSTANT)
-                        for n in args[0]):
-                args = args[0]
-                (self.mean, self.std) = _variance(args)
-                data = list(args)
-
-            # Single array of Measurements, weighted mean and std taken
-            elif len(args) == 1 and \
-                    all(isinstance(n, ExperimentalValue) for n in args[0]):
-                mean_vals = []
-                std_vals = []
-                for arg in args[0]:
-                    mean_vals.append(arg.mean)
-                    std_vals.append(arg.std)
-                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-                data = mean_vals
-                error_data = std_vals
-
-            # Mean and std taken from array of values and array of errors
-            elif len(args) == 2 and \
-                    all(
-                    isinstance(n, ExperimentalValue.CONSTANT)for n in args[0]
-                    ) and\
-                    all(
-                    isinstance(n, ExperimentalValue.CONSTANT)for n in args[1]):
-                mean_vals = args[0]
-                if len(args[1]) == 1:
-                    std_vals = args[1]*len(args[0])
-                else:
-                    std_vals = args[1]
-                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-                data = mean_vals
-                error_data = std_vals
-
-            # For series of arrays of length 2, element 0 is mean, 1 is std.
-            elif len(args) > 2 and all(len(n) is 2 for n in args):
-                mean_vals = []
-                std_vals = []
-                for arg in args:
-                    mean_vals.append(arg[0])
-                    std_vals.append(arg[1])
-                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-                data = mean_vals
-                error_data = std_vals
-
+        if len(args) ==1:
+            if isinstance(args[0], qu.array_types):
+                data = np.ndarray(len(args[0]))
+                for index in range(len(args[0])):
+                    data[index] = args[0][index]
+                self.mean = data.mean()
+                self.std = data.std(ddof=1)
             else:
-                raise TypeError('''Measurement input must be either a single
-                array of values, or two arrays with mean values and error
-                values respectivly.''')
-
-        elif len(args) > 2:
-            # Series of values entered, mean and std taken from said values
-            if all(isinstance(n, ExperimentalValue.CONSTANT) for n in args):
-                (self.mean, self.std) = _variance(args)
-                data = list(args)
-
-            # Series of Measurements, weighted mean and std taken
-            elif all(isinstance(n, ExperimentalValue) for n in args):
-                mean_vals = []
-                std_vals = []
-                for arg in args:
-                    mean_vals.append(arg.mean)
-                    std_vals.append(arg.std)
-                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-                data = mean_vals
-                error_data = std_vals
-
-        # If that fails, where than will you go
+                raise TypeError('''Input must be either a single array of values,
+                      or the central value and uncertainty in one measurement''')
+        elif len(args)==2:
+            if isinstance(args[0], qu.number_types) and isinstance(args[1], qu.number_types):
+                self.mean = float(args[0])
+                self.std = float(args[1])
+                data = np.ndarray(1)
+                error_data = np.ndarray(1)
+                data[0] = self.mean
+                #error_data[0] = self.std
+            else:
+                raise TypeError('''Input must be either a single array of values,
+                      or the central value and uncertainty in one measurement''')
         else:
-            raise ValueError('''Input arguments must be one of: a mean and
-            standard deviation, an array of values, or the individual values
-            themselves.''')
-
+            raise TypeError('''Input must be either a single array of values,
+                  or the central value and uncertainty in one measurement''')
+       
+       
         self.info = {
-                'ID': '', 'Formula': '', 'Method': '', 'Data': data,
-                'Error': error_data, 'Function': {
+                'ID': '', 'Formula': '', 'Method': '', 'Data': data,\
+                #'Error': error_data,
+                'Function': {
                         'operation': (), 'variables': ()}, }
 
         ExperimentalValue.id_register[id(self)] = self
         self.print_style = ExperimentalValue.print_style
+        
         if name is not None:
             self.user_name = True
         else:
@@ -281,6 +208,7 @@ class ExperimentalValue:
         '''
         if self.info['Data'] is None:
             print('No data array exists.')
+            return None
         return self.info['Data']
     
     def show_histogram(self, nbins=50, title=None, output='inline'):
@@ -396,12 +324,12 @@ class ExperimentalValue:
         if len(data_x) != len(data_y):
             raise TypeError('Lengths of data arrays must be equal to\
                       define a covariance')
-        sigma_xy = 0
+            
+        sigma_xy = np.sum((data_x-x.mean)*(data_y-y.mean))  
         nmin1 = len(data_x)-1
-        for i in range(len(data_x)):
-            sigma_xy += (data_x[i]-x.mean)*(data_y[i]-y.mean)
-        sigma_xy /= nmin1 if nmin1!= 0 else 1
-        
+        if nmin1 != 0:
+            sigma_xy /= nmin1
+                    
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
 
@@ -982,11 +910,12 @@ def MeasurementArray(data, error=None, name=None, units=None):
 
 class Measurement_Array(np.ndarray):
     ''' A numpy-based array of Measurement objects'''
-    
+    id_number = 0
     def __new__(subtype, shape, dtype=Measurement, buffer=None, offset=0,
           strides=None, order=None):
         obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
                          order)
+        Measurement_Array.id_number += 1
         return obj
 
     def __array_finalize__(self, obj):
@@ -1066,25 +995,37 @@ class Measurement_Array(np.ndarray):
 def MA(data, error=None, name=None, units=None):
     '''Function to construct a Measurement_Array'''
     array = Measurement_Array(0)
-    
-    
+    user_name=False
+    if name is not None:
+        array.name = name
+        user_name=True
+    else:
+        array.name = 'unnamed_arr%d' % (Measurement_Array.id_number)
+        
     if error is None: #MA(data)
         if isinstance(data, qu.array_types): #MA([...])
             n = len(data)       
             array.resize(n)
             if isinstance(data[0], qu.array_types) and len (data[0]) == 2: #MA([ (,), (,), (,)])
                 for i in range(n):
-                    array[i]=Measurement(data[i][0],data[i][1])
+                    data_name = "{}_{}".format(array.name,i)
+                    array[i]=Measurement(data[i][0],data[i][1], units=units, name=data_name)
+                    array[i].user_name=user_name
+                    
             elif isinstance(data[0], qu.number_types): #MA([,,,])
                 for i in range(n):
-                    array[i]=Measurement(float(data[i]),0.)
+                    data_name = "{}_{}".format(array.name,i)
+                    array[i]=Measurement(float(data[i]),0., units=units, name=data_name)
+                    array[i].user_name=user_name
             else:
                 print("unsupported type for data")
              
         elif isinstance(data, qu.int_types): #MA(n)
             array.resize(data)
             for i in range(data):
-                array[i]=Measurement(0.,0.)
+                data_name = "{}_{}".format(array.name,i)
+                array[i]=Measurement(0.,0., units=units, name=data_name)
+                array[i].user_name=user_name
         else:
             print("unsupported type for data")
             
@@ -1098,14 +1039,20 @@ def MA(data, error=None, name=None, units=None):
                 
                 if isinstance(error, qu.number_types):#MA([,,,,], error = x)
                     for i in range(n):
-                         array[i]=Measurement(float(data[i]),error)
+                        data_name = "{}_{}".format(array.name,i)
+                        array[i]=Measurement(float(data[i]),error, units=units, name=data_name)
+                        array[i].user_name=user_name
                 elif isinstance(error, qu.array_types):#MA([,,,,], error = [])
                     if len(error)==len(data):#MA([,,,,], error = [,,,,])
                         for i in range(n):
-                            array[i]=Measurement(float(data[i]),error[i])    
+                            data_name = "{}_{}".format(array.name,i)
+                            array[i]=Measurement(float(data[i]),error[i], units=units, name=data_name)    
+                            array[i].user_name=user_name
                     elif len(error)==1: #MA([,,,,], error = [x])
                         for i in range(n):
-                            array[i]=Measurement(float(data[i]),error[0])
+                            data_name = "{}_{}".format(array.name,i)
+                            array[i]=Measurement(float(data[i]),error[0], units=units, name=data_name)
+                            array[i].user_name=user_name
                     else:
                         print("error array must be same length as data")
                 else:
@@ -1117,9 +1064,13 @@ def MA(data, error=None, name=None, units=None):
         elif isinstance(data, qu.number_types): #MA(x,error=...)
             array.resize(1)
             if isinstance(error, qu.number_types):#MA(x, error = y)
-                array[0]=Measurement(float(data),error)
+                data_name = "{}_{}".format(array.name,0)
+                array[0]=Measurement(float(data),error, units=units, name=data_name)
+                array[0].user_name=user_name
             elif isinstance(error, qu.array_types) and len(error)==1:#MA(x, error = [u])
-                array[0]=Measurement(float(data),error[0])
+                data_name = "{}_{}".format(array.name,0)
+                array[0]=Measurement(float(data),error[0], units=units, name=data_name)
+                array[0].user_name=user_name
             else:
                 print("unsupported type for error")
         else:

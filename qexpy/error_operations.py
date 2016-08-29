@@ -470,8 +470,8 @@ def operation_wrap(operation, *args, func_flag=False):
     elif args[0].info["Data"] is not None and func_flag is True:
         result.info["Data"] = (operation(args[0].info["Data"]))
 
-        if args[0].info['Error'] is not None:
-            result.info['Error'] = dev(*args, der=df, manual_args=True)
+        #if args[0].info['Error'] is not None:
+        #    result.info['Error'] = dev(*args, der=df, manual_args=True)
 
     result.derivative.update(df)
     result._update_info(operation, *args, func_flag=func_flag)
@@ -513,7 +513,8 @@ op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec', #sqrt: 
              atan: 'atan', }
 
 
-def dev(*args, der=None, manual_args=None):
+#def dev(*args, der=None, manual_args=None):
+def dev(*args, der=None):    
     '''
     Returns the standard deviation of a function of N arguments.
 
@@ -525,55 +526,26 @@ def dev(*args, der=None, manual_args=None):
     '''
     import qexpy.error as e
 
-    if manual_args is None:
-        std = 0
-        roots = ()
 
-        for arg in args:
-            for i in range(len(arg.root)):
-                if arg.root[i] not in roots:
-                    roots += (arg.root[i], )
-        for root in roots:
-            std += (der[root]*e.ExperimentalValue.register[root].std)**2
+    std = 0
+    roots = ()
 
-        for i in range(len(roots)):
-            for j in range(len(roots)-i-1):
-                cov = e.ExperimentalValue.register[roots[i]].get_covariance(
-                    e.ExperimentalValue.register[roots[j + 1 + i]])
-                std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
-        std = std**(1/2)
+    for arg in args:
+        for i in range(len(arg.root)):
+            if arg.root[i] not in roots:
+                roots += (arg.root[i], )
+    for root in roots:
+        std += (der[root]*e.ExperimentalValue.register[root].std)**2
 
-        return std
+    for i in range(len(roots)):
+        for j in range(len(roots)-i-1):
+            cov = e.ExperimentalValue.register[roots[i]].get_covariance(
+                e.ExperimentalValue.register[roots[j + 1 + i]])
+            std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
+    std = std**(1/2)
 
-    elif manual_args is True:
-        error = []
+    return std
 
-        for k in range(len(args[0].info['Error'])):
-            std = 0
-            roots = ()
-
-            for arg in args:
-                for i in range(len(arg.root)):
-                    if arg.root[i] not in roots:
-                        roots += (arg.root[i], )
-                for root in roots:
-                    std += (der[root] *
-                            e.ExperimentalValue.register[root].info['Error'][k]
-                            )**2
-
-            for i in range(len(roots)):
-                for j in range(len(roots)-i-1):
-                    cov = e.ExperimentalValue.register[roots[i]
-                                                       ].get_covariance(
-                        e.ExperimentalValue.register[roots[j + 1 + i]])
-                    std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
-            std = std**(1/2)
-            error += [std]
-
-        return error
-
-    else:
-        print('Invaid input in error_operator devs() function.')
 
 
 def check_values(*args):
