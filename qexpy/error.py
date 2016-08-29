@@ -1118,7 +1118,7 @@ def sin(x):
     
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
-            return []
+            return np.ndarray(0, dtype=float)
         if isinstance(x[0],Measurement):
             result = Measurement_Array(len(x))
             for index in range(len(x)):

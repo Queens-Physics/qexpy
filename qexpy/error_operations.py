@@ -1,10 +1,12 @@
-from numpy import int64, float64, ndarray, int32, float32
+#from numpy import int64, float64, ndarray, int32, float32
+import numpy as np
 import math as m
 import qexpy.utils as qu
-from qexpy.error import Measurement_Array
-CONSTANT = qu.number_types #(int, float, int64, float64, int32, float32)
-ARRAY = qu.array_types +(Measurement_Array,)# (list, tuple, ndarray, Measurement_Array)
+from qexpy.error import Measurement_Array, Measurement, Constant, Function
 
+CONSTANT = qu.number_types 
+ARRAY = qu.array_types +(Measurement_Array,)
+MEASUREMENT = (Measurement, Constant, Function)
 
 ###############################################################################
 # Mathematical operations
@@ -148,15 +150,12 @@ def sqrt(x):
 
     if type(x) in CONSTANT:
         return m.sqrt(x)
-
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.sqrt(x[i]))
-        return result
-
-    else:
+        return np.sqrt(x)
+    elif isinstance(x,MEASUREMENT):
         return m.sqrt(x.mean)
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
     
 def sin(x):
     '''Returns the sine of a measurement with propagated errors'''
@@ -164,31 +163,25 @@ def sin(x):
 
     if type(x) in CONSTANT:
         return m.sin(x)
-
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.sin(x[i]))
-        return result
-
-    else:
+        return np.sin(x)
+    elif isinstance(x,MEASUREMENT):
         return m.sin(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def asin(x):
     '''Returns the arctangent of a measurement with propagated errors'''
     import math as m
 
     if type(x) in CONSTANT:
-        return m.asin(x)
+        return m.asin(x)   
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.asin(x[i]))
-        return result
-    else:
+        return np.asin(x)
+    elif isinstance(x,MEASUREMENT):
         return m.asin(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def cos(x):
     '''Returns the cosine of a measurement with propagated errors'''
@@ -196,16 +189,12 @@ def cos(x):
 
     if type(x) in CONSTANT:
         return m.cos(x)
-
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.cos(x[i]))
-        return result
-
-    else:
+        return np.cos(x)
+    elif isinstance(x,MEASUREMENT):
         return m.cos(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def acos(x):
     '''Returns the arctangent of a measurement with propagated errors'''
@@ -214,13 +203,11 @@ def acos(x):
     if type(x) in CONSTANT:
         return m.acos(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.acos(x[i]))
-        return result
-    else:
+        return np.acos(x)
+    elif isinstance(x,MEASUREMENT):
         return m.acos(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def tan(x):
     '''Returns the tangent of a measurement with propagated errors'''
@@ -229,13 +216,11 @@ def tan(x):
     if type(x) in CONSTANT:
         return m.tan(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.tan(x[i]))
-        return result
-    else:
+        return np.tan(x)
+    elif isinstance(x,MEASUREMENT):
         return m.tan(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def atan(x):
     '''Returns the arctangent of a measurement with propagated errors'''
@@ -244,13 +229,11 @@ def atan(x):
     if type(x) in CONSTANT:
         return m.atan(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.atan(x[i]))
-        return result
-    else:
+        return np.atan(x)
+    elif isinstance(x,MEASUREMENT):
         return m.atan(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def sec(x):
     '''Returns the secant of a measurement with propagated errors'''
@@ -259,13 +242,11 @@ def sec(x):
     if type(x) in CONSTANT:
         return 0. if m.cos(x) ==0 else 1./m.cos(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(0. if m.cos(x) ==0 else 1./m.cos(x[i]))
-        return result
-    else:
+        return 1./np.cos(x)
+    elif isinstance(x,MEASUREMENT):
         return 0. if m.cos(x.mean) ==0 else 1./m.cos(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def csc(x):
     '''Returns the cosecant of a measurement with propagated errors'''
@@ -274,13 +255,11 @@ def csc(x):
     if type(x) in CONSTANT:
         return 0. if m.sin(x) ==0 else 1./m.sin(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(0. if m.sin(x) ==0 else 1./m.sin(x[i]))
-        return result
-    else:
+        return 1./np.sin(x)
+    elif isinstance(x,MEASUREMENT):
         return 0. if m.sin(x.mean) ==0 else 1./m.sin(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def cot(x):
     '''Returns the cotangent of a measurement with propagated errors'''
@@ -289,13 +268,11 @@ def cot(x):
     if type(x) in CONSTANT:
         return 0. if m.tan(x) ==0 else 1./m.tan(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(0. if m.tan(x) ==0 else 1./m.tan(x[i]))
-        return result
-    else:
+        return 1./np.tan(x)
+    elif isinstance(x,MEASUREMENT):
         return 0. if m.tan(x.mean) ==0 else 1./m.tan(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def exp(x):
     '''Returns the exponent of a measurement with propagated errors'''
@@ -304,13 +281,11 @@ def exp(x):
     if type(x) in CONSTANT:
         return m.exp(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.exp(x[i]))
-        return result
-    else:
+        return np.exp(x)
+    elif isinstance(x,MEASUREMENT):
         return m.exp(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def log(x):
     '''Returns the natural logarithm of a measurement with propagated errors'''
@@ -319,13 +294,11 @@ def log(x):
     if type(x) in CONSTANT:
         return m.log(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.log(x[i]))
-        return result
-    else:
+        return np.log(x)
+    elif isinstance(x,MEASUREMENT):
         return m.log(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 ###############################################################################
 # Error Propagation Methods
@@ -338,25 +311,29 @@ def find_minmax(function, *args):
     and error on a given function
     '''
     import numpy as np
-
+    N=100
+    
     if len(args) is 1:
         x = args[0]
-        vals = np.linspace(x.mean-x.std, x.mean + x.std, 100)
-        results = []
-        for i in range(100):
-            results.append(function(vals[i]))
-
+        vals = np.linspace(x.mean-x.std, x.mean + x.std, N)
+        results = function(vals)
+            
     elif len(args) is 2:
         a = args[0]
         b = args[1]
-        results = []
-        a_vals = np.linspace(a.mean-a.std, a.mean + a.std, 100)
-        b_vals = np.linspace(b.mean-b.std, b.mean + b.std, 100)
-        for i in range(100):
-            results.append(function(a_vals[i], b_vals[i]))
+        results = np.ndarray(shape=(N,N))
+        a_vals = np.linspace(a.mean-a.std, a.mean + a.std, N)
+        b_vals = np.linspace(b.mean-b.std, b.mean + b.std, N)
+        for i in range(N):
+            for j in range(N):
+                results[i][j]= function(a_vals[i], b_vals[j])
+    else:
+        print("unsupported number of parameters")
+        results = np.ndarray(0)
+        
 
-    min_val = min(results)
-    max_val = max(results)
+    min_val = results.min()
+    max_val = results.max()
     mid_val = (max_val + min_val)/2.
     err = (max_val-min_val)/2.
     return [mid_val, err]
