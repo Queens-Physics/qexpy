@@ -3,9 +3,6 @@ import bokeh.plotting as bp
 import bokeh.io as bi
 import qexpy.utils as qu
 
-
-
-
 class ExperimentalValue:
     '''
     Root class of objects which containt a mean and standard deviation.
@@ -43,7 +40,6 @@ class ExperimentalValue:
             self.std = args[1]
             data.append(args[0])
             error_data.append(args[1])
-            #data = [args[0]]
 
         # If an array and single value are entered, then error is uniform for
         # first array.
@@ -326,7 +322,7 @@ class ExperimentalValue:
             
         bp.show(p1)
         return p1
-        
+    
     def show_MC_histogram(self, nbins=50, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
@@ -343,7 +339,8 @@ class ExperimentalValue:
             print('Histogram title must be a string.')
             hist_title = self.name+' Histogram'
 
-        p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
+        p1 = bp.figure(title=hist_title, tools='''save, pan, box_zoom,
+                       wheel_zoom, reset''',
                        background_fill_color="#E8DDCB")
 
         hist, edges = np.histogram(self.MC_list, bins=nbins)
@@ -357,14 +354,15 @@ class ExperimentalValue:
                 line_dash='dashed')
         p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
                 line_dash='dashed')
-          
-        if output =='file' or not qu.in_notebook():
+
+        if output == 'file' or not qu.in_notebook():
             bi.output_file(self.name+' histogram.html', title=hist_title)
         elif not qu.bokeh_ouput_notebook_called:
             bi.output_notebook()
-            #This must be the first time calling output_notebook, keep track that it's been called:
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
             qu.bokeh_ouput_notebook_called = True
-  
+
         bp.show(p1)
         return p1
 
@@ -1477,6 +1475,7 @@ def set_print_style(style=None, sigfigs=None):
 
     if sigfigs is not None:
         set_sigfigs(sigfigs)
+        ExperimentalValue.figs_on_uncertainty = False
 
     if style in latex:
         ExperimentalValue.print_style = "Latex"
@@ -1512,7 +1511,8 @@ def set_error_method(chosen_method):
     else:
         print("Method not recognized, using derivative method.")
         ExperimentalValue.error_method = "Derivative"
-        
+
+
 def set_sigfigs_error(sigfigs=3):
     '''Change the number of significant figures shown in print()
     based on the number of sig figs in the error
@@ -1539,12 +1539,14 @@ def set_sigfigs_centralvalue(sigfigs=3):
     else:
         raise TypeError('''Specified number of significant figures must be
                         and interger greater than zero.''')
-        
+
+
 def set_sigfigs(sigfigs=3):
     '''Change the number of significant figures shown in print()
     based on the number of sig figs in the error
     '''
     set_sigfigs_error(sigfigs)
+
 
 def _return_exponent(value):
     '''Returns the exponent of the argument in reduced scientific notation.
@@ -1761,6 +1763,46 @@ def _sci_print(self, method=None):
 # Random Methods
 ###############################################################################
 
+
+def show_histogram(data, title=None, output='inline'):
+    '''Creates a histogram of the inputted data using Bokeh.
+    '''
+    if type(title) is str:
+        hist_title = title
+    elif title is None:
+        hist_title = 'Histogram'
+    else:
+        print('Histogram title must be a string.')
+        hist_title = 'Histogram'
+
+    mean, std = _variance(data)
+
+    p1 = bp.figure(title=hist_title, tools="save",
+                   background_fill_color="#E8DDCB")
+
+    hist, edges = np.histogram(data, bins=50)
+
+    p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+            fill_color="#036564", line_color="#033649")
+
+    p1.line([mean]*2, [0, hist.max()*1.05], line_color='red',
+            line_dash='dashed')
+    p1.line([mean-std]*2, [0, hist.max()*1.1], line_color='red',
+            line_dash='dashed')
+    p1.line([mean+std]*2, [0, hist.max()*1.1], line_color='red',
+            line_dash='dashed')
+
+    if output == 'inline':
+        bp.output_notebook()
+    elif output == 'file':
+        bp.output_file(hist_title+' histogram.html', title=hist_title)
+    else:
+        print('''Output must be either "file" or "inline", using "file"
+              by default.''')
+        bp.output_file(hist_title+' histogram.html', title=hist_title)
+    bp.show(p1)
+
+
 def numerical_partial_derivative(func, var, *args):
     '''
     Returns the parital derivative of a dunction with respect to var.
@@ -1794,15 +1836,14 @@ def _variance(*args, ddof=1):
     Sum = 0
     SumSq = 0
     N = len(args)
-    #mean = sum(args)/N
     for i in range(N):
         Sum += args[i]
         SumSq += args[i]*args[i]
-        
+
     std = ((SumSq-Sum**2/N)/(N-1))**(1/2)
-    mean = Sum/N  
-  
-    return (mean,std)
+    mean = Sum/N
+
+    return (mean, std, )
 
 
 def _weighted_variance(mean, std, ddof=1):

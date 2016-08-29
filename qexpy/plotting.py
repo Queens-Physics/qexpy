@@ -12,7 +12,6 @@ CONSTANT = (int, float, int64, float64, int32, float32)
 ARRAY = (list, tuple, ndarray)
 
 
-
 class Plot:
     '''Objects which contain a dataset and any number of fuctions which can
     be shown on a Bokeh plot
@@ -425,14 +424,14 @@ class Plot:
         Previous methods simply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        
-        if output =='file' or not qu.in_notebook():
+
+        if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
         elif not qu.bokeh_ouput_notebook_called:
             bi.output_notebook()
-            #This must be the first time calling output_notebook,
-            #keep track that it's been called:
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
             qu.bokeh_ouput_notebook_called = True
 
         # create a new plot
@@ -520,14 +519,14 @@ class Plot:
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        
-        if output =='file' or not qu.in_notebook():
+
+        if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
         elif not qu.bokeh_ouput_notebook_called:
             bi.output_notebook()
-            #This must be the first time calling output_notebook,
-            #keep track that it's been called:
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
             qu.bokeh_ouput_notebook_called = True
 
         if min(plot2.xdata) < self.y_range[0]:
@@ -741,16 +740,15 @@ class Plot:
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-        
-        if output =='file' or not qu.in_notebook():
+
+        if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
         elif not qu.bokeh_ouput_notebook_called:
             bi.output_notebook()
-            #This must be the first time calling output_notebook,
-            #keep track that it's been called:
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
             qu.bokeh_ouput_notebook_called = True
-
 
         # create a new plot
         self.p = bp.figure(

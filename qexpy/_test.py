@@ -1,6 +1,6 @@
 import math as m
-import QExPy.error as e
-import QExPy.plotting as p
+import qexpy.error as e
+import qexpy.plotting as p
 
 
 def test1():
