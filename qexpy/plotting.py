@@ -1,6 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
-import qexpy.error as e
+import qexpy.error as qe
 import qexpy.utils as qu
 from math import pi
 import bokeh.plotting as bp
@@ -11,6 +11,22 @@ from numpy import int64, float64, ndarray, int32, float32
 CONSTANT = (int, float, int64, float64, int32, float32)
 ARRAY = (list, tuple, ndarray)
 
+#class XYDataSet:
+#    '''An XYDataSet contains a paired set of Measurement_Array Objects,
+#    typically, a set of x and y values to be used for a plot'''
+#
+#    def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
+#        self.x = qe.MA(x,error=xerr)
+#        self.xdata = self.x.get_means()
+#        self.xerr = self.x.get_stds()
+#        self.xunits = self.x.get_units_str()
+#        self.xname = self.x.name
+#        
+#        self.y = qe.MA(y,error=yerr)
+#        self.ydata = self.y.get_means()
+#        self.yerr = self.y.get_stds()
+#        self.yunits = self.y.get_units_str()
+#        self.yname = self.y.name
 
 class Plot:
     '''Objects which contain a dataset and any number of fuctions which can
@@ -36,7 +52,7 @@ class Plot:
     def gauss(x, mean, std):
         '''Fucntion of gaussian distribution'''
         from error import exp
-        return (2*pi*std**2)**(-1/2)*exp(-(x-mean)**2/2/std**2)
+        return (0 if std==0 else (2*pi*std**2)**(-0.5)*exp(-0.5*(x-mean)**2/std**2))
 
     fits = {
             'linear': lambda x, b, m: b+np.multiply(m, x),
@@ -58,8 +74,19 @@ class Plot:
         self.pars_fit = []
         self.pars_err = []
         self.pcov = []
-        data_transform(self, x, y, xerr, yerr)
 
+        self.x = qe.MeasurementArray(x,error=xerr)
+        self.xdata = self.x.get_means()
+        self.xerr = self.x.get_stds()
+        self.xunits = self.x.get_units_str()
+        self.xname = self.x.name
+        
+        self.y = qe.MeasurementArray(y,error=yerr)
+        self.ydata = self.y.get_means()
+        self.yerr = self.y.get_stds()
+        self.yunits = self.y.get_units_str()
+        self.yname = self.y.name
+        
         self.colors = {
             'Data Points': ['red', 'black'],
             'Fit': ['blue', 'green'],
@@ -72,9 +99,9 @@ class Plot:
         self.flag = {'fitted': False, 'residuals': False,
                      'Manual': False} # analysis:ignore
         self.attributes = {
-            'title': self.xname+' versus '+self.yname,
-            'xaxis': self.xname+' '+self.xunits,
-            'yaxis': self.yname+' '+self.yunits,
+            'title': self.yname+' versus '+self.xname,
+            'xaxis': self.xname+'/'+self.xunits,
+            'yaxis': self.yname+'/'+self.yunits,
             'data': data_name, 'function': (), }
         self.fit_parameters = ()
         self.yres = None
@@ -90,6 +117,8 @@ class Plot:
 ###############################################################################
 # User Methods for adding to Plot Objects
 ###############################################################################
+    def add_plot(self, plot):
+        self.plots.append(plot)
 
     def residuals(self):
         '''Request residual output for plot.'''
@@ -212,7 +241,7 @@ class Plot:
                                                     (lambda x: model
                                                      (x, *self.pars_fit
                                                       ), self.xdata
-                                                     )), 2)), 1/2)
+                                                     )), 2)), 0.5)
 
             self.pars_fit, self.pcov = sp.curve_fit(
                                         model, data_range, self.ydata,
@@ -234,7 +263,7 @@ class Plot:
                 name = 'par %d' % (i)
 
             self.fit_parameters += (
-                e.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
+                qe.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
 
             for i in range(len(self.fit_parameters)-1):
                 self.fit_parameters[0].set_covariance(self.fit_parameters[i+1],
@@ -357,6 +386,11 @@ class Plot:
         If no residual plot exists, a single Bokeh object, containing the
         main plot is returned. Else, a tuple with the main and residual plot
         in that order is returned.'''
+        
+        #disable MinMax to speed things up
+        recall = qe.Measurement.minmax_n
+        qe.Measurement.minmax_n=1
+        
         # create a new plot
         self.p = bp.figure(
             tools='save, pan, box_zoom, wheel_zoom, reset',
@@ -400,6 +434,7 @@ class Plot:
             self.function_counter += 1
 
         if self.flag['residuals'] is False:
+            qe.Measurement.minmax_n=recall
             return self.p
         else:
             self.res = bp.figure(
@@ -416,7 +451,9 @@ class Plot:
 
             # plot y errorbars
             _error_bar(self, residual=True)
+            qe.Measurement.minmax_n=recall
             return (self.p, self.res)
+       
 
     def show(self, output='inline'):
         '''
@@ -424,7 +461,10 @@ class Plot:
         Previous methods simply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
-
+        #disable MinMax to speed things up
+        recall = qe.Measurement.minmax_n
+        qe.Measurement.minmax_n=1
+        
         if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
                            title=self.attributes['title'])
@@ -492,6 +532,7 @@ class Plot:
 
         if self.flag['residuals'] is False:
             bp.show(self.p)
+            qe.Measurement.minmax_n=recall
             return self.p
         else:
 
@@ -511,6 +552,7 @@ class Plot:
 
             gp_alt = bi.gridplot([[self.p], [self.res]])
             bp.show(gp_alt)
+            qe.Measurement.minmax_n=recall
             return gp_alt
 
     def show_on(self, plot2, output='inline'):
@@ -519,6 +561,9 @@ class Plot:
         Previous methods sumply edit parameters which are used here, to
         prevent run times increasing due to rebuilding the bokeh plot object.
         '''
+        #disable MinMax to speed things up
+        recall = qe.Measurement.minmax_n
+        qe.Measurement.minmax_n=1
 
         if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
@@ -563,13 +608,14 @@ class Plot:
                        plot_object=self)
 
         if self.flag['fitted'] is True:
+            
             data = [min(self.xdata)-max(self.xerr),
                     max(self.xdata)+max(self.xerr)]
             _plot_function(
                 self, data,
                 lambda x: self.fit_function(x, *self.fit_parameters),
                 legend_name='Fit', color=plot2.colors['Fit'][0])
-
+            
             self.function_counter += 1
 
             if self.fit_parameters[1].mean > 0:
@@ -586,7 +632,7 @@ class Plot:
                 self, data,
                 lambda x: plot2.fit_function(x, *plot2.fit_parameters),
                 legend_name='Second Fit', color=plot2.colors['Fit'][1])
-
+            
             self.function_counter += 1
 
         for func in self.attributes['function']:
@@ -597,6 +643,7 @@ class Plot:
         if self.flag['residuals'] is False and\
                 plot2.flag['residuals'] is False:
             bp.show(self.p)
+            qe.Measurement.minmax_n = recall
             return self.p
 
         elif self.flag['residuals'] is True and\
@@ -630,6 +677,7 @@ class Plot:
 
             gp_alt = bi.gridplot([[self.p], [self.res], [plot2.res]])
             bp.show(gp_alt)
+            qe.Measurement.minmax_n = recall
             return gp_alt
 
 ###############################################################################
@@ -709,7 +757,7 @@ class Plot:
                 (np.power(self.yerr, 2) +
                 np.power(np.multiply(self.xerr, #analysis:ignore
                 num_der(lambda x: model(x, *self.pars_fit) , #analysis:ignore
-                self.xdata)), 2)), 1/2) #analysis:ignore
+                self.xdata)), 2)), 0.5) #analysis:ignore
 
             self.pars_fit, self.pcov = sp.curve_fit(
                                         model, data_range, self.ydata,
@@ -731,7 +779,7 @@ class Plot:
                 name = 'par %d' % (i)
 
             self.fit_parameters += (
-                e.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
+                qe.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
         self.flag['fitted'] = True
 
     def first_year_show(self, output='inline'):
@@ -1003,74 +1051,6 @@ def _plot_function(self, xdata, theory, n=1000, legend_name=None, color=None):
 ###############################################################################
 
 
-def data_transform(self, x, y, xerr=None, yerr=None):
-    '''Function to interpret user inputted data into a form compatible with
-    Plot objects.
-
-    Based on various input cases, the user given data is transformed into two
-    lists for x and y containing the data values and errors. These values and
-    any values included in measurement objects, should those objects be
-    inputted, are stored as object attributes. Information such as data units,
-    and the name of datasets are stored.'''
-
-    def _plot_arguments(arg, arg_err=None):
-        '''Creates data and error for various inputs.
-        '''
-        if type(arg) is e.ExperimentalValue:
-            # For input of Measurement object
-            arg_measurement = e.MeasurementArray(arg.info['Data'],
-                                                 arg.info['Error'],
-                                                 name=arg.name)
-            arg_data = arg_measurement.info['Data']
-            arg_error = arg_measurement.info['Error']
-            if arg_error is None:
-                arg_error = [0]*len(arg_data)
-
-        elif type(arg) is np.ndarray and\
-                all(isinstance(n, e.ExperimentalValue) for n in arg):
-            # For input of array of Measurement objects
-            arg_data = []
-            arg_error = []
-            for val in arg:
-                arg_data.append(val.mean)
-                arg_error.append(val.std)
-            arg_measurement = e.MeasurementArray(arg_data, arg_error)
-
-        elif type(arg) in ARRAY and\
-                all(isinstance(n, CONSTANT) for n in arg):
-            # For input of array of values to be plotted
-            arg_data = []
-            for val in arg:
-                arg_data.append(val)
-
-            if arg_err is not None:
-                arg_error = []
-                for val in arg_err:
-                    arg_error.append(val)
-            else:
-                arg_error = [0]*len(arg)
-            arg_measurement = e.MeasurementArray(arg_data, arg_error)
-        else:
-            raise TypeError('Input method not recognized.')
-
-        return (arg_data, arg_error, arg_measurement)
-
-    def _plot_labels(arg):
-        unit_string = arg[0].get_units()
-
-        if type(arg) is np.ndarray and\
-                all(isinstance(n, e.ExperimentalValue) for n in arg):
-            arg_name = arg[0].name
-        else:
-            arg_name = arg[0].name
-
-        return (unit_string, arg_name,)
-
-    self.xdata, self.xerr, x = _plot_arguments(x, xerr)
-    self.ydata, self.yerr, y = _plot_arguments(y, yerr)
-    self.xunits, self.xname = _plot_labels(x)
-    self.yunits, self.yname = _plot_labels(y)
-
 
 def update_plot(self):
     ''' Creates interactive sliders in Jupyter Notebook to adjust fit.
@@ -1080,11 +1060,11 @@ def update_plot(self):
     range_argument = ()
     for par in self.fit_parameters:
         min_val = par.mean - 2*par.std
-        increment = (par.mean-min_val)/100
+        increment = (par.mean-min_val)*0.01
         range_argument += (min_val, par.mean, increment)
 
     for par in self.fit_parameters:
-        increment = (par.std)/100
+        increment = (par.std)*0.01
         range_argument += (0, par.std, increment)
 
     @interact(b=self.fit_parameters[0].mean, m=self.fit_parameters[1].mean,

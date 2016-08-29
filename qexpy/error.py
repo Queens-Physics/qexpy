@@ -3,7 +3,6 @@ import bokeh.plotting as bp
 import bokeh.io as bi
 import qexpy.utils as qu
 
-
 class ExperimentalValue:
     '''
     Root class of objects which containt a mean and standard deviation.
@@ -14,6 +13,8 @@ class ExperimentalValue:
     error_method = "Derivative"  # Default error propogation method
     print_style = "Default"  # Default printing style
     mc_trial_number = 10000  # number of trial in Monte Carlo simulation
+    minmax_n = 100 # grid size in MinMax calculation
+
     figs = None
     figs_on_uncertainty = False
     register = {}
@@ -22,121 +23,49 @@ class ExperimentalValue:
 
     # Defining common types under single arrayclear
     from numpy import int64, float64, ndarray, int32, float32
-    CONSTANT = (int, float, int64, float64, int32, float32)
-    ARRAY = (list, tuple, ndarray)
+    CONSTANT = qu.number_types #(int, float, int64, float64, int32, float32)
+    ARRAY = qu.array_types #(list, tuple, ndarray)
 
     def __init__(self, *args, name=None):
         '''
         Creates a variable that contains a mean, standard deviation,
         and name for inputted data.
         '''
-        data = None
-        error_data = None
-
-        # If two values eneterd first value is mean and second value is std
-        if len(args) == 2 and all(
-                isinstance(n, ExperimentalValue.CONSTANT)for n in args
-                ):
-            self.mean = args[0]
-            self.std = args[1]
-            # data = [args[0]]
-
-        # If an array and single value are entered, then error is uniform for
-        # first array.
-        elif len(args) == 2 and type(args[0]) in ExperimentalValue.ARRAY and\
-                type(args[1]) in ExperimentalValue.CONSTANT:
-
-            mean_vals = args[0]
-            std_vals = [args[1]]*len(args[0])
-            (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-            data = mean_vals
-            error_data = std_vals
-
-        # Checks that all arguments are array type
-        elif all(isinstance(n, ExperimentalValue.ARRAY) for n in args):
-
-            # Sample mean and std talen from single array of values
-            if len(args) == 1 and\
-                    all(isinstance(n, ExperimentalValue.CONSTANT)
-                        for n in args[0]):
-                args = args[0]
-                (self.mean, self.std) = _variance(args)
-                data = list(args)
-
-            # Single array of Measurements, weighted mean and std taken
-            elif len(args) == 1 and \
-                    all(isinstance(n, ExperimentalValue) for n in args[0]):
-                mean_vals = []
-                std_vals = []
-                for arg in args[0]:
-                    mean_vals.append(arg.mean)
-                    std_vals.append(arg.std)
-                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-                data = mean_vals
-                error_data = std_vals
-
-            # Mean and std taken from array of values and array of errors
-            elif len(args) == 2 and \
-                    all(
-                    isinstance(n, ExperimentalValue.CONSTANT)for n in args[0]
-                    ) and\
-                    all(
-                    isinstance(n, ExperimentalValue.CONSTANT)for n in args[1]):
-                mean_vals = args[0]
-                if len(args[1]) == 1:
-                    std_vals = args[1]*len(args[0])
-                else:
-                    std_vals = args[1]
-                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-                data = mean_vals
-                error_data = std_vals
-
-            # For series of arrays of length 2, element 0 is mean, 1 is std.
-            elif len(args) > 2 and all(len(n) is 2 for n in args):
-                mean_vals = []
-                std_vals = []
-                for arg in args:
-                    mean_vals.append(arg[0])
-                    std_vals.append(arg[1])
-                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-                data = mean_vals
-                error_data = std_vals
-
+        if len(args) ==1:
+            if isinstance(args[0], qu.array_types):
+                data = np.ndarray(len(args[0]))
+                for index in range(len(args[0])):
+                    data[index] = args[0][index]
+                self.mean = data.mean()
+                self.std = data.std(ddof=1)
             else:
-                raise TypeError('''Measurement input must be either a single
-                array of values, or two arrays with mean values and error
-                values respectivly.''')
-
-        elif len(args) > 2:
-            # Series of values entered, mean and std taken from said values
-            if all(isinstance(n, ExperimentalValue.CONSTANT) for n in args):
-                (self.mean, self.std) = _variance(args)
-                data = list(args)
-
-            # Series of Measurements, weighted mean and std taken
-            elif all(isinstance(n, ExperimentalValue) for n in args):
-                mean_vals = []
-                std_vals = []
-                for arg in args:
-                    mean_vals.append(arg.mean)
-                    std_vals.append(arg.std)
-                (self.mean, self.std) = _weighted_variance(mean_vals, std_vals)
-                data = mean_vals
-                error_data = std_vals
-
-        # If that fails, where than will you go
+                raise TypeError('''Input must be either a single array of values,
+                      or the central value and uncertainty in one measurement''')
+        elif len(args)==2:
+            if isinstance(args[0], qu.number_types) and isinstance(args[1], qu.number_types):
+                self.mean = float(args[0])
+                self.std = float(args[1])
+                data = np.ndarray(1)
+                error_data = np.ndarray(1)
+                data[0] = self.mean
+                #error_data[0] = self.std
+            else:
+                raise TypeError('''Input must be either a single array of values,
+                      or the central value and uncertainty in one measurement''')
         else:
-            raise ValueError('''Input arguments must be one of: a mean and
-            standard deviation, an array of values, or the individual values
-            themselves.''')
-
+            raise TypeError('''Input must be either a single array of values,
+                  or the central value and uncertainty in one measurement''')
+       
+       
         self.info = {
-                'ID': '', 'Formula': '', 'Method': '', 'Data': data,
-                'Error': error_data, 'Function': {
+                'ID': '', 'Formula': '', 'Method': '', 'Data': data,\
+                #'Error': error_data,
+                'Function': {
                         'operation': (), 'variables': ()}, }
 
         ExperimentalValue.id_register[id(self)] = self
         self.print_style = ExperimentalValue.print_style
+        
         if name is not None:
             self.user_name = True
         else:
@@ -144,7 +73,7 @@ class ExperimentalValue:
 
         self.units = {}
         self.MC_list = None
-
+        
 ###############################################################################
 # Methods for printing or returning Measurement paramters
 ###############################################################################
@@ -167,7 +96,7 @@ class ExperimentalValue:
 
         unit_string = self.get_units()
         if unit_string != '':
-            string += '['+unit_string+']'
+            string += ' ['+unit_string+']'
 
         return string
 
@@ -281,8 +210,49 @@ class ExperimentalValue:
         '''
         if self.info['Data'] is None:
             print('No data array exists.')
+            return None
         return self.info['Data']
+    
+    def show_histogram(self, nbins=50, title=None, output='inline'):
+        '''Creates a histogram of the inputted data using Bokeh.
+        '''
+        if self.info['Data'] is None:
+            print("no data to histogram")
+            return None
 
+        if type(title) is str:
+            hist_title = title
+        elif title is None:
+            hist_title = self.name+' Histogram'
+        else:
+            print('Histogram title must be a string.')
+            hist_title = self.name+' Histogram'
+
+        p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
+                    background_fill_color="#FFFFFF")
+
+        hist, edges = np.histogram(self.info['Data'], bins=nbins)
+
+        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                fill_color="#036564", line_color="#033649")
+
+        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
+                line_dash='dashed')
+        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
+                line_dash='dashed')
+        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
+                line_dash='dashed')
+        
+        if output =='file' or not qu.in_notebook():
+            bi.output_file(self.name+' histogram.html', title=hist_title)
+        elif not qu.bokeh_ouput_notebook_called:
+            bi.output_notebook()
+            #This must be the first time calling output_notebook, keep track that it's been called:
+            qu.bokeh_ouput_notebook_called = True
+            
+        bp.show(p1)
+        return p1
+    
     def show_MC_histogram(self, nbins=50, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
@@ -301,7 +271,7 @@ class ExperimentalValue:
 
         p1 = bp.figure(title=hist_title, tools='''save, pan, box_zoom,
                        wheel_zoom, reset''',
-                       background_fill_color="#E8DDCB")
+                       background_fill_color="#FFFFFF")
 
         hist, edges = np.histogram(self.MC_list, bins=nbins)
 
@@ -356,15 +326,21 @@ class ExperimentalValue:
         if len(data_x) != len(data_y):
             raise TypeError('Lengths of data arrays must be equal to\
                       define a covariance')
-        sigma_xy = 0
-        for i in range(len(data_x)):
-            sigma_xy += (data_x[i]-x.mean)*(data_y[i]-y.mean)
-        sigma_xy /= (len(data_x)-1)
-
+            
+        sigma_xy = np.sum((data_x-x.mean)*(data_y-y.mean))  
+        nmin1 = len(data_x)-1
+        if nmin1 != 0:
+            sigma_xy /= nmin1
+                    
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
 
-        factor = sigma_xy/x.std/y.std
+        factor = sigma_xy
+        if x.std != 0:
+            factor /= x.std
+        if y.std != 0:
+            factor /= y.std
+              
         x.correlation[y.info['ID']] = factor
         y.correlation[x.info['ID']] = factor
 
@@ -396,7 +372,11 @@ class ExperimentalValue:
         between two variables is added to both objects.
         '''
         x = self
-        factor = sigma_xy/x.std/y.std
+        factor = sigma_xy
+        if x.std != 0:
+            factor /= x.std
+        if y.std != 0:
+            factor /= y.std
 
         x.correlation[y.info['ID']] = factor
         y.correlation[x.info['ID']] = factor
@@ -444,7 +424,14 @@ class ExperimentalValue:
         sigma_xy = x.covariance[y.info['ID']]
         sigma_x = x.std
         sigma_y = y.std
-        return sigma_xy/sigma_x/sigma_y
+        
+        factor = sigma_xy
+        if x.std != 0:
+            factor /= x.std
+        if y.std != 0:
+            factor /= y.std
+            
+        return factor
 
 ###############################################################################
 # Methods for Naming and Units
@@ -485,7 +472,7 @@ class ExperimentalValue:
             var1 = args[0]
             var2 = args[1]
 
-        op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan',
+        op_string = {op.sin: 'sin', op.cos: 'cos', op.tan: 'tan', op.sqrt: 'sqrt',
                      op.csc: 'csc', op.sec: 'sec', op.cot: 'cot',
                      op.exp: 'exp', op.log: 'log', op.add: '+',
                      op.sub: '-', op.mul: '*', op.div: '/', op.power: '**',
@@ -687,17 +674,7 @@ class ExperimentalValue:
             return other**self
         else:
             return op.operation_wrap(op.power, other, self)
-
-    def sqrt(x):
-        if x.mean < 0:
-            print('Imaginary numbers are no supported in qexpy.')
-        elif type(x) in ExperimentalValue.CONSTANT:
-            import math as m
-            return m.sqrt(x)
-        else:
-            import qexpy.error_operations as op
-            return op.operation_wrap(op.power, x, 1/2)
-
+    
     def __neg__(self):
         import qexpy.error_operations as op
         return op.neg(self)
@@ -726,7 +703,10 @@ class ExperimentalValue:
                 raise TypeError
             else:
                 return self.mean == other.mean
-
+            
+    def sqrt(x):
+        return sqrt(x)
+    
     def log(x):
         return log(x)
 
@@ -884,76 +864,315 @@ class Constant(ExperimentalValue):
         self.root = ()
 
 
-def MeasurementArray(data, error=None, name=None, units=None):
-    ''' Creates an array of measurements from inputted mean and standard
-    deviation arrays.
-    '''
-    if type(data) not in ExperimentalValue.ARRAY:
-        print('Data array must be a list, tuple, or numpy array.')
-        return None
-
-    if type(error) not in ExperimentalValue.ARRAY and\
-            type(error) not in ExperimentalValue.CONSTANT and\
-            error is not None:
-        print('Error array must be a list, tuple, numpy array or constant.')
-        return None
-
-    if error is None:
-        error = len(data)*[0]
-    elif len(error) is 1:
-        error = len(data)*error
-    elif type(error) in ExperimentalValue.CONSTANT:
-        error = len(data)*[error]
-
-    if len(data) != len(error):
-        print('''Data and error array must be of the same length, or the
-        error array should be of length 1.''')
-        return None
-
-    data_name = name
-    data_units = units
-
-    measurement = []
-    for i in range(len(data)):
-        measurement.append(Measurement(data[i], error[i], name=data_name,
-                                       units=data_units))
-
-    return np.array(measurement)
+#def MeasurementArray(data, error=None, name=None, units=None):
+#    ''' Creates an array of measurements from inputted mean and standard
+#    deviation arrays.
+#    '''
+#    if type(data) not in ExperimentalValue.ARRAY:
+#        print('Data array must be a list, tuple, or numpy array.')
+#        return None
+#
+#    if type(error) not in ExperimentalValue.ARRAY and\
+#            type(error) not in ExperimentalValue.CONSTANT and\
+#            error is not None:
+#        print('Error array must be a list, tuple, numpy array or constant.')
+#        return None
+#
+#    if error is None:
+#        error = len(data)*[0]
+#    elif len(error) is 1:
+#        error = len(data)*error
+#    elif type(error) in ExperimentalValue.CONSTANT:
+#        error = len(data)*[error]
+#
+#    if len(data) != len(error):
+#        print('''Data and error array must be of the same length, or the
+#        error array should be of length 1.''')
+#        return None
+#
+#    data_name = name
+#    data_units = units
+#
+#    measurement = []
+#    for i in range(len(data)):
+#        measurement.append(Measurement(data[i], error[i], name=data_name,
+#                                       units=data_units))
+#
+#    return np.array(measurement)
 
 
 class Measurement_Array(np.ndarray):
-    ''' Creates an array of measurements from inputted mean and standard
-    deviation arrays.
+    ''' A numpy-based array of Measurement objects'''
+    id_number = 0
+    def __new__(subtype, shape, dtype=Measurement, buffer=None, offset=0,
+          strides=None, order=None, name = None, units = None):
+        obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
+                         order)
+        
+        if name is not None:
+            obj.name = name
+        else:
+            obj.name = 'unnamed_arr%d' % (Measurement_Array.id_number)
+            
+        obj.units = {}
+        if units is not None:
+            if type(units) is str:
+                obj.units[units] = 1
+            else:
+                for i in range(len(units)//2):
+                    obj.units[units[2*i]] = units[2*i+1]
 
-    Subclass of numpy arrays, which have properties relating to Measurement
-    objects, and weighted statistical analysis of unique measured values.
-    '''
-    def __init__(self, *args):
-        self.mean = 1
+        Measurement_Array.id_number += 1
+        
+        return obj
 
+    def __array_finalize__(self, obj):
+        if obj is None: return
+        self.units = getattr(obj, 'units', None)
+        self.name = getattr(obj, 'name', None)
+        
+    def __array_wrap__(self, out_arr, context=None):
+        # then just call the parent
+        return np.ndarray.__array_wrap__(self, out_arr, context)
+ 
+    def get_means(self):
+        '''Returns a numpy array with the means of the measurements'''
+        if self.size == 0:
+            return np.ndarray(0)
+        
+        means = np.ndarray(shape=self.shape)
+        
+        for index, item in np.ndenumerate(self):
+            if item is not None:
+                means[index] = item.mean
+            else:
+                means[index] = 0
+        return means
+    
+    def get_stds(self):
+        '''Returns an array with the standard deviations of the measurements'''
+        if self.size == 0:
+            return np.ndarray(0)
+        
+        stds = np.ndarray(shape=self.shape)
+        
+        for index, item in np.ndenumerate(self):
+            if item is not None:
+                stds[index] = item.std
+            else:
+                stds[index] = 0
+        return stds
+    
+    def mean(self):
+        '''Return mean of the means of the measurements'''
+        #overides numpy mean()
+        nparr = self.get_means()
+        self.mean = nparr.mean()
+        return self.mean
+
+    def get_mean(self):
+        '''Return mean of the means of the measurements'''
+        return self.mean()
+    
+    def std(self, ddof=1):
+        '''Return standard deviation of the means of each measurement'''
+        nparr = self.get_means()
+        self.std = nparr.std(ddof=ddof)
+        return self.std 
+    
+    def get_std(self, ddof=1):
+        '''Return standard deviation of the means of each measurement'''
+        return self.std()
+
+   
+    def get_error_weighted_mean(self):
+        '''Return error weighted mean and error of the measurements, as a measurement'''
+        sumw2=2
+        mean=0
+        for mes in self:
+            if mes is not None:           
+                if mes.std == 0.0:
+                    continue
+                w2=1./(mes.std**2)
+                mean+=w2*mes.mean
+                sumw2+=w2
+            
+        self.error_weighted_mean =  (0. if sumw2==0 else mean/sumw2)
+        self.error_weighted_std =  (0. if sumw2==0 else np.sqrt(1./sumw2))
+            
+        return Measurement(self.error_weighted_mean, self.error_weighted_std)
+    
+    def get_units_str(self):
+        '''Returns a string with the units.
+        '''
+        unit_string = ''
+        if self.units != {}:
+            for key in self.units:
+                if self.units[key] == 1 and len(self.units.keys()) is 1:
+                    unit_string = key + unit_string
+                else:
+                    unit_string += key+'^%d' % (self.units[key])
+                    unit_string += ' '
+
+                if unit_string == '':
+                    unit_string = 'unitless'
+        return unit_string
+    
+    def set_errors(self, errors):
+        '''Set all of the errors on the data points - either to a constant value, or to an array of values'''
+        n = self.size
+        
+        if isinstance(error, qu.number_types):#MA([,,,,], error = x)
+            for i in range(n):
+                self[i].std=error
+                
+        elif isinstance(error, qu.array_types):#MA([,,,,], error = [])
+            if len(error)==n:#MA([,,,,], error = [,,,,])
+                for i in range(n):
+                    self[i].std=error[i]
+                    
+            elif len(error)==1: #MA([,,,,], error = [x])
+                for i in range(n):
+                    self[i].std=error[0]
+        else:
+            print("error array must be same length as data")
+    
+    def __str__(self):
+        theString=''
+        for item in self:
+            theString += item.__str__()+',\n'
+        return theString
+            
+def MeasurementArray(data, error=None, name=None, units=None):
+    '''Function to easily construct a Measurement_Array'''
+    
+    array = Measurement_Array(0, name=name, units=units)
+    user_name= True if name != None else False
+        
+    if error is None: #MA(data)
+        if isinstance(data, Measurement_Array):
+            array = data
+        elif isinstance(data, qu.array_types): #MA([...])
+            n = len(data)       
+            array.resize(n)
+            if isinstance(data[0], qu.array_types) and len (data[0]) == 2: #MA([ (,), (,), (,)])
+                for i in range(n):
+                    data_name = "{}_{}".format(array.name,i)
+                    array[i]=Measurement(data[i][0],data[i][1], units=units, name=data_name)
+                    array[i].user_name=user_name
+                    
+            elif isinstance(data[0], qu.number_types): #MA([,,,])
+                for i in range(n):
+                    data_name = "{}_{}".format(array.name,i)
+                    array[i]=Measurement(float(data[i]),0., units=units, name=data_name)
+                    array[i].user_name=user_name
+            else:
+                print("unsupported type for data")
+             
+        elif isinstance(data, qu.int_types): #MA(n)
+            array.resize(data)
+            for i in range(data):
+                data_name = "{}_{}".format(array.name,i)
+                array[i]=Measurement(0.,0., units=units, name=data_name)
+                array[i].user_name=user_name
+        else:
+            print("unsupported type for data")
+            
+    else: #error is not None
+        if isinstance(data, Measurement_Array):
+            array = data
+            array.set_errors(error)
+            
+        elif isinstance(data, qu.array_types): #MA([], error = ...)
+            n = len(data)       
+            array.resize(n)
+            
+            if isinstance(data[0], qu.number_types):#MA([,,,,], error = ...)
+                
+                if isinstance(error, qu.number_types):#MA([,,,,], error = x)
+                    for i in range(n):
+                        data_name = "{}_{}".format(array.name,i)
+                        array[i]=Measurement(float(data[i]),error, units=units, name=data_name)
+                        array[i].user_name=user_name
+                elif isinstance(error, qu.array_types):#MA([,,,,], error = [])
+                    if len(error)==len(data):#MA([,,,,], error = [,,,,])
+                        for i in range(n):
+                            data_name = "{}_{}".format(array.name,i)
+                            array[i]=Measurement(float(data[i]),error[i], units=units, name=data_name)    
+                            array[i].user_name=user_name
+                    elif len(error)==1: #MA([,,,,], error = [x])
+                        for i in range(n):
+                            data_name = "{}_{}".format(array.name,i)
+                            array[i]=Measurement(float(data[i]),error[0], units=units, name=data_name)
+                            array[i].user_name=user_name
+                    else:
+                        print("error array must be same length as data")
+                else:
+                    print("unsupported type for error")
+                    
+            else: # data[0] must be a float
+                print("unsupported type for data:", type(data[0]))
+                
+        elif isinstance(data, qu.number_types): #MA(x,error=...)
+            array.resize(1)
+            if isinstance(error, qu.number_types):#MA(x, error = y)
+                data_name = "{}_{}".format(array.name,0)
+                array[0]=Measurement(float(data),error, units=units, name=data_name)
+                array[0].user_name=user_name
+            elif isinstance(error, qu.array_types) and len(error)==1:#MA(x, error = [u])
+                data_name = "{}_{}".format(array.name,0)
+                array[0]=Measurement(float(data),error[0], units=units, name=data_name)
+                array[0].user_name=user_name
+            else:
+                print("unsupported type for error")
+        else:
+            print("unsupported type of data")
+        
+    return array        
+        
+        
 
 ###############################################################################
 # Mathematical Functions
 ###############################################################################
 
+ExperimentalValue.ARRAY = ExperimentalValue.ARRAY +(Measurement_Array,)
 
 def sqrt(x):
-    if x.mean < 0:
-        print('Imaginary numbers are no supported in qexpy.')
-    elif type(x) in ExperimentalValue.CONSTANT:
-        import math as m
-        return m.sqrt(x)
+    import qexpy.error_operations as op      
+    if type(x) in ExperimentalValue.ARRAY:
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)  
+        return result
     else:
-        import qexpy.error_operations as op
-        return op.operation_wrap(op.power, x, 1/2)
-
+        return op.operation_wrap(op.sqrt, x, func_flag=True)
 
 def sin(x):
     import qexpy.error_operations as op
+    
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.sin, value, func_flag=True))
+        if len(x) <1:
+            return np.ndarray(0, dtype=float)
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sin, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sin, x[index], func_flag=True)    
+        #result = []      
+        #for value in x:
+            #result.append(op.operation_wrap(op.sin, value, func_flag=True))
+        
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -965,9 +1184,20 @@ def sin(x):
 def cos(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.cos, value, func_flag=True))
+          
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.cos, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.cos, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.cos, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -979,9 +1209,19 @@ def cos(x):
 def tan(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.tan, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.tan, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.tan, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.tan, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -993,9 +1233,19 @@ def tan(x):
 def sec(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.sec, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sec, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.sec, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.sec, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1007,9 +1257,19 @@ def sec(x):
 def csc(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.csc, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.csc, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.csc, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.csc, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1021,9 +1281,19 @@ def csc(x):
 def cot(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.cot, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.cot, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.cot, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.cot, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1035,9 +1305,19 @@ def cot(x):
 def log(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.log, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.log, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.log, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.log, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1049,9 +1329,19 @@ def log(x):
 def exp(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.exp, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.exp, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1063,9 +1353,19 @@ def exp(x):
 def e(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.exp, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.exp, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1077,9 +1377,19 @@ def e(x):
 def asin(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.asin, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.asin, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.asin, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.asin, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1091,9 +1401,19 @@ def asin(x):
 def acos(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.acos, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.acos, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.acos, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.acos, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1105,9 +1425,19 @@ def acos(x):
 def atan(x):
     import qexpy.error_operations as op
     if type(x) in ExperimentalValue.ARRAY:
-        result = []
-        for value in x:
-            result.append(op.operation_wrap(op.atan, value, func_flag=True))
+        if len(x) <1:
+            return []
+        if isinstance(x[0],Measurement):
+            result = Measurement_Array(len(x))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.atan, x[index], func_flag=True)
+        else:
+            result = np.ndarray(len(x), dtype=type(x[0]))
+            for index in range(len(x)):
+                result[index]=op.operation_wrap(op.atan, x[index], func_flag=True)
+        #result = []
+        #for value in x:
+        #    result.append(op.operation_wrap(op.atan, value, func_flag=True))
         return result
     elif type(x) in ExperimentalValue.CONSTANT:
         import math as m
@@ -1443,7 +1773,7 @@ def show_histogram(data, title=None, output='inline'):
     mean, std = _variance(data)
 
     p1 = bp.figure(title=hist_title, tools="save",
-                   background_fill_color="#E8DDCB")
+                   background_fill_color="#FFFF")
 
     hist, edges = np.histogram(data, bins=50)
 

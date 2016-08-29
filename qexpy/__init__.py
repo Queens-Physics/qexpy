@@ -1,8 +1,8 @@
-from qexpy.error import Measurement, MeasurementArray,\
-                        set_print_style, set_sigfigs_centralvalue,\
-                        set_sigfigs_error, set_sigfigs, set_error_method,\
-                        sqrt, sin, cos, tan, sec, csc, cot, log, exp, e, asin,\
-                        acos, atan
+
+from qexpy.error import Measurement, MeasurementArray, Measurement_Array,\
+                        set_print_style, set_sigfigs_centralvalue, set_sigfigs_error, set_sigfigs, set_error_method,\
+                        sqrt, sin, cos, tan, sec, csc, cot, log, exp, e, asin, acos, atan
+        
 
 from qexpy.plotting import Plot
 import qexpy.utils as qu

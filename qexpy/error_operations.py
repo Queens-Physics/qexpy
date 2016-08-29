@@ -1,8 +1,13 @@
-from numpy import int64, float64, ndarray, int32, float32
+#from numpy import int64, float64, ndarray, int32, float32
+import numpy as np
 import math as m
-CONSTANT = (int, float, int64, float64, int32, float32)
-ARRAY = (list, tuple, ndarray)
+import qexpy.utils as qu
+from qexpy.error import Measurement_Array, Measurement, Constant, Function
 
+
+CONSTANT = qu.number_types 
+ARRAY = qu.array_types +(Measurement_Array,)
+MEASUREMENT = (Measurement, Constant, Function)
 
 ###############################################################################
 # Mathematical operations
@@ -106,15 +111,15 @@ def div(a, b):
 
     if type(a) in CONSTANT:
         if type(b) in CONSTANT:
-            return a/b
+            return a if b ==0 else a/b
         else:
-            return a/b.mean
+            return a if b ==0 else a/b.mean
 
     else:
         if type(b) in CONSTANT:
-            return a.mean/b
+            return a.mean if b ==0 else a.mean/b
         else:
-            return a.mean/b.mean
+            return a.mean if b.mean ==0 else a.mean/b.mean
 
 
 def power(a, b):
@@ -140,38 +145,44 @@ def power(a, b):
 # Mathematical Functions
 ###############################################################################
 
+def sqrt(x):
+    '''Returns the square root of a measurement with propagated errors'''
+    import math as m
 
+    if type(x) in CONSTANT:
+        return m.sqrt(x)
+    elif type(x) in ARRAY:
+        return np.sqrt(x)
+    elif isinstance(x,MEASUREMENT):
+        return m.sqrt(x.mean)
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
+    
 def sin(x):
     '''Returns the sine of a measurement with propagated errors'''
     import math as m
 
     if type(x) in CONSTANT:
         return m.sin(x)
-
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.sin(x[i]))
-        return result
-
-    else:
+        return np.sin(x)
+    elif isinstance(x,MEASUREMENT):
         return m.sin(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def asin(x):
     '''Returns the arctangent of a measurement with propagated errors'''
     import math as m
 
     if type(x) in CONSTANT:
-        return m.asin(x)
+        return m.asin(x)   
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.asin(x[i]))
-        return result
-    else:
+        return np.asin(x)
+    elif isinstance(x,MEASUREMENT):
         return m.asin(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def cos(x):
     '''Returns the cosine of a measurement with propagated errors'''
@@ -179,16 +190,12 @@ def cos(x):
 
     if type(x) in CONSTANT:
         return m.cos(x)
-
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.cos(x[i]))
-        return result
-
-    else:
+        return np.cos(x)
+    elif isinstance(x,MEASUREMENT):
         return m.cos(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def acos(x):
     '''Returns the arctangent of a measurement with propagated errors'''
@@ -197,13 +204,11 @@ def acos(x):
     if type(x) in CONSTANT:
         return m.acos(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.acos(x[i]))
-        return result
-    else:
+        return np.acos(x)
+    elif isinstance(x,MEASUREMENT):
         return m.acos(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def tan(x):
     '''Returns the tangent of a measurement with propagated errors'''
@@ -212,13 +217,11 @@ def tan(x):
     if type(x) in CONSTANT:
         return m.tan(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.tan(x[i]))
-        return result
-    else:
+        return np.tan(x)
+    elif isinstance(x,MEASUREMENT):
         return m.tan(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def atan(x):
     '''Returns the arctangent of a measurement with propagated errors'''
@@ -227,58 +230,50 @@ def atan(x):
     if type(x) in CONSTANT:
         return m.atan(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.atan(x[i]))
-        return result
-    else:
+        return np.atan(x)
+    elif isinstance(x,MEASUREMENT):
         return m.atan(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def sec(x):
     '''Returns the secant of a measurement with propagated errors'''
     import math as m
 
     if type(x) in CONSTANT:
-        return 1/m.cos(x)
+        return 0. if m.cos(x) ==0 else 1./m.cos(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(1/m.cos(x[i]))
-        return result
+        return 1./np.cos(x)
+    elif isinstance(x,MEASUREMENT):
+        return 0. if m.cos(x.mean) ==0 else 1./m.cos(x.mean)
     else:
-        return 1/m.cos(x.mean)
-
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def csc(x):
     '''Returns the cosecant of a measurement with propagated errors'''
     import math as m
 
     if type(x) in CONSTANT:
-        return 1/m.sin(x)
+        return 0. if m.sin(x) ==0 else 1./m.sin(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(1/m.sin(x[i]))
-        return result
+        return 1./np.sin(x)
+    elif isinstance(x,MEASUREMENT):
+        return 0. if m.sin(x.mean) ==0 else 1./m.sin(x.mean)
     else:
-        return 1/m.sin(x.mean)
-
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def cot(x):
     '''Returns the cotangent of a measurement with propagated errors'''
     import math as m
 
     if type(x) in CONSTANT:
-        return 1/m.tan(x)
+        return 0. if m.tan(x) ==0 else 1./m.tan(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(1/m.tan(x[i]))
-        return result
+        return 1./np.tan(x)
+    elif isinstance(x,MEASUREMENT):
+        return 0. if m.tan(x.mean) ==0 else 1./m.tan(x.mean)
     else:
-        return 1/m.tan(x.mean)
-
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def exp(x):
     '''Returns the exponent of a measurement with propagated errors'''
@@ -287,13 +282,11 @@ def exp(x):
     if type(x) in CONSTANT:
         return m.exp(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.exp(x[i]))
-        return result
-    else:
+        return np.exp(x)
+    elif isinstance(x,MEASUREMENT):
         return m.exp(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 def log(x):
     '''Returns the natural logarithm of a measurement with propagated errors'''
@@ -302,13 +295,11 @@ def log(x):
     if type(x) in CONSTANT:
         return m.log(x)
     elif type(x) in ARRAY:
-        result = []
-        for i in range(len(x)):
-            result.append(m.log(x[i]))
-        return result
-    else:
+        return np.log(x)
+    elif isinstance(x,MEASUREMENT):
         return m.log(x.mean)
-
+    else:
+        raise TypeError("Unsupported type: "+str(type(x)))
 
 ###############################################################################
 # Error Propagation Methods
@@ -321,27 +312,31 @@ def find_minmax(function, *args):
     and error on a given function
     '''
     import numpy as np
-
+    N=Measurement.minmax_n
+    
     if len(args) is 1:
         x = args[0]
-        vals = np.linspace(x.mean-x.std, x.mean + x.std, 100)
-        results = []
-        for i in range(100):
-            results.append(function(vals[i]))
-
+        vals = np.linspace(x.mean-x.std, x.mean + x.std, N)
+        results = function(vals)
+            
     elif len(args) is 2:
         a = args[0]
         b = args[1]
-        results = []
-        a_vals = np.linspace(a.mean-a.std, a.mean + a.std, 100)
-        b_vals = np.linspace(b.mean-b.std, b.mean + b.std, 100)
-        for i in range(100):
-            results.append(function(a_vals[i], b_vals[i]))
+        results = np.ndarray(shape=(N,N))
+        a_vals = np.linspace(a.mean-a.std, a.mean + a.std, N)
+        b_vals = np.linspace(b.mean-b.std, b.mean + b.std, N)
+        for i in range(N):
+            for j in range(N):
+                results[i][j]= function(a_vals[i], b_vals[j])
+    else:
+        print("unsupported number of parameters")
+        results = np.ndarray(0)
+        
 
-    min_val = min(results)
-    max_val = max(results)
-    mid_val = (max_val + min_val)/2
-    err = (max_val-min_val)/2
+    min_val = results.min()
+    max_val = results.max()
+    mid_val = (max_val + min_val)/2.
+    err = (max_val-min_val)/2.
     return [mid_val, err]
 
 
@@ -360,7 +355,7 @@ def monte_carlo(func, *args):
 
     _np_func = {add: np.add, sub: np.subtract, mul: np.multiply,
                 div: np.divide, power: np.power, log: np.log,
-                exp: np.exp, sin: np.sin, cos: np.cos,
+                exp: np.exp, sin: np.sin, cos: np.cos, sqrt: np.sqrt,
                 tan: np.tan, atan: np.arctan,
                 csc: lambda x: np.divide(1, np.sin(x)),
                 sec: lambda x: np.divide(1, np.cos(x)),
@@ -453,15 +448,17 @@ def operation_wrap(operation, *args, func_flag=False):
     elif args[0].info["Data"] is not None and func_flag is True:
         result.info["Data"] = (operation(args[0].info["Data"]))
 
-        if args[0].info['Error'] is not None:
-            result.info['Error'] = dev(*args, der=df, manual_args=True)
+        #if args[0].info['Error'] is not None:
+        #    result.info['Error'] = dev(*args, der=df, manual_args=True)
 
     result.derivative.update(df)
     result._update_info(operation, *args, func_flag=func_flag)
     return result
 
 
-diff = {sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
+diff = {
+        sqrt: lambda key, x: (0. if x.mean ==0 else -0.5/m.sqrt(x.mean)*x.derivative[key]),
+        sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
         cos: lambda key, x: -m.sin(x.mean)*x.derivative[key],
         tan: lambda key, x: m.cos(x.mean)**-2*x.derivative[key],
         sec: lambda key, x: m.tan(x.mean)*m.cos(x.mean)**-1*x.derivative[key],
@@ -470,31 +467,32 @@ diff = {sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
 
         cot: lambda key, x: -m.sin(x.mean)**-2*x.derivative[key],
         exp: lambda key, x: m.exp(x.mean)*x.derivative[key],
-        log: lambda key, x: 1/x.mean*x.derivative[key],
+        log: lambda key, x: (0. if x.mean ==0 else 1./x.mean*x.derivative[key]),
         add: lambda key, a, b: a.derivative[key] + b.derivative[key],
         sub: lambda key, a, b: a.derivative[key] - b.derivative[key],
         mul: lambda key, a, b: a.derivative[key]*b.mean +
         b.derivative[key]*a.mean,
 
         div: lambda key, a, b: (a.derivative[key]*b.mean -
-        b.derivative[key]*a.mean) / b.mean**2,
+        b.derivative[key]*a.mean) / (1. if b.mean==0 else b.mean**2),
 
         power: lambda key, a, b: a.mean**b.mean*(
-        b.derivative[key]*m.log(abs(a.mean)) +
-        b.mean/a.mean*a.derivative[key]),
+        b.derivative[key]*( 0. if a.mean<=0. else m.log(a.mean) ) +
+        b.mean/(1. if a.mean ==0 else a.mean)*a.derivative[key]),
 
         asin: lambda key, x: (1-x.mean**2)**(-1/2)*x.derivative[key],
         acos: lambda key, x: -(1-x.mean**2)**(-1/2)*x.derivative[key],
         atan: lambda key, x: 1/(1 + x.mean**2)*x.derivative[key],
         }
 
-op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
+op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec', sqrt: 'sqrt',
              cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
              mul: '*', div: '/', power: '**', asin: 'asin', acos: 'acos',
              atan: 'atan', }
 
 
-def dev(*args, der=None, manual_args=None):
+#def dev(*args, der=None, manual_args=None):
+def dev(*args, der=None):    
     '''
     Returns the standard deviation of a function of N arguments.
 
@@ -506,55 +504,26 @@ def dev(*args, der=None, manual_args=None):
     '''
     import qexpy.error as e
 
-    if manual_args is None:
-        std = 0
-        roots = ()
 
-        for arg in args:
-            for i in range(len(arg.root)):
-                if arg.root[i] not in roots:
-                    roots += (arg.root[i], )
-        for root in roots:
-            std += (der[root]*e.ExperimentalValue.register[root].std)**2
+    std = 0
+    roots = ()
 
-        for i in range(len(roots)):
-            for j in range(len(roots)-i-1):
-                cov = e.ExperimentalValue.register[roots[i]].get_covariance(
-                    e.ExperimentalValue.register[roots[j + 1 + i]])
-                std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
-        std = std**(1/2)
+    for arg in args:
+        for i in range(len(arg.root)):
+            if arg.root[i] not in roots:
+                roots += (arg.root[i], )
+    for root in roots:
+        std += (der[root]*e.ExperimentalValue.register[root].std)**2
 
-        return std
+    for i in range(len(roots)):
+        for j in range(len(roots)-i-1):
+            cov = e.ExperimentalValue.register[roots[i]].get_covariance(
+                e.ExperimentalValue.register[roots[j + 1 + i]])
+            std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
+    std = std**(1/2)
 
-    elif manual_args is True:
-        error = []
+    return std
 
-        for k in range(len(args[0].info['Error'])):
-            std = 0
-            roots = ()
-
-            for arg in args:
-                for i in range(len(arg.root)):
-                    if arg.root[i] not in roots:
-                        roots += (arg.root[i], )
-                for root in roots:
-                    std += (der[root] *
-                            e.ExperimentalValue.register[root].info['Error'][k]
-                            )**2
-
-            for i in range(len(roots)):
-                for j in range(len(roots)-i-1):
-                    cov = e.ExperimentalValue.register[roots[i]
-                                                       ].get_covariance(
-                        e.ExperimentalValue.register[roots[j + 1 + i]])
-                    std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
-            std = std**(1/2)
-            error += [std]
-
-        return error
-
-    else:
-        print('Invaid input in error_operator devs() function.')
 
 
 def check_values(*args):
@@ -588,7 +557,7 @@ def check_formula(operation, a, b=None, func_flag=False):
     import qexpy.error as e
 
     op_string = {
-        sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec',
+        sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec', sqrt: 'sqrt',
         cot: 'cot', exp: 'exp', log: 'log', add: '+', sub: '-',
         mul: '*', div: '/', power: '**', 'neg': '-', asin: 'asin',
         acos: 'acos', atan: 'atan', }
