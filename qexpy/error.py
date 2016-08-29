@@ -94,7 +94,7 @@ class ExperimentalValue:
 
         unit_string = self.get_units()
         if unit_string != '':
-            string += '['+unit_string+']'
+            string += ' ['+unit_string+']'
 
         return string
 
@@ -999,6 +999,12 @@ class Measurement_Array(np.ndarray):
         self.error_weighted_std =  (0. if sumw2==0 else np.sqrt(1./sumw2))
             
         return Measurement(self.error_weighted_mean, self.error_weighted_std)
+    
+    def __str__(self):
+        theString=''
+        for item in self:
+            theString += item.__str__()+',\n'
+        return theString
             
 def MA(data, error=None, name=None, units=None):
     '''Function to construct a Measurement_Array'''
