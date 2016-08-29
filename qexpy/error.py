@@ -912,15 +912,32 @@ class Measurement_Array(np.ndarray):
     ''' A numpy-based array of Measurement objects'''
     id_number = 0
     def __new__(subtype, shape, dtype=Measurement, buffer=None, offset=0,
-          strides=None, order=None):
+          strides=None, order=None, name = None, units = None):
         obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
                          order)
+        
+        if name is not None:
+            obj.name = name
+        else:
+            obj.name = 'unnamed_arr%d' % (Measurement_Array.id_number)
+            
+        obj.units = {}
+        if units is not None:
+            if type(units) is str:
+                obj.units[units] = 1
+            else:
+                for i in range(len(units)//2):
+                    obj.units[units[2*i]] = units[2*i+1]
+
         Measurement_Array.id_number += 1
+        
         return obj
 
     def __array_finalize__(self, obj):
         if obj is None: return
-
+        self.units = getattr(obj, 'units', None)
+        self.name = getattr(obj, 'name', None)
+        
     def __array_wrap__(self, out_arr, context=None):
         # then just call the parent
         return np.ndarray.__array_wrap__(self, out_arr, context)
@@ -994,13 +1011,9 @@ class Measurement_Array(np.ndarray):
             
 def MA(data, error=None, name=None, units=None):
     '''Function to construct a Measurement_Array'''
-    array = Measurement_Array(0)
-    user_name=False
-    if name is not None:
-        array.name = name
-        user_name=True
-    else:
-        array.name = 'unnamed_arr%d' % (Measurement_Array.id_number)
+    
+    array = Measurement_Array(0, name=name, units=units)
+    user_name= True if name != None else False
         
     if error is None: #MA(data)
         if isinstance(data, qu.array_types): #MA([...])
