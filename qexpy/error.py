@@ -13,6 +13,8 @@ class ExperimentalValue:
     error_method = "Derivative"  # Default error propogation method
     print_style = "Default"  # Default printing style
     mc_trial_number = 10000  # number of trial in Monte Carlo simulation
+    minmax_n = 100 # grid size in MinMax calculation
+
     figs = None
     figs_on_uncertainty = False
     register = {}
@@ -71,7 +73,7 @@ class ExperimentalValue:
 
         self.units = {}
         self.MC_list = None
-
+        
 ###############################################################################
 # Methods for printing or returning Measurement paramters
 ###############################################################################
@@ -862,41 +864,41 @@ class Constant(ExperimentalValue):
         self.root = ()
 
 
-def MeasurementArray(data, error=None, name=None, units=None):
-    ''' Creates an array of measurements from inputted mean and standard
-    deviation arrays.
-    '''
-    if type(data) not in ExperimentalValue.ARRAY:
-        print('Data array must be a list, tuple, or numpy array.')
-        return None
-
-    if type(error) not in ExperimentalValue.ARRAY and\
-            type(error) not in ExperimentalValue.CONSTANT and\
-            error is not None:
-        print('Error array must be a list, tuple, numpy array or constant.')
-        return None
-
-    if error is None:
-        error = len(data)*[0]
-    elif len(error) is 1:
-        error = len(data)*error
-    elif type(error) in ExperimentalValue.CONSTANT:
-        error = len(data)*[error]
-
-    if len(data) != len(error):
-        print('''Data and error array must be of the same length, or the
-        error array should be of length 1.''')
-        return None
-
-    data_name = name
-    data_units = units
-
-    measurement = []
-    for i in range(len(data)):
-        measurement.append(Measurement(data[i], error[i], name=data_name,
-                                       units=data_units))
-
-    return np.array(measurement)
+#def MeasurementArray(data, error=None, name=None, units=None):
+#    ''' Creates an array of measurements from inputted mean and standard
+#    deviation arrays.
+#    '''
+#    if type(data) not in ExperimentalValue.ARRAY:
+#        print('Data array must be a list, tuple, or numpy array.')
+#        return None
+#
+#    if type(error) not in ExperimentalValue.ARRAY and\
+#            type(error) not in ExperimentalValue.CONSTANT and\
+#            error is not None:
+#        print('Error array must be a list, tuple, numpy array or constant.')
+#        return None
+#
+#    if error is None:
+#        error = len(data)*[0]
+#    elif len(error) is 1:
+#        error = len(data)*error
+#    elif type(error) in ExperimentalValue.CONSTANT:
+#        error = len(data)*[error]
+#
+#    if len(data) != len(error):
+#        print('''Data and error array must be of the same length, or the
+#        error array should be of length 1.''')
+#        return None
+#
+#    data_name = name
+#    data_units = units
+#
+#    measurement = []
+#    for i in range(len(data)):
+#        measurement.append(Measurement(data[i], error[i], name=data_name,
+#                                       units=data_units))
+#
+#    return np.array(measurement)
 
 
 class Measurement_Array(np.ndarray):
@@ -1000,20 +1002,57 @@ class Measurement_Array(np.ndarray):
             
         return Measurement(self.error_weighted_mean, self.error_weighted_std)
     
+    def get_units_str(self):
+        '''Returns a string with the units.
+        '''
+        unit_string = ''
+        if self.units != {}:
+            for key in self.units:
+                if self.units[key] == 1 and len(self.units.keys()) is 1:
+                    unit_string = key + unit_string
+                else:
+                    unit_string += key+'^%d' % (self.units[key])
+                    unit_string += ' '
+
+                if unit_string == '':
+                    unit_string = 'unitless'
+        return unit_string
+    
+    def set_errors(self, errors):
+        '''Set all of the errors on the data points - either to a constant value, or to an array of values'''
+        n = self.size
+        
+        if isinstance(error, qu.number_types):#MA([,,,,], error = x)
+            for i in range(n):
+                self[i].std=error
+                
+        elif isinstance(error, qu.array_types):#MA([,,,,], error = [])
+            if len(error)==n:#MA([,,,,], error = [,,,,])
+                for i in range(n):
+                    self[i].std=error[i]
+                    
+            elif len(error)==1: #MA([,,,,], error = [x])
+                for i in range(n):
+                    self[i].std=error[0]
+        else:
+            print("error array must be same length as data")
+    
     def __str__(self):
         theString=''
         for item in self:
             theString += item.__str__()+',\n'
         return theString
             
-def MA(data, error=None, name=None, units=None):
-    '''Function to construct a Measurement_Array'''
+def MeasurementArray(data, error=None, name=None, units=None):
+    '''Function to easily construct a Measurement_Array'''
     
     array = Measurement_Array(0, name=name, units=units)
     user_name= True if name != None else False
         
     if error is None: #MA(data)
-        if isinstance(data, qu.array_types): #MA([...])
+        if isinstance(data, Measurement_Array):
+            array = data
+        elif isinstance(data, qu.array_types): #MA([...])
             n = len(data)       
             array.resize(n)
             if isinstance(data[0], qu.array_types) and len (data[0]) == 2: #MA([ (,), (,), (,)])
@@ -1040,8 +1079,11 @@ def MA(data, error=None, name=None, units=None):
             print("unsupported type for data")
             
     else: #error is not None
-        
-        if isinstance(data, qu.array_types): #MA([], error = ...)
+        if isinstance(data, Measurement_Array):
+            array = data
+            array.set_errors(error)
+            
+        elif isinstance(data, qu.array_types): #MA([], error = ...)
             n = len(data)       
             array.resize(n)
             
@@ -1731,7 +1773,7 @@ def show_histogram(data, title=None, output='inline'):
     mean, std = _variance(data)
 
     p1 = bp.figure(title=hist_title, tools="save",
-                   background_fill_color="#E8DDCB")
+                   background_fill_color="#FFFF")
 
     hist, edges = np.histogram(data, bins=50)
 

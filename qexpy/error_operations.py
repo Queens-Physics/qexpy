@@ -4,6 +4,7 @@ import math as m
 import qexpy.utils as qu
 from qexpy.error import Measurement_Array, Measurement, Constant, Function
 
+
 CONSTANT = qu.number_types 
 ARRAY = qu.array_types +(Measurement_Array,)
 MEASUREMENT = (Measurement, Constant, Function)
@@ -311,7 +312,7 @@ def find_minmax(function, *args):
     and error on a given function
     '''
     import numpy as np
-    N=100
+    N=Measurement.minmax_n
     
     if len(args) is 1:
         x = args[0]
