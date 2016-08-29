@@ -227,7 +227,7 @@ class ExperimentalValue:
             hist_title = self.name+' Histogram'
 
         p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
-                    background_fill_color="#E8DDCB")
+                    background_fill_color="#FFFFFF")
 
         hist, edges = np.histogram(self.info['Data'], bins=nbins)
 
@@ -269,7 +269,7 @@ class ExperimentalValue:
 
         p1 = bp.figure(title=hist_title, tools='''save, pan, box_zoom,
                        wheel_zoom, reset''',
-                       background_fill_color="#E8DDCB")
+                       background_fill_color="#FFFFFF")
 
         hist, edges = np.histogram(self.MC_list, bins=nbins)
 
