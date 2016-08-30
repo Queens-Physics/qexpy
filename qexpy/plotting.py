@@ -2,31 +2,16 @@ import scipy.optimize as sp
 import numpy as np
 import qexpy.error as qe
 import qexpy.utils as qu
+import qexpy.fitting as qf
+
 from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
 import bokeh.models as mo
-from numpy import int64, float64, ndarray, int32, float32
 
-CONSTANT = (int, float, int64, float64, int32, float32)
-ARRAY = (list, tuple, ndarray)
+CONSTANT = qu.number_types
+ARRAY = qu.array_types
 
-#class XYDataSet:
-#    '''An XYDataSet contains a paired set of Measurement_Array Objects,
-#    typically, a set of x and y values to be used for a plot'''
-#
-#    def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
-#        self.x = qe.MA(x,error=xerr)
-#        self.xdata = self.x.get_means()
-#        self.xerr = self.x.get_stds()
-#        self.xunits = self.x.get_units_str()
-#        self.xname = self.x.name
-#        
-#        self.y = qe.MA(y,error=yerr)
-#        self.ydata = self.y.get_means()
-#        self.yerr = self.y.get_stds()
-#        self.yunits = self.y.get_units_str()
-#        self.yname = self.y.name
 
 class Plot:
     '''Objects which contain a dataset and any number of fuctions which can
@@ -86,6 +71,9 @@ class Plot:
         self.yerr = self.y.get_stds()
         self.yunits = self.y.get_units_str()
         self.yname = self.y.name
+        
+        self.datasets=[]
+        self.datasets.append(qf.XYDataSet(x, y, xerr=xerr, yerr=yerr))
         
         self.colors = {
             'Data Points': ['red', 'black'],

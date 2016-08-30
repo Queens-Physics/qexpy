@@ -1020,7 +1020,7 @@ class Measurement_Array(np.ndarray):
                     unit_string = 'unitless'
         return unit_string
     
-    def set_errors(self, errors):
+    def set_errors(self, error):
         '''Set all of the errors on the data points - either to a constant value, or to an array of values'''
         n = self.size
         
