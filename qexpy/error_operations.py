@@ -322,9 +322,11 @@ def find_minmax(function, *args):
     elif len(args) is 2:
         a = args[0]
         b = args[1]
+        
         results = np.ndarray(shape=(N,N))
         a_vals = np.linspace(a.mean-a.std, a.mean + a.std, N)
         b_vals = np.linspace(b.mean-b.std, b.mean + b.std, N)
+        
         for i in range(N):
             for j in range(N):
                 results[i][j]= function(a_vals[i], b_vals[j])
@@ -332,7 +334,7 @@ def find_minmax(function, *args):
         print("unsupported number of parameters")
         results = np.ndarray(0)
         
-
+    
     min_val = results.min()
     max_val = results.max()
     mid_val = (max_val + min_val)/2.
@@ -438,18 +440,15 @@ def operation_wrap(operation, *args, func_flag=False):
 
     if func_flag is False and args[0].info["Data"] is not None\
             and args[1].info['Data'] is not None\
-            and len(args[0].info['Data']) == len(args[1].info['Data']):
-        for i in range(len(args[0].info['Data'])):
-            result.info['Data'] = []
-            result.info["Data"].append(
-                        operation(args[0].info["Data"][i],
-                                  args[1].info["Data"][i]))
+            and args[0].info['Data'].size == args[1].info['Data'].size:
+        d1 = args[0].info["Data"]
+        d2 = args[1].info["Data"]
+        result.info['Data'] = np.ndarray(d1.size, dtype=type(d1[0]))
+        for i in range(d1.size):           
+            result.info["Data"][i] = operation(d1[i],d2[i])
 
     elif args[0].info["Data"] is not None and func_flag is True:
         result.info["Data"] = (operation(args[0].info["Data"]))
-
-        #if args[0].info['Error'] is not None:
-        #    result.info['Error'] = dev(*args, der=df, manual_args=True)
 
     result.derivative.update(df)
     result._update_info(operation, *args, func_flag=func_flag)
