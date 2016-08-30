@@ -48,7 +48,6 @@ class ExperimentalValue:
                 data = np.ndarray(1)
                 error_data = np.ndarray(1)
                 data[0] = self.mean
-                #error_data[0] = self.std
             else:
                 raise TypeError('''Input must be either a single array of values,
                       or the central value and uncertainty in one measurement''')
@@ -96,7 +95,10 @@ class ExperimentalValue:
 
         unit_string = self.get_units()
         if unit_string != '':
-            string += ' ['+unit_string+']'
+            if ExperimentalValue.print_style == "Latex":
+                string += '\,'+unit_string
+            else:
+                string += ' ['+unit_string+']'
 
         return string
 
@@ -114,7 +116,7 @@ class ExperimentalValue:
             string = _sci_print(self, method=self.MC)
         print(string)
 
-    def print_min_mix_error(self):
+    def print_min_max_error(self):
         '''Prints the result of a Min-Max method error propagation.
 
         The purpose of this method is to easily compare the results of a
@@ -139,9 +141,9 @@ class ExperimentalValue:
         if self.print_style == "Latex":
             string = _tex_print(self, method=self.Derivative)
         elif self.print_style == "Default":
-            string = _def_print(self, method=self.MinMax)
+            string = _def_print(self, method=self.Derivative)
         elif self.print_style == "Scientific":
-            string = _sci_print(self, method=self.MinMax)
+            string = _sci_print(self, method=self.Derivative)
         print(string)
 
     def get_derivative(self, variable=None):
@@ -680,7 +682,7 @@ class ExperimentalValue:
         return op.neg(self)
 
     def __len__(self):
-        return len(self.info['Data'])
+        return self.info['Data'].size
 
     def __eq__(self, other):
         if type(other) in ExperimentalValue.CONSTANT:
@@ -858,7 +860,7 @@ class Constant(ExperimentalValue):
         self.info['ID'] = 'Constant'
         self.info["Formula"] = '%f' % arg
         self.derivative = {}
-        self.info["Data"] = [arg]
+        self.info["Data"] = np.array([arg])
         self.type = "Constant"
         self.covariance = {self.name: 0}
         self.root = ()
@@ -1039,8 +1041,10 @@ class Measurement_Array(np.ndarray):
     
     def __str__(self):
         theString=''
-        for item in self:
-            theString += item.__str__()+',\n'
+        for i in range(self.size):
+            theString += self[i].__str__()
+            if i != self.size-1:
+                theString += ',\n'
         return theString
             
 def MeasurementArray(data, error=None, name=None, units=None):
@@ -1570,6 +1574,9 @@ def _return_print_values(variable, method):
     '''Function for returning the correct mean and std for the method
     selected.
     '''
+    if isinstance(variable, Constant):
+        return (variable.mean, 0,)
+    
     if ExperimentalValue.error_method == 'Derivative':
         [mean, std] = variable.der
     elif ExperimentalValue.error_method == 'Monte Carlo':
