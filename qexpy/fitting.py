@@ -10,7 +10,7 @@ ARRAY = qu.array_types
 def Rlinear(x, *pars):
     return pars[0]+pars[1]*x
 
-def Rpolynial(x, *pars):
+def Rpolynomial(x, *pars):
     '''Function for a polynomial of nth order, requiring n pars.'''
     poly = 0
     n = 0
@@ -21,12 +21,12 @@ def Rpolynial(x, *pars):
 
 def Rexp(x, *pars):
     '''Function for a Gaussian'''
-    from error import exp
+    from qexpy.error import exp
     return (0 if pars[1]==0 else pars[0]*exp(-x/pars[1]) )
 
 def Rgauss(x, *pars):
     '''Function for a Gaussian'''
-    from error import exp
+    from qexpy.error import exp
     mean = pars[0]
     std = pars[1]
     norm = pars[2]
@@ -61,7 +61,7 @@ class XYFitter:
         wexponential = ('exponential', 'Exponential', 'exp', 'Exp',)
         
         if model is None:
-            self.set_fit_func(func=RLinear,npars=2,funcname="linear",parguess=parguess)
+            self.set_fit_func(func=Rlinear,npars=2,funcname="linear",parguess=parguess)
                 
         elif isinstance(model, str):
             if model in wlinear:
@@ -70,12 +70,12 @@ class XYFitter:
                 self.set_fit_func(func=Rgauss,npars=3,funcname="gaussian",parguess=parguess) 
             elif model in wexponential:
                 self.set_fit_func(func=Rexp,npars=2,funcname="exponential",parguess=parguess) 
-            elif model[:3] is 'pol' or model[:3] is 'Pol':
+            elif 'pol' in model or 'Pol' in model:
                 #TODO change this to regex, as it would not catch a poly of order 10 or bigger
                 degree = int(model[len(model)-1]) + 1
-                self.set_fit_func(func=Rexp,npars=degree,funcname="polynomial",parguess=parguess)
+                self.set_fit_func(func=Rpolynomial,npars=degree,funcname="polynomial",parguess=parguess)
             else:
-                print("Unrecognized model string, defaulting to linear")
+                print("Unrecognized model string: "+model+", defaulting to linear")
                 self.set_fit_func(func=Rlinear,npars=2,funcname="linear",parguess=parguess)
         else:
             import inspect
@@ -125,7 +125,7 @@ class XYFitter:
          
         # Use derivative method to factor x error into fit
         if xerr.nonzero()[0].size:
-            yerr_eff = np.sqrt((yerr**2 + np.multiply(xerr, num_der(lambda x: model(x, *self.fit_pars), xdata))**2))
+            yerr_eff = np.sqrt((yerr**2 + np.multiply(xerr, num_der(lambda x: self.fit_function(x, *self.fit_pars), xdata))**2))
 
             self.fit_pars, self.fit_pcov  = sp.curve_fit(self.fit_function, xdata, ydata,
                                                     sigma=yerr_eff, p0=self.parguess)
@@ -157,16 +157,26 @@ class XYFitter:
         for i in range(self.fit_npars):
             for j in range(i+1, self.fit_npars):
                 self.fit_parameters[i].set_covariance(self.fit_parameters[j],
-                                                      self.fit_pcov[i][j])       
-
-        return self.fit_parameters
+                                                      self.fit_pcov[i][j])   
+                
+        #Calculate the residuals:        
+        yfit = self.fit_function(dataset.xdata, *self.fit_pars)
+        yres = qe.MeasurementArray( (dataset.ydata-yfit), dataset.yerr)        
+               
+        return self.fit_parameters, yres
     
     
 class XYDataSet:
     '''An XYDataSet contains a paired set of Measurement_Array Objects,
-    typically, a set of x and y values to be used for a plot'''
+    typically, a set of x and y values to be used for a plot, as well
+    as a method to fit that dataset. If the data set is fit multiple times
+    the various fits are all recorded in a list of XYFitter objects'''
+    
+    #So that each dataset has a unique name (at least by default):
     unnamed_data_counter=0
+    
     def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
+        '''Use MeasurementArray() to initialize a dataset'''
         if(data_name is None):
             self.name = "dataset{}".format(XYDataSet.unnamed_data_counter)
             XYDataSet.unnamed_data_counter += 1
@@ -185,9 +195,18 @@ class XYDataSet:
         self.yunits = self.y.get_units_str()
         self.yname = self.y.name
         
+        if self.x.size != self.y.size:
+            print("Error: x and y data should have the same number of points")
+            #TODO raise an error!
+        else:
+            self.npoints = self.x.size
+        
         self.xyfitter = []
         self.fit_pars = []
-        self.fit_function = []       
+        self.fit_function = [] 
+        self.fit_function_name = []
+        self.fit_npars =[]
+        self.yres = []
         self.nfits=0
         
     def fit(self, model=None, parguess=None, fit_range=None):
@@ -195,10 +214,33 @@ class XYDataSet:
         is called on a data set, it adds a new XYFitter to the dataset. This
         is to allow multiple functions to be fit to the same data set'''
         fitter = XYFitter(model=model, parguess=parguess)
-        fit_pars = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
+        fit_pars, yres = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
         self.xyfitter.append(fitter)
-        self.fit_pars.append(fit_pars) # redundant, just for convenience
-        self.fit_function.append(fitter.fit_function) #redundant, just for convenience
+        self.fit_pars.append(fit_pars) 
+        self.fit_npars.append(fit_pars.size)
+        self.yres.append(yres)
+        self.fit_function.append(fitter.fit_function) 
+        self.fit_function_name.append(fitter.fit_function_name) 
         self.nfits += 1
         return self.fit_pars[self.nfits-1]
-   
+    
+    def get_x_range(self, errfact=1):
+        return (self.xdata.min()-errfact*max(self.xerr.max(),1),\
+                self.xdata.max()+errfact*max(self.xerr.max(),1))
+    
+    def get_y_range(self, errfact=1):
+        return (self.ydata.min()-errfact*max(self.yerr.max(),1),\
+                self.ydata.max()+errfact*max(self.yerr.max(),1)) 
+    
+    def get_yres_range(self, errfact=1):
+        return (self.yres[-1].get_means().min()-errfact*max(self.yerr.max(),1),\
+                self.yres[-1].get_means().max()+errfact*max(self.yerr.max(),1)) 
+    
+def num_der(function, point, dx=1e-10):
+    '''
+    Returns the first order derivative of a function.
+    Used in combining xerr and yerr.
+    '''
+    import numpy as np
+    point = np.array(point)
+    return np.divide(function(point+dx)-function(point), dx)   

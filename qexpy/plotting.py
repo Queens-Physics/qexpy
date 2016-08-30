@@ -24,28 +24,6 @@ class Plot:
     which mimic errorbars and data points.
     '''
 
-    def polynomial(x, *pars):
-        '''Function for a polynomial of nth order, requiring n pars.'''
-        poly = 0
-        n = 0
-
-        for par in pars:
-            poly += np.multiply(par, np.power(x, n))
-            n += 1
-        return poly
-
-    def gauss(x, mean, std):
-        '''Fucntion of gaussian distribution'''
-        from error import exp
-        return (0 if std==0 else (2*pi*std**2)**(-0.5)*exp(-0.5*(x-mean)**2/std**2))
-
-    fits = {
-            'linear': lambda x, b, m: b+np.multiply(m, x),
-            'exponential': lambda x, b, m: np.exp(b+m*x),
-            'polynomial': polynomial,
-            'gaussian': gauss,
-            }
-
     def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
         '''
         Constructor requiring two measeurement objects, or lists of data and
@@ -56,34 +34,25 @@ class Plot:
         used to record the data to be plotted and track what the user has
         requested to be plotted.
         '''
-        self.pars_fit = []
-        self.pars_err = []
-        self.pcov = []
-
-        self.x = qe.MeasurementArray(x,error=xerr)
-        self.xdata = self.x.get_means()
-        self.xerr = self.x.get_stds()
-        self.xunits = self.x.get_units_str()
-        self.xname = self.x.name
-        
-        self.y = qe.MeasurementArray(y,error=yerr)
-        self.ydata = self.y.get_means()
-        self.yerr = self.y.get_stds()
-        self.yunits = self.y.get_units_str()
-        self.yname = self.y.name
         
         self.datasets=[]
-        self.datasets.append(qf.XYDataSet(x, y, xerr=xerr, yerr=yerr))
+        self.datasets.append(qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name))
+        
+        self.xunits = self.datasets[-1].xunits
+        self.xname = self.datasets[-1].xname
+        
+        self.yunits = self.datasets[-1].yunits
+        self.yname = self.datasets[-1].yname    
         
         self.colors = {
             'Data Points': ['red', 'black'],
             'Fit': ['blue', 'green'],
             'Function': ['orange', 'navy'],
             'Error': 'red'}
-        self.fit_method = 'linear'
-        self.fit_function = Plot.fits[self.fit_method] # analysis:ignore
+        
         self.plot_para = {
             'xscale': 'linear', 'yscale': 'linear', 'filename': 'Plot'}
+        
         self.flag = {'fitted': False, 'residuals': False,
                      'Manual': False} # analysis:ignore
         self.attributes = {
@@ -91,209 +60,59 @@ class Plot:
             'xaxis': self.xname+'/'+self.xunits,
             'yaxis': self.yname+'/'+self.yunits,
             'data': data_name, 'function': (), }
-        self.fit_parameters = ()
-        self.yres = None
-        self.function_counter = 0
-        self.manual_data = ()
-        self.x_range = [min(self.xdata)-2*max(self.xerr),
-                        max(self.xdata)+2*max(self.xerr)]
-        self.y_range = [min(self.ydata)-2*max(self.yerr),
-                        max(self.ydata)+2*max(self.yerr)]
+                
+        self.x_range = self.datasets[-1].get_x_range(2)
+        self.y_range = self.datasets[-1].get_y_range(2)
+        
         self.dimensions = [600, 400]
         self.sigma = 1
-
+        
+    def fit(self, model=None, parguess=None, fit_range=None, datasetindex=-1):
+        return self.datasets[datasetindex].fit()
+        
 ###############################################################################
 # User Methods for adding to Plot Objects
 ###############################################################################
-    def add_plot(self, plot):
-        self.plots.append(plot)
 
     def residuals(self):
         '''Request residual output for plot.'''
-        if self.flag['fitted'] is False:
-            self.fit(model='linear')
-            print('Fit not defined, using linear fit by default.')
+        if self.datasets[-1].nfits>0:
+            self.flag['residuals'] = True
 
-        # Calculate residual values
-        yfit = self.fit_function(self.xdata, *self.pars_fit)
-        # Generate a set of residuals for the fit
-        self.yres = self.ydata-yfit
-
-        self.flag['residuals'] = True
-
-    def fit(self, model=None, guess=None, fit_range=None):
-        '''Fit data, by least squares method, to a model. Model must be
-        provided or specified from built in models. User specified models
-        require and inital guess for the fit parameters.
-
-        By default a linear fit is used, if the user enters a string
-        for another fit model which is built-in, that model is used.
-        If the user provides a fit function, with two arguments, the first
-        for the independent variable, and the second for the list of
-        parameters, an inital guess of the parameters in the form of a
-        list of values must be provided.
-        '''
-        import numpy as np
-
-        linear = ('linear', 'Linear', 'line', 'Line',)
-        gaussian = ('gaussian', 'Gaussian', 'Gauss', 'gauss', 'normal',)
-        exponential = ('exponential', 'Exponential', 'exp', 'Exp',)
-
-        if guess is None:
-            if model in linear:
-                guess = [1, 1]
-            elif model[0] is 'p':
-                degree = int(model[len(model)-1]) + 1
-                guess = [1]*degree
-            elif model in gaussian:
-                guess = [1]*2
-            elif model in exponential:
-                guess = [1]*2
-
-        if model is not None:
-            if type(model) is not str:
-                self.flag['Unknown Function'] = True
-                self.fit_method = None
-                self.fit_function = model
-
-            elif model[0] is 'p' and model[1] is 'o':
-                self.fit_function = Plot.fits['polynomial']
-
-                def model(x, *pars):
-                    return self.fit_function(x, *pars)
-
-            elif model in linear:
-                self.fit_method = 'linear'
-                self.fit_function = Plot.fits['linear']
-
-                def model(x, *pars):
-                    return self.fit_function(x, *pars)
-
-            elif model in exponential:
-                self.fit_method = 'exponential'
-                self.fit_function = Plot.fits['exponential']
-
-                def model(x, *pars):
-                    return self.fit_function(x, *pars)
-
-            elif model in gaussian:
-                self.fit_method = 'gaussian'
-                self.fit_function = Plot.fits['gaussian']
-
-                def model(x, *pars):
-                    return self.fit_function(x, *pars)
-
-            else:
-                raise TypeError('''Input must be string, either 'linear',
-                                'gaussian', 'exponential', 'polyn' for a
-                                polynomial of order n, or a custom
-                                function.''')
-
-        else:
-            print('Using a linear fit by default.')
-            self.fit_method = 'linear'
-            self.fit_function = Plot.fits[model]
-
-            def model(x, *pars):
-                return self.fit_function(x, *pars)
-
-        if self.flag['fitted'] is True:
-            print('''A fit of the data already exists, overwriting previous
-                  fit.''')
-            self.fit_parameters = ()
-            self.function_counter -= 1
-
-        pars_guess = guess
-
-        if fit_range is None:
-            data_range = self.xdata
-        elif type(fit_range) in ARRAY and len(fit_range) is 2:
-            data_range = []
-            for i in self.xdata:
-                if i >= min(fit_range) and i <= max(fit_range):
-                    data_range.append(i)
-
-        data_range = np.array(data_range)
-        ydata = np.array(self.ydata)
-        yerr = np.array(self.yerr)
-        self.pars_fit, self.pcov = sp.curve_fit(
-                                    model, data_range, ydata,
-                                    sigma=yerr, p0=pars_guess)
-        self.pars_err = np.sqrt(np.diag(self.pcov))
-
-        # Use derivative method to factor x error into fit
-        if self.xerr is not None:
-            yerr_eff = np.power(
-                (np.power(self.yerr,
-                          2) + np.power(np.multiply(self.xerr, num_der
-                                                    (lambda x: model
-                                                     (x, *self.pars_fit
-                                                      ), self.xdata
-                                                     )), 2)), 0.5)
-
-            self.pars_fit, self.pcov = sp.curve_fit(
-                                        model, data_range, self.ydata,
-                                        sigma=yerr_eff, p0=pars_guess)
-            self.pars_err = np.sqrt(np.diag(self.pcov))
-
-        for i in range(len(self.pars_fit)):
-            if self.fit_method is 'gaussian':
-                if i is 0:
-                    name = 'mean'
-                elif i is 1:
-                    name = 'standard deviation'
-            elif self.fit_method is 'linear':
-                if i is 0:
-                    name = 'intercept'
-                elif i is 1:
-                    name = 'slope'
-            else:
-                name = 'par %d' % (i)
-
-            self.fit_parameters += (
-                qe.Measurement(self.pars_fit[i], self.pars_err[i], name=name),)
-
-            for i in range(len(self.fit_parameters)-1):
-                self.fit_parameters[0].set_covariance(self.fit_parameters[i+1],
-                                                      self.pcov[0][i+1])
-        self.flag['fitted'] = True
-
-    def function(self, function):
+    
+    def add_function(self, function):
         '''Adds a specified function to the list of functions to be plotted.
 
         Functions are only plotted when a Bokeh object is created, thus user
         specified functions are stored to be plotted later.
         '''
-        if function(min(self.xdata)) > self.y_range[1] or\
-                function(max(self.xdata)) > self.y_range[1]:
-
-            if function(min(self.xdata)) > function(max(self.xdata)):
-                self.y_range[1] = function(min(self.xdata))
-            elif function(min(self.xdata)) < function(max(self.xdata)):
-                self.y_range[1] = function(max(self.xdata))
-
-        if function(min(self.xdata)) < self.y_range[0] or\
-                function(max(self.xdata)) < self.y_range[0]:
-
-            if function(min(self.xdata)) < function(max(self.xdata)):
-                self.y_range[0] = function(min(self.xdata))
-            elif function(min(self.xdata)) > function(max(self.xdata)):
-                self.y_range[0] = function(max(self.xdata))
-
+        
+        #check if we should change the y-axis range to accomodate the function
+        f = function(datasets[-1].xdata)
+        fmax = f.max()
+        fmin = f.min()
+        if fmax > self.yrange[1]:
+            self.yrange[1]=fmax
+        if fmin < self.yrange[0]:
+            self.yrange[0]=fmin
+            
         self.attributes['function'] += (function,)
 
-    def manual_errorbar(self, data, function):
-        '''Manually specify the location of a datapoint with errorbars.'''
-        import qexpy.error_operations as op
-        data, function = op.check_values(data, function)
-        self.manual_data = (data, function(data))
-        self.flag['Manual'] = True
+# This should be handled by changing the dataset
+#    def manual_errorbar(self, data, function):
+#        '''Manually specify the location of a datapoint with errorbars.'''
+#        import qexpy.error_operations as op
+#        data, function = op.check_values(data, function)
+#        self.manual_data = (data, function(data))
+#        self.flag['Manual'] = True
 
 ###############################################################################
 # Methods for changing parameters of Plot Object
 ###############################################################################
-
-    def plot_range(self, x_range=None, y_range=None):
+    def add_dataset(self, dataset):
+        self.datasets.append(dataset)
+    
+    def set_plot_range(self, x_range=None, y_range=None):
         if type(x_range) in ARRAY and len(x_range) is 2:
             self.x_range = x_range
         elif x_range is not None:
@@ -349,10 +168,10 @@ class Plot:
             width = 600
         if height is None:
             height = 400
-        self.dimensions[width, height]
+        self.dimensions = [width, height]
 
     def set_errorband_sigma(self, sigma=1):
-        '''Change the confidance bounds of the error range on a fit.
+        '''Change the confidence bounds of the error range on a fit.
         '''
         self.sigma = sigma
 
@@ -361,13 +180,81 @@ class Plot:
 ###############################################################################
 
     def print_fit_parameters(self):
-        if self.flag['Fitted'] is False:
-            print('''Please create a fit of the data using .fit to find the
-            fit parameters.''')
-        else:
-            for par in self.fit_parameters:
-                print(par)
-
+        if self.datasets[-1].nfits>0:
+            print("Fit parameters:\n"+self.datasets[-1].fit_pars[-1])
+            
+    def get_bokeh_figure(self):
+        #disable MinMax to speed things up
+        recall = qe.Measurement.minmax_n
+        qe.Measurement.minmax_n=1
+        
+        # create a new plot
+        self.figure = bp.figure(
+            tools='save, pan, box_zoom, wheel_zoom, reset',
+            width=self.dimensions[0], height=self.dimensions[1],
+            y_axis_type=self.plot_para['yscale'],
+            y_range=self.y_range,
+            x_axis_type=self.plot_para['xscale'],
+            x_range=self.x_range,
+            title=self.attributes['title'],
+            x_axis_label=self.attributes['xaxis'],
+            y_axis_label=self.attributes['yaxis'],
+        )
+        # creat the one for residuals if needed
+        if self.flag['residuals']:
+            self.res = bp.figure(
+                width=self.dimensions[0], height=self.dimensions[1]//3,
+                tools='save, pan, box_zoom, wheel_zoom, reset',
+                y_axis_type='linear',
+                y_range=self.datasets[-1].get_yres_range(),
+                x_range=self.figure.x_range,
+                x_axis_label=self.attributes['xaxis'],
+                y_axis_label='Residuals'
+            )
+                    
+            
+        #plot the data sets and their latest fit
+        count = 0
+        for dataset in self.datasets:
+            plot_dataset(self.figure, dataset, residual=False,
+                         data_color=self.colors['Data Points'][count])
+                   
+            if dataset.nfits>0:
+                plot_function(self.figure, function=dataset.fit_function[-1], xdata=dataset.xdata,
+                              fpars=dataset.fit_pars[-1], n=1000, legend_name=dataset.fit_function_name[-1],
+                              color=self.colors['Data Points'][count])
+                #Draw fit parameters only for the first dataset
+                if count<1:
+                     for i in range(dataset.fit_npars[-1]):
+                        short_name =  dataset.fit_pars[-1][i].__str__().split('_')
+                        short_name = short_name[0]+"_"+short_name[-1]
+                        citation = mo.Label(x=590, y=320+20*i,
+                                    text_align='right',
+                                    text_baseline='top',
+                                    text_font_size='11pt',
+                                    x_units='screen',
+                                    y_units='screen',
+                                    text=short_name,
+                                    render_mode='css',
+                                    background_fill_color='white',
+                                    background_fill_alpha=1.0)
+                        self.figure.add_layout(citation)
+                        
+                if self.flag['residuals']:
+                    plot_dataset(self.res, dataset, residual=True,
+                                 data_color=self.colors['Data Points'][count])
+            count += 1
+        
+        self.figure.legend.location = "top_left"
+        
+        if self.flag['residuals']:
+            self.figure = bi.gridplot([[self.figure], [self.res]])
+            
+            
+        #Add any functions    
+            
+        return self.figure
+        
     def get_bokeh(self):
         '''Return Bokeh plot object for the plot acted upon.
 
@@ -384,11 +271,9 @@ class Plot:
             tools='save, pan, box_zoom, wheel_zoom, reset',
             width=self.dimensions[0], height=self.dimensions[1],
             y_axis_type=self.plot_para['yscale'],
-            y_range=[min(self.ydata)-2*max(self.yerr),
-                     max(self.ydata)+2*max(self.yerr)],
+            y_range=self.y_range,
             x_axis_type=self.plot_para['xscale'],
-            x_range=[min(self.xdata)-2*max(self.xerr),
-                     max(self.xdata)+2*max(self.xerr)],
+            x_range=self.y_range,
             title=self.attributes['title'],
             x_axis_label=self.attributes['xaxis'],
             y_axis_label=self.attributes['yaxis'],
@@ -855,133 +740,70 @@ class Plot:
 # Functions for Plotting common objects
 ###############################################################################
 
-
-def _error_bar(self, residual=False, xdata=None, ydata=None, plot_object=None,
-               color=None):
-    '''Function to create a Bokeh glyph which appears to be a datapoint with
-    an errorbar.
-
-    The datapoint is created using a Bokeh circle glyph. The errobars consist
-    of two lines spanning error range of each datapoint. The errorbar caps
-    are rectangles at each end of the errorline. The errorbar caps are
-    rectangles whose size is based on Bokeh 'size' which is based on screen
-    size and thus does not get larger when zooming in on a plot.
-    '''
-
-    if color is None:
-        data_color = self.colors['Data Points'][0]
-    elif type(color) is int:
-        data_color = self.colors['Data Points'][color]
+def plot_dataset(figure, dataset, residual=False, data_color='black'):
+    '''Given a bokeh figure, this will add data points with errors from the dataset'''
+  
+    xdata = dataset.xdata
+    xerr = dataset.xerr
+    
+    if residual is True and dataset.nfits>0:
+        ydata = dataset.yres[-1].get_means()
+        yerr = dataset.yres[-1].get_stds()
     else:
-        print('Color option must be an integer')
-        data_color = self.colors['Data Points'][0]
+        ydata = dataset.ydata
+        yerr = dataset.yerr
+     
+    add_points_with_error_bars(figure, xdata, ydata, xerr, yerr, data_color, dataset.name)
+    
+def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, data_color='black', data_name='dataset'):
+    
+    if xdata.size != ydata.size:
+        print("Error: x and y data must have the same number of points")
+        return None
+    
+    #Draw points:    
+    figure.circle(xdata, ydata, color=data_color, size=2, legend=data_name)
 
-    if plot_object is None:
-        if residual is False:
-            p = self.p
-        else:
-            p = self.res
+    if isinstance(xerr,np.ndarray) or isinstance(yerr,np.ndarray):
+        #Add error bars
+        for i in range(xdata.size):
+            
+            xcentral = [xdata[i], xdata[i]]
+            ycentral = [ydata[i], ydata[i]]
+            
+            #x error bar
+            if isinstance(xerr,np.ndarray) and xerr.size == xdata.size and xerr[i]>0:
+                xends = [xdata[i]-xerr[i], xdata[i]+xerr[i]]
+                figure.line(xends,ycentral, color=data_color)
+                #winglets on x error bar:
+                figure.rect(x=xends, y=ycentral, height=5, width=0.2,
+                    height_units='screen', width_units='screen',
+                    color=data_color,legend=data_name)
+                
+            #y error bar    
+            if isinstance(yerr,np.ndarray) and yerr.size == xdata.size and yerr[i]>0:    
+                yends = [ydata[i]-yerr[i], ydata[i]+yerr[i]]
+                figure.line(xcentral, yends, color=data_color)
+                #winglets on y error bar:
+                figure.rect(x=xcentral, y=yends, height=0.2, width=5,
+                    height_units='screen', width_units='screen',
+                    color=data_color,legend=data_name)
+    
+    
+def plot_function(figure, function, xdata, fpars=None, n=1000, legend_name=None, color='black'):
+    '''Plot a function evaluated over the range of xdata'''
+    xvals = np.linspace(min(xdata), max(xdata), n)
+    
+    if fpars is None:
+        fvals = function(xvals)
+    elif isinstance(fpars, qe.Measurement_Array):
+        fvals = function(xvals, *(fpars.get_means()))
+    elif isinstance(fpars,(list, np.ndarray)):
+        fvals = function(xvals, *fpars)
     else:
-        if residual is False:
-            p = plot_object.p
-        else:
-            p = plot_object.res
-
-    if residual is True:
-        data_name = None
-    elif type(self.attributes['data']) is str:
-        data_name = self.attributes['data']
-    else:
-        if plot_object is None:
-            data_name = 'Data'
-        else:
-            data_name = 'Second Data'
-
-    err_x1 = []
-    err_d1 = []
-    err_y1 = []
-    err_d2 = []
-    err_t1 = []
-    err_t2 = []
-    err_b1 = []
-    err_b2 = []
-
-    if xdata is None:
-        _xdata = list(self.xdata)
-        x_data = list(self.xdata)
-    else:
-        _xdata = [xdata.mean]
-        x_data = [xdata.mean]
-
-    if residual is True:
-        _ydata = list(self.yres)
-        y_res = list(self.yres)
-        _yerr = list(self.yerr)
-
-    elif ydata is None:
-        _ydata = list(self.ydata)
-        y_data = list(self.ydata)
-        _yerr = list(self.yerr)
-    else:
-        _ydata = [ydata.mean]
-        y_data = [ydata.mean]
-        _yerr = [ydata.std]
-
-    p.circle(_xdata, _ydata, color=data_color, size=2, legend=data_name)
-
-    for _xdata, _ydata, _yerr in zip(_xdata, _ydata, _yerr):
-        err_x1.append((_xdata, _xdata))
-        err_d1.append((_ydata - _yerr, _ydata + _yerr))
-        err_t1.append(_ydata+_yerr)
-        err_b1.append(_ydata-_yerr)
-
-    p.multi_line(err_x1, err_d1, color=data_color, legend=data_name)
-    p.rect(
-        x=x_data*2, y=err_t1+err_b1,
-        height=0.2, width=5,
-        height_units='screen', width_units='screen',
-        color=data_color,
-        legend=data_name)
-
-    if xdata is None:
-        _xdata = list(self.xdata)
-        x_data = list(self.xdata)
-        _xerr = list(self.xerr)
-    else:
-        _xdata = [xdata.mean]
-        x_data = [xdata.mean]
-        _xerr = [xdata.std]
-
-    if residual is True:
-        _ydata = list(self.yres)
-        y_res = list(self.yres)
-    elif ydata is None:
-        _ydata = list(self.ydata)
-        y_data = list(self.ydata)
-    else:
-        _ydata = [ydata.mean]
-        y_data = [ydata.mean]
-
-    for _ydata, _xdata, _xerr in zip(_ydata, _xdata, _xerr):
-        err_y1.append((_ydata, _ydata))
-        err_d2.append((_xdata - _xerr, _xdata + _xerr))
-        err_t2.append(_xdata+_xerr)
-        err_b2.append(_xdata-_xerr)
-
-    p.multi_line(err_d2, err_y1, color=data_color, legend=data_name)
-    if residual is True:
-        p.circle(x_data, y_res, color=data_color, size=2)
-
-        p.rect(
-            x=err_t2+err_b2, y=y_res*2,
-            height=5, width=0.2, height_units='screen', width_units='screen',
-            color=data_color)
-    else:
-        p.rect(
-            x=err_t2+err_b2, y=y_data*2,
-            height=5, width=0.2, height_units='screen', width_units='screen',
-            color=data_color, legend=data_name)
-
+        pass
+    figure.line(xvals, fvals, legend=legend_name, line_color=color)
+        
 
 def _plot_function(self, xdata, theory, n=1000, legend_name=None, color=None):
     '''Semi-privite function to plot a function over a given range of values.
