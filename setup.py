@@ -10,7 +10,7 @@ setup(
     author_email='connorkapahi@gmail.com',
     license='GNU GLP v3',
     url='https://github.com/Queens-Physics/QExPy',
-    download_url='https://github.com/Queens-Physics/QExPy/tarball/0.2.0',
+    download_url='https://github.com/Queens-Physics/QExPy/tarball/0.2.5',
     keywords=['physics', 'laboratories', 'labs', 'undergraduate',
               'data analysis', 'uncertainties', 'plotting', 'error analysis',
               'error propagation', 'uncertainty propagation'],
