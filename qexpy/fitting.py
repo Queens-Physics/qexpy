@@ -8,10 +8,12 @@ ARRAY = qu.array_types
 
 
 def Rlinear(x, *pars):
+    '''Linear function p[0]+p[1]*x'''
     return pars[0]+pars[1]*x
 
 def Rpolynomial(x, *pars):
-    '''Function for a polynomial of nth order, requiring n pars.'''
+    '''Function for a polynomial of nth order, requiring n pars,
+    p[0]+p[1]*x+p[2]x^2+...'''
     poly = 0
     n = 0
     for par in pars:
@@ -20,12 +22,11 @@ def Rpolynomial(x, *pars):
     return poly
 
 def Rexp(x, *pars):
-    '''Function for a Gaussian'''
-    #from qexpy.error import exp
+    '''Function for a decaying exponential p[0]*exp(-x/p[1])'''
     return (0 if pars[1]==0 else pars[0]*np.exp(-x/pars[1]) )
 
 def Rgauss(x, *pars):
-    '''Function for a Gaussian'''
+    '''Function for a Gaussian p[2]*Gaus(p[0],p[1])'''
     #from qexpy.error import exp
     mean = pars[0]
     std = pars[1]
@@ -119,12 +120,11 @@ class XYFitter:
         #TODO: check the math on this...
         #TODO: catch curve_fit run time errors
            
-            self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
+        self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
                                                     sigma=yerr, p0=self.parguess)
 
-            self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
-       
-         
+        self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
+                 
         # Use derivative method to factor x error into fit
         if xerr.nonzero()[0].size:
             yerr_eff = np.sqrt((yerr**2 + np.multiply(xerr, num_der(lambda x: self.fit_function(x, *self.fit_pars), xdata))**2))
@@ -133,6 +133,11 @@ class XYFitter:
                                                     sigma=yerr_eff, p0=self.parguess)
             self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
 
+        for i in range(self.fit_pars_err.size):
+            if self.fit_pars_err[i] == float('inf'):
+                self.fit_pars_err[i] = 0
+            
+            
         self.fit_npars = self.fit_pars.size  
         
         parnames = dataset.name+"_"+self.fit_function_name+"_fit{}".format(fit_count)+"_fitpars"
@@ -177,7 +182,7 @@ class XYDataSet:
     #So that each dataset has a unique name (at least by default):
     unnamed_data_counter=0
     
-    def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
+    def __init__(self, x, y, xerr=None, yerr=None, data_name=None, xname=None, xunits=None, yname=None, yunits=None):
         '''Use MeasurementArray() to initialize a dataset'''
         if(data_name is None):
             self.name = "dataset{}".format(XYDataSet.unnamed_data_counter)
@@ -185,13 +190,13 @@ class XYDataSet:
         else:
             self.name=data_name
         
-        self.x = qe.MeasurementArray(x,error=xerr)
+        self.x = qe.MeasurementArray(x,error=xerr, name=xname, units=xunits)
         self.xdata = self.x.get_means()
         self.xerr = self.x.get_stds()
         self.xunits = self.x.get_units_str()
         self.xname = self.x.name
         
-        self.y = qe.MeasurementArray(y,error=yerr)
+        self.y = qe.MeasurementArray(y,error=yerr, name=yname, units=yunits)
         self.ydata = self.y.get_means()
         self.yerr = self.y.get_stds()
         self.yunits = self.y.get_units_str()
@@ -227,16 +232,16 @@ class XYDataSet:
         return self.fit_pars[self.nfits-1]
     
     def get_x_range(self, errfact=1):
-        return (self.xdata.min()-errfact*max(self.xerr.max(),1),\
-                self.xdata.max()+errfact*max(self.xerr.max(),1))
+        return [self.xdata.min()-errfact*max(self.xerr.max(),self.yerr.max()),\
+                self.xdata.max()+errfact*max(self.xerr.max(),self.yerr.max())]
     
     def get_y_range(self, errfact=1):
-        return (self.ydata.min()-errfact*max(self.yerr.max(),1),\
-                self.ydata.max()+errfact*max(self.yerr.max(),1)) 
+        return [self.ydata.min()-errfact*max(self.yerr.max(),1),\
+                self.ydata.max()+errfact*max(self.yerr.max(),1)] 
     
-    def get_yres_range(self, errfact=1):
-        return (self.yres[-1].get_means().min()-errfact*max(self.yerr.max(),1),\
-                self.yres[-1].get_means().max()+errfact*max(self.yerr.max(),1)) 
+    def get_yres_range(self, errfact=1, fitindex=-1):
+        return [self.yres[fitindex].get_means().min()-errfact*max(self.yerr.max(),1),\
+                self.yres[fitindex].get_means().max()+errfact*max(self.yerr.max(),1)] 
     
 def num_der(function, point, dx=1e-10):
     '''

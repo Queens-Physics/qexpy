@@ -3,6 +3,7 @@ import numpy as np
 import qexpy.error as qe
 import qexpy.utils as qu
 import qexpy.fitting as qf
+import qexpy.plot_utils as qpu
 
 from math import pi
 import bokeh.plotting as bp
@@ -35,6 +36,7 @@ class Plot:
         requested to be plotted.
         '''
         
+        #Revised members:
         self.datasets=[]
         self.datasets.append(qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name))
         
@@ -44,6 +46,22 @@ class Plot:
         self.yunits = self.datasets[-1].yunits
         self.yname = self.datasets[-1].yname    
         
+        self.errorband_sigma = 1.0
+        self.show_residuals=False
+        
+        self.color_palette = ['red', 'blue','black','green', 'orange'] 
+        
+        self.x_range = self.datasets[-1].get_x_range(2)
+        self.y_range = self.datasets[-1].get_y_range(2)
+        
+        self.dimensions = [600, 400]
+        
+        self.user_functions_count=0
+        self.user_functions = []
+        self.user_functions_pars = []
+        self.user_functions_names = []
+        
+        #Old
         self.colors = {
             'Data Points': ['red', 'black'],
             'Fit': ['blue', 'green'],
@@ -60,12 +78,8 @@ class Plot:
             'xaxis': self.xname+'/'+self.xunits,
             'yaxis': self.yname+'/'+self.yunits,
             'data': data_name, 'function': (), }
-                
-        self.x_range = self.datasets[-1].get_x_range(2)
-        self.y_range = self.datasets[-1].get_y_range(2)
-        
-        self.dimensions = [600, 400]
-        self.sigma = 1
+        self.sigma = 1       
+
         
     def fit(self, model=None, parguess=None, fit_range=None, datasetindex=-1):
         return self.datasets[datasetindex].fit()
@@ -78,39 +92,69 @@ class Plot:
         '''Request residual output for plot.'''
         if self.datasets[-1].nfits>0:
             self.flag['residuals'] = True
+            self.show_residuals = True
 
     
-    def add_function(self, function):
+    def add_function(self, function, fpars = None, fname=None):
         '''Adds a specified function to the list of functions to be plotted.
 
         Functions are only plotted when a Bokeh object is created, thus user
         specified functions are stored to be plotted later.
         '''
         
+        xvals = np.linspace(self.x_range[0],self.x_range[1], 100)
+        
         #check if we should change the y-axis range to accomodate the function
-        f = function(datasets[-1].xdata)
-        fmax = f.max()
-        fmin = f.min()
-        if fmax > self.yrange[1]:
-            self.yrange[1]=fmax
-        if fmin < self.yrange[0]:
-            self.yrange[0]=fmin
+        if fpars == None:
+            fvals = function(xvals)
+        elif isinstance(fpars, qe.Measurement_Array):
+            recall = qe.Measurement.minmax_n
+            qe.Measurement.minmax_n=1
+            fmes = function(xvals, *(fpars))
+            fvals = fmes.get_means()
+            qe.Measurement.minmax_n=recall
+        elif isinstance(fpars,(list, np.ndarray)):
+            fvals = function(xvals, *fpars)
+        else:
+            print("Error: Not a recognized format for parameter")
+            return
+                 
+        fmax = fvals.max()
+        fmin = fvals.min()
+        
+        if fmax > self.y_range[1]:
+            self.y_range[1]=fmax
+        if fmin < self.y_range[0]:
+            self.y_range[0]=fmin
             
+        self.user_functions.append(function)
+        self.user_functions_pars.append(fpars)
+        name = "userf_{}".format(self.user_functions_count) if fname==None else fname
+        self.user_functions_names.append(name)
+        self.user_functions_count +=1
+        
+        #old
         self.attributes['function'] += (function,)
 
-# This should be handled by changing the dataset
-#    def manual_errorbar(self, data, function):
-#        '''Manually specify the location of a datapoint with errorbars.'''
-#        import qexpy.error_operations as op
-#        data, function = op.check_values(data, function)
-#        self.manual_data = (data, function(data))
-#        self.flag['Manual'] = True
 
 ###############################################################################
 # Methods for changing parameters of Plot Object
 ###############################################################################
     def add_dataset(self, dataset):
         self.datasets.append(dataset)
+        x_range = dataset.get_x_range(2)
+        y_range = dataset.get_y_range(2)
+        
+        if x_range[0] < self.x_range[0]:
+            self.x_range[0]=x_range[0]
+        if x_range[1] > self.x_range[1]:
+            self.x_range[1]=x_range[1]
+            
+        if y_range[0] < self.y_range[0]:
+            self.y_range[0]=y_range[0]
+        if y_range[1] > self.y_range[1]:
+            self.y_range[1]=y_range[1] 
+ 
     
     def set_plot_range(self, x_range=None, y_range=None):
         if type(x_range) in ARRAY and len(x_range) is 2:
@@ -173,7 +217,7 @@ class Plot:
     def set_errorband_sigma(self, sigma=1):
         '''Change the confidence bounds of the error range on a fit.
         '''
-        self.sigma = sigma
+        self.errorband_sigma = sigma
 
 ###############################################################################
 # Methods for Returning or Rendering Bokeh
@@ -183,49 +227,29 @@ class Plot:
         if self.datasets[-1].nfits>0:
             print("Fit parameters:\n"+self.datasets[-1].fit_pars[-1])
             
-    def get_bokeh_figure(self):
-        #disable MinMax to speed things up
-        recall = qe.Measurement.minmax_n
-        qe.Measurement.minmax_n=1
+    def get_bokeh_figure(self):    
+        # create a new bokeh figure
+        self.bkfigure = self.build_bokeh_figure(residuals=False)
         
-        # create a new plot
-        self.figure = bp.figure(
-            tools='save, pan, box_zoom, wheel_zoom, reset',
-            width=self.dimensions[0], height=self.dimensions[1],
-            y_axis_type=self.plot_para['yscale'],
-            y_range=self.y_range,
-            x_axis_type=self.plot_para['xscale'],
-            x_range=self.x_range,
-            title=self.attributes['title'],
-            x_axis_label=self.attributes['xaxis'],
-            y_axis_label=self.attributes['yaxis'],
-        )
-        # creat the one for residuals if needed
-        if self.flag['residuals']:
-            self.res = bp.figure(
-                width=self.dimensions[0], height=self.dimensions[1]//3,
-                tools='save, pan, box_zoom, wheel_zoom, reset',
-                y_axis_type='linear',
-                y_range=self.datasets[-1].get_yres_range(),
-                x_range=self.figure.x_range,
-                x_axis_label=self.attributes['xaxis'],
-                y_axis_label='Residuals'
-            )
-                    
-            
-        #plot the data sets and their latest fit
-        count = 0
+        # create the one for residuals if needed
+        if self.show_residuals:
+            self.bkres = self.build_bokeh_figure(residuals=True)
+                              
+        #plot the datasets and their latest fit
+        colorcount = 0
         for dataset in self.datasets:
-            plot_dataset(self.figure, dataset, residual=False,
-                         data_color=self.colors['Data Points'][count])
+            qpu.plot_dataset(self.bkfigure, dataset, residual=False,
+                         data_color=self.color_palette[colorcount])
                    
             if dataset.nfits>0:
-                plot_function(self.figure, function=dataset.fit_function[-1], xdata=dataset.xdata,
-                              fpars=dataset.fit_pars[-1], n=1000, legend_name=dataset.fit_function_name[-1],
-                              color=self.colors['Data Points'][count])
-                #Draw fit parameters only for the first dataset
-                if count<1:
+                qpu.plot_function(self.bkfigure, function=dataset.fit_function[-1], xdata=dataset.xdata,
+                              fpars=dataset.fit_pars[-1], n=100, legend_name=dataset.fit_function_name[-1],
+                              color=self.color_palette[colorcount], errorbandfactor=self.errorband_sigma)
+                
+                #Draw fit parameters only for the first 2 dataset
+                if colorcount<1:
                      for i in range(dataset.fit_npars[-1]):
+                        #shorten the name of the fit parameters
                         short_name =  dataset.fit_pars[-1][i].__str__().split('_')
                         short_name = short_name[0]+"_"+short_name[-1]
                         citation = mo.Label(x=590, y=320+20*i,
@@ -238,24 +262,55 @@ class Plot:
                                     render_mode='css',
                                     background_fill_color='white',
                                     background_fill_alpha=1.0)
-                        self.figure.add_layout(citation)
+                        self.bkfigure.add_layout(citation)
                         
-                if self.flag['residuals']:
-                    plot_dataset(self.res, dataset, residual=True,
-                                 data_color=self.colors['Data Points'][count])
-            count += 1
+                if self.show_residuals:
+                    qpu.plot_dataset(self.bkres, dataset, residual=True,
+                                 data_color=self.color_palette[colorcount])
+            colorcount += 1
+
+        #Now add any user defined functions:
+        xvals = np.linspace(self.x_range[0],self.x_range[1], 100)
+   
+        for func, pars, fname in zip(self.user_functions,self.user_functions_pars,self.user_functions_names):
+            
+            qpu.plot_function(self.bkfigure, function=func, xdata=xvals,
+                              fpars=pars, n=100, legend_name= fname,
+                              color=self.color_palette[colorcount], errorbandfactor=self.errorband_sigma)
         
-        self.figure.legend.location = "top_left"
+        #Specify the location of the legend
+        self.bkfigure.legend.location = "top_left"
         
         if self.flag['residuals']:
-            self.figure = bi.gridplot([[self.figure], [self.res]])
+            self.bkfigure = bi.gridplot([[self.bkfigure], [self.bkres]])
             
-        #TODO: Draw the rest (e.g. functions and error bands)    
+        return self.bkfigure
     
-            
-            
-        return self.figure
-        
+    def build_bokeh_figure(self, residuals=False):  
+        if residuals==False:
+            return bp.figure(
+                tools='save, pan, box_zoom, wheel_zoom, reset',
+                width=self.dimensions[0], height=self.dimensions[1],
+                y_axis_type=self.plot_para['yscale'],
+                y_range=self.y_range,
+                x_axis_type=self.plot_para['xscale'],
+                x_range=self.x_range,
+                title=self.attributes['title'],
+                x_axis_label=self.attributes['xaxis'],
+                y_axis_label=self.attributes['yaxis'],
+            )
+        else:
+            return bp.figure(
+                width=self.dimensions[0], height=self.dimensions[1]//3,
+                tools='save, pan, box_zoom, wheel_zoom, reset',
+                y_axis_type='linear',
+                y_range=self.datasets[-1].get_yres_range(),
+                x_range=self.bkfigure.x_range,
+                x_axis_label=self.attributes['xaxis'],
+                y_axis_label='Residuals'
+            )
+    
+    
     def get_bokeh(self):
         '''Return Bokeh plot object for the plot acted upon.
 
@@ -739,72 +794,8 @@ class Plot:
 
 ###############################################################################
 # Functions for Plotting common objects
-###############################################################################
-
-def plot_dataset(figure, dataset, residual=False, data_color='black'):
-    '''Given a bokeh figure, this will add data points with errors from the dataset'''
-  
-    xdata = dataset.xdata
-    xerr = dataset.xerr
-    
-    if residual is True and dataset.nfits>0:
-        ydata = dataset.yres[-1].get_means()
-        yerr = dataset.yres[-1].get_stds()
-    else:
-        ydata = dataset.ydata
-        yerr = dataset.yerr
-     
-    add_points_with_error_bars(figure, xdata, ydata, xerr, yerr, data_color, dataset.name)
-    
-def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, data_color='black', data_name='dataset'):
-    
-    if xdata.size != ydata.size:
-        print("Error: x and y data must have the same number of points")
-        return None
-    
-    #Draw points:    
-    figure.circle(xdata, ydata, color=data_color, size=2, legend=data_name)
-
-    if isinstance(xerr,np.ndarray) or isinstance(yerr,np.ndarray):
-        #Add error bars
-        for i in range(xdata.size):
-            
-            xcentral = [xdata[i], xdata[i]]
-            ycentral = [ydata[i], ydata[i]]
-            
-            #x error bar
-            if isinstance(xerr,np.ndarray) and xerr.size == xdata.size and xerr[i]>0:
-                xends = [xdata[i]-xerr[i], xdata[i]+xerr[i]]
-                figure.line(xends,ycentral, color=data_color)
-                #winglets on x error bar:
-                figure.rect(x=xends, y=ycentral, height=5, width=0.2,
-                    height_units='screen', width_units='screen',
-                    color=data_color,legend=data_name)
-                
-            #y error bar    
-            if isinstance(yerr,np.ndarray) and yerr.size == xdata.size and yerr[i]>0:    
-                yends = [ydata[i]-yerr[i], ydata[i]+yerr[i]]
-                figure.line(xcentral, yends, color=data_color)
-                #winglets on y error bar:
-                figure.rect(x=xcentral, y=yends, height=0.2, width=5,
-                    height_units='screen', width_units='screen',
-                    color=data_color,legend=data_name)
-    
-    
-def plot_function(figure, function, xdata, fpars=None, n=1000, legend_name=None, color='black'):
-    '''Plot a function evaluated over the range of xdata'''
-    xvals = np.linspace(min(xdata), max(xdata), n)
-    
-    if fpars is None:
-        fvals = function(xvals)
-    elif isinstance(fpars, qe.Measurement_Array):
-        fvals = function(xvals, *(fpars.get_means()))
-    elif isinstance(fpars,(list, np.ndarray)):
-        fvals = function(xvals, *fpars)
-    else:
-        pass
-    figure.line(xvals, fvals, legend=legend_name, line_color=color)
-        
+############################################################################### 
+       
 
 def _plot_function(self, xdata, theory, n=1000, legend_name=None, color=None):
     '''Semi-privite function to plot a function over a given range of values.

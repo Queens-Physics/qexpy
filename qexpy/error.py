@@ -238,11 +238,10 @@ class ExperimentalValue:
         p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                 fill_color="#036564", line_color="#033649")
 
-        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
+        p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
+        p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
-        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
-        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
+        p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
         
         if output =='file' or not qu.in_notebook():
@@ -280,11 +279,10 @@ class ExperimentalValue:
         p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                 fill_color="#036564", line_color="#033649")
 
-        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
+        p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
+        p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
-        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
-        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
+        p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
 
         if output == 'file' or not qu.in_notebook():
@@ -1705,10 +1703,12 @@ def _def_print(self, method=None):
         return n % (mean)+" +/- "+n % (std)
 
     else:
-
+        if mean == float('inf') and std == float('inf'):
+            return "inf +/- inf"
+        
         if mean == float('inf'):
             return "inf"
-
+                        
         i = _return_exponent(std)
 
         if i < 0:
@@ -1716,8 +1716,13 @@ def _def_print(self, method=None):
             n = "%."+n+"f"
         else:
             n = '%.0f'
-        std = float(round(std, -i))
+            
         mean = float(round(mean, -i))
+        if std == float('inf'):
+            return  n % (mean)+" +/- inf"
+        
+        std = float(round(std, -i))
+        
         return n % (mean)+" +/- "+n % (std)
 
 
