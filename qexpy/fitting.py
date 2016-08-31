@@ -21,16 +21,16 @@ def Rpolynomial(x, *pars):
 
 def Rexp(x, *pars):
     '''Function for a Gaussian'''
-    from qexpy.error import exp
-    return (0 if pars[1]==0 else pars[0]*exp(-x/pars[1]) )
+    #from qexpy.error import exp
+    return (0 if pars[1]==0 else pars[0]*np.exp(-x/pars[1]) )
 
 def Rgauss(x, *pars):
     '''Function for a Gaussian'''
-    from qexpy.error import exp
+    #from qexpy.error import exp
     mean = pars[0]
     std = pars[1]
     norm = pars[2]
-    return (0 if std==0 else norm*(2*pi*std**2)**(-0.5)*exp(-0.5*(x-mean)**2/std**2))
+    return (0 if std==0 else norm*(2*pi*std**2)**(-0.5)*np.exp(-0.5*(x-mean)**2/std**2))
 
 class XYFitter:
     '''A class to fit a set of data given as y(x)'''
@@ -117,11 +117,13 @@ class XYFitter:
             
         #if the x errors are not zero, convert them to equivalent errors in y
         #TODO: check the math on this...
-            
-        self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
+        #TODO: catch curve_fit run time errors
+           
+            self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
                                                     sigma=yerr, p0=self.parguess)
 
-        self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
+            self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
+       
          
         # Use derivative method to factor x error into fit
         if xerr.nonzero()[0].size:

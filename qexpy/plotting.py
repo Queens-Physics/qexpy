@@ -250,8 +250,9 @@ class Plot:
         if self.flag['residuals']:
             self.figure = bi.gridplot([[self.figure], [self.res]])
             
+        #TODO: Draw the rest (e.g. functions and error bands)    
+    
             
-        #Add any functions    
             
         return self.figure
         

@@ -548,11 +548,13 @@ class ExperimentalValue:
 ###############################################################################
 
     def __add__(self, other):
+        #TODO: is this the correct implementation??? or should ARRAy create an ndarray???
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.add, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.add, self, other[i])
+                #result.append(op.operation_wrap(op.add, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -563,9 +565,10 @@ class ExperimentalValue:
     def __radd__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.add, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.add, self, other[i])
+                #result.append(op.operation_wrap(op.add, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -576,9 +579,10 @@ class ExperimentalValue:
     def __mul__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.mul, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.mul, self, other[i])
+                #result.append(op.operation_wrap(op.mul, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -589,9 +593,10 @@ class ExperimentalValue:
     def __rmul__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.mul, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.mul, self, other[i])
+                #result.append(op.operation_wrap(op.mul, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -602,9 +607,10 @@ class ExperimentalValue:
     def __sub__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.sub, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.sub, self, other[i])
+                #result.append(op.operation_wrap(op.sub, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -615,9 +621,10 @@ class ExperimentalValue:
     def __rsub__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.sub, value, self))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.sub, self, other[i])
+                #result.append(op.operation_wrap(op.sub, value, self))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -628,9 +635,10 @@ class ExperimentalValue:
     def __truediv__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.div, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.div, self, other[i])
+                #result.append(op.operation_wrap(op.div, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -641,9 +649,10 @@ class ExperimentalValue:
     def __rtruediv__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.div, value, self))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.div, self, other[i])
+                #result.append(op.operation_wrap(op.div, value, self))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -654,9 +663,10 @@ class ExperimentalValue:
     def __pow__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.power, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.power, self, other[i])
+                #result.append(op.operation_wrap(op.power, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -667,9 +677,10 @@ class ExperimentalValue:
     def __rpow__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.power, value, self))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.power, self, other[i])
+                #result.append(op.operation_wrap(op.power, value, self))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
