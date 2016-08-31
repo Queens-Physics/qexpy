@@ -222,6 +222,7 @@ class XYDataSet:
         is to allow multiple functions to be fit to the same data set'''
         fitter = XYFitter(model=model, parguess=parguess)
         fit_pars, yres = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
+        
         self.xyfitter.append(fitter)
         self.fit_pars.append(fit_pars) 
         self.fit_npars.append(fit_pars.size)
@@ -229,7 +230,7 @@ class XYDataSet:
         self.fit_function.append(fitter.fit_function) 
         self.fit_function_name.append(fitter.fit_function_name) 
         self.nfits += 1
-        return self.fit_pars[self.nfits-1]
+        return self.fit_pars[-1]
     
     def clear_fits(self):
         self.xyfitter = []

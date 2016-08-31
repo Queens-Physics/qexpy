@@ -98,35 +98,37 @@ def make_np_arrays(*args):
             np_tuple = np_tuple +(np.array([None]),)
     return np_tuple
     
-def plot_function(figure, function, xdata, fpars=None, n=100, legend_name=None, color='black', errorbandfactor=1.0):
+def plot_function(figure, function, xdata, pars=None, n=100, legend_name=None, color='black', errorbandfactor=1.0):
     '''Plot a function evaluated over the range of xdata'''
     xvals = np.linspace(min(xdata), max(xdata), n)
     
-    if fpars is None:
+    if pars is None:
         fvals = function(xvals)
-    elif isinstance(fpars, qe.Measurement_Array):
+    elif isinstance(pars, qe.Measurement_Array):
         recall = qe.Measurement.minmax_n
         qe.Measurement.minmax_n=1
-        fmes = function(xvals, *(fpars))
+        fmes = function(xvals, *(pars))
         fvals = fmes.get_means()
         qe.Measurement.minmax_n=recall
-    elif isinstance(fpars,(list, np.ndarray)):
-        fvals = function(xvals, *fpars)
+    elif isinstance(pars,(list, np.ndarray)):
+        fvals = function(xvals, *pars)
     else:
         print("Error: unrecognized parameters for function")
         pass
-    figure.line(xvals, fvals, legend=legend_name, line_color=color)
+    line = figure.line(xvals, fvals, legend=legend_name, line_color=color)
     
     #Add error band
-    if isinstance(fpars, qe.Measurement_Array):
+    if isinstance(pars, qe.Measurement_Array):
         ymax = fmes.get_means()+errorbandfactor*fmes.get_stds()
         ymin = fmes.get_means()-errorbandfactor*fmes.get_stds()
 
-        figure.patch(x=np.append(xvals,xvals[::-1]),y=np.append(ymax,ymin[::-1]),
+        patch = figure.patch(x=np.append(xvals,xvals[::-1]),y=np.append(ymax,ymin[::-1]),
                      fill_alpha=0.3,
                      fill_color=color,
                      line_alpha=0.0,
                      legend=legend_name)
        
-        
+        return line, patch
+    else:
+        return line, None
 
