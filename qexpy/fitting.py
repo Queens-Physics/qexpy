@@ -231,17 +231,26 @@ class XYDataSet:
         self.nfits += 1
         return self.fit_pars[self.nfits-1]
     
-    def get_x_range(self, errfact=1):
-        return [self.xdata.min()-errfact*max(self.xerr.max(),self.yerr.max()),\
-                self.xdata.max()+errfact*max(self.xerr.max(),self.yerr.max())]
+    def clear_fits(self):
+        self.xyfitter = []
+        self.fit_pars = []
+        self.fit_function = [] 
+        self.fit_function_name = []
+        self.fit_npars =[]
+        self.yres = []
+        self.nfits=0
     
-    def get_y_range(self, errfact=1):
-        return [self.ydata.min()-errfact*max(self.yerr.max(),1),\
-                self.ydata.max()+errfact*max(self.yerr.max(),1)] 
+    def get_x_range(self, margin=0):
+        return [self.xdata.min()-self.xerr.max()-margin,\
+                self.xdata.max()+self.xerr.max()+margin]
     
-    def get_yres_range(self, errfact=1, fitindex=-1):
-        return [self.yres[fitindex].get_means().min()-errfact*max(self.yerr.max(),1),\
-                self.yres[fitindex].get_means().max()+errfact*max(self.yerr.max(),1)] 
+    def get_y_range(self, margin=0):
+        return [self.ydata.min()-self.yerr.max()-margin,\
+                self.ydata.max()+self.yerr.max()+margin] 
+    
+    def get_yres_range(self, margin=0, fitindex=-1):
+        return [self.yres[fitindex].get_means().min()-self.yerr.max()-margin,\
+                self.yres[fitindex].get_means().max()+self.yerr.max()+margin] 
     
 def num_der(function, point, dx=1e-10):
     '''

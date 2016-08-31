@@ -9,6 +9,7 @@ from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
 import bokeh.models as mo
+import bokeh.palettes as bpal
 
 CONSTANT = qu.number_types
 ARRAY = qu.array_types
@@ -25,7 +26,7 @@ class Plot:
     which mimic errorbars and data points.
     '''
 
-    def __init__(self, x, y, xerr=None, yerr=None, data_name=None):
+    def __init__(self, x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None):
         '''
         Constructor requiring two measeurement objects, or lists of data and
         error values.
@@ -35,11 +36,20 @@ class Plot:
         used to record the data to be plotted and track what the user has
         requested to be plotted.
         '''
-        
+    
+        self.color_palette = bpal.Set1_9
+        self.color_count = 0
+    
         #Revised members:
         self.datasets=[]
-        self.datasets.append(qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name))
+        if dataset != None:
+            self.datasets.append(dataset)
+        else:
+            self.datasets.append(qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name))
         
+        self.datasets_colors=[]
+        self.datasets_colors.append(self._get_color_from_palette())
+            
         self.xunits = self.datasets[-1].xunits
         self.xname = self.datasets[-1].xname
         
@@ -49,10 +59,12 @@ class Plot:
         self.errorband_sigma = 1.0
         self.show_residuals=False
         
-        self.color_palette = ['red', 'blue','black','green', 'orange'] 
+
         
-        self.x_range = self.datasets[-1].get_x_range(2)
-        self.y_range = self.datasets[-1].get_y_range(2)
+        self.x_range_margin = 0.5
+        self.y_range_margin = 0.5
+        self.x_range = self.datasets[-1].get_x_range(self.x_range_margin)
+        self.y_range = self.datasets[-1].get_y_range(self.y_range_margin)
         
         self.dimensions = [600, 400]
         
@@ -60,13 +72,17 @@ class Plot:
         self.user_functions = []
         self.user_functions_pars = []
         self.user_functions_names = []
+        self.user_functions_colors = []
         
-        #Old
-        self.colors = {
-            'Data Points': ['red', 'black'],
-            'Fit': ['blue', 'green'],
-            'Function': ['orange', 'navy'],
-            'Error': 'red'}
+        
+        self.axes = {'xscale': 'linear', 'yscale': 'linear'}
+        self.labels = {
+            'title': self.datasets[-1].name,
+            'xtitle': self.xname+' ['+self.xunits+']',
+            'ytitle': self.yname+' ['+self.yunits+']',
+            'data': data_name }
+        
+        
         
         self.plot_para = {
             'xscale': 'linear', 'yscale': 'linear', 'filename': 'Plot'}
@@ -74,28 +90,36 @@ class Plot:
         self.flag = {'fitted': False, 'residuals': False,
                      'Manual': False} # analysis:ignore
         self.attributes = {
-            'title': self.yname+' versus '+self.xname,
-            'xaxis': self.xname+'/'+self.xunits,
-            'yaxis': self.yname+'/'+self.yunits,
+            'title': self.datasets[-1].name,
+            'xaxis': self.xname+' ['+self.xunits+']',
+            'yaxis': self.yname+' ['+self.yunits+']',
             'data': data_name, 'function': (), }
         self.sigma = 1       
 
-        
+    def _get_color_from_palette(self):
+        self.color_count += 1
+        return self.color_palette[self.color_count-1]
+    
     def fit(self, model=None, parguess=None, fit_range=None, datasetindex=-1):
         return self.datasets[datasetindex].fit()
         
+    def print_fit_parameters(self, dataset=-1):
+        if self.datasets[-1].nfits>0:
+            print("Fit parameters:\n"+str(self.datasets[dataset].fit_pars[-1]))    
+        else:
+            print("Datasets have not been fit")
+            
 ###############################################################################
 # User Methods for adding to Plot Objects
 ###############################################################################
 
-    def residuals(self):
-        '''Request residual output for plot.'''
+    def add_residuals(self):
+        '''Add a subfigure with residuals to the main figure when plotting'''
         if self.datasets[-1].nfits>0:
-            self.flag['residuals'] = True
             self.show_residuals = True
 
     
-    def add_function(self, function, fpars = None, fname=None):
+    def add_function(self, function, pars = None, name=None, color=None):
         '''Adds a specified function to the list of functions to be plotted.
 
         Functions are only plotted when a Bokeh object is created, thus user
@@ -105,22 +129,22 @@ class Plot:
         xvals = np.linspace(self.x_range[0],self.x_range[1], 100)
         
         #check if we should change the y-axis range to accomodate the function
-        if fpars == None:
+        if not isinstance(pars, np.ndarray) and pars == None:
             fvals = function(xvals)
-        elif isinstance(fpars, qe.Measurement_Array):
+        elif isinstance(pars, qe.Measurement_Array) :
             recall = qe.Measurement.minmax_n
             qe.Measurement.minmax_n=1
-            fmes = function(xvals, *(fpars))
+            fmes = function(xvals, *(pars))
             fvals = fmes.get_means()
             qe.Measurement.minmax_n=recall
-        elif isinstance(fpars,(list, np.ndarray)):
-            fvals = function(xvals, *fpars)
+        elif isinstance(pars,(list, np.ndarray)):
+            fvals = function(xvals, *pars)
         else:
             print("Error: Not a recognized format for parameter")
             return
                  
-        fmax = fvals.max()
-        fmin = fvals.min()
+        fmax = fvals.max()+self.y_range_margin
+        fmin = fvals.min()-self.y_range_margin
         
         if fmax > self.y_range[1]:
             self.y_range[1]=fmax
@@ -128,22 +152,27 @@ class Plot:
             self.y_range[0]=fmin
             
         self.user_functions.append(function)
-        self.user_functions_pars.append(fpars)
-        name = "userf_{}".format(self.user_functions_count) if fname==None else fname
-        self.user_functions_names.append(name)
+        self.user_functions_pars.append(pars)
+        fname = "userf_{}".format(self.user_functions_count) if name==None else name
+        self.user_functions_names.append(fname)
         self.user_functions_count +=1
         
-        #old
-        self.attributes['function'] += (function,)
-
-
-###############################################################################
-# Methods for changing parameters of Plot Object
-###############################################################################
-    def add_dataset(self, dataset):
+        if color is None:
+            self.user_functions_colors.append(self._get_color_from_palette())
+        else: 
+            self.user_functions_colors.append(color)
+        
+    def add_dataset(self, dataset, color=None, name = None):
         self.datasets.append(dataset)
-        x_range = dataset.get_x_range(2)
-        y_range = dataset.get_y_range(2)
+        if color is None:
+            self.datasets_colors.append(self._get_color_from_palette())
+        else: 
+            self.datasets_colors.append(color)
+        if name != None:
+            self.datasets[-1].name=name
+            
+        x_range = dataset.get_x_range(self.x_range_margin)
+        y_range = dataset.get_y_range(self.y_range_margin)
         
         if x_range[0] < self.x_range[0]:
             self.x_range[0]=x_range[0]
@@ -155,7 +184,11 @@ class Plot:
         if y_range[1] > self.y_range[1]:
             self.y_range[1]=y_range[1] 
  
-    
+
+###############################################################################
+# Methods for changing parameters of Plot Object
+###############################################################################
+
     def set_plot_range(self, x_range=None, y_range=None):
         if type(x_range) in ARRAY and len(x_range) is 2:
             self.x_range = x_range
@@ -169,43 +202,23 @@ class Plot:
             print('''Y range must be a list containing a minimun and maximum
             value for the range of the plot.''')
 
-    def set_colors(self, data=None, error=None, fit=None):
-        '''Method to changes colors of data or function lines.
-
-        User can specify a list or tuple of color strings for the data points
-        or functions, as multiple datasets and functions will be plotted with
-        different functions.
-        '''
-        if data is not None:
-            try:
-                len(data)
-            except TypeError:
-                self.colors['Data Points'][0] = data
-            else:
-                self.colors['Data Points'] = data
-
-        if error is not None:
-            self.colors['Error'] = error
-
-        if type(fit) is str:
-            self.colors['Fit'] = fit
-
-    def set_name(self, title=None, xlabel=None, ylabel=None, data_name=None, ):
+            
+    def set_labels(self, title=None, xtitle=None, ytitle=None, data_name=None ):
         '''Change the labels for plot axis, datasets, or the plot itself.
 
         Method simply overwrites the automatically generated names used in
         the Bokeh plot.'''
         if title is not None:
-            self.attributes['title'] = title
+            self.labels['title'] = title
 
-        if xlabel is not None:
-            self.attributes['xname'] = xlabel
+        if xtitle is not None:
+            self.labels['xtitle'] = xtitle
 
-        if ylabel is not None:
-            self.attributes['yname'] = ylabel
+        if ytitle is not None:
+            self.labels['ytitle'] = ytitle
 
         if data_name is not None:
-            self.attributes['Data'] = data_name
+            self.labels['Data'] = data_name
 
     def resize_plot(self, width=None, height=None):
         if width is None:
@@ -222,61 +235,80 @@ class Plot:
 ###############################################################################
 # Methods for Returning or Rendering Bokeh
 ###############################################################################
-
-    def print_fit_parameters(self):
-        if self.datasets[-1].nfits>0:
-            print("Fit parameters:\n"+self.datasets[-1].fit_pars[-1])
             
-    def get_bokeh_figure(self):    
+    def show(self, output='inline'):
+        '''
+        Method which creates and displays plot.
+        Previous methods simply edit parameters which are used here, to
+        prevent run times increasing due to rebuilding the bokeh plot object.
+        '''
+        
+        if output == 'file' or not qu.in_notebook():
+            bi.output_file(self.plot_para['filename']+'.html',
+                           title=self.attributes['title'])
+        elif not qu.bokeh_ouput_notebook_called:
+            bi.output_notebook()
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
+            qu.bokeh_ouput_notebook_called = True
+
+        bp.show(self.populate_bokeh_figure())
+                    
+            
+    def populate_bokeh_figure(self):    
         # create a new bokeh figure
-        self.bkfigure = self.build_bokeh_figure(residuals=False)
+        self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         
         # create the one for residuals if needed
         if self.show_residuals:
-            self.bkres = self.build_bokeh_figure(residuals=True)
+            self.bkres = self.initialize_bokeh_figure(residuals=True)
                               
         #plot the datasets and their latest fit
-        colorcount = 0
+        count = 0
         for dataset in self.datasets:
+            color = self.datasets_colors[count]
             qpu.plot_dataset(self.bkfigure, dataset, residual=False,
-                         data_color=self.color_palette[colorcount])
+                            data_color=color)
                    
             if dataset.nfits>0:
-                qpu.plot_function(self.bkfigure, function=dataset.fit_function[-1], xdata=dataset.xdata,
-                              fpars=dataset.fit_pars[-1], n=100, legend_name=dataset.fit_function_name[-1],
-                              color=self.color_palette[colorcount], errorbandfactor=self.errorband_sigma)
+                qpu.plot_function(self.bkfigure, function=dataset.fit_function[-1],
+                                  xdata=dataset.xdata,fpars=dataset.fit_pars[-1],
+                                  n=100, legend_name=dataset.fit_function_name[-1],
+                                  color=color, errorbandfactor=self.errorband_sigma)
                 
                 #Draw fit parameters only for the first 2 dataset
-                if colorcount<1:
+                if count<1:
                      for i in range(dataset.fit_npars[-1]):
                         #shorten the name of the fit parameters
                         short_name =  dataset.fit_pars[-1][i].__str__().split('_')
                         short_name = short_name[0]+"_"+short_name[-1]
                         citation = mo.Label(x=590, y=320+20*i,
-                                    text_align='right',
-                                    text_baseline='top',
-                                    text_font_size='11pt',
-                                    x_units='screen',
-                                    y_units='screen',
-                                    text=short_name,
-                                    render_mode='css',
-                                    background_fill_color='white',
-                                    background_fill_alpha=1.0)
+                                            text_align='right',
+                                            text_baseline='top',
+                                            text_font_size='11pt',
+                                            x_units='screen',
+                                            y_units='screen',
+                                            text=short_name,
+                                            render_mode='css',
+                                            background_fill_color='white',
+                                            background_fill_alpha=1.0)
                         self.bkfigure.add_layout(citation)
                         
                 if self.show_residuals:
                     qpu.plot_dataset(self.bkres, dataset, residual=True,
-                                 data_color=self.color_palette[colorcount])
-            colorcount += 1
+                                     data_color=color)
+            count += 1
 
         #Now add any user defined functions:
-        xvals = np.linspace(self.x_range[0],self.x_range[1], 100)
+        xvals = np.linspace(self.x_range[0]+self.x_range_margin,self.x_range[1]-self.x_range_margin, 100)
    
+        count = 0
         for func, pars, fname in zip(self.user_functions,self.user_functions_pars,self.user_functions_names):
-            
+            color = self.user_functions_colors[count]
             qpu.plot_function(self.bkfigure, function=func, xdata=xvals,
                               fpars=pars, n=100, legend_name= fname,
-                              color=self.color_palette[colorcount], errorbandfactor=self.errorband_sigma)
+                              color=color, errorbandfactor=self.errorband_sigma)
+            count += 1
         
         #Specify the location of the legend
         self.bkfigure.legend.location = "top_left"
@@ -286,14 +318,14 @@ class Plot:
             
         return self.bkfigure
     
-    def build_bokeh_figure(self, residuals=False):  
+    def initialize_bokeh_figure(self, residuals=False):  
         if residuals==False:
             return bp.figure(
                 tools='save, pan, box_zoom, wheel_zoom, reset',
                 width=self.dimensions[0], height=self.dimensions[1],
-                y_axis_type=self.plot_para['yscale'],
+                y_axis_type=self.axes['yscale'],
                 y_range=self.y_range,
-                x_axis_type=self.plot_para['xscale'],
+                x_axis_type=self.axes['xscale'],
                 x_range=self.x_range,
                 title=self.attributes['title'],
                 x_axis_label=self.attributes['xaxis'],
@@ -309,306 +341,11 @@ class Plot:
                 x_axis_label=self.attributes['xaxis'],
                 y_axis_label='Residuals'
             )
+        
+    def show_interactive_linear_fit():
+        pass
+   
     
-    
-    def get_bokeh(self):
-        '''Return Bokeh plot object for the plot acted upon.
-
-        If no residual plot exists, a single Bokeh object, containing the
-        main plot is returned. Else, a tuple with the main and residual plot
-        in that order is returned.'''
-        
-        #disable MinMax to speed things up
-        recall = qe.Measurement.minmax_n
-        qe.Measurement.minmax_n=1
-        
-        # create a new plot
-        self.p = bp.figure(
-            tools='save, pan, box_zoom, wheel_zoom, reset',
-            width=self.dimensions[0], height=self.dimensions[1],
-            y_axis_type=self.plot_para['yscale'],
-            y_range=self.y_range,
-            x_axis_type=self.plot_para['xscale'],
-            x_range=self.y_range,
-            title=self.attributes['title'],
-            x_axis_label=self.attributes['xaxis'],
-            y_axis_label=self.attributes['yaxis'],
-        )
-
-        # add datapoints with errorbars
-        _error_bar(self)
-
-        if self.flag['Manual'] is True:
-            _error_bar(self,
-                       xdata=self.manual_data[0], ydata=self.manual_data[1])
-
-        if self.flag['fitted'] is True:
-            _plot_function(
-                self, self.xdata,
-                lambda x: self.fit_function(x, *self.fit_parameters),
-                legend_name='Fit')
-
-            self.function_counter += 1
-
-            if self.fit_parameters[1].mean > 0:
-                self.p.legend.location = "top_left"
-            else:
-                self.p.legend.location = "top_right"
-        else:
-            self.p.legend.location = 'top_right'
-
-        for func in self.attributes['function']:
-            _plot_function(
-                self, self.xdata, func)
-            self.function_counter += 1
-
-        if self.flag['residuals'] is False:
-            qe.Measurement.minmax_n=recall
-            return self.p
-        else:
-            self.res = bp.figure(
-                tools='save, pan, box_zoom, wheel_zoom, reset',
-                width=self.dimensions[0], height=self.dimensions[1]//3,
-                y_axis_type='linear',
-                y_range=[min(self.yres)-2*max(self.yerr),
-                         max(self.yres)+2*max(self.yerr)],
-                x_range=[min(self.xdata)-2*max(self.xerr),
-                         max(self.xdata)+2*max(self.xerr)],
-                x_axis_label=self.attributes['xaxis'],
-                y_axis_label='Residuals'
-            )
-
-            # plot y errorbars
-            _error_bar(self, residual=True)
-            qe.Measurement.minmax_n=recall
-            return (self.p, self.res)
-       
-
-    def show(self, output='inline'):
-        '''
-        Method which creates and displays plot.
-        Previous methods simply edit parameters which are used here, to
-        prevent run times increasing due to rebuilding the bokeh plot object.
-        '''
-        #disable MinMax to speed things up
-        recall = qe.Measurement.minmax_n
-        qe.Measurement.minmax_n=1
-        
-        if output == 'file' or not qu.in_notebook():
-            bi.output_file(self.plot_para['filename']+'.html',
-                           title=self.attributes['title'])
-        elif not qu.bokeh_ouput_notebook_called:
-            bi.output_notebook()
-            # This must be the first time calling output_notebook,
-            # keep track that it's been called:
-            qu.bokeh_ouput_notebook_called = True
-
-        # create a new plot
-        self.p = bp.figure(
-            width=self.dimensions[0], height=self.dimensions[1],
-            toolbar_location='above',
-            tools='save, pan, box_zoom, wheel_zoom, reset',
-            y_axis_type=self.plot_para['yscale'],
-            y_range=self.y_range,
-            x_axis_type=self.plot_para['xscale'],
-            x_range=self.x_range,
-            title=self.attributes['title'],
-            x_axis_label=self.attributes['xaxis'],
-            y_axis_label=self.attributes['yaxis'],
-        )
-
-        # add datapoints with errorbars
-        _error_bar(self)
-
-        if self.flag['Manual'] is True:
-            _error_bar(self,
-                       xdata=self.manual_data[0], ydata=self.manual_data[1])
-
-        if self.flag['fitted'] is True:
-            data = [min(self.xdata)-max(self.xerr),
-                    max(self.xdata)+max(self.xerr)]
-            _plot_function(
-                self, data,
-                lambda x: self.fit_function(x, *self.fit_parameters),
-                color=self.colors['Fit'][0])
-
-            for i in range(len(self.fit_parameters)):
-                citation = mo.Label(x=590, y=320+20*i,
-                                    text_align='right',
-                                    text_baseline='top',
-                                    text_font_size='11pt',
-                                    x_units='screen',
-                                    y_units='screen',
-                                    text=self.fit_parameters[i].__str__(),
-                                    render_mode='css',
-                                    background_fill_color='white',
-                                    background_fill_alpha=1.0)
-                self.p.add_layout(citation)
-
-            self.function_counter += 1
-
-            if self.fit_parameters[1].mean > 0:
-                self.p.legend.location = "top_left"
-            else:
-                self.p.legend.location = "top_right"
-        else:
-            self.p.legend.location = 'top_right'
-
-        for func in self.attributes['function']:
-            _plot_function(
-                self, self.xdata, func)
-            self.function_counter += 1
-
-        if self.flag['residuals'] is False:
-            bp.show(self.p)
-            qe.Measurement.minmax_n=recall
-            return self.p
-        else:
-
-            self.res = bp.figure(
-                width=self.dimensions[0], height=self.dimensions[1]//3,
-                tools='save, pan, box_zoom, wheel_zoom, reset',
-                y_axis_type='linear',
-                y_range=[min(self.yres)-2*max(self.yerr),
-                         max(self.yres)+2*max(self.yerr)],
-                x_range=self.p.x_range,
-                x_axis_label=self.attributes['xaxis'],
-                y_axis_label='Residuals'
-            )
-
-            # plot y errorbars
-            _error_bar(self, residual=True)
-
-            gp_alt = bi.gridplot([[self.p], [self.res]])
-            bp.show(gp_alt)
-            qe.Measurement.minmax_n=recall
-            return gp_alt
-
-    def show_on(self, plot2, output='inline'):
-        '''
-        Method which creates and displays plot.
-        Previous methods sumply edit parameters which are used here, to
-        prevent run times increasing due to rebuilding the bokeh plot object.
-        '''
-        #disable MinMax to speed things up
-        recall = qe.Measurement.minmax_n
-        qe.Measurement.minmax_n=1
-
-        if output == 'file' or not qu.in_notebook():
-            bi.output_file(self.plot_para['filename']+'.html',
-                           title=self.attributes['title'])
-        elif not qu.bokeh_ouput_notebook_called:
-            bi.output_notebook()
-            # This must be the first time calling output_notebook,
-            # keep track that it's been called:
-            qu.bokeh_ouput_notebook_called = True
-
-        if min(plot2.xdata) < self.y_range[0]:
-            self.y_range[0] = min(plot2.xdata)
-
-        if max(plot2.xdata) > self.y_range[1]:
-            self.y_range[1] = max(plot2.xdata)
-
-        # create a new plot
-        self.p = bp.figure(
-            width=self.dimensions[0], height=self.dimensions[1],
-            toolbar_location='above',
-            tools='save, pan, box_zoom, wheel_zoom, reset',
-            y_axis_type=self.plot_para['yscale'],
-            #  y_range=self.y_range,
-            x_axis_type=self.plot_para['xscale'],
-            #  x_range=self.x_range,
-            title=self.attributes['title'],
-            x_axis_label=self.attributes['xaxis'],
-            y_axis_label=self.attributes['yaxis'],
-        )
-
-        # add datapoints with errorbars
-        _error_bar(self)
-        _error_bar(plot2, plot_object=self, color=1)
-
-        if self.flag['Manual'] is True:
-            _error_bar(self,
-                       xdata=self.manual_data[0], ydata=self.manual_data[1])
-
-        if plot2.flag['Manual'] is True:
-            _error_bar(plot2,
-                       xdata=plot2.manual_data[0], ydata=plot2.manual_data[1],
-                       plot_object=self)
-
-        if self.flag['fitted'] is True:
-            
-            data = [min(self.xdata)-max(self.xerr),
-                    max(self.xdata)+max(self.xerr)]
-            _plot_function(
-                self, data,
-                lambda x: self.fit_function(x, *self.fit_parameters),
-                legend_name='Fit', color=plot2.colors['Fit'][0])
-            
-            self.function_counter += 1
-
-            if self.fit_parameters[1].mean > 0:
-                self.p.legend.location = "top_left"
-            else:
-                self.p.legend.location = "top_right"
-        else:
-            self.p.legend.location = 'top_right'
-
-        if plot2.flag['fitted'] is True:
-            data = [min(plot2.xdata)-max(plot2.xerr),
-                    max(plot2.xdata)+max(plot2.xerr)]
-            _plot_function(
-                self, data,
-                lambda x: plot2.fit_function(x, *plot2.fit_parameters),
-                legend_name='Second Fit', color=plot2.colors['Fit'][1])
-            
-            self.function_counter += 1
-
-        for func in self.attributes['function']:
-            _plot_function(
-                self, self.xdata, func)
-            self.function_counter += 1
-
-        if self.flag['residuals'] is False and\
-                plot2.flag['residuals'] is False:
-            bp.show(self.p)
-            qe.Measurement.minmax_n = recall
-            return self.p
-
-        elif self.flag['residuals'] is True and\
-                plot2.flag['residuals'] is True:
-
-            self.res = bp.figure(
-                width=self.dimensions[0], height=self.dimensions[1]//3,
-                y_axis_type='linear',
-                y_range=[min(self.yres)-2*max(self.yerr),
-                         max(self.yres)+2*max(self.yerr)],
-                x_range=self.p.x_range,
-                x_axis_label=self.attributes['xaxis'],
-                y_axis_label='Residuals',
-            )
-
-            # plot y errorbars
-            _error_bar(self, residual=True)
-
-            plot2.res = bp.figure(
-                width=self.dimensions[0], height=self.dimensions[1]//3,
-                y_axis_type='linear',
-                y_range=[min(plot2.yres)-2*max(plot2.yerr),
-                         max(plot2.yres)+2*max(plot2.yerr)],
-                x_range=self.p.x_range,
-                x_axis_label=plot2.attributes['xaxis'],
-                y_axis_label='Residuals'
-            )
-
-            # plot y errorbars
-            _error_bar(plot2, residual=True, color=1)
-
-            gp_alt = bi.gridplot([[self.p], [self.res], [plot2.res]])
-            bp.show(gp_alt)
-            qe.Measurement.minmax_n = recall
-            return gp_alt
-
 ###############################################################################
 # First Year Methods
 ###############################################################################
@@ -792,60 +529,6 @@ class Plot:
             return gp_alt
 
 
-###############################################################################
-# Functions for Plotting common objects
-############################################################################### 
-       
-
-def _plot_function(self, xdata, theory, n=1000, legend_name=None, color=None):
-    '''Semi-privite function to plot a function over a given range of values.
-
-    Curves are generated by creating a series of lines between points, the
-    parameter n is the number of points. Line color is given by the plot
-    attribute containing a list of colors which are assigned uniquly to a
-    curve.'''
-    xrange = np.linspace(min(xdata), max(xdata), n)
-    y_theory = theory(min(xdata))
-    y_mid = []
-
-    if type(color) is str:
-        func_color = color
-    else:
-        func_color = self.colors['Function'][self.function_counter]
-
-    try:
-        y_theory.type
-    except AttributeError:
-        for i in range(n):
-            y_mid.append(theory(xrange[i]))
-        self.fit_line = self.p.line(
-            xrange, y_mid, legend=legend_name,
-            line_color=func_color)
-
-    else:
-        y_max = []
-        y_min = []
-        for i in range(n):
-            y_theory = theory(xrange[i])
-            y_mid.append(y_theory.mean)
-            y_max.append(y_theory.mean+self.sigma*y_theory.std)
-            y_min.append(y_theory.mean-self.sigma*y_theory.std)
-        self.fit_line = self.p.line(
-            xrange, y_mid, legend=legend_name,
-            line_color=func_color)
-
-        xrange_reverse = list(reversed(xrange))
-        y_min_reverse = list(reversed(y_min))
-        xrange = list(xrange)
-        y_max = list(y_max)
-
-        self.fit_range = self.p.patch(
-            x=xrange+xrange_reverse, y=y_max+y_min_reverse,
-            fill_alpha=0.3,
-            fill_color=func_color,
-            line_color=func_color,
-            line_dash='dashed', line_alpha=0.3,
-            legend=legend_name)
 
 
 ###############################################################################

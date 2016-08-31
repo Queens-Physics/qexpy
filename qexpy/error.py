@@ -38,6 +38,7 @@ class ExperimentalValue:
                     data[index] = args[0][index]
                 self.mean = data.mean()
                 self.std = data.std(ddof=1)
+                self.error_on_mean = 0 if data.size==0 else self.std/np.sqrt(data.size)
             else:
                 raise TypeError('''Input must be either a single array of values,
                       or the central value and uncertainty in one measurement''')
@@ -178,7 +179,19 @@ class ExperimentalValue:
         propagation method is selected.
         '''
         return self.std
-
+    
+    def get_uncertainty(self):
+        return self.std
+    
+    def get_error_on_mean(self):
+        '''Returns the error on the mean if the Measurement is from a set 
+        of data'''
+        if self.error_on_mean:
+            return self.error_on_mean
+        else:
+            print("Error: error on mean not calculated")
+            return 0
+    
     def get_mean(self):
         ''' Returns the central value associated with the Measurement object
         using whatever error propagation method is selected.

@@ -30,39 +30,73 @@ def plot_dataset(figure, dataset, residual=False, data_color='black'):
     add_points_with_error_bars(figure, xdata, ydata, xerr, yerr, data_color, data_name)
     
 def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, data_color='black', data_name='dataset'):
+    '''Add data points to a bokeh plot. If the errors are given as numbers, 
+    the same error bar is assume for all data points'''
     
-    if xdata.size != ydata.size:
+    
+    _xdata, _ydata, _xerr, _yerr = make_np_arrays(xdata,ydata,xerr,yerr)  
+    
+    if _xdata.size != _ydata.size:
         print("Error: x and y data must have the same number of points")
-        return None
+        return None 
     
     #Draw points:    
-    figure.circle(xdata, ydata, color=data_color, size=2, legend=data_name)
+    figure.circle(_xdata, _ydata, color=data_color, size=2, legend=data_name)
 
-    if isinstance(xerr,np.ndarray) or isinstance(yerr,np.ndarray):
+    if isinstance(_xerr,np.ndarray) or isinstance(_yerr,np.ndarray):
         #Add error bars
-        for i in range(xdata.size):
+        for i in range(_xdata.size):
             
-            xcentral = [xdata[i], xdata[i]]
-            ycentral = [ydata[i], ydata[i]]
+            xcentral = [_xdata[i], _xdata[i]]
+            ycentral = [_ydata[i], _ydata[i]]
             
-            #x error bar
-            if isinstance(xerr,np.ndarray) and xerr.size == xdata.size and xerr[i]>0:
-                xends = [xdata[i]-xerr[i], xdata[i]+xerr[i]]
-                figure.line(xends,ycentral, color=data_color)
-                #winglets on x error bar:
-                figure.rect(x=xends, y=ycentral, height=5, width=0.2,
-                    height_units='screen', width_units='screen',
-                    color=data_color,legend=data_name)
+            #x error bar, if the xerr argument was not none
+            if xerr is not None:
+                xends = []
+                if _xerr.size == _xdata.size and _xerr[i]>0:
+                    xends = [_xdata[i]-_xerr[i], _xdata[i]+_xerr[i]]
+                elif _xerr.size == 1 and _xerr[0]>0:
+                    xends = [_xdata[i]-_xerr[0], _xdata[i]+_xerr[0]]
+                else:                    
+                    pass
+                
+                if len(xends)>0:                    
+                    figure.line(xends,ycentral, color=data_color)
+                    #winglets on x error bar:
+                    figure.rect(x=xends, y=ycentral, height=5, width=0.2,
+                        height_units='screen', width_units='screen',
+                        color=data_color)
                 
             #y error bar    
-            if isinstance(yerr,np.ndarray) and yerr.size == xdata.size and yerr[i]>0:    
-                yends = [ydata[i]-yerr[i], ydata[i]+yerr[i]]
-                figure.line(xcentral, yends, color=data_color)
-                #winglets on y error bar:
-                figure.rect(x=xcentral, y=yends, height=0.2, width=5,
-                    height_units='screen', width_units='screen',
-                    color=data_color,legend=data_name)
-    
+            if yerr is not None:
+                yends=[]
+                if _yerr.size == _ydata.size and _yerr[i]>0:
+                    yends = [_ydata[i]-_yerr[i], _ydata[i]+_yerr[i]]
+                elif _yerr.size == 1 and _yerr[i]>0:
+                    yends = [_ydata[i]-_yerr[0], _ydata[i]+_yerr[0]]
+                else:
+                    pass
+                if len(yends)>0:          
+                    figure.line(xcentral, yends, color=data_color)
+                    #winglets on y error bar:
+                    figure.rect(x=xcentral, y=yends, height=0.2, width=5,
+                        height_units='screen', width_units='screen',
+                        color=data_color)
+                
+def make_np_arrays(*args):
+    '''Return a tuple where all of the arguments have been converted into 
+    numpy arrays'''
+    np_tuple=()
+    for arg in args:
+        if isinstance(arg,np.ndarray):
+            np_tuple = np_tuple +(arg,)
+        elif isinstance(arg, list):
+            np_tuple = np_tuple +(np.array(arg),)
+        elif isinstance(arg, qu.number_types):
+            np_tuple = np_tuple +(np.array([arg]),)
+        else:
+            np_tuple = np_tuple +(np.array([None]),)
+    return np_tuple
     
 def plot_function(figure, function, xdata, fpars=None, n=100, legend_name=None, color='black', errorbandfactor=1.0):
     '''Plot a function evaluated over the range of xdata'''
