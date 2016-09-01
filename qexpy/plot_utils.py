@@ -10,7 +10,7 @@ import qexpy.utils as qu
 CONSTANT = qu.number_types
 ARRAY = qu.array_types
 
-def plot_dataset(figure, dataset, residual=False, color='black'):
+def bk_plot_dataset(figure, dataset, residual=False, color='black'):
     '''Given a bokeh figure, this will add data points with errors from a dataset'''
   
     xdata = dataset.xdata
@@ -25,9 +25,9 @@ def plot_dataset(figure, dataset, residual=False, color='black'):
         ydata = dataset.ydata
         yerr = dataset.yerr
      
-    add_points_with_error_bars(figure, xdata, ydata, xerr, yerr, color, data_name)
+    bk_add_points_with_error_bars(figure, xdata, ydata, xerr, yerr, color, data_name)
     
-def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, color='black', data_name='dataset'):
+def bk_add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, color='black', data_name='dataset'):
     '''Add data points to a bokeh plot. If the errors are given as numbers, 
     the same error bar is assume for all data points'''
     
@@ -96,7 +96,7 @@ def make_np_arrays(*args):
             np_tuple = np_tuple +(None,)
     return np_tuple
     
-def plot_function(figure, function, xdata, pars=None, n=100, legend_name=None, color='black', errorbandfactor=1.0):
+def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None, color='black', errorbandfactor=1.0):
     '''Plot a function evaluated over the range of xdata - xdata only needs 2 values
     The function can be either f(x) or f(x, *pars). In the later case, if pars is
     a Measurement_Array (e.g. the parameters from a fit), then an error band is also

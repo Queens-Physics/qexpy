@@ -9,7 +9,15 @@ def in_notebook():
 
 #Global variable to keep track of whether the output_notebook command was run    
 bokeh_ouput_notebook_called = False
+mpl_ouput_notebook_called = False   
+
+def mpl_output_notebook():
     
+#   import IPython.core.ipapi  
+#   ipython = IPython.ipapi.get()
+#   ipython.magic('matplotlib inline')
+    mpl_ouput_notebook_called = True
+
 #These are used for checking whether something is an instance of
 #an array or a number.
 import numpy as np

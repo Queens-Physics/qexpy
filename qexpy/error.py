@@ -2,6 +2,8 @@ import numpy as np
 import bokeh.plotting as bp
 import bokeh.io as bi
 import qexpy.utils as qu
+import qexpy as q
+import pylab as pl
 
 class ExperimentalValue:
     '''
@@ -228,7 +230,7 @@ class ExperimentalValue:
             return None
         return self.info['Data']
     
-    def show_histogram(self, nbins=50, title=None, output='inline'):
+    def show_histogram(self, bins=50, title=None, output='inline'):
         '''Creates a histogram of the inputted data using Bokeh.
         '''
         if self.info['Data'] is None:
@@ -241,31 +243,42 @@ class ExperimentalValue:
             hist_title = self.name+' Histogram'
         else:
             print('Histogram title must be a string.')
-            hist_title = self.name+' Histogram'
-
-        p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
+            hist_title = self.name+' Histogram'                     
+            
+        hist, edges = np.histogram(self.info['Data'], bins=bins)
+        
+        if q.plot_engine in q.plot_engine_synonyms["mpl"]:  
+            xvals = MeasurementArray(edges, error=0, name=self.name)
+            yvals = MeasurementArray(hist, error=np.sqrt(hist), name='counts')
+            xy = q.XYDataSet(xvals[:-1], yvals, data_name=hist_title, is_histogram=True)
+            q.plot_engine="mpl"
+            p = q.MakePlot(dataset = xy)
+            p.show()
+            return p
+        else:
+        
+            p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
                     background_fill_color="#FFFFFF")
 
-        hist, edges = np.histogram(self.info['Data'], bins=nbins)
-
-        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+            p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                 fill_color="#036564", line_color="#033649")
 
-        p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
-        p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
+            p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
+            p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
-        p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
+            p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
         
-        if output =='file' or not qu.in_notebook():
-            bi.output_file(self.name+' histogram.html', title=hist_title)
-        elif not qu.bokeh_ouput_notebook_called:
-            bi.output_notebook()
-            #This must be the first time calling output_notebook, keep track that it's been called:
-            qu.bokeh_ouput_notebook_called = True
+            if output =='file' or not qu.in_notebook():
+                bi.output_file(self.name+' histogram.html', title=hist_title)
+            elif not qu.bokeh_ouput_notebook_called:
+                bi.output_notebook()
+                #This must be the first time calling output_notebook,
+                #keep track that it's been called:
+                qu.bokeh_ouput_notebook_called = True
             
-        bp.show(p1)
-        return p1
+            bp.show(p1)
+            return p1
     
     def show_MC_histogram(self, nbins=50, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
@@ -288,25 +301,34 @@ class ExperimentalValue:
                        background_fill_color="#FFFFFF")
 
         hist, edges = np.histogram(self.MC_list, bins=nbins)
+        
+        if q.plot_engine in q.plot_engine_synonyms["mpl"]:      
+            xvals = MeasurementArray(edges, error=0, name=self.name)
+            yvals = MeasurementArray(hist, error=np.sqrt(hist), name='counts')
+            xy = q.XYDataSet(xvals[:-1], yvals, data_name=hist_title, is_histogram=True)
+            q.plot_engine="mpl"
+            p = q.MakePlot(dataset = xy)
+            p.show()
+            return p
+        else:
+            p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                    fill_color="#036564", line_color="#033649")
 
-        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                fill_color="#036564", line_color="#033649")
-
-        p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
-        p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
+            p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
+            p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
+                    line_dash='dashed')
+            p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
-        p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
-                line_dash='dashed')
+    
+            if output == 'file' or not qu.in_notebook():
+                bi.output_file(self.name+' histogram.html', title=hist_title)
+            elif not qu.bokeh_ouput_notebook_called:
+                bi.output_notebook()
+                # This must be the first time calling output_notebook,
+                # keep track that it's been called:
+                qu.bokeh_ouput_notebook_called = True
 
-        if output == 'file' or not qu.in_notebook():
-            bi.output_file(self.name+' histogram.html', title=hist_title)
-        elif not qu.bokeh_ouput_notebook_called:
-            bi.output_notebook()
-            # This must be the first time calling output_notebook,
-            # keep track that it's been called:
-            qu.bokeh_ouput_notebook_called = True
-
-        bp.show(p1)
+            bp.show(p1)
         return p1
 
 ###############################################################################

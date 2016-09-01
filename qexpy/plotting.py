@@ -1,15 +1,17 @@
-import scipy.optimize as sp
 import numpy as np
+import qexpy as q
 import qexpy.error as qe
 import qexpy.utils as qu
 import qexpy.fitting as qf
 import qexpy.plot_utils as qpu
 
-from math import pi
 import bokeh.plotting as bp
 import bokeh.io as bi
 import bokeh.models as mo
 import bokeh.palettes as bpal
+
+import pylab as pl
+import matplotlib.gridspec as gridspec
 
 from ipywidgets import interact 
 
@@ -17,21 +19,26 @@ CONSTANT = qu.number_types
 ARRAY = qu.array_types
 
 
+
 def MakePlot(x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None, xname=None, xunits=None, yname=None, yunits=None):
     '''Use this function to create a plot object, by providing either arrays
     corresponding to the x and y data, Measurement_Arrays for x and y, or
-    an XYDataset'''
+    an XYDataset
+   
+    '''
     
     if (x is None or y is None) and dataset is None:
+        print("here", dataset)
         return Plot(None)
     
     elif dataset is not None:
+        return Plot(dataset)
         #Need to make sure to override the names and units, if the user specified them 
         #along with a dataset, so re-create the data set:
-        xa = q.MeasurementArray(dataset.xdata, error=dataset.xerr, name=xname, units=xunits)
-        ya = q.MeasurementArray(dataset.ydata, error=dataset.yerr, name=yname, units=yunits)
-        ds = qf.XYDataSet(xa,ya)
-        return Plot(dataset=ds)
+        #xa = q.MeasurementArray(dataset.xdata, error=dataset.xerr, name=xname, units=xunits)
+        #ya = q.MeasurementArray(dataset.ydata, error=dataset.yerr, name=yname, units=yunits)
+        #ds = qf.XYDataSet(xa,ya)
+        #return Plot(dataset=ds)
     
     elif (x is not None and y is not None):
         ds = qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name,
@@ -50,17 +57,16 @@ class Plot:
 
     The Plot object holds a list of XYDatasets, themselves containing
     pairs of MeasurementArrays holding x and y values to be plotted and 
-    fitted. The Plot object uses bokeh to display the data, along with
-    fit functions, and user-specified functions. One should configure
+    fitted. The Plot object uses bokeh or matplotlib to display the data,
+    along with fit functions, and user-specified functions. One should configure
     the various aspects of the plot, and then call the show() function
-    which will actually build the bokeh object and display it. 
+    which will actually build the plot object and display it. 
     '''
 
-    #def __init__(self, x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None):
     def __init__(self, dataset=None):
         '''
         Constructor to make a plot based on a dataset
-        '''
+        '''                                    
     
         #Colors to be used for coloring elements automatically
         self.color_palette = bpal.Set1_9+bpal.Set2_8
@@ -70,8 +76,11 @@ class Plot:
         self.x_range_margin = 0.5
         self.y_range_margin = 0.5  
         
-        #Dimensions of the figure in pixels
+        #Dimensions of the figure in pixels for bokeh
         self.dimensions = [600, 400]
+        #Convert to something similar for matplotlib (although that is 
+        #screen resolution dependent)
+        self.mpl_scaling = 0.017
         
         #Functions that the user can add to be plotted
         self.user_functions_count=0
@@ -89,9 +98,14 @@ class Plot:
         self.show_residuals=False
         #whether to include text labels on plot with fit parameters
         self.show_fit_results=True 
+        self.fit_results_x_offset=0
+        self.fit_results_y_offset=0
+        
         #location of legend
-        self.legend_location = "top_left"
-        self.legend_orientation = "vertical"
+        self.bk_legend_location = "top_left"
+        self.bk_legend_orientation = "vertical"
+        self.mpl_legend_location = "upper left"
+        self.mpl_show_legend = True
         
         #The data to be plotted are held in a list of datasets:
         self.datasets=[]
@@ -129,6 +143,10 @@ class Plot:
         self.yunits = dataset.yunits
         self.yname = dataset.yname 
         self.title = dataset.name
+        self.labels = {
+            'title': self.title,
+            'xtitle': self.xname+' ['+self.xunits+']',
+            'ytitle': self.yname+' ['+self.yunits+']'}
         
         #Get the range from the dataset (will include the margin)
         self.set_range_from_dataset(dataset)
@@ -224,7 +242,8 @@ class Plot:
         '''Add a dataset to the Plot object. All datasets are plotted
         when populate_bokeh_figure is called - usually when show() is called'''
         self.datasets.append(dataset)
-        if len(self.datasets) < 2:
+        
+        if len(self.datasets) < 2:    
             self.initialize_from_dataset(dataset)
             
         if color is None:
@@ -284,11 +303,13 @@ class Plot:
             self.labels['ytitle'] = ytitle
 
 
-    def resize_plot(self, width=None, height=None):
+    def resize_plot(self, width=None, height=None, mpl_scaling=None):
         if width is None:
             width = 600
         if height is None:
             height = 400
+        if mpl_scaling is not None:
+            self.mpl_scaling = mpl_scaling
         self.dimensions = [width, height]
 
     def set_errorband_sigma(self, sigma=1):
@@ -296,24 +317,286 @@ class Plot:
         '''
         self.errorband_sigma = sigma
 
-###############################################################################
-# Methods for Returning or Rendering Bokeh
-###############################################################################
+
             
     def show(self, output='inline', populate_figure=True):
         '''
-        Show the figure, will call populate_bokeh_figure by default to
-        add all the items (datasets, fit functions, user-specified functions)
-        to the plot
+        Show the figure, will call one of the populate methods
+        by default to build a figure.
         '''
         
-        self.set_bokeh_output(output)
-        
-        if populate_figure:
-            bp.show(self.populate_bokeh_figure())
+        if q.plot_engine in q.plot_engine_synonyms["bokeh"]:
+               
+            self.set_bokeh_output(output)      
+            if populate_figure:
+                bp.show(self.populate_bokeh_figure())
+            else:
+                bp.show(self.bkfigure)
+                
+        elif q.plot_engine in q.plot_engine_synonyms["mpl"]:
+            self.set_mpl_output()
+            if populate_figure:
+                self.populate_mpl_figure()
+            pl.show()
+            
         else:
-            bp.show(self.bkfigure)
+            print("Error: unrecognized plot engine")
+
+###############################################################################
+# Methods for Returning or Rendering Matplotlib
+###############################################################################  
+
+    def set_mpl_output(self, output='inline'):
+        '''Choose where to output (in a notebook or to a file)'''
+        #TODO not tested, the output notebook part does not work
+        if output == 'file' or not qu.in_notebook():
+            pl.savefig(self.save_filename, bbox_inches='tight')
+        elif not qu.mpl_ouput_notebook_called:
+            qu.mpl_output_notebook()
+            # This must be the first time calling output_notebook,
+            # keep track that it's been called:
+            qu.mpl_ouput_notebook_called = True
+        else:
+            pass
+        
+        
+    def populate_mpl_figure(self):
+        '''Thia is the main function to populate the matplotlib figure. It will create
+        the figure, and then draw all of the data sets, their residuals, their fits,
+        and any user-supplied functions'''
+        
+        self.initialize_mpl_figure()
+      
+        #Plot the data sets
+        legend_offset = 0
+        for dataset, color in zip(self.datasets, self.datasets_colors):           
+            self.mpl_plot_dataset(dataset, color,
+                                  show_fit_function=True, show_residuals=True)
+            
+            if self.show_fit_results and dataset.nfits > 0:
+                    legend_offset = self.mpl_plot_fit_results_text_box(dataset, legend_offset)
+                    
+         
+        #Now add any user defined functions:
+        #The range over which to plot the functions:
+        xvals = [self.x_range[0]+self.x_range_margin, 
+                 self.x_range[1]-self.x_range_margin]
+        for func, pars, fname, color in zip(self.user_functions,
+                                            self.user_functions_pars, 
+                                            self.user_functions_names,
+                                            self.user_functions_colors):
+        
+            self.mpl_plot_function(function=func, xdata=xvals,pars=pars, n=100,
+                               legend_name= fname, color=color,
+                               errorbandfactor=self.errorband_sigma)
+            
+        if self.mpl_show_legend:
+            pl.legend(loc=self.mpl_legend_location,fontsize=11)
+            
+    def initialize_mpl_figure(self):
+    '''Build a matplotlib figure with the desired size to draw on'''
     
+        if not self.show_residuals:            
+            self.mplfigure = pl.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
+                                       self.dimensions[1]*self.mpl_scaling))
+            
+        if self.show_residuals:
+            self.mplfigure = pl.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
+                                                1.33*self.dimensions[1]*self.mpl_scaling)) 
+            self.mpl_gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
+            
+            pl.subplot(self.mpl_gs[1])
+            pl.axis([self.x_range[0], self.x_range[1], 
+                     self.yres_range[0], self.yres_range[1]])
+            pl.xlabel(self.labels['xtitle'])
+            pl.ylabel("Residuals")
+            pl.grid()
+            #switch to main figure
+            pl.subplot(self.mpl_gs[0])          
+
+        
+        pl.axis([self.x_range[0], self.x_range[1], 
+                 self.y_range[0], self.y_range[1]])
+        pl.xlabel(self.labels['xtitle'])
+        pl.ylabel(self.labels['ytitle'])
+        pl.title(self.labels['title'])
+        pl.grid()
+   
+    def mpl_plot_fit_results_text_box(self, dataset, yoffset=0):
+        '''Add a text box with the fit parameters from the last fit 
+        of the dataset'''
+        
+        offset = yoffset    
+        h = self.y_range[1]-self.y_range[0]
+        l = self.x_range[1]-self.x_range[0]
+        start_x = self.x_range[1]-0.02*l + self.fit_results_x_offset
+        start_y = self.y_range[1]-0.12*h-offset + self.fit_results_y_offset
+        
+        textfit=""
+        for i in range(dataset.fit_npars[-1]):
+            short_name =  dataset.fit_pars[-1][i].__str__().split('_')
+            textfit += short_name[0]+"_"+short_name[-1]+"\n"
+           
+        pl.text(start_x, start_y, textfit,fontsize=11, horizontalalignment='right',
+                verticalalignment='bottom', bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
+        offset = dataset.fit_npars[-1] * 0.045 * h
+        return offset
+           
+        
+    def mpl_plot_dataset(self, dataset, color='black', show_fit_function=True, show_residuals=True):
+        '''Add a dataset, its fit function and its residuals to the main figure.
+        It is better to use add_function() and to let populate_mpl_plot() actually
+        add the function.
+        '''
+        if hasattr(self, 'mpl_gs'):
+            pl.subplot(self.mpl_gs[0])
+            
+        if dataset.is_histogram:
+            pl.bar(dataset.xdata, dataset.ydata, width = dataset.xdata[-1]-dataset.xdata[-2],
+                   label=dataset.name, color=color, alpha=0.7)
+            
+        else:    
+            pl.errorbar(dataset.xdata, dataset.ydata,
+                    xerr=dataset.xerr,yerr=dataset.yerr,
+                    fmt='o',color=color,markeredgecolor = 'none',
+                    label=dataset.name)
+            
+        if dataset.nfits > 0 and show_fit_function:   
+            self.mpl_plot_function(function=dataset.fit_function[-1], xdata=dataset.xdata,
+                                   pars=dataset.fit_pars[-1], n=50,
+                                   legend_name=dataset.fit_function_name[-1],
+                                   color=color, errorbandfactor=self.errorband_sigma)
+            
+        if self.show_residuals and hasattr(self, 'mpl_gs') and show_residuals:
+            pl.subplot(self.mpl_gs[1])
+            pl.errorbar(dataset.xdata, dataset.fit_yres[-1].get_means(),
+                        xerr=dataset.xerr,yerr=dataset.yerr,
+                        fmt='o',color=color,markeredgecolor = 'none')
+            pl.subplot(self.mpl_gs[0])
+                    
+     
+    def mpl_plot_function(self, function, xdata, pars=None, n=100,
+                      legend_name=None, color='black', errorbandfactor=1.0):
+        '''Add a function to the main figure. It is better to use add_function() and to
+        let populate_mpl_plot() actually add the function.
+        
+        The function can be either f(x) or f(x, *pars), in which case, if *pars is
+        a Measurement_Array, then error bands will be drawn
+        '''
+        if hasattr(self, 'mpl_gs'):
+            pl.subplot(self.mpl_gs[0])
+        xvals = np.linspace(min(xdata), max(xdata), n)
+        
+        if pars is None:
+            fvals = function(xvals)
+        elif isinstance(pars, qe.Measurement_Array):
+            recall = qe.Measurement.minmax_n
+            qe.Measurement.minmax_n=1
+            fmes = function(xvals, *(pars))
+            fvals = fmes.get_means()
+            ferr = fmes.get_stds()
+            qe.Measurement.minmax_n=recall
+        elif isinstance(pars,(list, np.ndarray)):
+            fvals = function(xvals, *pars)
+        else:
+            print("Error: unrecognized parameters for function")
+            pass
+        
+        pl.plot(xvals,fvals, color=color, label = legend_name)
+        
+        if isinstance(pars, qe.Measurement_Array):
+            fmax = fvals + ferr
+            fmin = fvals - ferr
+            pl.fill_between(xvals, fmin, fmax, facecolor=color,
+                            alpha=0.3, edgecolor = 'none',
+                            interpolate=True)
+        
+    def interactive_linear_fit(self, error_range=5):
+        '''Fits the last dataset to a linear function and displays the
+        result as an interactive fit'''
+                
+        if len(self.datasets) >1:
+            print("Warning: only using the last added dataset, and clearing previous fits")
+                     
+        dataset = self.datasets[-1]
+        color = self.datasets_colors[-1]
+        
+        dataset.clear_fits()
+        dataset.fit("linear")
+        
+        func = dataset.fit_function[-1]
+        pars = dataset.fit_pars[-1]
+        fname = "linear"       
+        
+        #Extend the x range to 0
+        if self.x_range[0] > -0.5:
+            self.x_range[0] = -0.5
+            self.y_range[0] = dataset.fit_function[-1](self.x_range[0], *pars.get_means())
+                
+        off_min = pars[0].mean-error_range*pars[0].std
+        off_max = pars[0].mean+error_range*pars[0].std
+        off_step = (off_max-off_min)/50.
+       
+        slope_min = pars[1].mean-error_range*pars[1].std
+        slope_max = pars[1].mean+error_range*pars[1].std
+        slope_step = (slope_max-slope_min)/50.
+        
+            
+        @interact(offset=(off_min, off_max, off_step),
+                  offset_err = (0, error_range*pars[0].std, pars[0].std/50.),
+                  slope=(slope_min, slope_max, slope_step),
+                  slope_err = (0, error_range*pars[1].std, pars[1].std/50.),
+                  correlation = (-1,1,0.05)                 
+                 )
+        
+        def update(offset=pars[0].mean, offset_err=pars[0].std, slope=pars[1].mean,
+                   slope_err=pars[1].std, correlation=dataset.fit_pcorr[-1][0][1]):  
+            
+            pl.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
+                               self.dimensions[1]*self.mpl_scaling))
+            
+            xvals = np.linspace(self.x_range[0], self.x_range[1], 20)
+            
+            omes = qe.Measurement(offset,offset_err)
+            smes = qe.Measurement(slope,slope_err)
+            omes.set_correlation(smes,correlation)
+            
+            recall = qe.Measurement.minmax_n
+            qe.Measurement.minmax_n=1
+            fmes = omes + smes*xvals
+            qe.Measurement.minmax_n=recall
+            fvals = fmes.get_means()
+            ferr = fmes.get_stds()
+            
+            fmax = fvals + ferr
+            fmin = fvals - ferr
+            
+            pl.errorbar(dataset.xdata, dataset.ydata,
+                    xerr=dataset.xerr,yerr=dataset.yerr,
+                    fmt='o',color=color,markeredgecolor = 'none',
+                    label=dataset.name)
+            
+            pl.plot(xvals,fvals, color=color, label ="linear fit")
+            pl.fill_between(xvals, fmin, fmax, facecolor=color,
+                            alpha=0.3, edgecolor = 'none',
+                            interpolate=True)
+            
+            pl.axis([self.x_range[0], self.x_range[1], 
+                 self.y_range[0], self.y_range[1]])
+            pl.xlabel(self.labels['xtitle'])
+            pl.ylabel(self.labels['ytitle'])
+            pl.title(self.labels['title'])
+            pl.legend(loc='best')
+            pl.grid()
+            pl.show()
+
+
+            
+            
+###############################################################################
+# Methods for Returning or Rendering Bokeh
+###############################################################################    
+
     def set_bokeh_output(self, output='inline'):
         '''Choose where to output (in a notebook or to a file)'''
         
@@ -353,13 +636,13 @@ class Plot:
         #plot the datasets and their latest fit
         legend_offset=0
         for dataset, color in zip(self.datasets, self.datasets_colors):
-            self.plot_dataset(dataset, residual=False, color=color)
+            self.bk_plot_dataset(dataset, residual=False, color=color, show_fit_function=True)
             if dataset.nfits>0:      
                 if self.show_fit_results:
-                    legend_offset = self.plot_fit_results_text_box(dataset, legend_offset)
+                    legend_offset = self.bk_plot_fit_results_text_box(dataset, legend_offset)
                     legend_offset += 3
                 if self.show_residuals:
-                    self.plot_dataset(dataset, residual=True, color=color)
+                    self.bk_plot_dataset(dataset, residual=True, color=color)
 
 
         #Now add any user defined functions:
@@ -372,13 +655,13 @@ class Plot:
                                             self.user_functions_names,
                                             self.user_functions_colors):
         
-            self.plot_function(function=func, xdata=xvals,pars=pars, n=100,
+            self.bk_plot_function(function=func, xdata=xvals,pars=pars, n=100,
                                legend_name= fname, color=color,
                                errorbandfactor=self.errorband_sigma)
 
         #Specify the location of the legend (must be done after stuff has been added)
-        self.bkfigure.legend.location = self.legend_location
-        self.bkfigure.legend.orientation = self.legend_orientation
+        self.bkfigure.legend.location = self.bk_legend_location
+        self.bkfigure.legend.orientation = self.bk_legend_orientation
         
         if self.show_residuals:
             self.bkfigure = bi.gridplot([[self.bkfigure], [self.bkres]])
@@ -415,13 +698,15 @@ class Plot:
             )
             return self.bkres
         
-    def plot_fit_results_text_box(self, dataset, yoffset=0):
+    def bk_plot_fit_results_text_box(self, dataset, yoffset=0):
+        '''Add a text box with the fit parameters from the last fit to
+        the data set'''
         if self.bkfigure is None:
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
             
         offset = yoffset    
-        start_x = self.dimensions[0]-5   
-        start_y = self.dimensions[1]-30-offset  
+        start_x = self.dimensions[0]-5 + self.fit_results_x_offset   
+        start_y = self.dimensions[1]-30-offset + self.fit_results_y_offset 
         
         for i in range(dataset.fit_npars[-1]):
             #shorten the name of the fit parameters
@@ -442,7 +727,7 @@ class Plot:
             self.bkfigure.add_layout(tbox)
         return offset
         
-    def plot_dataset(self, dataset, residual=False, color='black'):
+    def bk_plot_dataset(self, dataset, residual=False, color='black', show_fit_function=True):
         '''Add a dataset to the bokeh figure for the plot - it is better to 
         use add_dataset() to add a dataset to the Plot object and let
         populate_bokeh_figure take care of calling this function'''
@@ -450,29 +735,29 @@ class Plot:
         if residual == True:
             if self.bkres is None:
                 self.bkres = self.initialize_bokeh_figure(residuals=True)
-            return qpu.plot_dataset(self.bkres, dataset, residual=True, color=color)
+            return qpu.bk_plot_dataset(self.bkres, dataset, residual=True, color=color)
             
         if self.bkfigure is None:
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
             
-        qpu.plot_dataset(self.bkfigure, dataset, residual=False, color=color)
-        if dataset.nfits > 0:
-            self.plot_function(function=dataset.fit_function[-1], xdata=dataset.xdata,
+        qpu.bk_plot_dataset(self.bkfigure, dataset, residual=False, color=color)
+        if dataset.nfits > 0 and show_fit_function:
+            self.bk_plot_function(function=dataset.fit_function[-1], xdata=dataset.xdata,
                                pars=dataset.fit_pars[-1], n=50,
                                legend_name=dataset.fit_function_name[-1],
                                color=color, errorbandfactor=self.errorband_sigma)
     
-    def add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
+    def bk_add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
                                    color='black', data_name='dataset'):
         '''Add a set of data points with error bars to the main figure -it is better 
         to use add_dataset if the data should be treated as a dataset that can be fit'''
         if self.bkfigure is None:
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
-        return qpu.add_points_with_error_bars(self.bkfigure, xdata, ydata, xerr=xerr,
+        return qpu.bk_add_points_with_error_bars(self.bkfigure, xdata, ydata, xerr=xerr,
                                               yerr=yerr, color=color,
                                               data_name=data_name)
     
-    def plot_function(self, function, xdata, pars=None, n=100,
+    def bk_plot_function(self, function, xdata, pars=None, n=100,
                       legend_name=None, color='black', errorbandfactor=1.0):
         '''Add a function to the main figure. It is better to use add_function() and to
         let populate_bokeh_plot() actually add the function.
@@ -482,13 +767,13 @@ class Plot:
         '''
         if self.bkfigure is None:
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
-        return qpu.plot_function(self.bkfigure, function, xdata, pars=pars, n=n,
+        return qpu.bk_plot_function(self.bkfigure, function, xdata, pars=pars, n=n,
                       legend_name=legend_name, color=color, errorbandfactor=errorbandfactor)       
         
-    def show_linear_fit(self, output='inline'):
+    def bk_show_linear_fit(self, output='inline'):
         '''Fits the last dataset to a linear function and displays the
         result. The fit parameters are not displayed as this function is 
-        designed to be used in conjunction with interarct_linear_fit()'''
+        designed to be used in conjunction with bk_interarct_linear_fit()'''
         
         
         if len(self.datasets) >1:
@@ -511,12 +796,12 @@ class Plot:
         
         self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         
-        qpu.plot_dataset(self.bkfigure, dataset, residual=False,color=color)
+        self.bk_plot_dataset(dataset, residual=False,color=color, show_fit_function=False)
         
         xvals = [self.x_range[0]+self.x_range_margin, 
                  self.x_range[1]-self.x_range_margin]
         
-        line, patches = qpu.plot_function(self.bkfigure, function=func, xdata=xvals,
+        line, patches = self.bk_plot_function( function=func, xdata=xvals,
                               pars=pars, n=100, legend_name= fname,
                               color=color, errorbandfactor=self.errorband_sigma)
         
@@ -527,12 +812,10 @@ class Plot:
         self.linear_fit_corr = dataset.fit_pcorr[-1][0][1]
                
         #Specify the location of the legend
-        self.bkfigure.legend.location = self.legend_location      
+        self.bkfigure.legend.location = self.bk_legend_location      
         self.show(output=output,populate_figure=False)
-        
-        error_range=2
 
-    def interact_linear_fit(self, error_range = 2):  
+    def bk_interact_linear_fit(self, error_range = 2):  
         '''After show_linear_fit() has been called, this will display
         sliders allowing the user to adjust the parameters of the linear
         fit - only works in a notebook, require ipywigets''' 

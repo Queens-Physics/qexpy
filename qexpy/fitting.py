@@ -194,7 +194,9 @@ class XYDataSet:
     #So that each dataset has a unique name (at least by default):
     unnamed_data_counter=0
     
-    def __init__(self, x, y, xerr=None, yerr=None, data_name=None, xname=None, xunits=None, yname=None, yunits=None):
+    def __init__(self, x, y, xerr=None, yerr=None, data_name=None,
+                 xname=None, xunits=None, yname=None, yunits=None,
+                 is_histogram=False):
         '''Use MeasurementArray() to initialize a dataset'''
         if(data_name is None):
             self.name = "dataset{}".format(XYDataSet.unnamed_data_counter)
@@ -213,6 +215,8 @@ class XYDataSet:
         self.yerr = self.y.get_stds()
         self.yunits = self.y.get_units_str()
         self.yname = self.y.name
+        
+        self.is_histogram=is_histogram
         
         if self.x.size != self.y.size:
             print("Error: x and y data should have the same number of points")
