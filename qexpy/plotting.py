@@ -18,20 +18,20 @@ ARRAY = qu.array_types
 
 
 class Plot:
-    '''Objects which contain a dataset and any number of fuctions which can
-    be shown on a Bokeh plot
+    '''Object for plotting and fitting datasets built on
+    Measurement_Arrays
 
-    Plot objects are indirectly dependent on Bokeh plots. Plot objects
-    contain data and associated error lists, as well as functions or fits
-    of the data. These points are used to contruct Bokeh plots by using
-    custom functions to draw a series of circles, lines, and rectangles
-    which mimic errorbars and data points.
+    The Plot object holds a list of XYDatasets, themselves containing
+    pairs of MeasurementArrays holding x and y values to be plotted and 
+    fitted. The Plot object uses bokeh to display the data, along with
+    fit functions, and user-specified functions. One should configure
+    the various aspects of the plot, and then call the show() function
+    which will actually build the bokeh object and display it. 
     '''
 
     def __init__(self, x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None):
         '''
-        Constructor requiring two measeurement objects, or lists of data and
-        error values.
+        Constructor requiring x and y data or a XYDataset
 
         Plotting objects do not create Bokeh objects until shown or if the
         Bokeh object is otherwise requested. Class methods built here are
@@ -39,16 +39,19 @@ class Plot:
         requested to be plotted.
         '''
     
+        #Colors to be used for coloring elements automatically
         self.color_palette = bpal.Set1_9
         self.color_count = 0
     
-        #Revised members:
+        #The data to be plotted are held in a list of datasets:
         self.datasets=[]
         if dataset != None:
             self.datasets.append(dataset)
         else:
             self.datasets.append(qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name))
         
+        #Each data set has a color, so that the user can choose specific
+        #colors for each dataset
         self.datasets_colors=[]
         self.datasets_colors.append(self._get_color_from_palette())
             
@@ -64,7 +67,8 @@ class Plot:
         #Add margins to the range of the plot
         self.x_range_margin = 0.5
         self.y_range_margin = 0.5
-        #Get the range from the data set (will include the margin)
+        
+        #Get the range from the dataset (will include the margin)
         self.set_range_from_dataset(self.datasets[-1])
         
         #Dimensions of the figure
@@ -77,6 +81,7 @@ class Plot:
         self.user_functions_names = []
         self.user_functions_colors = []
         
+        #Some parameters to make the plots have proper labels
         self.axes = {'xscale': 'linear', 'yscale': 'linear'}
         self.legend_location = "top_left"
         self.labels = {
@@ -88,13 +93,14 @@ class Plot:
         self.plot_para = {
             'filename': 'Plot'}
         
-      
-
     def _get_color_from_palette(self):
+        '''Automatically select a color from the palette'''
         self.color_count += 1
         return self.color_palette[self.color_count-1]
     
     def fit(self, model=None, parguess=None, fit_range=None, datasetindex=-1):
+        '''Fit a dataset to model - calls XYDataset.fit and returns a 
+        Measurement_Array of fitted parameters'''
         return self.datasets[datasetindex].fit(model, parguess, fit_range)
         
     def print_fit_parameters(self, dataset=-1):
@@ -114,10 +120,10 @@ class Plot:
 
     
     def add_function(self, function, pars = None, name=None, color=None):
-        '''Adds a specified function to the list of functions to be plotted.
-
-        Functions are only plotted when a Bokeh object is created, thus user
-        specified functions are stored to be plotted later.
+        '''Add a user-specifed function to the list of functions to be plotted.
+        
+        All datasets are functions when populate_bokeh_figure is called
+        - usually when show() is called
         '''
         
         xvals = np.linspace(self.x_range[0],self.x_range[1], 100)
@@ -157,6 +163,8 @@ class Plot:
             self.user_functions_colors.append(color)
         
     def add_dataset(self, dataset, color=None, name = None):
+        '''Add a dataset to the Plot object. All datasets are plotted
+        when populate_bokeh_figure is called - usually when show() is called'''
         self.datasets.append(dataset)
         if color is None:
             self.datasets_colors.append(self._get_color_from_palette())
@@ -184,10 +192,12 @@ class Plot:
 # Methods for changing parameters of Plot Object
 ###############################################################################
     def set_range_from_dataset(self, dataset):
+        '''Use a dataset to set the range for the figure'''
         self.x_range = dataset.get_x_range(self.x_range_margin)
         self.y_range = dataset.get_y_range(self.y_range_margin)
         
     def set_plot_range(self, x_range=None, y_range=None):
+        '''Set the range for the figure'''
         if type(x_range) in ARRAY and len(x_range) is 2:
             self.x_range = x_range
         elif x_range is not None:
@@ -236,9 +246,9 @@ class Plot:
             
     def show(self, output='inline', populate_figure=True):
         '''
-        Method which creates and displays plot.
-        Previous methods simply edit parameters which are used here, to
-        prevent run times increasing due to rebuilding the bokeh plot object.
+        Show the figure, will call populate_bokeh_figure by default to
+        add all the items (datasets, fit functions, user-specified functions)
+        to the plot
         '''
         
         self.set_bokeh_output(output)
@@ -249,6 +259,7 @@ class Plot:
             bp.show(self.bkfigure)
     
     def set_bokeh_output(self, output='inline'):
+        '''Choose where to output (in a notebook or to a file)'''
         
         if output == 'file' or not qu.in_notebook():
             bi.output_file(self.plot_para['filename']+'.html',
@@ -261,7 +272,11 @@ class Plot:
         else:
             pass
             
-    def populate_bokeh_figure(self):    
+    def populate_bokeh_figure(self):  
+        '''Main method for building the plot - this creates the Bokeh figure,
+        and then loops through all datasets (and their fit functions), as
+        well as user-specified functions, and adds them to the bokeh figure'''
+        
         # create a new bokeh figure
         self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         
@@ -326,6 +341,7 @@ class Plot:
         return self.bkfigure
     
     def initialize_bokeh_figure(self, residuals=False):  
+        '''Create the bokeh figure with desired labeling and axes'''
         if residuals==False:
             return bp.figure(
                 tools='save, pan, box_zoom, wheel_zoom, reset',
@@ -351,6 +367,11 @@ class Plot:
        
         
     def show_linear_fit(self, output='inline'):
+        '''Fits the last dataset to a linear function and displays the
+        result. The fit parameters are not displayed as this function is 
+        designed to be used in conjunction with interarct_linear_fit()'''
+        
+        
         if len(self.datasets) >1:
             print("Warning: only using the last added dataset, and clearing previous fits")
                      
@@ -380,9 +401,12 @@ class Plot:
         line, patches = qpu.plot_function(self.bkfigure, function=func, xdata=xvals,
                               pars=pars, n=100, legend_name= fname,
                               color=color, errorbandfactor=self.errorband_sigma)
-        self.linear_fit_line=line
-        self.linear_fit_pars=pars
         
+        #stuff that is only needed by interact_linear_fit
+        self.linear_fit_line = line
+        self.linear_fit_patches = patches
+        self.linear_fit_pars = pars
+               
         #Specify the location of the legend
         self.bkfigure.legend.location = self.legend_location      
         self.show(output=output,populate_figure=False)
@@ -390,24 +414,47 @@ class Plot:
         error_range=2
 
     def interact_linear_fit(self, error_range = 2):  
+        '''After show_linear_fit() has been called, this will display
+        sliders allowing the user to adjust the parameters of the linear
+        fit - only works in a notebook, require ipywigets''' 
+        
         off_mean = self.linear_fit_pars[0].mean
         off_std = self.linear_fit_pars[0].std
         off_min = off_mean-error_range*off_std
         off_max = off_mean+error_range*off_std
-        off_step = (off_max-off_min)/100.
+        off_step = (off_max-off_min)/50.
        
         slope_mean = self.linear_fit_pars[1].mean
         slope_std = self.linear_fit_pars[1].std
         slope_min = slope_mean-error_range*slope_std
         slope_max = slope_mean+error_range*slope_std
-        slope_step = (slope_max-slope_min)/100.
+        slope_step = (slope_max-slope_min)/50.
         
-        @interact(offset=(off_min, off_max, off_step),
-                  slope=(slope_min, slope_max, slope_step))
-        def update(offset=off_mean, slope=slope_mean):
             
-            self.linear_fit_line.data_source.data['y'] = np.multiply(
-                slope, self.linear_fit_line.data_source.data['x']) + offset
+        @interact(offset=(off_min, off_max, off_step),
+                  slope=(slope_min, slope_max, slope_step),
+                  offset_err = (0, 2.*off_std, off_std/50.),
+                  slope_err = (0, 2.*slope_std, off_std/50.),
+                  correlation = (-1,1,0.05)                 
+                 )
+        def update(offset=off_mean, slope=slope_mean, offset_err=off_std, slope_err=slope_std, correlation=0.1):
+            
+           
+            
+            recall = qe.Measurement.minmax_n
+            qe.Measurement.minmax_n=1
+            omes = qe.Measurement(offset,offset_err)
+            smes = qe.Measurement(slope,slope_err)
+            omes.set_correlation(smes,correlation)
+            xdata = np.array(self.linear_fit_line.data_source.data['x'])
+            fmes = omes+ smes*xdata
+            qe.Measurement.minmax_n=recall
+            
+            ymax = fmes.get_means()+fmes.get_stds()
+            ymin = fmes.get_means()-fmes.get_stds()        
+            
+            self.linear_fit_line.data_source.data['y'] = fmes.get_means()
+            self.linear_fit_patches.data_source.data['y'] = np.append(ymax,ymin[::-1])
 
             bi.push_notebook()
 

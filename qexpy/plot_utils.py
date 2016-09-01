@@ -13,7 +13,7 @@ CONSTANT = qu.number_types
 ARRAY = qu.array_types
 
 def plot_dataset(figure, dataset, residual=False, data_color='black'):
-    '''Given a bokeh figure, this will add data points with errors from the dataset'''
+    '''Given a bokeh figure, this will add data points with errors from a dataset'''
   
     xdata = dataset.xdata
     xerr = dataset.xerr
@@ -95,16 +95,24 @@ def make_np_arrays(*args):
         elif isinstance(arg, qu.number_types):
             np_tuple = np_tuple +(np.array([arg]),)
         else:
-            np_tuple = np_tuple +(np.array([None]),)
+            np_tuple = np_tuple +(None,)
     return np_tuple
     
 def plot_function(figure, function, xdata, pars=None, n=100, legend_name=None, color='black', errorbandfactor=1.0):
-    '''Plot a function evaluated over the range of xdata'''
+    '''Plot a function evaluated over the range of xdata - xdata only needs 2 values
+    The function can be either f(x) or f(x, *pars). In the later case, if pars is
+    a Measurement_Array (e.g. the parameters from a fit), then an error band is also
+    added to the plot, corresponding to varying the parameters within their uncertainty.
+    The errorbandfactor can be used to choose an error band that is larger than 1 standard
+    deviation.
+    '''
+    
     xvals = np.linspace(min(xdata), max(xdata), n)
     
     if pars is None:
         fvals = function(xvals)
     elif isinstance(pars, qe.Measurement_Array):
+        #TODO see if this can be sped up more
         recall = qe.Measurement.minmax_n
         qe.Measurement.minmax_n=1
         fmes = function(xvals, *(pars))

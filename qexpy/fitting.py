@@ -34,7 +34,7 @@ def Rgauss(x, *pars):
     return (0 if std==0 else norm*(2*pi*std**2)**(-0.5)*np.exp(-0.5*(x-mean)**2/std**2))
 
 class XYFitter:
-    '''A class to fit a set of data given as y(x)'''
+    '''A class to fit an XYDatatset to a function/model using scipy.optimize'''
     
     def __init__(self, model = None, parguess=None):
         self.xydataset=None   
@@ -119,6 +119,7 @@ class XYFitter:
         #if the x errors are not zero, convert them to equivalent errors in y
         #TODO: check the math on this...
         #TODO: catch curve_fit run time errors
+        #TODO: calculate chi-squared and ndof
            
         self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
                                                     sigma=yerr, p0=self.parguess)
@@ -233,6 +234,7 @@ class XYDataSet:
         return self.fit_pars[-1]
     
     def clear_fits(self):
+        '''Remove all fit records'''
         self.xyfitter = []
         self.fit_pars = []
         self.fit_function = [] 
@@ -242,21 +244,25 @@ class XYDataSet:
         self.nfits=0
     
     def get_x_range(self, margin=0):
+        '''Get range of the x data, including errors and a specified margin'''
         return [self.xdata.min()-self.xerr.max()-margin,\
                 self.xdata.max()+self.xerr.max()+margin]
     
     def get_y_range(self, margin=0):
+        '''Get range of the y data, including errors and a specified margin'''
         return [self.ydata.min()-self.yerr.max()-margin,\
                 self.ydata.max()+self.yerr.max()+margin] 
     
     def get_yres_range(self, margin=0, fitindex=-1):
+        '''Get range of the y residuals, including errors and a specified margin'''
         return [self.yres[fitindex].get_means().min()-self.yerr.max()-margin,\
                 self.yres[fitindex].get_means().max()+self.yerr.max()+margin] 
     
 def num_der(function, point, dx=1e-10):
     '''
     Returns the first order derivative of a function.
-    Used in combining xerr and yerr.
+    Used in combining xerr and yerr. Used to include
+    x errors in XYFitter
     '''
     import numpy as np
     point = np.array(point)
