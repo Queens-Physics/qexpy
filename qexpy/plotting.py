@@ -17,6 +17,33 @@ CONSTANT = qu.number_types
 ARRAY = qu.array_types
 
 
+def MakePlot(x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None, xname=None, xunits=None, yname=None, yunits=None):
+    '''Use this function to create a plot object, by providing either arrays
+    corresponding to the x and y data, Measurement_Arrays for x and y, or
+    an XYDataset'''
+    
+    if (x is None or y is None) and dataset is None:
+        return Plot(None)
+    
+    elif dataset is not None:
+        #Need to make sure to override the names and units, if the user specified them 
+        #along with a dataset, so re-create the data set:
+        xa = q.MeasurementArray(dataset.xdata, error=dataset.xerr, name=xname, units=xunits)
+        ya = q.MeasurementArray(dataset.ydata, error=dataset.yerr, name=yname, units=yunits)
+        ds = qf.XYDataSet(xa,ya)
+        return Plot(dataset=ds)
+    
+    elif (x is not None and y is not None):
+        ds = qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name,
+                          xname=xname, xunits=xunits, yname=yname, yunits=yunits)
+        return Plot(dataset = ds)
+    
+    else:
+        return Plot(None)
+  
+    
+
+
 class Plot:
     '''Object for plotting and fitting datasets built on
     Measurement_Arrays
@@ -29,49 +56,21 @@ class Plot:
     which will actually build the bokeh object and display it. 
     '''
 
-    def __init__(self, x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None):
+    #def __init__(self, x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None):
+    def __init__(self, dataset=None):
         '''
-        Constructor requiring x and y data or a XYDataset
-
-        Plotting objects do not create Bokeh objects until shown or if the
-        Bokeh object is otherwise requested. Class methods built here are
-        used to record the data to be plotted and track what the user has
-        requested to be plotted.
+        Constructor to make a plot based on a dataset
         '''
     
         #Colors to be used for coloring elements automatically
-        self.color_palette = bpal.Set1_9
+        self.color_palette = bpal.Set1_9+bpal.Set2_8
         self.color_count = 0
-    
-        #The data to be plotted are held in a list of datasets:
-        self.datasets=[]
-        if dataset != None:
-            self.datasets.append(dataset)
-        else:
-            self.datasets.append(qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name))
-        
-        #Each data set has a color, so that the user can choose specific
-        #colors for each dataset
-        self.datasets_colors=[]
-        self.datasets_colors.append(self._get_color_from_palette())
-            
-        self.xunits = self.datasets[-1].xunits
-        self.xname = self.datasets[-1].xname
-        
-        self.yunits = self.datasets[-1].yunits
-        self.yname = self.datasets[-1].yname    
-        
-        self.errorband_sigma = 1.0
-        self.show_residuals=False
         
         #Add margins to the range of the plot
         self.x_range_margin = 0.5
-        self.y_range_margin = 0.5
+        self.y_range_margin = 0.5  
         
-        #Get the range from the dataset (will include the margin)
-        self.set_range_from_dataset(self.datasets[-1])
-        
-        #Dimensions of the figure
+        #Dimensions of the figure in pixels
         self.dimensions = [600, 400]
         
         #Functions that the user can add to be plotted
@@ -80,28 +79,86 @@ class Plot:
         self.user_functions_pars = []
         self.user_functions_names = []
         self.user_functions_colors = []
+                
+        #Where to save the plot              
+        self.save_filename = 'myplot.html'
+        
+        #How big to draw error bands on fitted functions
+        self.errorband_sigma = 1.0
+        #whether to show residuals
+        self.show_residuals=False
+        #whether to include text labels on plot with fit parameters
+        self.show_fit_results=True 
+        #location of legend
+        self.legend_location = "top_left"
+        self.legend_orientation = "vertical"
+        
+        #The data to be plotted are held in a list of datasets:
+        self.datasets=[]
+        #Each data set has a color, so that the user can choose specific
+        #colors for each dataset
+        self.datasets_colors=[]      
+        
+        #Things to initialize from a data set:
+        self.xunits = ""
+        self.xname = "x"      
+        self.yunits = ""
+        self.yname = "y"
+        self.x_range = [0,1]
+        self.y_range = [0,1]
+        self.title = "y as a function of x"
+        
+        if dataset != None:
+            self.datasets.append(dataset)            
+            self.datasets_colors.append(self._get_color_from_palette())
+            self.initialize_from_dataset(dataset)
+        else:
+            self.initialized_from_dataset = False
         
         #Some parameters to make the plots have proper labels
-        self.axes = {'xscale': 'linear', 'yscale': 'linear'}
-        self.legend_location = "top_left"
+        self.axes = {'xscale': 'linear', 'yscale': 'linear'}      
         self.labels = {
-            'title': self.datasets[-1].name,
+            'title': self.title,
             'xtitle': self.xname+' ['+self.xunits+']',
-            'ytitle': self.yname+' ['+self.yunits+']',
-            'data': data_name }
-                      
-        self.plot_para = {
-            'filename': 'Plot'}
+            'ytitle': self.yname+' ['+self.yunits+']'}
+ 
+
+    def initialize_from_dataset(self, dataset):
+        self.xunits = dataset.xunits
+        self.xname = dataset.xname      
+        self.yunits = dataset.yunits
+        self.yname = dataset.yname 
+        self.title = dataset.name
+        
+        #Get the range from the dataset (will include the margin)
+        self.set_range_from_dataset(dataset)
+        self.initialized_from_dataset = True
         
     def _get_color_from_palette(self):
         '''Automatically select a color from the palette'''
         self.color_count += 1
+        if self.color_count>len(self.color_palette):
+            self.color_count = 1
         return self.color_palette[self.color_count-1]
     
-    def fit(self, model=None, parguess=None, fit_range=None, datasetindex=-1):
+    def set_range_from_dataset(self, dataset):
+        '''Use a dataset to set the range for the figure'''
+        self.x_range = dataset.get_x_range(self.x_range_margin)
+        self.y_range = dataset.get_y_range(self.y_range_margin)
+        self.set_yres_range_from_fits()
+        
+    def set_yres_range_from_fits(self):
+        '''Set the range for the residual plot, based on all datasets that
+        have a fit'''      
+        for dataset in self.datasets:
+            if dataset.nfits > 0:
+                self.yres_range = dataset.get_yres_range(self.y_range_margin)
+        
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, datasetindex=-1):
         '''Fit a dataset to model - calls XYDataset.fit and returns a 
         Measurement_Array of fitted parameters'''
-        return self.datasets[datasetindex].fit(model, parguess, fit_range)
+        results = self.datasets[datasetindex].fit(model, parguess, fit_range) 
+        return results
         
     def print_fit_parameters(self, dataset=-1):
         if self.datasets[-1].nfits>0:
@@ -115,6 +172,7 @@ class Plot:
 
     def add_residuals(self):
         '''Add a subfigure with residuals to the main figure when plotting'''
+        self.set_yres_range_from_fits()
         if self.datasets[-1].nfits>0:
             self.show_residuals = True
 
@@ -162,10 +220,13 @@ class Plot:
         else: 
             self.user_functions_colors.append(color)
         
-    def add_dataset(self, dataset, color=None, name = None):
+    def add_dataset(self, dataset, color=None, name=None):
         '''Add a dataset to the Plot object. All datasets are plotted
         when populate_bokeh_figure is called - usually when show() is called'''
         self.datasets.append(dataset)
+        if len(self.datasets) < 2:
+            self.initialize_from_dataset(dataset)
+            
         if color is None:
             self.datasets_colors.append(self._get_color_from_palette())
         else: 
@@ -174,7 +235,7 @@ class Plot:
             self.datasets[-1].name=name
             
         x_range = dataset.get_x_range(self.x_range_margin)
-        y_range = dataset.get_y_range(self.y_range_margin)
+        y_range = dataset.get_y_range(self.y_range_margin)    
         
         if x_range[0] < self.x_range[0]:
             self.x_range[0]=x_range[0]
@@ -185,16 +246,13 @@ class Plot:
             self.y_range[0]=y_range[0]
         if y_range[1] > self.y_range[1]:
             self.y_range[1]=y_range[1] 
- 
+            
+        self.set_yres_range_from_fits()
 
 #
 ###############################################################################
 # Methods for changing parameters of Plot Object
 ###############################################################################
-    def set_range_from_dataset(self, dataset):
-        '''Use a dataset to set the range for the figure'''
-        self.x_range = dataset.get_x_range(self.x_range_margin)
-        self.y_range = dataset.get_y_range(self.y_range_margin)
         
     def set_plot_range(self, x_range=None, y_range=None):
         '''Set the range for the figure'''
@@ -211,7 +269,7 @@ class Plot:
             value for the range of the plot.''')
 
             
-    def set_labels(self, title=None, xtitle=None, ytitle=None, data_name=None ):
+    def set_labels(self, title=None, xtitle=None, ytitle=None):
         '''Change the labels for plot axis, datasets, or the plot itself.
 
         Method simply overwrites the automatically generated names used in
@@ -225,8 +283,6 @@ class Plot:
         if ytitle is not None:
             self.labels['ytitle'] = ytitle
 
-        if data_name is not None:
-            self.labels['Data'] = data_name
 
     def resize_plot(self, width=None, height=None):
         if width is None:
@@ -262,89 +318,79 @@ class Plot:
         '''Choose where to output (in a notebook or to a file)'''
         
         if output == 'file' or not qu.in_notebook():
-            bi.output_file(self.plot_para['filename']+'.html',
-                           title=self.attributes['title'])
+            bi.output_file(self.save_filename,
+                           title=self.labels['title'])
         elif not qu.bokeh_ouput_notebook_called:
             bi.output_notebook()
             # This must be the first time calling output_notebook,
             # keep track that it's been called:
             qu.bokeh_ouput_notebook_called = True
         else:
-            pass
-            
+            pass        
+        
     def populate_bokeh_figure(self):  
         '''Main method for building the plot - this creates the Bokeh figure,
         and then loops through all datasets (and their fit functions), as
         well as user-specified functions, and adds them to the bokeh figure'''
         
-        # create a new bokeh figure
-        self.bkfigure = self.initialize_bokeh_figure(residuals=False)
+        #create a new bokeh figure
+        
+        #expand the y-range to accomodate the fit results text
+        yrange_recall = self.y_range[1]
+        if self.show_fit_results:
+            pixelcount = 0
+            for dataset in self.datasets:
+                if dataset.nfits > 0:
+                    pixelcount += dataset.fit_npars[-1] * 25
+            self.y_range[1] += pixelcount * self.y_range[1]/self.dimensions[1]
+        self.initialize_bokeh_figure(residuals=False)
+        self.y_range[1] = yrange_recall
         
         # create the one for residuals if needed
         if self.show_residuals:
-            self.bkres = self.initialize_bokeh_figure(residuals=True)
+            self.initialize_bokeh_figure(residuals=True)
                               
         #plot the datasets and their latest fit
-        count = 0
-        for dataset in self.datasets:
-            color = self.datasets_colors[count]
-            qpu.plot_dataset(self.bkfigure, dataset, residual=False,
-                            data_color=color)
-                   
-            if dataset.nfits>0:
-                qpu.plot_function(self.bkfigure, function=dataset.fit_function[-1],
-                                  xdata=dataset.xdata,pars=dataset.fit_pars[-1],
-                                  n=100, legend_name=dataset.fit_function_name[-1],
-                                  color=color, errorbandfactor=self.errorband_sigma)
-                
-                #Draw fit parameters only for the first dataset
-                if count<1:
-                     for i in range(dataset.fit_npars[-1]):
-                        #shorten the name of the fit parameters
-                        short_name =  dataset.fit_pars[-1][i].__str__().split('_')
-                        short_name = short_name[0]+"_"+short_name[-1]
-                        citation = mo.Label(x=590, y=320+20*i,
-                                            text_align='right',
-                                            text_baseline='top',
-                                            text_font_size='11pt',
-                                            x_units='screen',
-                                            y_units='screen',
-                                            text=short_name,
-                                            render_mode='css',
-                                            background_fill_color='white',
-                                            background_fill_alpha=1.0)
-                        self.bkfigure.add_layout(citation)
-                        
+        legend_offset=0
+        for dataset, color in zip(self.datasets, self.datasets_colors):
+            self.plot_dataset(dataset, residual=False, color=color)
+            if dataset.nfits>0:      
+                if self.show_fit_results:
+                    legend_offset = self.plot_fit_results_text_box(dataset, legend_offset)
+                    legend_offset += 3
                 if self.show_residuals:
-                    qpu.plot_dataset(self.bkres, dataset, residual=True,
-                                     data_color=color)
-            count += 1
+                    self.plot_dataset(dataset, residual=True, color=color)
+
 
         #Now add any user defined functions:
+        #The range over which to plot the functions:
         xvals = [self.x_range[0]+self.x_range_margin, 
                  self.x_range[1]-self.x_range_margin]
    
-        count = 0
-        for func, pars, fname in zip(self.user_functions,self.user_functions_pars,self.user_functions_names):
-            color = self.user_functions_colors[count]
-            qpu.plot_function(self.bkfigure, function=func, xdata=xvals,
-                              pars=pars, n=100, legend_name= fname,
-                              color=color, errorbandfactor=self.errorband_sigma)
-            count += 1
+        for func, pars, fname, color in zip(self.user_functions,
+                                            self.user_functions_pars, 
+                                            self.user_functions_names,
+                                            self.user_functions_colors):
         
-        #Specify the location of the legend
+            self.plot_function(function=func, xdata=xvals,pars=pars, n=100,
+                               legend_name= fname, color=color,
+                               errorbandfactor=self.errorband_sigma)
+
+        #Specify the location of the legend (must be done after stuff has been added)
         self.bkfigure.legend.location = self.legend_location
+        self.bkfigure.legend.orientation = self.legend_orientation
         
         if self.show_residuals:
             self.bkfigure = bi.gridplot([[self.bkfigure], [self.bkres]])
-            
+          
         return self.bkfigure
     
     def initialize_bokeh_figure(self, residuals=False):  
         '''Create the bokeh figure with desired labeling and axes'''
         if residuals==False:
-            return bp.figure(
+            self.bkfigure = bp.figure(
                 tools='save, pan, box_zoom, wheel_zoom, reset',
+                toolbar_location="above",
                 width=self.dimensions[0], height=self.dimensions[1],
                 y_axis_type=self.axes['yscale'],
                 y_range=self.y_range,
@@ -354,17 +400,90 @@ class Plot:
                 x_axis_label=self.labels['xtitle'],
                 y_axis_label=self.labels['ytitle'],
             )
+            return self.bkfigure
         else:
-            return bp.figure(
+            self.set_yres_range_from_fits
+            self.bkres =  bp.figure(
                 width=self.dimensions[0], height=self.dimensions[1]//3,
                 tools='save, pan, box_zoom, wheel_zoom, reset',
+                toolbar_location="above",
                 y_axis_type='linear',
-                y_range=self.datasets[-1].get_yres_range(),
+                y_range=self.yres_range,
                 x_range=self.bkfigure.x_range,
                 x_axis_label=self.labels['xtitle'],
                 y_axis_label='Residuals'
             )
-       
+            return self.bkres
+        
+    def plot_fit_results_text_box(self, dataset, yoffset=0):
+        if self.bkfigure is None:
+            self.bkfigure = self.initialize_bokeh_figure(residuals=False)
+            
+        offset = yoffset    
+        start_x = self.dimensions[0]-5   
+        start_y = self.dimensions[1]-30-offset  
+        
+        for i in range(dataset.fit_npars[-1]):
+            #shorten the name of the fit parameters
+            short_name =  dataset.fit_pars[-1][i].__str__().split('_')
+            short_name = short_name[0]+"_"+short_name[-1]
+            if i > 0:
+                offset += 18
+            tbox = mo.Label(x=start_x, y=start_y-offset,
+                                text_align='right',
+                                text_baseline='top',
+                                text_font_size='11pt',
+                                x_units='screen',
+                                y_units='screen',
+                                text=short_name,
+                                render_mode='css',
+                                background_fill_color='white',
+                                background_fill_alpha=0.7)
+            self.bkfigure.add_layout(tbox)
+        return offset
+        
+    def plot_dataset(self, dataset, residual=False, color='black'):
+        '''Add a dataset to the bokeh figure for the plot - it is better to 
+        use add_dataset() to add a dataset to the Plot object and let
+        populate_bokeh_figure take care of calling this function'''
+        
+        if residual == True:
+            if self.bkres is None:
+                self.bkres = self.initialize_bokeh_figure(residuals=True)
+            return qpu.plot_dataset(self.bkres, dataset, residual=True, color=color)
+            
+        if self.bkfigure is None:
+            self.bkfigure = self.initialize_bokeh_figure(residuals=False)
+            
+        qpu.plot_dataset(self.bkfigure, dataset, residual=False, color=color)
+        if dataset.nfits > 0:
+            self.plot_function(function=dataset.fit_function[-1], xdata=dataset.xdata,
+                               pars=dataset.fit_pars[-1], n=50,
+                               legend_name=dataset.fit_function_name[-1],
+                               color=color, errorbandfactor=self.errorband_sigma)
+    
+    def add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
+                                   color='black', data_name='dataset'):
+        '''Add a set of data points with error bars to the main figure -it is better 
+        to use add_dataset if the data should be treated as a dataset that can be fit'''
+        if self.bkfigure is None:
+            self.bkfigure = self.initialize_bokeh_figure(residuals=False)
+        return qpu.add_points_with_error_bars(self.bkfigure, xdata, ydata, xerr=xerr,
+                                              yerr=yerr, color=color,
+                                              data_name=data_name)
+    
+    def plot_function(self, function, xdata, pars=None, n=100,
+                      legend_name=None, color='black', errorbandfactor=1.0):
+        '''Add a function to the main figure. It is better to use add_function() and to
+        let populate_bokeh_plot() actually add the function.
+        
+        The function can be either f(x) or f(x, *pars), in which case, if *pars is
+        a Measurement_Array, then error bands will be drawn
+        '''
+        if self.bkfigure is None:
+            self.bkfigure = self.initialize_bokeh_figure(residuals=False)
+        return qpu.plot_function(self.bkfigure, function, xdata, pars=pars, n=n,
+                      legend_name=legend_name, color=color, errorbandfactor=errorbandfactor)       
         
     def show_linear_fit(self, output='inline'):
         '''Fits the last dataset to a linear function and displays the
@@ -392,8 +511,7 @@ class Plot:
         
         self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         
-        qpu.plot_dataset(self.bkfigure, dataset, residual=False,
-                         data_color=color)
+        qpu.plot_dataset(self.bkfigure, dataset, residual=False,color=color)
         
         xvals = [self.x_range[0]+self.x_range_margin, 
                  self.x_range[1]-self.x_range_margin]
@@ -406,6 +524,7 @@ class Plot:
         self.linear_fit_line = line
         self.linear_fit_patches = patches
         self.linear_fit_pars = pars
+        self.linear_fit_corr = dataset.fit_pcorr[-1][0][1]
                
         #Specify the location of the legend
         self.bkfigure.legend.location = self.legend_location      
@@ -432,12 +551,12 @@ class Plot:
         
             
         @interact(offset=(off_min, off_max, off_step),
-                  slope=(slope_min, slope_max, slope_step),
                   offset_err = (0, 2.*off_std, off_std/50.),
+                  slope=(slope_min, slope_max, slope_step),
                   slope_err = (0, 2.*slope_std, off_std/50.),
                   correlation = (-1,1,0.05)                 
                  )
-        def update(offset=off_mean, slope=slope_mean, offset_err=off_std, slope_err=slope_std, correlation=0.1):
+        def update(offset=off_mean, offset_err=off_std, slope=slope_mean, slope_err=slope_std, correlation=self.linear_fit_corr):
             
            
             

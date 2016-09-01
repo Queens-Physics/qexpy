@@ -4,7 +4,7 @@ from qexpy.error import Measurement, MeasurementArray, Measurement_Array,\
                         sqrt, sin, cos, tan, sec, csc, cot, log, exp, e, asin, acos, atan
         
 
-from qexpy.plotting import Plot
+from qexpy.plotting import Plot, MakePlot
 import qexpy.utils as qu
 
 import bokeh.plotting as bp

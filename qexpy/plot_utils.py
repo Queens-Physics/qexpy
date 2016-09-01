@@ -1,18 +1,16 @@
-import scipy.optimize as sp
 import numpy as np
 import qexpy.error as qe
 import qexpy.utils as qu
-import qexpy.fitting as qf
+#import qexpy.fitting as qf
 
-from math import pi
-import bokeh.plotting as bp
-import bokeh.io as bi
-import bokeh.models as mo
+#import bokeh.plotting as bp
+#import bokeh.io as bi
+#import bokeh.models as mo
 
 CONSTANT = qu.number_types
 ARRAY = qu.array_types
 
-def plot_dataset(figure, dataset, residual=False, data_color='black'):
+def plot_dataset(figure, dataset, residual=False, color='black'):
     '''Given a bokeh figure, this will add data points with errors from a dataset'''
   
     xdata = dataset.xdata
@@ -20,16 +18,16 @@ def plot_dataset(figure, dataset, residual=False, data_color='black'):
     data_name = dataset.name
     
     if residual is True and dataset.nfits>0:
-        ydata = dataset.yres[-1].get_means()
-        yerr = dataset.yres[-1].get_stds()
+        ydata = dataset.fit_yres[-1].get_means()
+        yerr = dataset.fit_yres[-1].get_stds()
         data_name=None
     else:
         ydata = dataset.ydata
         yerr = dataset.yerr
      
-    add_points_with_error_bars(figure, xdata, ydata, xerr, yerr, data_color, data_name)
+    add_points_with_error_bars(figure, xdata, ydata, xerr, yerr, color, data_name)
     
-def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, data_color='black', data_name='dataset'):
+def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, color='black', data_name='dataset'):
     '''Add data points to a bokeh plot. If the errors are given as numbers, 
     the same error bar is assume for all data points'''
     
@@ -41,7 +39,7 @@ def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, data_
         return None 
     
     #Draw points:    
-    figure.circle(_xdata, _ydata, color=data_color, size=2, legend=data_name)
+    figure.circle(_xdata, _ydata, color=color, size=2, legend=data_name)
 
     if isinstance(_xerr,np.ndarray) or isinstance(_yerr,np.ndarray):
         #Add error bars
@@ -61,11 +59,11 @@ def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, data_
                     pass
                 
                 if len(xends)>0:                    
-                    figure.line(xends,ycentral, color=data_color)
+                    figure.line(xends,ycentral, color=color)
                     #winglets on x error bar:
                     figure.rect(x=xends, y=ycentral, height=5, width=0.2,
                         height_units='screen', width_units='screen',
-                        color=data_color)
+                        color=color)
                 
             #y error bar    
             if yerr is not None:
@@ -77,11 +75,11 @@ def add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, data_
                 else:
                     pass
                 if len(yends)>0:          
-                    figure.line(xcentral, yends, color=data_color)
+                    figure.line(xcentral, yends, color=color)
                     #winglets on y error bar:
                     figure.rect(x=xcentral, y=yends, height=0.2, width=5,
                         height_units='screen', width_units='screen',
-                        color=data_color)
+                        color=color)
                 
 def make_np_arrays(*args):
     '''Return a tuple where all of the arguments have been converted into 

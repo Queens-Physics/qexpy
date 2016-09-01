@@ -23,7 +23,7 @@ def Rpolynomial(x, *pars):
 
 def Rexp(x, *pars):
     '''Function for a decaying exponential p[0]*exp(-x/p[1])'''
-    return (0 if pars[1]==0 else pars[0]*np.exp(-x/pars[1]) )
+    return (0 if pars[1]==0 else pars[0]/pars[1]*np.exp(-x/pars[1]) )
 
 def Rgauss(x, *pars):
     '''Function for a Gaussian p[2]*Gaus(p[0],p[1])'''
@@ -149,7 +149,7 @@ class XYFitter:
                 if i is 0:
                     name = 'mean'
                 elif i is 1:
-                    name = 'standard deviation'
+                    name = 'sigma'
                 elif i ==2:
                     name = 'normalization'               
             elif self.fit_function_name is 'linear':
@@ -157,6 +157,11 @@ class XYFitter:
                     name = 'intercept'
                 elif i is 1:
                     name = 'slope'
+            elif self.fit_function_name is 'exponential':
+                if i is 0:
+                    name = 'amplitude'
+                elif i is 1:
+                    name = 'decay-constant'
             else:
                 name = 'par_%d' % (i)
             name = parnames +"_"+name
@@ -169,9 +174,15 @@ class XYFitter:
                 
         #Calculate the residuals:        
         yfit = self.fit_function(dataset.xdata, *self.fit_pars)
-        yres = qe.MeasurementArray( (dataset.ydata-yfit), dataset.yerr)        
+        self.fit_yres = qe.MeasurementArray( (dataset.ydata-yfit), dataset.yerr)  
+        #Calculate the chi-squared:
+        self.fit_chi2 = 0
+        for i in range(self.fit_npars):
+            if self.fit_yres[i].std !=0:
+                self.fit_chi2 += (self.fit_yres[i].mean/self.fit_yres[i].std)**2
+        self.fit_ndof = self.fit_yres.size-self.fit_npars-1
                
-        return self.fit_parameters, yres
+        return self.fit_parameters
     
     
 class XYDataSet:
@@ -210,28 +221,52 @@ class XYDataSet:
             self.npoints = self.x.size
         
         self.xyfitter = []
-        self.fit_pars = []
+        self.fit_pars = [] #stored as Measurement
+        self.fit_pcov = []
+        self.fit_pcorr = []
         self.fit_function = [] 
         self.fit_function_name = []
         self.fit_npars =[]
-        self.yres = []
+        self.fit_yres = []
+        self.fit_chi2 = []
+        self.fit_ndof = []
         self.nfits=0
         
-    def fit(self, model=None, parguess=None, fit_range=None):
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True):
         '''Fit a data set to a model using XYFitter. Everytime this function
         is called on a data set, it adds a new XYFitter to the dataset. This
         is to allow multiple functions to be fit to the same data set'''
         fitter = XYFitter(model=model, parguess=parguess)
-        fit_pars, yres = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
-        
+        fit_pars = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
+
         self.xyfitter.append(fitter)
-        self.fit_pars.append(fit_pars) 
+        self.fit_pars.append(fit_pars)
+        self.fit_pcov.append(fitter.fit_pcov)
+        self.fit_pcorr.append(cov2corr(fitter.fit_pcov))
         self.fit_npars.append(fit_pars.size)
-        self.yres.append(yres)
+        self.fit_yres.append(fitter.fit_yres)
         self.fit_function.append(fitter.fit_function) 
         self.fit_function_name.append(fitter.fit_function_name) 
+        self.fit_chi2.append(fitter.fit_chi2)
+        self.fit_ndof.append(fitter.fit_ndof)
         self.nfits += 1
+        
+        if print_results:
+            self.print_results()
+        
         return self.fit_pars[-1]
+    
+    def print_results(self):
+        if self.nfits == 0:
+            print("no fit results to print")
+            return
+        print("------Fit results-------")
+        print("Fit of ",self.name," to ", self.fit_function_name[-1]) 
+        print(self.fit_pars[-1])
+        print("Correlation matrix: ")
+        print(np.array_str(self.fit_pcorr[-1], precision=3))
+        print("chi2/ndof = {:.2f}/{}".format(self.fit_chi2[-1],self.fit_ndof[-1]))
+        print("----End fit results-----")
     
     def clear_fits(self):
         '''Remove all fit records'''
@@ -255,8 +290,25 @@ class XYDataSet:
     
     def get_yres_range(self, margin=0, fitindex=-1):
         '''Get range of the y residuals, including errors and a specified margin'''
-        return [self.yres[fitindex].get_means().min()-self.yerr.max()-margin,\
-                self.yres[fitindex].get_means().max()+self.yerr.max()+margin] 
+        return [self.fit_yres[fitindex].get_means().min()-self.yerr.max()-margin,\
+                self.fit_yres[fitindex].get_means().max()+self.yerr.max()+margin] 
+    
+def cov2corr(pcov):
+    '''Return a correlation matrix given a covariance matrix'''
+    sigmas = np.sqrt(np.diag(pcov))
+    dim = sigmas.size
+    pcorr = np.ndarray(shape=(dim,dim))
+    
+    for i in range(dim):
+        for j in range(dim):
+            pcorr[i][j]=pcov[i][j]
+            if sigmas[i] == 0 or sigmas[j] == 0:
+                pcorr[i][j] = 0.
+            else:
+                pcorr[i][j] /= (sigmas[i]*sigmas[j])
+    return pcorr
+           
+    
     
 def num_der(function, point, dx=1e-10):
     '''
