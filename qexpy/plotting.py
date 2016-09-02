@@ -560,6 +560,10 @@ class Plot:
         '''Fits the last dataset to a linear function and displays the
         result as an interactive fit'''
                 
+        if not qu.in_notebook():
+            print("Can only use this feature in a notebook, sorry")
+            return
+        
         if len(self.datasets) >1:
             print("Warning: only using the last added dataset, and clearing previous fits")
                      
@@ -904,7 +908,12 @@ class Plot:
     def bk_interact_linear_fit(self, error_range = 2):  
         '''After show_linear_fit() has been called, this will display
         sliders allowing the user to adjust the parameters of the linear
-        fit - only works in a notebook, require ipywigets''' 
+        fit - only works in a notebook, require ipywigets'''
+        
+        if not qu.in_notebook():
+            print("Can only use this feature in a notebook, sorry")
+        return
+        
         
         off_mean = self.linear_fit_pars[0].mean
         off_std = self.linear_fit_pars[0].std
