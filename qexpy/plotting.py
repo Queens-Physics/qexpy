@@ -10,7 +10,7 @@ import bokeh.io as bi
 import bokeh.models as mo
 import bokeh.palettes as bpal
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from ipywidgets import interact 
@@ -23,23 +23,45 @@ ARRAY = qu.array_types
 def MakePlot(x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None, xname=None, xunits=None, yname=None, yunits=None):
     '''Use this function to create a plot object, by providing either arrays
     corresponding to the x and y data, Measurement_Arrays for x and y, or
-    an XYDataset
+    an XYDataset. If providing a dataset, it can be specified as either the 
+    x argument or the dataset argument.
    
     '''
     
-    if (x is None or y is None) and dataset is None:
-        print("here", dataset)
+    if x is None and y is None and dataset is None:
         return Plot(None)
     
+    elif x is not None and y is None:
+        #assume that x is a dataset:
+        if isinstance(x, qf.XYDataSet):
+            if xname is not None and isinstance(xname, str):
+                x.xname = xname
+            if yname is not None and isinstance(yname, str):
+                x.yname = yname           
+            if xunits is not None and isinstance(xunits, str):
+                x.xunits = xunits
+            if yunits is not None and isinstance(yunits, str):
+                x.yunits = yunits 
+            if data_name is not None and isinstance(data_name, str):
+                x.name = data_name
+            return Plot(x)
+        else:
+            print("Must specify x AND y or dataset, returning empty plot")
+            return Plot(None)
+        
     elif dataset is not None:
+        if xname is not None and isinstance(xname, str):
+            dataset.xname = xname
+        if yname is not None and isinstance(yname, str):
+            dataset.yname = yname           
+        if xunits is not None and isinstance(xunits, str):
+            dataset.xunits = xunits
+        if yunits is not None and isinstance(yunits, str):
+            dataset.yunits = yunits 
+        if data_name is not None and isinstance(data_name, str):
+            dataset.name = data_name
         return Plot(dataset)
-        #Need to make sure to override the names and units, if the user specified them 
-        #along with a dataset, so re-create the data set:
-        #xa = q.MeasurementArray(dataset.xdata, error=dataset.xerr, name=xname, units=xunits)
-        #ya = q.MeasurementArray(dataset.ydata, error=dataset.yerr, name=yname, units=yunits)
-        #ds = qf.XYDataSet(xa,ya)
-        #return Plot(dataset=ds)
-    
+  
     elif (x is not None and y is not None):
         ds = qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name,
                           xname=xname, xunits=xunits, yname=yname, yunits=yunits)
@@ -319,7 +341,7 @@ class Plot:
 
 
             
-    def show(self, output='inline', populate_figure=True):
+    def show(self, output='inline', populate_figure=True, refresh = True):
         '''
         Show the figure, will call one of the populate methods
         by default to build a figure.
@@ -336,8 +358,8 @@ class Plot:
         elif q.plot_engine in q.plot_engine_synonyms["mpl"]:
             self.set_mpl_output()
             if populate_figure:
-                self.populate_mpl_figure()
-            pl.show()
+                self.populate_mpl_figure(refresh=refresh)
+            plt.show()
             
         else:
             print("Error: unrecognized plot engine")
@@ -350,7 +372,7 @@ class Plot:
         '''Choose where to output (in a notebook or to a file)'''
         #TODO not tested, the output notebook part does not work
         if output == 'file' or not qu.in_notebook():
-            pl.savefig(self.save_filename, bbox_inches='tight')
+            plt.savefig(self.save_filename, bbox_inches='tight')
         elif not qu.mpl_ouput_notebook_called:
             qu.mpl_output_notebook()
             # This must be the first time calling output_notebook,
@@ -360,18 +382,18 @@ class Plot:
             pass
         
         
-    def populate_mpl_figure(self):
+    def populate_mpl_figure(self, refresh = True):
         '''Thia is the main function to populate the matplotlib figure. It will create
         the figure, and then draw all of the data sets, their residuals, their fits,
         and any user-supplied functions'''
         
-        self.initialize_mpl_figure()
+        self.initialize_mpl_figure(refresh)
       
         #Plot the data sets
         legend_offset = 0
         for dataset, color in zip(self.datasets, self.datasets_colors):           
-            self.mpl_plot_dataset(dataset, color,
-                                  show_fit_function=True, show_residuals=True)
+            self.mpl_plot_dataset(dataset, color, show_fit_function=True,
+                                  show_residuals=self.show_residuals)
             
             if self.show_fit_results and dataset.nfits > 0:
                     legend_offset = self.mpl_plot_fit_results_text_box(dataset, legend_offset)
@@ -391,41 +413,50 @@ class Plot:
                                errorbandfactor=self.errorband_sigma)
             
         if self.mpl_show_legend:
-            pl.legend(loc=self.mpl_legend_location,fontsize=11)
+            plt.legend(loc=self.mpl_legend_location,fontsize=11)
             
-    def initialize_mpl_figure(self):
+    def initialize_mpl_figure(self, refresh = True):
         '''Build a matplotlib figure with the desired size to draw on'''
-    
+        
+        if not refresh and hasattr(self, 'mplfigure'):
+            if self.show_residuals and not hasattr(self,'mpl_gs'):
+                pass
+            else:
+                return
+         
         if not self.show_residuals:            
-            self.mplfigure = pl.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
+            self.mplfigure = plt.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
                                        self.dimensions[1]*self.mpl_scaling))
             
-        if self.show_residuals:
-            self.mplfigure = pl.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
+        else:
+            self.mplfigure = plt.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
                                                 1.33*self.dimensions[1]*self.mpl_scaling)) 
             self.mpl_gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
             
-            pl.subplot(self.mpl_gs[1])
-            pl.axis([self.x_range[0], self.x_range[1], 
+            plt.subplot(self.mpl_gs[1])
+            plt.axis([self.x_range[0], self.x_range[1], 
                      self.yres_range[0], self.yres_range[1]])
-            pl.xlabel(self.labels['xtitle'])
-            pl.ylabel("Residuals")
-            pl.grid()
+            plt.xlabel(self.labels['xtitle'])
+            plt.ylabel("Residuals")
+            plt.grid()
             #switch to main figure
-            pl.subplot(self.mpl_gs[0])          
+            plt.subplot(self.mpl_gs[0])          
 
         
-        pl.axis([self.x_range[0], self.x_range[1], 
+        plt.axis([self.x_range[0], self.x_range[1], 
                  self.y_range[0], self.y_range[1]])
-        pl.xlabel(self.labels['xtitle'])
-        pl.ylabel(self.labels['ytitle'])
-        pl.title(self.labels['title'])
-        pl.grid()
-   
+        plt.xlabel(self.labels['xtitle'])
+        plt.ylabel(self.labels['ytitle'])
+        plt.title(self.labels['title'])
+        plt.grid()
+           
     def mpl_plot_fit_results_text_box(self, dataset, yoffset=0):
         '''Add a text box with the fit parameters from the last fit 
         of the dataset'''
         
+        if not hasattr(self, 'mplfigure'):
+            self.initialize_mpl_figure()
+            
         offset = yoffset    
         h = self.y_range[1]-self.y_range[0]
         l = self.x_range[1]-self.x_range[0]
@@ -437,7 +468,7 @@ class Plot:
             short_name =  dataset.fit_pars[-1][i].__str__().split('_')
             textfit += short_name[0]+"_"+short_name[-1]+"\n"
            
-        pl.text(start_x, start_y, textfit,fontsize=11, horizontalalignment='right',
+        plt.text(start_x, start_y, textfit,fontsize=11, horizontalalignment='right',
                 verticalalignment='bottom', bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
         offset = dataset.fit_npars[-1] * 0.045 * h
         return offset
@@ -448,15 +479,26 @@ class Plot:
         It is better to use add_function() and to let populate_mpl_plot() actually
         add the function.
         '''
+        
+        if not hasattr(self, 'mplfigure'):       
+            if show_residuals:
+                if dataset.nfits > 0:
+                    self.show_residuals = True
+            self.initialize_mpl_figure()
+        
         if hasattr(self, 'mpl_gs'):
-            pl.subplot(self.mpl_gs[0])
+            plt.subplot(self.mpl_gs[0])
             
         if dataset.is_histogram:
-            pl.bar(dataset.xdata, dataset.ydata, width = dataset.xdata[-1]-dataset.xdata[-2],
-                   label=dataset.name, color=color, alpha=0.7)
+            if hasattr(dataset, 'hist_data'):
+                plt.hist(dataset.hist_data, bins=dataset.hist_bins,
+                    label=dataset.name, color=color, alpha=0.7)
+            else:
+                plt.bar(dataset.xdata, dataset.ydata, width = dataset.xdata[-1]-dataset.xdata[-2],
+                      label=dataset.name, color=color, alpha=0.7)
             
-        else:    
-            pl.errorbar(dataset.xdata, dataset.ydata,
+        else:   
+            plt.errorbar(dataset.xdata, dataset.ydata,
                     xerr=dataset.xerr,yerr=dataset.yerr,
                     fmt='o',color=color,markeredgecolor = 'none',
                     label=dataset.name)
@@ -468,11 +510,11 @@ class Plot:
                                    color=color, errorbandfactor=self.errorband_sigma)
             
         if self.show_residuals and hasattr(self, 'mpl_gs') and show_residuals:
-            pl.subplot(self.mpl_gs[1])
-            pl.errorbar(dataset.xdata, dataset.fit_yres[-1].get_means(),
+            plt.subplot(self.mpl_gs[1])
+            plt.errorbar(dataset.xdata, dataset.fit_yres[-1].get_means(),
                         xerr=dataset.xerr,yerr=dataset.yerr,
                         fmt='o',color=color,markeredgecolor = 'none')
-            pl.subplot(self.mpl_gs[0])
+            plt.subplot(self.mpl_gs[0])
                     
      
     def mpl_plot_function(self, function, xdata, pars=None, n=100,
@@ -483,8 +525,11 @@ class Plot:
         The function can be either f(x) or f(x, *pars), in which case, if *pars is
         a Measurement_Array, then error bands will be drawn
         '''
+        if not hasattr(self, 'mplfigure'):
+            self.initialize_mpl_figure()
+        
         if hasattr(self, 'mpl_gs'):
-            pl.subplot(self.mpl_gs[0])
+            plt.subplot(self.mpl_gs[0])
         xvals = np.linspace(min(xdata), max(xdata), n)
         
         if pars is None:
@@ -492,7 +537,7 @@ class Plot:
         elif isinstance(pars, qe.Measurement_Array):
             recall = qe.Measurement.minmax_n
             qe.Measurement.minmax_n=1
-            fmes = function(xvals, *(pars))
+            fmes = function(xvals, *pars)
             fvals = fmes.get_means()
             ferr = fmes.get_stds()
             qe.Measurement.minmax_n=recall
@@ -502,12 +547,12 @@ class Plot:
             print("Error: unrecognized parameters for function")
             pass
         
-        pl.plot(xvals,fvals, color=color, label = legend_name)
+        plt.plot(xvals,fvals, color=color, label = legend_name)
         
         if isinstance(pars, qe.Measurement_Array):
             fmax = fvals + ferr
             fmin = fvals - ferr
-            pl.fill_between(xvals, fmin, fmax, facecolor=color,
+            plt.fill_between(xvals, fmin, fmax, facecolor=color,
                             alpha=0.3, edgecolor = 'none',
                             interpolate=True)
         
@@ -552,13 +597,13 @@ class Plot:
         def update(offset=pars[0].mean, offset_err=pars[0].std, slope=pars[1].mean,
                    slope_err=pars[1].std, correlation=dataset.fit_pcorr[-1][0][1]):  
             
-            pl.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
+            plt.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
                                self.dimensions[1]*self.mpl_scaling))
             
             xvals = np.linspace(self.x_range[0], self.x_range[1], 20)
             
-            omes = qe.Measurement(offset,offset_err)
-            smes = qe.Measurement(slope,slope_err)
+            omes = qe.Measurement(offset,offset_err, name="offset")
+            smes = qe.Measurement(slope,slope_err, name="slope")
             omes.set_correlation(smes,correlation)
             
             recall = qe.Measurement.minmax_n
@@ -571,26 +616,67 @@ class Plot:
             fmax = fvals + ferr
             fmin = fvals - ferr
             
-            pl.errorbar(dataset.xdata, dataset.ydata,
+            plt.errorbar(dataset.xdata, dataset.ydata,
                     xerr=dataset.xerr,yerr=dataset.yerr,
                     fmt='o',color=color,markeredgecolor = 'none',
                     label=dataset.name)
             
-            pl.plot(xvals,fvals, color=color, label ="linear fit")
-            pl.fill_between(xvals, fmin, fmax, facecolor=color,
+            plt.plot(xvals,fvals, color=color, label ="linear fit")
+            plt.fill_between(xvals, fmin, fmax, facecolor=color,
                             alpha=0.3, edgecolor = 'none',
                             interpolate=True)
             
-            pl.axis([self.x_range[0], self.x_range[1], 
+            #Add text with currently chosen fits
+            h = self.y_range[1]-self.y_range[0]
+            l = self.x_range[1]-self.x_range[0]
+            start_x = self.x_range[1]-0.02*l + self.fit_results_x_offset
+            start_y = self.y_range[1]-0.08*h+ self.fit_results_y_offset
+        
+            textfit=str(omes)+"\n"+str(smes)
+            plt.text(start_x, start_y, textfit,fontsize=12, horizontalalignment='right',
+                verticalalignment='bottom')
+     
+            plt.axis([self.x_range[0], self.x_range[1], 
                  self.y_range[0], self.y_range[1]])
-            pl.xlabel(self.labels['xtitle'])
-            pl.ylabel(self.labels['ytitle'])
-            pl.title(self.labels['title'])
-            pl.legend(loc='best')
-            pl.grid()
-            pl.show()
+            plt.xlabel(self.labels['xtitle'])
+            plt.ylabel(self.labels['ytitle'])
+            plt.title(self.labels['title'])
+            plt.legend(loc=self.mpl_legend_location)
+            plt.grid()
+            plt.show()
 
-
+###Some wrapped matplotlib functions
+    def mpl_plot(self, *args, **kwargs):
+        '''Wrapper for matplotlib plot(), typically to plot a line'''
+        if not hasattr(self, 'mplfigure'):
+            self.initialize_mpl_figure()
+            
+        plt.plot(*args, **kwargs)
+        
+    def mpl_error_bar(self, x, y, yerr=None, xerr=None, fmt='', ecolor=None, 
+                      elinewidth=None, capsize=None, barsabove=False, lolims=False,
+                      uplims=False, xlolims=False, xuplims=False, errorevery=1,
+                      capthick=None, hold=None, data=None, **kwargs):
+        '''Wrapper for matplotlib error_bar(), adds points with error bars '''
+        if not hasattr(self, 'mplfigure'):
+            self.initialize_mpl_figure()
+            
+        plt.error_bar(self, x, y, yerr, xerr, fmt, ecolor, 
+                      elinewidth, capsize, barsabove, lolims,
+                      uplims, xlolims, xuplims, errorevery,
+                      capthick, hold, data, **kwargs)
+        
+    def mpl_hist(self,x, bins=10, range=None, normed=False, weights=None,
+                 cumulative=False, bottom=None, histtype='bar', align='mid',
+                 orientation='vertical', rwidth=None, log=False, color=None,
+                 label=None, stacked=False, hold=None, data=None, **kwargs):
+        '''Wrapper for matplotlib hist(), creates a histogram'''
+        if not hasattr(self, 'mplfigure'):
+            self.initialize_mpl_figure()
+            
+        plt.hist(x, bins, range, normed, weights, cumulative, bottom,
+                histtype, align,   orientation, rwidth, log, color,
+                label, stacked, hold, data, **kwargs)
             
             
 ###############################################################################
@@ -701,7 +787,7 @@ class Plot:
     def bk_plot_fit_results_text_box(self, dataset, yoffset=0):
         '''Add a text box with the fit parameters from the last fit to
         the data set'''
-        if self.bkfigure is None:
+        if not hasattr(self, 'bkfigure'):
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
             
         offset = yoffset    
@@ -733,11 +819,11 @@ class Plot:
         populate_bokeh_figure take care of calling this function'''
         
         if residual == True:
-            if self.bkres is None:
+            if not hasattr(self, 'bkfigure'):
                 self.bkres = self.initialize_bokeh_figure(residuals=True)
             return qpu.bk_plot_dataset(self.bkres, dataset, residual=True, color=color)
             
-        if self.bkfigure is None:
+        if not hasattr(self, 'bkfigure'):
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
             
         qpu.bk_plot_dataset(self.bkfigure, dataset, residual=False, color=color)
@@ -751,7 +837,7 @@ class Plot:
                                    color='black', data_name='dataset'):
         '''Add a set of data points with error bars to the main figure -it is better 
         to use add_dataset if the data should be treated as a dataset that can be fit'''
-        if self.bkfigure is None:
+        if not hasattr(self, 'bkfigure'):
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         return qpu.bk_add_points_with_error_bars(self.bkfigure, xdata, ydata, xerr=xerr,
                                               yerr=yerr, color=color,
@@ -765,7 +851,7 @@ class Plot:
         The function can be either f(x) or f(x, *pars), in which case, if *pars is
         a Measurement_Array, then error bands will be drawn
         '''
-        if self.bkfigure is None:
+        if not hasattr(self, 'bkfigure'):
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         return qpu.bk_plot_function(self.bkfigure, function, xdata, pars=pars, n=n,
                       legend_name=legend_name, color=color, errorbandfactor=errorbandfactor)       
@@ -840,9 +926,7 @@ class Plot:
                   correlation = (-1,1,0.05)                 
                  )
         def update(offset=off_mean, offset_err=off_std, slope=slope_mean, slope_err=slope_std, correlation=self.linear_fit_corr):
-            
-           
-            
+              
             recall = qe.Measurement.minmax_n
             qe.Measurement.minmax_n=1
             omes = qe.Measurement(offset,offset_err)

@@ -1,9 +1,13 @@
 import numpy as np
+#used for the histograms, will remove when move bokeh histo to 
+#to use Plot():
 import bokeh.plotting as bp
 import bokeh.io as bi
+#used for array and number types:
 import qexpy.utils as qu
+#used to check plot_engine:
 import qexpy as q
-import pylab as pl
+
 
 class ExperimentalValue:
     '''
@@ -40,7 +44,7 @@ class ExperimentalValue:
                     data[index] = args[0][index]
                 self.mean = data.mean()
                 self.std = data.std(ddof=1)
-                self.error_on_mean = 0 if data.size==0 else self.std/np.sqrt(data.size)
+                self.error_on_mean = 0 if data.size==0 else self.std/np.sqrt(data.size)             
             else:
                 raise TypeError('''Input must be either a single array of values,
                       or the central value and uncertainty in one measurement''')
@@ -59,9 +63,11 @@ class ExperimentalValue:
                   or the central value and uncertainty in one measurement''')
        
        
+        self.MinMax = [self.mean, self.std]
+        self.MC = [self.mean, self.std]
+        
         self.info = {
                 'ID': '', 'Formula': '', 'Method': '', 'Data': data,\
-                #'Error': error_data,
                 'Function': {
                         'operation': (), 'variables': ()}, }
 
@@ -247,13 +253,23 @@ class ExperimentalValue:
             
         hist, edges = np.histogram(self.info['Data'], bins=bins)
         
-        if q.plot_engine in q.plot_engine_synonyms["mpl"]:  
-            xvals = MeasurementArray(edges, error=0, name=self.name)
-            yvals = MeasurementArray(hist, error=np.sqrt(hist), name='counts')
-            xy = q.XYDataSet(xvals[:-1], yvals, data_name=hist_title, is_histogram=True)
-            q.plot_engine="mpl"
-            p = q.MakePlot(dataset = xy)
-            p.show()
+        if q.plot_engine in q.plot_engine_synonyms["mpl"]:              
+            p = q.MakePlot(q.XYDataSet(self.info['Data'],
+                                     data_name=hist_title,
+                                     is_histogram=True, bins=bins))
+            p.datasets_colors[-1]='blue'
+            
+            p.x_range_margin=edges[1]-edges[0]
+            p.y_range_margin=hist.max()*0.2
+            p.y_range[0]=0.
+            
+            p.mpl_plot([self.mean]*2, [0, hist.max()*1.1],color='red',lw=2)
+            p.mpl_plot([self.mean-self.std]*2, [0, hist.max()], color='red',
+                ls='--', lw=2)
+            p.mpl_plot([self.mean+self.std]*2, [0, hist.max()], color='red',
+                ls='--', lw=2)
+            
+            p.show(refresh=False)
             return p
         else:
         
@@ -280,7 +296,7 @@ class ExperimentalValue:
             bp.show(p1)
             return p1
     
-    def show_MC_histogram(self, nbins=50, title=None, output='inline'):
+    def show_MC_histogram(self, bins=50, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
         '''
@@ -300,15 +316,25 @@ class ExperimentalValue:
                        wheel_zoom, reset''',
                        background_fill_color="#FFFFFF")
 
-        hist, edges = np.histogram(self.MC_list, bins=nbins)
+        hist, edges = np.histogram(self.MC_list, bins=bins)
         
-        if q.plot_engine in q.plot_engine_synonyms["mpl"]:      
-            xvals = MeasurementArray(edges, error=0, name=self.name)
-            yvals = MeasurementArray(hist, error=np.sqrt(hist), name='counts')
-            xy = q.XYDataSet(xvals[:-1], yvals, data_name=hist_title, is_histogram=True)
-            q.plot_engine="mpl"
-            p = q.MakePlot(dataset = xy)
-            p.show()
+        if q.plot_engine in q.plot_engine_synonyms["mpl"]:              
+            p = q.MakePlot(q.XYDataSet(self.MC_list,
+                                     data_name=hist_title,
+                                     is_histogram=True, bins=bins))
+            p.datasets_colors[-1]='blue'
+            
+            p.x_range_margin=edges[1]-edges[0]
+            p.y_range_margin=hist.max()*0.2
+            p.y_range[0]=0.
+            
+            p.mpl_plot([self.mean]*2, [0, hist.max()*1.1],color='red',lw=2)
+            p.mpl_plot([self.mean-self.std]*2, [0, hist.max()], color='red',
+                ls='--', lw=2)
+            p.mpl_plot([self.mean+self.std]*2, [0, hist.max()], color='red',
+                ls='--', lw=2)
+            
+            p.show(refresh=False)
             return p
         else:
             p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
@@ -872,8 +898,9 @@ class Function(ExperimentalValue):
         self.correlation = {self.info['ID']: 1}
         self.root = ()
         self.der = None
-        self.MC = None
-        self.MinMax = None
+        #These are set by super()
+        #self.MC = None
+        #self.MinMax = None
         self.error_flag = False
 
 
@@ -908,43 +935,6 @@ class Constant(ExperimentalValue):
         self.type = "Constant"
         self.covariance = {self.name: 0}
         self.root = ()
-
-
-#def MeasurementArray(data, error=None, name=None, units=None):
-#    ''' Creates an array of measurements from inputted mean and standard
-#    deviation arrays.
-#    '''
-#    if type(data) not in ExperimentalValue.ARRAY:
-#        print('Data array must be a list, tuple, or numpy array.')
-#        return None
-#
-#    if type(error) not in ExperimentalValue.ARRAY and\
-#            type(error) not in ExperimentalValue.CONSTANT and\
-#            error is not None:
-#        print('Error array must be a list, tuple, numpy array or constant.')
-#        return None
-#
-#    if error is None:
-#        error = len(data)*[0]
-#    elif len(error) is 1:
-#        error = len(data)*error
-#    elif type(error) in ExperimentalValue.CONSTANT:
-#        error = len(data)*[error]
-#
-#    if len(data) != len(error):
-#        print('''Data and error array must be of the same length, or the
-#        error array should be of length 1.''')
-#        return None
-#
-#    data_name = name
-#    data_units = units
-#
-#    measurement = []
-#    for i in range(len(data)):
-#        measurement.append(Measurement(data[i], error[i], name=data_name,
-#                                       units=data_units))
-#
-#    return np.array(measurement)
 
 
 class Measurement_Array(np.ndarray):

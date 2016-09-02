@@ -1,11 +1,6 @@
 import numpy as np
 import qexpy.error as qe
 import qexpy.utils as qu
-#import qexpy.fitting as qf
-
-#import bokeh.plotting as bp
-#import bokeh.io as bi
-#import bokeh.models as mo
 
 CONSTANT = qu.number_types
 ARRAY = qu.array_types
