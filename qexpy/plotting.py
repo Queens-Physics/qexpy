@@ -394,7 +394,7 @@ class Plot:
             pl.legend(loc=self.mpl_legend_location,fontsize=11)
             
     def initialize_mpl_figure(self):
-    '''Build a matplotlib figure with the desired size to draw on'''
+        '''Build a matplotlib figure with the desired size to draw on'''
     
         if not self.show_residuals:            
             self.mplfigure = pl.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
