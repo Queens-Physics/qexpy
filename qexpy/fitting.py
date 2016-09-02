@@ -272,6 +272,21 @@ class XYDataSet:
         print("chi2/ndof = {:.2f}/{}".format(self.fit_chi2[-1],self.fit_ndof[-1]))
         print("----End fit results-----")
     
+    def __str__(self):
+        
+        theString=""
+        for i in range(self.xdata.size):
+            theString += str(self.x[i])+" , "+str(self.y[i])+"\n"
+        return theString
+            
+    def save_text(self, filename="dataset.dat"):
+        data = np.ndarray(shape=(self.xdata.size,4))
+        data[:,0]=self.xdata
+        data[:,1]=self.ydata
+        data[:,2]=self.xerr
+        data[:,3]=self.xerr
+        np.savetxt(filename, data, fmt='%.4f')
+        
     def clear_fits(self):
         '''Remove all fit records'''
         self.xyfitter = []
