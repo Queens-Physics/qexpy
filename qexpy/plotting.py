@@ -98,11 +98,12 @@ class Plot:
         self.x_range_margin = 0.5
         self.y_range_margin = 0.5  
         
-        #Dimensions of the figure in pixels for bokeh
-        self.dimensions = [600, 400]
-        #Convert to something similar for matplotlib (although that is 
-        #screen resolution dependent)
-        self.mpl_scaling = 0.017
+        #Dimensions of the figure in pixels
+        self.dimensions_px = [600, 400]
+        #Screen dots per inch, required for mpl
+        self.screen_dpi = plt.gcf().get_dpi()
+        if self.screen_dpi == 0:
+            self.screen_dpi = 100
         
         #Functions that the user can add to be plotted
         self.user_functions_count=0
@@ -325,14 +326,14 @@ class Plot:
             self.labels['ytitle'] = ytitle
 
 
-    def resize_plot(self, width=None, height=None, mpl_scaling=None):
+    def resize_plot_px(self, width=None, height=None):
+        
         if width is None:
             width = 600
         if height is None:
             height = 400
-        if mpl_scaling is not None:
-            self.mpl_scaling = mpl_scaling
-        self.dimensions = [width, height]
+        self.dimensions_px = [width, height]
+
 
     def set_errorband_sigma(self, sigma=1):
         '''Change the confidence bounds of the error range on a fit.
@@ -389,6 +390,18 @@ class Plot:
         
         self.initialize_mpl_figure(refresh)
       
+        newy=self.y_range[1]
+        if self.show_fit_results:
+            pixelcount = 0
+            for dataset in self.datasets:
+                if dataset.nfits > 0:
+                    pixelcount += dataset.fit_npars[-1] * 25
+            newy += pixelcount * self.y_range[1]/self.dimensions_px[1]
+        plt.axis([self.x_range[0], self.x_range[1], 
+                     self.y_range[0], newy])
+  
+    
+    
         #Plot the data sets
         legend_offset = 0
         for dataset, color in zip(self.datasets, self.datasets_colors):           
@@ -397,6 +410,7 @@ class Plot:
             
             if self.show_fit_results and dataset.nfits > 0:
                     legend_offset = self.mpl_plot_fit_results_text_box(dataset, legend_offset)
+                    legend_offset += 5
                     
          
         #Now add any user defined functions:
@@ -425,12 +439,12 @@ class Plot:
                 return
          
         if not self.show_residuals:            
-            self.mplfigure = plt.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
-                                       self.dimensions[1]*self.mpl_scaling))
+            self.mplfigure = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
+                                                 self.dimensions_px[1]/self.screen_dpi))
             
         else:
-            self.mplfigure = plt.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
-                                                1.33*self.dimensions[1]*self.mpl_scaling)) 
+            self.mplfigure = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
+                                                1.33*self.dimensions_px[1]/self.screen_dpi)) 
             self.mpl_gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
             
             plt.subplot(self.mpl_gs[1])
@@ -458,19 +472,19 @@ class Plot:
             self.initialize_mpl_figure()
             
         offset = yoffset    
-        h = self.y_range[1]-self.y_range[0]
-        l = self.x_range[1]-self.x_range[0]
-        start_x = self.x_range[1]-0.02*l + self.fit_results_x_offset
-        start_y = self.y_range[1]-0.12*h-offset + self.fit_results_y_offset
+        
+        start_x = self.dimensions_px[0] - 100 + self.fit_results_x_offset
+        start_y = self.dimensions_px[1] - offset + self.fit_results_y_offset
         
         textfit=""
         for i in range(dataset.fit_npars[-1]):
             short_name =  dataset.fit_pars[-1][i].__str__().split('_')
             textfit += short_name[0]+"_"+short_name[-1]+"\n"
-           
-        plt.text(start_x, start_y, textfit,fontsize=11, horizontalalignment='right',
-                verticalalignment='bottom', bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
-        offset = dataset.fit_npars[-1] * 0.045 * h
+         
+        plt.annotate(textfit,xy=(start_x, start_y), fontsize=11, horizontalalignment='right',
+                 verticalalignment='bottom', xycoords = 'figure points',
+                 bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
+        offset = dataset.fit_npars[-1] * 20
         return offset
            
         
@@ -601,8 +615,8 @@ class Plot:
         def update(offset=pars[0].mean, offset_err=pars[0].std, slope=pars[1].mean,
                    slope_err=pars[1].std, correlation=dataset.fit_pcorr[-1][0][1]):  
             
-            plt.figure(figsize=(self.dimensions[0]*self.mpl_scaling,
-                               self.dimensions[1]*self.mpl_scaling))
+            plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
+                               self.dimensions_px[1]/self.screen_dpi))
             
             xvals = np.linspace(self.x_range[0], self.x_range[1], 20)
             
@@ -630,15 +644,16 @@ class Plot:
                             alpha=0.3, edgecolor = 'none',
                             interpolate=True)
             
-            #Add text with currently chosen fits
-            h = self.y_range[1]-self.y_range[0]
-            l = self.x_range[1]-self.x_range[0]
-            start_x = self.x_range[1]-0.02*l + self.fit_results_x_offset
-            start_y = self.y_range[1]-0.08*h+ self.fit_results_y_offset
-        
+            
+            start_x = self.dimensions_px[0] - 100 + self.fit_results_x_offset
+            start_y = self.dimensions_px[1] - 100 + self.fit_results_y_offset
             textfit=str(omes)+"\n"+str(smes)
-            plt.text(start_x, start_y, textfit,fontsize=12, horizontalalignment='right',
-                verticalalignment='bottom')
+            
+         
+            plt.annotate(textfit,xy=(start_x, start_y), fontsize=11, horizontalalignment='right',
+                 verticalalignment='bottom', xycoords = 'figure points',
+                 bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
+            
      
             plt.axis([self.x_range[0], self.x_range[1], 
                  self.y_range[0], self.y_range[1]])
@@ -715,7 +730,7 @@ class Plot:
             for dataset in self.datasets:
                 if dataset.nfits > 0:
                     pixelcount += dataset.fit_npars[-1] * 25
-            self.y_range[1] += pixelcount * self.y_range[1]/self.dimensions[1]
+            self.y_range[1] += pixelcount * self.y_range[1]/self.dimensions_px[1]
         self.initialize_bokeh_figure(residuals=False)
         self.y_range[1] = yrange_recall
         
@@ -764,7 +779,7 @@ class Plot:
             self.bkfigure = bp.figure(
                 tools='save, pan, box_zoom, wheel_zoom, reset',
                 toolbar_location="above",
-                width=self.dimensions[0], height=self.dimensions[1],
+                width=self.dimensions_px[0], height=self.dimensions_px[1],
                 y_axis_type=self.axes['yscale'],
                 y_range=self.y_range,
                 x_axis_type=self.axes['xscale'],
@@ -777,7 +792,7 @@ class Plot:
         else:
             self.set_yres_range_from_fits
             self.bkres =  bp.figure(
-                width=self.dimensions[0], height=self.dimensions[1]//3,
+                width=self.dimensions_px[0], height=self.dimensions_px[1]//3,
                 tools='save, pan, box_zoom, wheel_zoom, reset',
                 toolbar_location="above",
                 y_axis_type='linear',
@@ -795,8 +810,8 @@ class Plot:
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
             
         offset = yoffset    
-        start_x = self.dimensions[0]-5 + self.fit_results_x_offset   
-        start_y = self.dimensions[1]-30-offset + self.fit_results_y_offset 
+        start_x = self.dimensions_px[0]-5 + self.fit_results_x_offset   
+        start_y = self.dimensions_px[1]-30-offset + self.fit_results_y_offset 
         
         for i in range(dataset.fit_npars[-1]):
             #shorten the name of the fit parameters
@@ -912,7 +927,7 @@ class Plot:
         
         if not qu.in_notebook():
             print("Can only use this feature in a notebook, sorry")
-        return
+            return
         
         
         off_mean = self.linear_fit_pars[0].mean
