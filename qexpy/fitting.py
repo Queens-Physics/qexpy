@@ -256,20 +256,20 @@ class XYDataSet:
         self.nfits += 1
         
         if print_results:
-            self.print_results()
+            self.print_fit_results()
         
         return self.fit_pars[-1]
     
-    def print_results(self):
+    def print_fit_results(self, fitindex=-1):
         if self.nfits == 0:
             print("no fit results to print")
             return
         print("------Fit results-------")
-        print("Fit of ",self.name," to ", self.fit_function_name[-1]) 
-        print(self.fit_pars[-1])
+        print("Fit of ",self.name," to ", self.fit_function_name[fitindex]) 
+        print(self.fit_pars[fitindex])
         print("Correlation matrix: ")
-        print(np.array_str(self.fit_pcorr[-1], precision=3))
-        print("chi2/ndof = {:.2f}/{}".format(self.fit_chi2[-1],self.fit_ndof[-1]))
+        print(np.array_str(self.fit_pcorr[fitindex], precision=3))
+        print("chi2/ndof = {:.2f}/{}".format(self.fit_chi2[fitindex],self.fit_ndof[fitindex]))
         print("----End fit results-----")
     
     def __str__(self):

@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name='qexpy',
     packages=['qexpy'],
-    version='0.2.5',
+    version='0.3.0',
     description='''Package to handle error analysis and data plotting aimed
     at undergraduate physics.''',
     author='Connor Kapahi and Prof. Ryan Martin',
@@ -21,5 +21,5 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Programming Language :: Python',
     ],
-    install_requires=['numpy', 'ipywidgets', 'scipy>=0.17', 'bokeh>=0.12.1'],
+    install_requires=['numpy','matplotlib', 'ipywidgets', 'scipy>=0.17', 'bokeh>=0.12.1'],
 )
