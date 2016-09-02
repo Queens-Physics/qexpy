@@ -1,7 +1,13 @@
 import numpy as np
+#used for the histograms, will remove when move bokeh histo to 
+#to use Plot():
 import bokeh.plotting as bp
 import bokeh.io as bi
+#used for array and number types:
 import qexpy.utils as qu
+#used to check plot_engine:
+import qexpy as q
+
 
 class ExperimentalValue:
     '''
@@ -38,6 +44,7 @@ class ExperimentalValue:
                     data[index] = args[0][index]
                 self.mean = data.mean()
                 self.std = data.std(ddof=1)
+                self.error_on_mean = 0 if data.size==0 else self.std/np.sqrt(data.size)             
             else:
                 raise TypeError('''Input must be either a single array of values,
                       or the central value and uncertainty in one measurement''')
@@ -56,9 +63,11 @@ class ExperimentalValue:
                   or the central value and uncertainty in one measurement''')
        
        
+        self.MinMax = [self.mean, self.std]
+        self.MC = [self.mean, self.std]
+        
         self.info = {
                 'ID': '', 'Formula': '', 'Method': '', 'Data': data,\
-                #'Error': error_data,
                 'Function': {
                         'operation': (), 'variables': ()}, }
 
@@ -178,7 +187,19 @@ class ExperimentalValue:
         propagation method is selected.
         '''
         return self.std
-
+    
+    def get_uncertainty(self):
+        return self.std
+    
+    def get_error_on_mean(self):
+        '''Returns the error on the mean if the Measurement is from a set 
+        of data'''
+        if self.error_on_mean:
+            return self.error_on_mean
+        else:
+            print("Error: error on mean not calculated")
+            return 0
+    
     def get_mean(self):
         ''' Returns the central value associated with the Measurement object
         using whatever error propagation method is selected.
@@ -215,7 +236,7 @@ class ExperimentalValue:
             return None
         return self.info['Data']
     
-    def show_histogram(self, nbins=50, title=None, output='inline'):
+    def show_histogram(self, bins=50, title=None, output='inline'):
         '''Creates a histogram of the inputted data using Bokeh.
         '''
         if self.info['Data'] is None:
@@ -228,34 +249,54 @@ class ExperimentalValue:
             hist_title = self.name+' Histogram'
         else:
             print('Histogram title must be a string.')
-            hist_title = self.name+' Histogram'
-
-        p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
+            hist_title = self.name+' Histogram'                     
+            
+        hist, edges = np.histogram(self.info['Data'], bins=bins)
+        
+        if q.plot_engine in q.plot_engine_synonyms["mpl"]:              
+            p = q.MakePlot(q.XYDataSet(self.info['Data'],
+                                     data_name=hist_title,
+                                     is_histogram=True, bins=bins))
+            p.datasets_colors[-1]='blue'
+            
+            p.x_range_margin=edges[1]-edges[0]
+            p.y_range_margin=hist.max()*0.2
+            p.y_range[0]=0.
+            
+            p.mpl_plot([self.mean]*2, [0, hist.max()*1.1],color='red',lw=2)
+            p.mpl_plot([self.mean-self.std]*2, [0, hist.max()], color='red',
+                ls='--', lw=2)
+            p.mpl_plot([self.mean+self.std]*2, [0, hist.max()], color='red',
+                ls='--', lw=2)
+            
+            p.show(refresh=False)
+            return p
+        else:
+        
+            p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
                     background_fill_color="#FFFFFF")
 
-        hist, edges = np.histogram(self.info['Data'], bins=nbins)
-
-        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+            p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                 fill_color="#036564", line_color="#033649")
 
-        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
+            p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
+            p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
-        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
-        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
+            p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
         
-        if output =='file' or not qu.in_notebook():
-            bi.output_file(self.name+' histogram.html', title=hist_title)
-        elif not qu.bokeh_ouput_notebook_called:
-            bi.output_notebook()
-            #This must be the first time calling output_notebook, keep track that it's been called:
-            qu.bokeh_ouput_notebook_called = True
+            if output =='file' or not qu.in_notebook():
+                bi.output_file(self.name+' histogram.html', title=hist_title)
+            elif not qu.bokeh_ouput_notebook_called:
+                bi.output_notebook()
+                #This must be the first time calling output_notebook,
+                #keep track that it's been called:
+                qu.bokeh_ouput_notebook_called = True
             
-        bp.show(p1)
-        return p1
+            bp.show(p1)
+            return p1
     
-    def show_MC_histogram(self, nbins=50, title=None, output='inline'):
+    def show_MC_histogram(self, bins=50, title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
         '''
@@ -275,27 +316,45 @@ class ExperimentalValue:
                        wheel_zoom, reset''',
                        background_fill_color="#FFFFFF")
 
-        hist, edges = np.histogram(self.MC_list, bins=nbins)
+        hist, edges = np.histogram(self.MC_list, bins=bins)
+        
+        if q.plot_engine in q.plot_engine_synonyms["mpl"]:              
+            p = q.MakePlot(q.XYDataSet(self.MC_list,
+                                     data_name=hist_title,
+                                     is_histogram=True, bins=bins))
+            p.datasets_colors[-1]='blue'
+            
+            p.x_range_margin=edges[1]-edges[0]
+            p.y_range_margin=hist.max()*0.2
+            p.y_range[0]=0.
+            
+            p.mpl_plot([self.mean]*2, [0, hist.max()*1.1],color='red',lw=2)
+            p.mpl_plot([self.mean-self.std]*2, [0, hist.max()], color='red',
+                ls='--', lw=2)
+            p.mpl_plot([self.mean+self.std]*2, [0, hist.max()], color='red',
+                ls='--', lw=2)
+            
+            p.show(refresh=False)
+            return p
+        else:
+            p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                    fill_color="#036564", line_color="#033649")
 
-        p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                fill_color="#036564", line_color="#033649")
-
-        p1.line([self.mean]*2, [0, hist.max()*1.05], line_color='red',
+            p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
+            p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
+                    line_dash='dashed')
+            p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
-        p1.line([self.mean-self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
-        p1.line([self.mean+self.std]*2, [0, hist.max()*1.1], line_color='red',
-                line_dash='dashed')
+    
+            if output == 'file' or not qu.in_notebook():
+                bi.output_file(self.name+' histogram.html', title=hist_title)
+            elif not qu.bokeh_ouput_notebook_called:
+                bi.output_notebook()
+                # This must be the first time calling output_notebook,
+                # keep track that it's been called:
+                qu.bokeh_ouput_notebook_called = True
 
-        if output == 'file' or not qu.in_notebook():
-            bi.output_file(self.name+' histogram.html', title=hist_title)
-        elif not qu.bokeh_ouput_notebook_called:
-            bi.output_notebook()
-            # This must be the first time calling output_notebook,
-            # keep track that it's been called:
-            qu.bokeh_ouput_notebook_called = True
-
-        bp.show(p1)
+            bp.show(p1)
         return p1
 
 ###############################################################################
@@ -548,11 +607,13 @@ class ExperimentalValue:
 ###############################################################################
 
     def __add__(self, other):
+        #TODO: is this the correct implementation??? or should ARRAy create an ndarray???
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.add, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.add, self, other[i])
+                #result.append(op.operation_wrap(op.add, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -563,9 +624,10 @@ class ExperimentalValue:
     def __radd__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.add, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.add, self, other[i])
+                #result.append(op.operation_wrap(op.add, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -576,9 +638,10 @@ class ExperimentalValue:
     def __mul__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.mul, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.mul, self, other[i])
+                #result.append(op.operation_wrap(op.mul, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -589,9 +652,10 @@ class ExperimentalValue:
     def __rmul__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.mul, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.mul, self, other[i])
+                #result.append(op.operation_wrap(op.mul, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -602,9 +666,10 @@ class ExperimentalValue:
     def __sub__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.sub, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.sub, self, other[i])
+                #result.append(op.operation_wrap(op.sub, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -615,9 +680,10 @@ class ExperimentalValue:
     def __rsub__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.sub, value, self))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.sub, self, other[i])
+                #result.append(op.operation_wrap(op.sub, value, self))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -628,9 +694,10 @@ class ExperimentalValue:
     def __truediv__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.div, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.div, self, other[i])
+                #result.append(op.operation_wrap(op.div, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -641,9 +708,10 @@ class ExperimentalValue:
     def __rtruediv__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.div, value, self))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.div, self, other[i])
+                #result.append(op.operation_wrap(op.div, value, self))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -654,9 +722,10 @@ class ExperimentalValue:
     def __pow__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.power, self, value))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.power, self, other[i])
+                #result.append(op.operation_wrap(op.power, self, value))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -667,9 +736,10 @@ class ExperimentalValue:
     def __rpow__(self, other):
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
-            result = []
-            for value in other:
-                result.append(op.operation_wrap(op.power, value, self))
+            result = Measurement_Array(len(other))
+            for i in range(result.size):
+                result[i]=op.operation_wrap(op.power, self, other[i])
+                #result.append(op.operation_wrap(op.power, value, self))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
                 type(other) in ExperimentalValue.CONSTANT:
@@ -828,8 +898,9 @@ class Function(ExperimentalValue):
         self.correlation = {self.info['ID']: 1}
         self.root = ()
         self.der = None
-        self.MC = None
-        self.MinMax = None
+        #These are set by super()
+        #self.MC = None
+        #self.MinMax = None
         self.error_flag = False
 
 
@@ -864,43 +935,6 @@ class Constant(ExperimentalValue):
         self.type = "Constant"
         self.covariance = {self.name: 0}
         self.root = ()
-
-
-#def MeasurementArray(data, error=None, name=None, units=None):
-#    ''' Creates an array of measurements from inputted mean and standard
-#    deviation arrays.
-#    '''
-#    if type(data) not in ExperimentalValue.ARRAY:
-#        print('Data array must be a list, tuple, or numpy array.')
-#        return None
-#
-#    if type(error) not in ExperimentalValue.ARRAY and\
-#            type(error) not in ExperimentalValue.CONSTANT and\
-#            error is not None:
-#        print('Error array must be a list, tuple, numpy array or constant.')
-#        return None
-#
-#    if error is None:
-#        error = len(data)*[0]
-#    elif len(error) is 1:
-#        error = len(data)*error
-#    elif type(error) in ExperimentalValue.CONSTANT:
-#        error = len(data)*[error]
-#
-#    if len(data) != len(error):
-#        print('''Data and error array must be of the same length, or the
-#        error array should be of length 1.''')
-#        return None
-#
-#    data_name = name
-#    data_units = units
-#
-#    measurement = []
-#    for i in range(len(data)):
-#        measurement.append(Measurement(data[i], error[i], name=data_name,
-#                                       units=data_units))
-#
-#    return np.array(measurement)
 
 
 class Measurement_Array(np.ndarray):
@@ -1020,7 +1054,7 @@ class Measurement_Array(np.ndarray):
                     unit_string = 'unitless'
         return unit_string
     
-    def set_errors(self, errors):
+    def set_errors(self, error):
         '''Set all of the errors on the data points - either to a constant value, or to an array of values'''
         n = self.size
         
@@ -1694,10 +1728,12 @@ def _def_print(self, method=None):
         return n % (mean)+" +/- "+n % (std)
 
     else:
-
+        if mean == float('inf') and std == float('inf'):
+            return "inf +/- inf"
+        
         if mean == float('inf'):
             return "inf"
-
+                        
         i = _return_exponent(std)
 
         if i < 0:
@@ -1705,8 +1741,13 @@ def _def_print(self, method=None):
             n = "%."+n+"f"
         else:
             n = '%.0f'
-        std = float(round(std, -i))
+            
         mean = float(round(mean, -i))
+        if std == float('inf'):
+            return  n % (mean)+" +/- inf"
+        
+        std = float(round(std, -i))
+        
         return n % (mean)+" +/- "+n % (std)
 
 

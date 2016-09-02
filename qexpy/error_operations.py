@@ -1,4 +1,3 @@
-#from numpy import int64, float64, ndarray, int32, float32
 import numpy as np
 import math as m
 import qexpy.utils as qu
@@ -316,16 +315,16 @@ def find_minmax(function, *args):
     
     if len(args) is 1:
         x = args[0]
-        vals = np.linspace(x.mean-x.std, x.mean + x.std, N)
+        #vals = np.linspace(x.mean-x.std, x.mean + x.std, N)
+        vals = np.linspace(x.MinMax[0]-x.MinMax[1], x.MinMax[0] + x.MinMax[1], N)
         results = function(vals)
             
-    elif len(args) is 2:
+    elif len(args) is 2:     
         a = args[0]
         b = args[1]
-        
         results = np.ndarray(shape=(N,N))
-        a_vals = np.linspace(a.mean-a.std, a.mean + a.std, N)
-        b_vals = np.linspace(b.mean-b.std, b.mean + b.std, N)
+        a_vals = np.linspace(a.MinMax[0]-a.MinMax[1], a.MinMax[0] + a.MinMax[1], N)
+        b_vals = np.linspace(b.MinMax[0]-b.MinMax[1], b.MinMax[0] + b.MinMax[1], N)
         
         for i in range(N):
             for j in range(N):
@@ -376,7 +375,8 @@ def monte_carlo(func, *args):
             value[i] = args[i].mean
             args[i].MC_list = value[i]
         else:
-            value[i] = np.random.normal(args[i].mean, args[i].std, n)
+            #value[i] = np.random.normal(args[i].mean, args[i].std, n)
+            value[i] = np.random.normal(args[i].MC[0], args[i].MC[1], n)
             args[i].MC_list = value[i]
 
     if len(args) == 2:
@@ -422,21 +422,25 @@ def operation_wrap(operation, *args, func_flag=False):
     result.MinMax = find_minmax(operation, *args)
     result.MC, result.MC_list = monte_carlo(operation, *args)
 
+    
+    #TODO: This is wrong: should not keep changing the mean and std
+    # the error method should only change this on a print!!!
+    
     # Derivative Method
-    if e.ExperimentalValue.error_method == "Derivative":
-        pass
+    #if e.ExperimentalValue.error_method == "Derivative":
+    #    pass
 
     # By Min-Max method
-    elif e.ExperimentalValue.error_method == "Min Max":
-        (mean, std, ) = result.MinMax
+    #elif e.ExperimentalValue.error_method == "Min Max":
+    #    (mean, std, ) = result.MinMax
 
     # Monte Carlo Method
-    elif e.ExperimentalValue.error_method == 'Monte Carlo':
-        (mean, std, ) = result.MC
+    #elif e.ExperimentalValue.error_method == 'Monte Carlo':
+    #    (mean, std, ) = result.MC
 
-    else:
-        print('''Error method not properly set, please set to derivatie, Monte
-        Carlo, or Min-Max. Derivative method used by default.''')
+    #else:
+    #    print('''Error method not properly set, please set to derivatie, Monte
+    #    Carlo, or Min-Max. Derivative method used by default.''')
 
     if func_flag is False and args[0].info["Data"] is not None\
             and args[1].info['Data'] is not None\
