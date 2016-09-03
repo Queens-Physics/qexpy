@@ -34,7 +34,7 @@ def bk_add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, co
         return None 
     
     #Draw points:    
-    figure.circle(_xdata, _ydata, color=color, size=2, legend=data_name)
+    figure.circle(_xdata, _ydata, color=color, size=4, legend=data_name)
 
     if isinstance(_xerr,np.ndarray) or isinstance(_yerr,np.ndarray):
         #Add error bars

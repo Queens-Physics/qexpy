@@ -20,7 +20,8 @@ ARRAY = qu.array_types
 
 
 
-def MakePlot(x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None, xname=None, xunits=None, yname=None, yunits=None):
+def MakePlot(xdata=None, ydata=None, xerr=None, yerr=None, data_name=None,
+             dataset=None, xname=None, xunits=None, yname=None, yunits=None):
     '''Use this function to create a plot object, by providing either arrays
     corresponding to the x and y data, Measurement_Arrays for x and y, or
     an XYDataset. If providing a dataset, it can be specified as either the 
@@ -28,23 +29,23 @@ def MakePlot(x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None,
    
     '''
     
-    if x is None and y is None and dataset is None:
+    if xdata is None and ydata is None and dataset is None:
         return Plot(None)
     
-    elif x is not None and y is None:
+    elif xdata is not None and ydata is None:
         #assume that x is a dataset:
-        if isinstance(x, qf.XYDataSet):
+        if isinstance(xdata, qf.XYDataSet):
             if xname is not None and isinstance(xname, str):
-                x.xname = xname
+                xdata.xname = xname
             if yname is not None and isinstance(yname, str):
-                x.yname = yname           
+                xdata.yname = yname           
             if xunits is not None and isinstance(xunits, str):
-                x.xunits = xunits
+                xdata.xunits = xunits
             if yunits is not None and isinstance(yunits, str):
-                x.yunits = yunits 
+                xdata.yunits = yunits 
             if data_name is not None and isinstance(data_name, str):
-                x.name = data_name
-            return Plot(x)
+                xdata.name = data_name
+            return Plot(xdata)
         else:
             print("Must specify x AND y or dataset, returning empty plot")
             return Plot(None)
@@ -62,8 +63,8 @@ def MakePlot(x=None, y=None, xerr=None, yerr=None, data_name=None, dataset=None,
             dataset.name = data_name
         return Plot(dataset)
   
-    elif (x is not None and y is not None):
-        ds = qf.XYDataSet(x, y, xerr=xerr, yerr=yerr, data_name=data_name,
+    elif (xdata is not None and ydata is not None):
+        ds = qf.XYDataSet(xdata, ydata, xerr=xerr, yerr=yerr, data_name=data_name,
                           xname=xname, xunits=xunits, yname=yname, yunits=yunits)
         return Plot(dataset = ds)
     
@@ -182,6 +183,32 @@ class Plot:
             self.color_count = 1
         return self.color_palette[self.color_count-1]
     
+    def check_datasets_color_array(self):
+        '''Make sure that color array is the same length as dataset array'''
+        if len(self.datasets) == len(self.datasets_colors):
+            return
+        elif len(self.datasets) > len(self.datasets_colors):
+            for i in range(len(self.datasets_colors), len(self.datasets)):
+                self.datasets_colors.append(self._get_color_from_palette())
+        elif len(self.datasets_colors) > len(self.datasets):
+            while len(self.datasets_colors) != len(self.datasets):
+                self.datasets_colors.pop()
+        else: pass
+        
+    def check_user_functions_color_array(self):
+        '''Make sure that color array is the same length as dataset array'''
+        if len(self.user_functions) == len(self.user_functions_colors):
+            return
+        elif len(self.user_functions) > len(self.user_functions_colors):
+            for i in range(len(self.user_functions_colors), len(self.user_functions)):
+                self.user_functions_colors.append(self._get_color_from_palette())
+        elif len(self.user_functions_colors) > len(self.user_functions):
+            while len(self.user_functions_colors) != len(self.user_functions):
+                self.user_functions_colors.pop()
+        else: pass               
+                
+            
+    
     def set_range_from_dataset(self, dataset):
         '''Use a dataset to set the range for the figure'''
         self.x_range = dataset.get_x_range(self.x_range_margin)
@@ -207,6 +234,15 @@ class Plot:
         else:
             print("Datasets have not been fit")
             
+    def get_dataset(self, index=-1):
+        if len(self.datasets) > 0:
+            if index < len(self.datasets) -1:
+                return self.datasets[index]
+            else:
+                return None
+        else:
+            return None
+        
 ###############################################################################
 # User Methods for adding to Plot Objects
 ###############################################################################
@@ -267,7 +303,7 @@ class Plot:
         self.datasets.append(dataset)
         
         if len(self.datasets) < 2:    
-            self.initialize_from_dataset(dataset)
+            self.initialize_from_dataset(self.datasets[0])
             
         if color is None:
             self.datasets_colors.append(self._get_color_from_palette())
@@ -404,6 +440,7 @@ class Plot:
     
         #Plot the data sets
         legend_offset = 0
+        self.check_datasets_color_array()
         for dataset, color in zip(self.datasets, self.datasets_colors):           
             self.mpl_plot_dataset(dataset, color, show_fit_function=True,
                                   show_residuals=self.show_residuals)
@@ -417,6 +454,7 @@ class Plot:
         #The range over which to plot the functions:
         xvals = [self.x_range[0]+self.x_range_margin, 
                  self.x_range[1]-self.x_range_margin]
+        self.check_user_functions_color_array()
         for func, pars, fname, color in zip(self.user_functions,
                                             self.user_functions_pars, 
                                             self.user_functions_names,
@@ -740,6 +778,7 @@ class Plot:
                               
         #plot the datasets and their latest fit
         legend_offset=0
+        self.check_datasets_color_array()
         for dataset, color in zip(self.datasets, self.datasets_colors):
             self.bk_plot_dataset(dataset, residual=False, color=color, show_fit_function=True)
             if dataset.nfits>0:      
@@ -754,7 +793,7 @@ class Plot:
         #The range over which to plot the functions:
         xvals = [self.x_range[0]+self.x_range_margin, 
                  self.x_range[1]-self.x_range_margin]
-   
+        self.check_user_functions_color_array()
         for func, pars, fname, color in zip(self.user_functions,
                                             self.user_functions_pars, 
                                             self.user_functions_names,

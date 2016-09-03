@@ -119,8 +119,7 @@ class XYFitter:
             
         #if the x errors are not zero, convert them to equivalent errors in y
         #TODO: check the math on this...
-        #TODO: catch curve_fit run time errors
-
+    
         try:
             self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
                                                     sigma=yerr, p0=self.parguess)

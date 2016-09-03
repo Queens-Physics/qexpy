@@ -62,7 +62,7 @@ class ExperimentalValue:
             raise TypeError('''Input must be either a single array of values,
                   or the central value and uncertainty in one measurement''')
        
-       
+        self.der = [self.mean, self.std]
         self.MinMax = [self.mean, self.std]
         self.MC = [self.mean, self.std]
         
@@ -189,7 +189,13 @@ class ExperimentalValue:
         return self.std
     
     def get_uncertainty(self):
-        return self.std
+        return self.get_error()
+    
+    def get_relative_error(self):
+        return self.std/self.mean if self.mean !=0 else 0.
+    
+    def get_relative_uncertainty(self):
+        return self.get_relative_error()
     
     def get_error_on_mean(self):
         '''Returns the error on the mean if the Measurement is from a set 
@@ -1054,6 +1060,22 @@ class Measurement_Array(np.ndarray):
                     unit_string = 'unitless'
         return unit_string
     
+    def set_units(self, units=None):
+        if units is not None:
+            for mes in self:
+                if type(units) is str:
+                    mes.units[units] = 1
+                else:
+                    for i in range(len(units)//2):
+                        mes.units[units[2*i]] = units[2*i+1]
+             
+            if type(units) is str:
+                self.units[units] = 1
+            else:
+                for i in range(len(units)//2):
+                    self.units[units[2*i]] = units[2*i+1]
+        
+    
     def set_errors(self, error):
         '''Set all of the errors on the data points - either to a constant value, or to an array of values'''
         n = self.size
@@ -1088,8 +1110,15 @@ def MeasurementArray(data, error=None, name=None, units=None):
     user_name= True if name != None else False
         
     if error is None: #MA(data)
-        if isinstance(data, Measurement_Array):
+        if isinstance(data, Measurement_Array):# MA(MA)
+            #TODO should this be a copy?? This will just 
+            #make array be a reference to data...
             array = data
+            array.set_units(units)
+            #allow the name to be updated:
+            if name is not None:
+                array.name = name  
+                
         elif isinstance(data, qu.array_types): #MA([...])
             n = len(data)       
             array.resize(n)
@@ -1120,6 +1149,11 @@ def MeasurementArray(data, error=None, name=None, units=None):
         if isinstance(data, Measurement_Array):
             array = data
             array.set_errors(error)
+            array.set_units(units)
+            #allow the name to be updated:
+            if name is not None:
+                array.name = name
+
             
         elif isinstance(data, qu.array_types): #MA([], error = ...)
             n = len(data)       
