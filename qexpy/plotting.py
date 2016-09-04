@@ -144,6 +144,7 @@ class Plot:
         self.yname = "y"
         self.x_range = [0,1]
         self.y_range = [0,1]
+        self.yres_range = [0,0.1]
         self.title = "y as a function of x"
         
         if dataset != None:
@@ -205,14 +206,14 @@ class Plot:
         elif len(self.user_functions_colors) > len(self.user_functions):
             while len(self.user_functions_colors) != len(self.user_functions):
                 self.user_functions_colors.pop()
-        else: pass               
-                
-            
+        else: pass                    
     
     def set_range_from_dataset(self, dataset):
         '''Use a dataset to set the range for the figure'''
-        self.x_range = dataset.get_x_range(self.x_range_margin)
-        self.y_range = dataset.get_y_range(self.y_range_margin)
+        xr = dataset.get_x_range(self.x_range_margin)
+        self.x_range = [min(xr[0], self.x_range[0]), max(xr[1], self.x_range[1])]
+        yr = dataset.get_y_range(self.y_range_margin)
+        self.y_range = [min(yr[0], self.y_range[0]), max(yr[1], self.y_range[1])]
         self.set_yres_range_from_fits()
         
     def set_yres_range_from_fits(self):
@@ -220,7 +221,8 @@ class Plot:
         have a fit'''      
         for dataset in self.datasets:
             if dataset.nfits > 0:
-                self.yres_range = dataset.get_yres_range(self.y_range_margin)
+                yr = dataset.get_yres_range(self.y_range_margin)
+                self.yres_range = [min(yr[0], self.yres_range[0]), max(yr[1], self.yres_range[1])]               
         
     def fit(self, model=None, parguess=None, fit_range=None, print_results=True, datasetindex=-1):
         '''Fit a dataset to model - calls XYDataset.fit and returns a 
@@ -313,19 +315,20 @@ class Plot:
             self.datasets_colors.append(color)
         if name != None:
             self.datasets[-1].name=name
-            
-        x_range = dataset.get_x_range(self.x_range_margin)
-        y_range = dataset.get_y_range(self.y_range_margin)    
+          
+        self.set_range_from_dataset(dataset)
+        #x_range = dataset.get_x_range(self.x_range_margin)
+        #y_range = dataset.get_y_range(self.y_range_margin)    
         
-        if x_range[0] < self.x_range[0]:
-            self.x_range[0]=x_range[0]
-        if x_range[1] > self.x_range[1]:
-            self.x_range[1]=x_range[1]
+        #if x_range[0] < self.x_range[0]:
+        #    self.x_range[0]=x_range[0]
+        #if x_range[1] > self.x_range[1]:
+        #    self.x_range[1]=x_range[1]
             
-        if y_range[0] < self.y_range[0]:
-            self.y_range[0]=y_range[0]
-        if y_range[1] > self.y_range[1]:
-            self.y_range[1]=y_range[1] 
+        #if y_range[0] < self.y_range[0]:
+        #    self.y_range[0]=y_range[0]
+        #if y_range[1] > self.y_range[1]:
+        #    self.y_range[1]=y_range[1] 
             
         self.set_yres_range_from_fits()
 
@@ -426,6 +429,7 @@ class Plot:
         the figure, and then draw all of the data sets, their residuals, their fits,
         and any user-supplied functions'''
         
+        #TODO: if refresh is False, maybe should not even call initialize() ?
         self.initialize_mpl_figure(refresh)
       
         newy=self.y_range[1]
@@ -438,7 +442,6 @@ class Plot:
         plt.axis([self.x_range[0], self.x_range[1], 
                      self.y_range[0], newy])
   
-    
     
         #Plot the data sets
         legend_offset = 0
@@ -474,6 +477,7 @@ class Plot:
         
         if not refresh and hasattr(self, 'mplfigure'):
             if self.show_residuals and not hasattr(self,'mpl_gs'):
+                print("refreshing figure to add residuals")
                 pass
             else:
                 return
