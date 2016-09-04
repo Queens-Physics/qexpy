@@ -250,8 +250,10 @@ class Plot:
     def add_residuals(self):
         '''Add a subfigure with residuals to the main figure when plotting'''
         self.set_yres_range_from_fits()
-        if self.datasets[-1].nfits>0:
-            self.show_residuals = True
+        for ds in self.datasets:
+            if ds.nfits > 0:
+                self.show_residuals = True
+                return
 
     
     def add_function(self, function, pars = None, name=None, color=None):
@@ -683,9 +685,24 @@ class Plot:
                             interpolate=True)
             
             
-            start_x = self.dimensions_px[0] - 100 + self.fit_results_x_offset
+            start_x = self.dimensions_px[0] - 150 + self.fit_results_x_offset
             start_y = self.dimensions_px[1] - 100 + self.fit_results_y_offset
-            textfit=str(omes)+"\n"+str(smes)
+           
+            #calculate chi2
+            xdata = dataset.xdata
+            ydata = dataset.ydata
+            yerr = dataset.yerr
+            ymodel = offset+slope*xdata
+            yres = ydata-ymodel
+            chi2 = 0
+            ndof = 0
+            for i in range(xdata.size):
+                if yerr[i] != 0:
+                    chi2 += (yres[i]/yerr[i])**2
+                    ndof += 1
+            ndof -= 3 #2 parameters, -1
+            
+            textfit=str(omes)+"\n"+str(smes)+"\n chi2/ndof: {:.3f}/{}".format(chi2, ndof)
             
          
             plt.annotate(textfit,xy=(start_x, start_y), fontsize=11, horizontalalignment='right',
@@ -701,6 +718,7 @@ class Plot:
             plt.legend(loc=self.mpl_legend_location)
             plt.grid()
             plt.show()
+            
 
 ###Some wrapped matplotlib functions
     def mpl_plot(self, *args, **kwargs):
@@ -888,7 +906,7 @@ class Plot:
         if dataset.nfits > 0 and show_fit_function:
             self.bk_plot_function(function=dataset.fit_function[-1], xdata=dataset.xdata,
                                pars=dataset.fit_pars[-1], n=50,
-                               legend_name=dataset.fit_function_name[-1],
+                               legend_name=dataset.name+"_"+dataset.fit_function_name[-1],
                                color=color, errorbandfactor=self.errorband_sigma)
     
     def bk_add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
