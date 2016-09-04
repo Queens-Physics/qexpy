@@ -683,9 +683,24 @@ class Plot:
                             interpolate=True)
             
             
-            start_x = self.dimensions_px[0] - 100 + self.fit_results_x_offset
+            start_x = self.dimensions_px[0] - 150 + self.fit_results_x_offset
             start_y = self.dimensions_px[1] - 100 + self.fit_results_y_offset
-            textfit=str(omes)+"\n"+str(smes)
+           
+            #calculate chi2
+            xdata = dataset.xdata
+            ydata = dataset.ydata
+            yerr = dataset.yerr
+            ymodel = offset+slope*xdata
+            yres = ydata-ymodel
+            chi2 = 0
+            ndof = 0
+            for i in range(xdata.size):
+                if yerr[i] != 0:
+                    chi2 += (yres[i]/yerr[i])**2
+                    ndof += 1
+            ndof -= 3 #2 parameters, -1
+            
+            textfit=str(omes)+"\n"+str(smes)+"\n chi2/ndof: {:.3f}/{}".format(chi2, ndof)
             
          
             plt.annotate(textfit,xy=(start_x, start_y), fontsize=11, horizontalalignment='right',
@@ -701,6 +716,7 @@ class Plot:
             plt.legend(loc=self.mpl_legend_location)
             plt.grid()
             plt.show()
+            
 
 ###Some wrapped matplotlib functions
     def mpl_plot(self, *args, **kwargs):
