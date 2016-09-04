@@ -250,8 +250,10 @@ class Plot:
     def add_residuals(self):
         '''Add a subfigure with residuals to the main figure when plotting'''
         self.set_yres_range_from_fits()
-        if self.datasets[-1].nfits>0:
-            self.show_residuals = True
+        for ds in self.datasets:
+            if ds.nfits > 0:
+                self.show_residuals = True
+                return
 
     
     def add_function(self, function, pars = None, name=None, color=None):
@@ -904,7 +906,7 @@ class Plot:
         if dataset.nfits > 0 and show_fit_function:
             self.bk_plot_function(function=dataset.fit_function[-1], xdata=dataset.xdata,
                                pars=dataset.fit_pars[-1], n=50,
-                               legend_name=dataset.fit_function_name[-1],
+                               legend_name=dataset.name+"_"+dataset.fit_function_name[-1],
                                color=color, errorbandfactor=self.errorband_sigma)
     
     def bk_add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
