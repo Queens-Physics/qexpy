@@ -181,7 +181,7 @@ class XYFitter:
                 elif i is 1:
                     name = 'decay-constant'
             else:
-                name = 'par_%d' % (i)
+                name = 'par%d' % (i)
             name = parnames +"_"+name
             self.fit_parameters[i]= qe.Measurement(self.fit_pars[i], self.fit_pars_err[i], name=name)
                  
