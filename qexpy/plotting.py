@@ -436,30 +436,18 @@ class Plot:
        
         if not hasattr(self, 'mplfigure_main_ax') or refresh == True:
             self.initialize_mpl_figure()
-                 
-        if self.show_fit_results:
-            newy=self.y_range[1]
-            pixelcount = 0
-            for dataset in self.datasets:
-                if dataset.nfits > 0:
-                    pixelcount += dataset.fit_npars[-1] * 25
-            newy += pixelcount * self.y_range[1]/self.dimensions_px[1]
-            self.mplfigure_main_ax.axis([self.x_range[0], self.x_range[1], 
-                     self.y_range[0], newy])
-  
-    
+                   
         #Plot the data sets
-        legend_offset = 0
         self.check_datasets_color_array()
         for dataset, color in zip(self.datasets, self.datasets_colors):           
             self.mpl_plot_dataset(dataset, color, show_fit_function=True,
                                   show_residuals=self.show_residuals)
             
-            if self.show_fit_results and dataset.nfits > 0:
-                    legend_offset = self.mpl_plot_fit_results_text_box(dataset, legend_offset)
-                    legend_offset += 0
-                    
-         
+        #Add a box with results from the fits                        
+        if self.show_fit_results:
+            self.mpl_show_fit_results_box(self.datasets)
+            
+            
         #Now add any user defined functions:
         #The range over which to plot the functions:
         xvals = [self.x_range[0]+self.x_range_margin, 
@@ -507,37 +495,49 @@ class Plot:
         self.mplfigure_main_ax.set_title(self.labels['title'])
         self.mplfigure_main_ax.grid()        
                        
-    def mpl_plot_fit_results_text_box(self, dataset, yoffset=0):
-        '''Add a text box with the fit parameters from the last fit 
-        of the dataset'''
+    def mpl_show_fit_results_box(self, datasets=None, add_space = True):
+        '''Show a box with the fit results for the given list of datasets. If 
+        datasets==None, it will use self.datasets'''
         
         if not hasattr(self, 'mplfigure_main_ax'):
             self.initialize_mpl_figure()
+        
+        if datasets == None:
+            datasets = self.dataset
             
-        offset = yoffset    
+        #Add some space to plot for the fit results:
+        if add_space:
+            newy = self.y_range[1]
+            pix2y = newy / self.mplfigure_main_ax.patch.get_window_extent().height
+            #TODO textheight should depend on font size
+            textheight = 25
+            pixelcount = 0
+            for dataset in datasets:
+                if dataset.nfits > 0:
+                    pixelcount += dataset.fit_npars[-1] * textheight
+            newy += pixelcount * pix2y
+            self.mplfigure_main_ax.axis([self.x_range[0], self.x_range[1], 
+                                        self.y_range[0], newy])
+            
+            
+        textfit = ""
+        for ds in datasets:
+            if ds.nfits == 0:
+                continue
+            for i in range(ds.fit_npars[-1]):
+                short_name =  ds.fit_pars[-1][i].__str__().split('_')
+                textfit += short_name[0]+"_"+short_name[-1]+"\n"
+            textfit += "\n"
+            
+        start_x = 0.99 + self.fit_results_x_offset
+        start_y = 0.99 + self.fit_results_y_offset
         
-        
-        #width = self.mplfigure_main_ax.get_window_extent().width
-        #height = self.mplfigure_main_ax.get_window_extent().height
-        #start_x = width - 12 + self.fit_results_x_offset
-        #start_y = height - 8 - offset + self.fit_results_y_offset
-        
-        start_x = self.dimensions_px[0] - 12 + self.fit_results_x_offset
-        start_y = self.dimensions_px[1] - 8 - offset + self.fit_results_y_offset
- 
-        textfit=""
-        for i in range(dataset.fit_npars[-1]):
-            short_name =  dataset.fit_pars[-1][i].__str__().split('_')
-            textfit += short_name[0]+"_"+short_name[-1]+"\n"
-         
-        self.mplfigure_main_ax.annotate(textfit,xy=(start_x, start_y), fontsize=11,
+        an = self.mplfigure_main_ax.annotate(textfit,xy=(start_x, start_y), fontsize=11,
                                         horizontalalignment='right',verticalalignment='top',
-                                        xycoords = 'figure pixels',
+                                        xycoords = 'axes fraction',
                                         bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
-
-        offset = dataset.fit_npars[-1] * 20
-        return offset
-           
+        return an
+                    
         
     def mpl_plot_dataset(self, dataset, color='black', show_fit_function=True, show_residuals=True):
         '''Add a dataset, its fit function and its residuals to the main figure.
@@ -573,10 +573,10 @@ class Plot:
                                    legend_name=dataset.fit_function_name[-1],
                                    color=color, errorbandfactor=self.errorband_sigma)
             
-        if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
-            self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[-1].get_means(),
-                                           xerr=dataset.xerr,yerr=dataset.yerr,
-                                           fmt='o',color=color,markeredgecolor = 'none')
+            if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
+                self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[-1].get_means(),
+                                               xerr=dataset.xerr,yerr=dataset.yerr,
+                                               fmt='o',color=color,markeredgecolor = 'none')
             
                     
      
@@ -707,8 +707,8 @@ class Plot:
                                                 interpolate=True)
             
             
-            start_x = self.dimensions_px[0] - 150 + self.fit_results_x_offset
-            start_y = self.dimensions_px[1] - 100 + self.fit_results_y_offset
+            start_x = 0.99 + self.fit_results_x_offset
+            start_y = 0.99 + self.fit_results_y_offset
            
             #calculate chi2
             xdata = dataset.xdata
@@ -726,7 +726,7 @@ class Plot:
             
             textfit=str(omes)+"\n"+str(smes)+"\n chi2/ndof: {:.3f}/{}".format(chi2, ndof)
                
-            ax.annotate(textfit,xy=(0.98,0.98), fontsize=11, horizontalalignment='right',
+            ax.annotate(textfit,xy=(start_x, start_y), fontsize=11, horizontalalignment='right',
                         verticalalignment='top', xycoords = 'axes fraction',
                         bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
   

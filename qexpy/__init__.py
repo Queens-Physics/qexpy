@@ -17,7 +17,7 @@ from qexpy.error import Measurement, MeasurementArray, Measurement_Array,\
 from qexpy.plotting import Plot, MakePlot
 from qexpy.fitting import XYDataSet, XYFitter, DataSetFromFile
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 # The following will initialize bokeh if running in a notebook,
 # and hacks the _nb_loaded variable which is required for all plots
