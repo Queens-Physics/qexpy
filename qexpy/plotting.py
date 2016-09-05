@@ -206,8 +206,12 @@ class Plot:
         elif len(self.user_functions_colors) > len(self.user_functions):
             while len(self.user_functions_colors) != len(self.user_functions):
                 self.user_functions_colors.pop()
-        else: pass                    
+        else: pass                     
     
+    def set_range_from_datasets(self):
+        for ds in self.datasets:
+            self.set_range_from_dataset(ds)
+        
     def set_range_from_dataset(self, dataset):
         '''Use a dataset to set the range for the figure'''
         xr = dataset.get_x_range(self.x_range_margin)
@@ -429,17 +433,18 @@ class Plot:
         the figure, and then draw all of the data sets, their residuals, their fits,
         and any user-supplied functions'''
         
-        #TODO: if refresh is False, maybe should not even call initialize() ?
-        self.initialize_mpl_figure(refresh)
-      
-        newy=self.y_range[1]
+       
+        if not hasattr(self, 'mplfigure_main_ax') or refresh == True:
+            self.initialize_mpl_figure()
+                 
         if self.show_fit_results:
+            newy=self.y_range[1]
             pixelcount = 0
             for dataset in self.datasets:
                 if dataset.nfits > 0:
                     pixelcount += dataset.fit_npars[-1] * 25
             newy += pixelcount * self.y_range[1]/self.dimensions_px[1]
-        plt.axis([self.x_range[0], self.x_range[1], 
+            self.mplfigure_main_ax.axis([self.x_range[0], self.x_range[1], 
                      self.y_range[0], newy])
   
     
@@ -452,7 +457,7 @@ class Plot:
             
             if self.show_fit_results and dataset.nfits > 0:
                     legend_offset = self.mpl_plot_fit_results_text_box(dataset, legend_offset)
-                    legend_offset += 5
+                    legend_offset += 0
                     
          
         #Now add any user defined functions:
@@ -470,64 +475,66 @@ class Plot:
                                errorbandfactor=self.errorband_sigma)
             
         if self.mpl_show_legend:
-            plt.legend(loc=self.mpl_legend_location,fontsize=11)
-            
-    def initialize_mpl_figure(self, refresh = True):
+            self.mplfigure_main_ax.legend(loc=self.mpl_legend_location,fontsize=11)
+
+    def initialize_mpl_figure(self):
         '''Build a matplotlib figure with the desired size to draw on'''
+                
+        #Create the main figure object
+        self.mplfigure = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
+                                             self.dimensions_px[1]/self.screen_dpi))
         
-        if not refresh and hasattr(self, 'mplfigure'):
-            if self.show_residuals and not hasattr(self,'mpl_gs'):
-                print("refreshing figure to add residuals")
-                pass
-            else:
-                return
-         
-        if not self.show_residuals:            
-            self.mplfigure = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
-                                                 self.dimensions_px[1]/self.screen_dpi))
+        #If we're showing residuals, create the axes differently,
+        #create axes for the residuals, and label them
+        if self.show_residuals:
+            self.mplfigure_main_ax = self.mplfigure.add_axes([0,0.35,1.,0.65])
+            self.mplfigure_res_ax = self.mplfigure.add_axes([0,0,1.0,0.3],
+                                                            sharex=self.mplfigure_main_ax)    
+            self.set_yres_range_from_fits()
+            self.mplfigure_res_ax.set_ylim([self.yres_range[0], self.yres_range[1]])
+            self.mplfigure_res_ax.set_xlabel(self.labels['xtitle'])
+            self.mplfigure_res_ax.set_ylabel("Residuals")
+            self.mplfigure_res_ax.grid()
             
         else:
-            self.mplfigure = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
-                                                1.33*self.dimensions_px[1]/self.screen_dpi)) 
-            self.mpl_gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
-            
-            plt.subplot(self.mpl_gs[1])
-            plt.axis([self.x_range[0], self.x_range[1], 
-                     self.yres_range[0], self.yres_range[1]])
-            plt.xlabel(self.labels['xtitle'])
-            plt.ylabel("Residuals")
-            plt.grid()
-            #switch to main figure
-            plt.subplot(self.mpl_gs[0])          
-
+            self.mplfigure_main_ax = self.mplfigure.add_axes([0,0,1.,1.])
         
-        plt.axis([self.x_range[0], self.x_range[1], 
+        #Regardless of residuals, create the main axes
+        self.mplfigure_main_ax.axis([self.x_range[0], self.x_range[1], 
                  self.y_range[0], self.y_range[1]])
-        plt.xlabel(self.labels['xtitle'])
-        plt.ylabel(self.labels['ytitle'])
-        plt.title(self.labels['title'])
-        plt.grid()
-           
+        self.mplfigure_main_ax.set_xlabel(self.labels['xtitle'])
+        self.mplfigure_main_ax.set_ylabel(self.labels['ytitle'])
+        self.mplfigure_main_ax.set_title(self.labels['title'])
+        self.mplfigure_main_ax.grid()        
+                       
     def mpl_plot_fit_results_text_box(self, dataset, yoffset=0):
         '''Add a text box with the fit parameters from the last fit 
         of the dataset'''
         
-        if not hasattr(self, 'mplfigure'):
+        if not hasattr(self, 'mplfigure_main_ax'):
             self.initialize_mpl_figure()
             
         offset = yoffset    
         
-        start_x = self.dimensions_px[0] - 100 + self.fit_results_x_offset
-        start_y = self.dimensions_px[1] - offset + self.fit_results_y_offset
         
+        #width = self.mplfigure_main_ax.get_window_extent().width
+        #height = self.mplfigure_main_ax.get_window_extent().height
+        #start_x = width - 12 + self.fit_results_x_offset
+        #start_y = height - 8 - offset + self.fit_results_y_offset
+        
+        start_x = self.dimensions_px[0] - 12 + self.fit_results_x_offset
+        start_y = self.dimensions_px[1] - 8 - offset + self.fit_results_y_offset
+ 
         textfit=""
         for i in range(dataset.fit_npars[-1]):
             short_name =  dataset.fit_pars[-1][i].__str__().split('_')
             textfit += short_name[0]+"_"+short_name[-1]+"\n"
          
-        plt.annotate(textfit,xy=(start_x, start_y), fontsize=11, horizontalalignment='right',
-                 verticalalignment='bottom', xycoords = 'figure points',
-                 bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
+        self.mplfigure_main_ax.annotate(textfit,xy=(start_x, start_y), fontsize=11,
+                                        horizontalalignment='right',verticalalignment='top',
+                                        xycoords = 'figure pixels',
+                                        bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
+
         offset = dataset.fit_npars[-1] * 20
         return offset
            
@@ -538,41 +545,39 @@ class Plot:
         add the function.
         '''
         
-        if not hasattr(self, 'mplfigure'):       
+        if not hasattr(self, 'mplfigure_main_ax'):       
             if show_residuals:
                 if dataset.nfits > 0:
                     self.show_residuals = True
             self.initialize_mpl_figure()
         
-        if hasattr(self, 'mpl_gs'):
-            plt.subplot(self.mpl_gs[0])
             
         if dataset.is_histogram:
             if hasattr(dataset, 'hist_data'):
-                plt.hist(dataset.hist_data, bins=dataset.hist_bins,
+                self.mplfigure_main_ax.hist(dataset.hist_data, bins=dataset.hist_bins,
                     label=dataset.name, color=color, alpha=0.7)
             else:
-                plt.bar(dataset.xdata, dataset.ydata, width = dataset.xdata[-1]-dataset.xdata[-2],
+                self.mplfigure_main_ax.bar(dataset.xdata, dataset.ydata, width = dataset.xdata[-1]-dataset.xdata[-2],
                       label=dataset.name, color=color, alpha=0.7)
             
         else:   
-            plt.errorbar(dataset.xdata, dataset.ydata,
-                    xerr=dataset.xerr,yerr=dataset.yerr,
-                    fmt='o',color=color,markeredgecolor = 'none',
-                    label=dataset.name)
+            self.mplfigure_main_ax.errorbar(dataset.xdata, dataset.ydata,
+                                            xerr=dataset.xerr,yerr=dataset.yerr,
+                                            fmt='o',color=color,markeredgecolor = 'none',
+                                             label=dataset.name)
             
         if dataset.nfits > 0 and show_fit_function:   
-            self.mpl_plot_function(function=dataset.fit_function[-1], xdata=dataset.xdata,
+            self.mpl_plot_function(function=dataset.fit_function[-1],
+                                   xdata=dataset.xdata,
                                    pars=dataset.fit_pars[-1], n=50,
                                    legend_name=dataset.fit_function_name[-1],
                                    color=color, errorbandfactor=self.errorband_sigma)
             
-        if self.show_residuals and hasattr(self, 'mpl_gs') and show_residuals:
-            plt.subplot(self.mpl_gs[1])
-            plt.errorbar(dataset.xdata, dataset.fit_yres[-1].get_means(),
-                        xerr=dataset.xerr,yerr=dataset.yerr,
-                        fmt='o',color=color,markeredgecolor = 'none')
-            plt.subplot(self.mpl_gs[0])
+        if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
+            self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[-1].get_means(),
+                                           xerr=dataset.xerr,yerr=dataset.yerr,
+                                           fmt='o',color=color,markeredgecolor = 'none')
+            
                     
      
     def mpl_plot_function(self, function, xdata, pars=None, n=100,
@@ -583,11 +588,9 @@ class Plot:
         The function can be either f(x) or f(x, *pars), in which case, if *pars is
         a Measurement_Array, then error bands will be drawn
         '''
-        if not hasattr(self, 'mplfigure'):
+        if not hasattr(self, 'mplfigure_main_ax'):
             self.initialize_mpl_figure()
-        
-        if hasattr(self, 'mpl_gs'):
-            plt.subplot(self.mpl_gs[0])
+      
         xvals = np.linspace(min(xdata), max(xdata), n)
         
         if pars is None:
@@ -605,14 +608,14 @@ class Plot:
             print("Error: unrecognized parameters for function")
             pass
         
-        plt.plot(xvals,fvals, color=color, label = legend_name)
+        self.mplfigure_main_ax.plot(xvals,fvals, color=color, label = legend_name)
         
         if isinstance(pars, qe.Measurement_Array):
             fmax = fvals + ferr
             fmin = fvals - ferr
-            plt.fill_between(xvals, fmin, fmax, facecolor=color,
-                            alpha=0.3, edgecolor = 'none',
-                            interpolate=True)
+            self.mplfigure_main_ax.fill_between(xvals, fmin, fmax, facecolor=color,
+                                                alpha=0.3, edgecolor = 'none',
+                                                interpolate=True)
         
     def interactive_linear_fit(self, error_range=5):
         '''Fits the last dataset to a linear function and displays the
@@ -633,13 +636,26 @@ class Plot:
         
         func = dataset.fit_function[-1]
         pars = dataset.fit_pars[-1]
-        fname = "linear"       
+        parmeans = pars.get_means()
+        fname = "linear"     
         
-        #Extend the x range to 0
+        #Reset the range
+        self.x_range = [0,1]
+        self.y_range = [0,1]
+        self.set_range_from_dataset(dataset)
+        
+        #Extend the x range to 0 if needed
         if self.x_range[0] > -0.5:
             self.x_range[0] = -0.5
-            self.y_range[0] = dataset.fit_function[-1](self.x_range[0], *pars.get_means())
-                
+            
+        #make sure the y range is large enough
+        xvals = np.array([self.x_range])
+        fvals = dataset.fit_function[-1](xvals, *parmeans)
+        fmaxvals = fvals+error_range*max(dataset.yerr)
+        fminvals = fvals-error_range*max(dataset.yerr)
+        self.y_range[0] = fminvals.min()
+        self.y_range[1] = fmaxvals.max()
+           
         off_min = pars[0].mean-error_range*pars[0].std
         off_max = pars[0].mean+error_range*pars[0].std
         off_step = (off_max-off_min)/50.
@@ -650,17 +666,19 @@ class Plot:
         
             
         @interact(offset=(off_min, off_max, off_step),
-                  offset_err = (0, error_range*pars[0].std, pars[0].std/50.),
+                  offset_err = (0, error_range*pars[0].std, error_range*pars[0].std/50.),
                   slope=(slope_min, slope_max, slope_step),
-                  slope_err = (0, error_range*pars[1].std, pars[1].std/50.),
+                  slope_err = (0, error_range*pars[1].std, error_range*pars[1].std/50.),
                   correlation = (-1,1,0.05)                 
                  )
         
         def update(offset=pars[0].mean, offset_err=pars[0].std, slope=pars[1].mean,
                    slope_err=pars[1].std, correlation=dataset.fit_pcorr[-1][0][1]):  
             
-            plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
-                               self.dimensions_px[1]/self.screen_dpi))
+            fig = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
+                                         self.dimensions_px[1]/self.screen_dpi))
+            
+            ax = fig.add_axes([0,0,1.,1.])
             
             xvals = np.linspace(self.x_range[0], self.x_range[1], 20)
             
@@ -678,15 +696,15 @@ class Plot:
             fmax = fvals + ferr
             fmin = fvals - ferr
             
-            plt.errorbar(dataset.xdata, dataset.ydata,
+            ax.errorbar(dataset.xdata, dataset.ydata,
                     xerr=dataset.xerr,yerr=dataset.yerr,
                     fmt='o',color=color,markeredgecolor = 'none',
                     label=dataset.name)
             
-            plt.plot(xvals,fvals, color=color, label ="linear fit")
-            plt.fill_between(xvals, fmin, fmax, facecolor=color,
-                            alpha=0.3, edgecolor = 'none',
-                            interpolate=True)
+            ax.plot(xvals,fvals, color=color, label ="linear fit")
+            ax.fill_between(xvals, fmin, fmax, facecolor=color,
+                                                alpha=0.3, edgecolor = 'none',
+                                                interpolate=True)
             
             
             start_x = self.dimensions_px[0] - 150 + self.fit_results_x_offset
@@ -707,20 +725,18 @@ class Plot:
             ndof -= 3 #2 parameters, -1
             
             textfit=str(omes)+"\n"+str(smes)+"\n chi2/ndof: {:.3f}/{}".format(chi2, ndof)
-            
-         
-            plt.annotate(textfit,xy=(start_x, start_y), fontsize=11, horizontalalignment='right',
-                 verticalalignment='bottom', xycoords = 'figure points',
-                 bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
-            
-     
-            plt.axis([self.x_range[0], self.x_range[1], 
-                 self.y_range[0], self.y_range[1]])
-            plt.xlabel(self.labels['xtitle'])
-            plt.ylabel(self.labels['ytitle'])
-            plt.title(self.labels['title'])
-            plt.legend(loc=self.mpl_legend_location)
-            plt.grid()
+               
+            ax.annotate(textfit,xy=(0.98,0.98), fontsize=11, horizontalalignment='right',
+                        verticalalignment='top', xycoords = 'axes fraction',
+                        bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
+  
+            ax.axis([self.x_range[0], self.x_range[1], 
+                                         self.y_range[0], self.y_range[1]])
+            ax.set_xlabel(self.labels['xtitle'])
+            ax.set_ylabel(self.labels['ytitle'])
+            ax.set_title(self.labels['title'])
+            ax.legend(loc=self.mpl_legend_location)
+            ax.grid()
             plt.show()
             
 
@@ -1005,9 +1021,9 @@ class Plot:
         
             
         @interact(offset=(off_min, off_max, off_step),
-                  offset_err = (0, 2.*off_std, off_std/50.),
+                  offset_err = (0, error_range*off_std, error_range*off_std/50.),
                   slope=(slope_min, slope_max, slope_step),
-                  slope_err = (0, 2.*slope_std, off_std/50.),
+                  slope_err = (0, error_range*slope_std, error_range*slope_std/50.),
                   correlation = (-1,1,0.05)                 
                  )
         def update(offset=off_mean, offset_err=off_std, slope=slope_mean, slope_err=slope_std, correlation=self.linear_fit_corr):
