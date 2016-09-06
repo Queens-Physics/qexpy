@@ -21,16 +21,19 @@ Highlights:
 Examples
 --------
 
+Up to date Jupyter notebooks highlighting the features of QExPy can be found on `Github 
+<https://github.com/Queens-Physics/qexpy/tree/master/examples/jupyter>`_. Some of the examples in this documentation may be out of date.
+
 We can create "Measurement" objects to represent quantities with uncertainties, and propagate the error in those quantities.
 
 .. nbinput:: ipython3
    :execution-count: 1
    
    #import the error propagation module
-   import qexpy.error as e
+   import qexpy as q
    #declare 2 Measurements, x and y
-   x = e.Measurement(10,1)
-   y = e.Measurement(5,3)
+   x = q.Measurement(10,1)
+   y = q.Measurement(5,3)
    #define a quantitiy that depends on x and y:
    z = (x+y)/(x-y)
    #print z, with the correct error
@@ -46,74 +49,43 @@ The example below shows a case of plotting data and fitting them to a straight l
 .. nbinput:: ipython3
    :execution-count: 1
 
-   import qexpy.error as e
-   import qexpy.plotting as p
+   import qexpy as q
 
-   # This cell will load the modules
+   # This cell loads the module
 	
 .. nbinput:: ipython3
    :execution-count: 2
 
-   # We can now enter the data gathered in the lab itself
+   # There are several ways to produce a Plot Object from a set of data.
+   # Here, we pass the data directly to the plot object:
+   
+   fig1 = q.MakePlot(xdata = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                     ydata = [0.9, 1.4, 2.5, 4.2, 5.7, 6., 7.3, 7.1, 8.9, 10.8],
+                     yerr = 0.5,
+                     xname = 'length', xunits='m',
+                     yname = 'force', yunits='N',
+                     data_name = 'mydata')
 
-   dl = e.Measurement([185e-6, 250e-6, 305e-6, 378e-6, 460e-6, 515e-6,
-	573e-6, 659e-6, 733e-6, 799e-6, 1199e-6, 860e-6, 933e-6, 993e-6,
-	1060e-6, 1125e-6], [5e-6], name='Lengthening', units='m')
-   # This data is the amount that the cable stretched for each applied mass
-   # As the error on each of these measurements is the same, we will use a 
-   # single value of error instead of another list containing the error for
-   # each point.
-
-   m50 = 0.05008
-   m1 = 0.10010
-   m2x = 0.20019
-   m2i = 0.20025
-   m5 = 0.50054
-   m5d = 0.50087
-
-   mass = e.Measurement([0, m1, m2x, m2x+m1, m2x+m2i, m5, m1+m5, m2x+m5,
-	m2x+m5+m1, m5+m2x+m2i,m5+m5d+m2x+m2i+m1, m5+m5d, m5+m5d+m1,
-	m5+m5d+m2x, m5+m5d+m2x+m1,m5+m5d+m2x+m2i], [0.04],
-	name='Suspended Mass', units='m')
-
-   ''' This list is the combination of weights that were used in each
-   trial.  As the error on each of these measurements is the same, we will
-   use a single value of error instead of another list containing the error
-   for each point.
-   '''
+ 
 	
 .. nbinput:: ipython3
 		      
-   # Now that we have the data stored, we can plot the data, along with a
-   # line of best fit
+   # We can now fit the data, and display a plot (optionally) showing the residuals
 
-   plot = p.Plot(dl, mass) # This creates the plot and stores it as plot
-   plot.fit('linear') # We can find a linear fit of the data
-   plot.residuals() # This tells the plot that we also want a residual plot
-   plot.show() # Now the plot can be shown
+   fig.fit("linear")
+   fig1.add_residuals()
+   fig1.show()
 	 
 .. bokeh-plot::
    :source-position: none
-
-   import qexpy.plotting as p
-
-   dl = [185e-6, 250e-6, 305e-6, 378e-6, 460e-6, 515e-6, 573e-6,
-					 659e-6, 733e-6, 799e-6, 1199e-6, 860e-6, 933e-6,
-					 993e-6, 1060e-6, 1125e-6]
-
-   m50 = 0.05008
-   m1 = 0.10010
-   m2x = 0.20019
-   m2i = 0.20025
-   m5 = 0.50054
-   m5d = 0.50087
-
-   mass = [0, m1, m2x, m2x+m1, m2x+m2i, m5, m1+m5, m2x+m5,
-					m2x+m5+m1, m5+m2x+m2i, m5+m5d+m2x+m2i+m1, m5+m5d,
-					m5+m5d+m1, m5+m5d+m2x, m5+m5d+m2x+m1,m5+m5d+m2x+m2i]
-
-   plot = p.Plot(dl, mass, xerr=5e-6, yerr=0.04) # This creates the plot
-   plot.fit('linear') # We can find a linear fit of the data
-   plot.residuals() # This tells the plot that we also want a residual plot
-   plot.show() # Now the plot can be shown
-
+   
+   import qexpy as q
+   fig1 = q.MakePlot(xdata = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                  ydata = [0.9, 1.4, 2.5, 4.2, 5.7, 6., 7.3, 7.1, 8.9, 10.8],
+                  yerr = 0.5,
+                  xname = 'length', xunits='m',
+                  yname = 'force', yunits='N',
+                  data_name = 'mydata')
+   fig.fit("linear")
+   fig1.add_residuals()
+   fig1.show()
