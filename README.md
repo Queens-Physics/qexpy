@@ -17,5 +17,8 @@ QExPy (Queen’s Experimental Physics) is a python 3 package designed to facilit
   * Plot confidence bands from the errors in fitted parameters (still in development)  
   * Integrates with Jupyter notebooks, numpy, bokeh  
 
+#Examples
+Up to date examples are maintained in the examples directory of the repository. These are likely the best way to get acquainted with the package.
+
 #More information
 Read the documentation at http://qexpy.readthedocs.io/en/latest/
