@@ -262,16 +262,27 @@ class Plot:
                 return
 
     
-    def add_function(self, function, pars = None, name=None, color=None):
+    def add_function(self, function, pars = None, name=None, color=None, x_range = None):
         '''Add a user-specifed function to the list of functions to be plotted.
         
         All datasets are functions when populate_bokeh_figure is called
         - usually when show() is called
         '''
         
+        if x_range is not None:
+            if not isinstance(x_range, ARRAY):
+                print("Error: x_range must be specified as an array of length 2")
+            elif len(x_range) != 2:
+                print("Error: x_range must be specified as an array of length 2")
+            else:
+                self.x_range[0]=x_range[0]-self.x_range_margin
+                self.x_range[1]=x_range[1]+self.x_range_margin
+                
         xvals = np.linspace(self.x_range[0],self.x_range[1], 100)
         
         #check if we should change the y-axis range to accomodate the function
+        fvals = np.zeros(xvals.size)
+        ferr = fvals
         if not isinstance(pars, np.ndarray) and pars == None:
             fvals = function(xvals)
         elif isinstance(pars, qe.Measurement_Array) :
@@ -279,6 +290,7 @@ class Plot:
             qe.Measurement.minmax_n=1
             fmes = function(xvals, *(pars))
             fvals = fmes.get_means()
+            ferr = fmes.get_stds()
             qe.Measurement.minmax_n=recall
         elif isinstance(pars,(list, np.ndarray)):
             fvals = function(xvals, *pars)
@@ -286,8 +298,8 @@ class Plot:
             print("Error: Not a recognized format for parameter")
             return
                  
-        fmax = fvals.max()+self.y_range_margin
-        fmin = fvals.min()-self.y_range_margin
+        fmax = (fvals+ferr).max() + self.y_range_margin
+        fmin = (fvals-ferr).min() - self.y_range_margin
         
         if fmax > self.y_range[1]:
             self.y_range[1]=fmax
