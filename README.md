@@ -21,4 +21,6 @@ QExPy (Queen’s Experimental Physics) is a python 3 package designed to facilit
 Up to date examples are maintained in the examples directory of the repository. These are likely the best way to get acquainted with the package.
 
 #More information
+**The documentation is currently out of date, please refer to the example notebooks in the examples/jupyter directory above to learn how to use the package**
+
 Read the documentation at http://qexpy.readthedocs.io/en/latest/
