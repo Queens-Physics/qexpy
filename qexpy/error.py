@@ -546,7 +546,7 @@ class ExperimentalValue:
                      'neg': '-', op.asin: 'asin', op.acos: 'acos',
                      op.atan: 'atan', }
 
-        if func_flag is False and var2 is not None:
+        if func_flag == False and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
             self.user_name = False
             self.info['Formula'] = var1.info['Formula'] + \
@@ -589,7 +589,7 @@ class ExperimentalValue:
                     else:
                         self.units[key] = -var2.units[key]
 
-        elif func_flag is True:
+        elif func_flag == True and var2 is None:
             self.rename(op_string[operation]+'('+var1.name+')')
             self.user_name = False
             self.info['Formula'] = op_string[operation] + '(' + \
@@ -606,9 +606,9 @@ class ExperimentalValue:
             self.units = ''
 
         else:
-            #TODO remove this pass!!! Had to include it to plot a function of a Measurement_Array
-            pass
-            #print('Something went wrong in update_info')
+            #TODO double check with Connor, but I think it was a bug above and we have to check == True
+            # not is True, since 1 could also be True...
+            print('Something went wrong in update_info')
 
 ###############################################################################
 # Operations on measurement objects
@@ -1768,7 +1768,7 @@ def _tex_print(self, method=None):
     mean, std = _return_print_values(self, method)
 
     if ExperimentalValue.figs is not None and\
-            ExperimentalValue.figs_on_uncertainty is False:
+            ExperimentalValue.figs_on_uncertainty == False:
 
         if mean == float('inf'):
             return "inf"
@@ -1784,7 +1784,7 @@ def _tex_print(self, method=None):
             return "(%d \pm %d)" % (mean, std)
 
     elif ExperimentalValue.figs is not None and\
-            ExperimentalValue.figs_on_uncertainty is True:
+            ExperimentalValue.figs_on_uncertainty == True:
 
         if mean == float('inf'):
             return "inf"
@@ -1819,7 +1819,7 @@ def _def_print(self, method=None):
     mean, std = _return_print_values(self, method)
 
     if ExperimentalValue.figs is not None and\
-            ExperimentalValue.figs_on_uncertainty is False:
+            ExperimentalValue.figs_on_uncertainty == False:
 
         if mean == float('inf'):
             return "inf"
@@ -1838,7 +1838,7 @@ def _def_print(self, method=None):
         return n % (mean)+" +/- "+n % (std)
 
     elif ExperimentalValue.figs is not None and\
-            ExperimentalValue.figs_on_uncertainty is True:
+            ExperimentalValue.figs_on_uncertainty == True:
 
         if mean == float('inf'):
             return "inf"
@@ -1889,7 +1889,7 @@ def _sci_print(self, method=None):
     mean, std = _return_print_values(self, method)
 
     if ExperimentalValue.figs is not None and\
-            ExperimentalValue.figs_on_uncertainty is False:
+            ExperimentalValue.figs_on_uncertainty == False:
 
         if mean == float('inf'):
             return "inf"
@@ -1905,7 +1905,7 @@ def _sci_print(self, method=None):
             return "(%d +/- %d)" % (mean, std)
 
     elif ExperimentalValue.figs is not None and\
-            ExperimentalValue.figs_on_uncertainty is True:
+            ExperimentalValue.figs_on_uncertainty == True:
 
         if mean == float('inf'):
             return "inf"
