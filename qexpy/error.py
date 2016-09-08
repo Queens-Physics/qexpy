@@ -606,7 +606,9 @@ class ExperimentalValue:
             self.units = ''
 
         else:
-            print('Something went wrong in update_info')
+            #TODO remove this pass!!! Had to include it to plot a function of a Measurement_Array
+            pass
+            #print('Something went wrong in update_info')
 
 ###############################################################################
 # Operations on measurement objects
@@ -782,6 +784,99 @@ class ExperimentalValue:
             else:
                 return self.mean == other.mean
             
+    def __gt__(self, other):
+        
+        if type(other) in ExperimentalValue.CONSTANT:
+            return self.mean > other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean > other.mean
+            
+    def __rgt__(self, other):
+        
+        if type(other) in ExperimentalValue.CONSTANT:
+            return self.mean < other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean < other.mean 
+            
+    def __ge__(self, other):
+        
+        if type(other) in ExperimentalValue.CONSTANT:
+            return self.mean >=other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean >= other.mean
+            
+    def __rge__(self, other):
+        
+        if type(other) in ExperimentalValue.CONSTANT:
+            return self.mean <= other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean <= other.mean
+            
+    def __lt__(self, other):
+        
+        if type(other) in ExperimentalValue.CONSTANT:
+            return self.mean < other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean < other.mean
+            
+    def __rlt__(self, other):        
+        if type(other) in ExperimentalValue.CONSTANT:
+            return self.mean > other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean > other.mean
+            
+    def __le__(self, other):
+        
+        if type(other) in ExperimentalValue.CONSTANT:
+            return self.mean <= other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean <= other.mean
+            
+    def __rle__(self, other):        
+        if type(other) in ExperimentalValue.CONSTANT:
+            return self.mean >= other
+        else:
+            try:
+                other.type
+            except AttributeError:
+                raise TypeError
+            else:
+                return self.mean >= other.mean            
     def sqrt(x):
         return sqrt(x)
     
@@ -1215,7 +1310,7 @@ def sqrt(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.sqrt, x[index], func_flag=True)
@@ -1233,7 +1328,7 @@ def sin(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return np.ndarray(0, dtype=float)
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.sin, x[index], func_flag=True)
@@ -1259,7 +1354,7 @@ def cos(x):
           
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.cos, x[index], func_flag=True)
@@ -1283,7 +1378,7 @@ def tan(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.tan, x[index], func_flag=True)
@@ -1307,7 +1402,7 @@ def sec(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.sec, x[index], func_flag=True)
@@ -1331,7 +1426,7 @@ def csc(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.csc, x[index], func_flag=True)
@@ -1355,7 +1450,7 @@ def cot(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.cot, x[index], func_flag=True)
@@ -1379,7 +1474,7 @@ def log(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.log, x[index], func_flag=True)
@@ -1403,7 +1498,7 @@ def exp(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
@@ -1427,7 +1522,7 @@ def e(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.exp, x[index], func_flag=True)
@@ -1451,7 +1546,7 @@ def asin(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.asin, x[index], func_flag=True)
@@ -1475,7 +1570,7 @@ def acos(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.acos, x[index], func_flag=True)
@@ -1499,7 +1594,7 @@ def atan(x):
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return []
-        if isinstance(x[0],Measurement):
+        if isinstance(x[0],ExperimentalValue):
             result = Measurement_Array(len(x))
             for index in range(len(x)):
                 result[index]=op.operation_wrap(op.atan, x[index], func_flag=True)
