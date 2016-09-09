@@ -195,7 +195,7 @@ class XYFitter:
         self.fit_yres = qe.MeasurementArray( (dataset.ydata-yfit), dataset.yerr)  
         #Calculate the chi-squared:
         self.fit_chi2 = 0
-        for i in range(self.fit_npars):
+        for i in range(xdata.size):
             if self.fit_yres[i].std !=0:
                 self.fit_chi2 += (self.fit_yres[i].mean/self.fit_yres[i].std)**2
         self.fit_ndof = self.fit_yres.size-self.fit_npars-1
@@ -294,7 +294,7 @@ class XYDataSet:
             self.npoints = self.x.size
         
         self.xyfitter = []
-        self.fit_pars = [] #stored as Measurement
+        self.fit_pars = [] #stored as Measurement_Array
         self.fit_pcov = []
         self.fit_pcorr = []
         self.fit_function = [] 

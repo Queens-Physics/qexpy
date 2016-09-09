@@ -551,11 +551,13 @@ class Plot:
         return an
                     
         
-    def mpl_plot_dataset(self, dataset, color='black', show_fit_function=True, show_residuals=True):
+    def mpl_plot_dataset(self, dataset, color='black', show_fit_function=True, show_residuals=True, fit_index = -1):
         '''Add a dataset, its fit function and its residuals to the main figure.
         It is better to use add_function() and to let populate_mpl_plot() actually
         add the function.
         '''
+        
+        index = fit_index if fit_index < dataset.nfits else -1
         
         if not hasattr(self, 'mplfigure_main_ax'):       
             if show_residuals:
@@ -579,14 +581,14 @@ class Plot:
                                              label=dataset.name)
             
         if dataset.nfits > 0 and show_fit_function:   
-            self.mpl_plot_function(function=dataset.fit_function[-1],
+            self.mpl_plot_function(function=dataset.fit_function[index],
                                    xdata=dataset.xdata,
-                                   pars=dataset.fit_pars[-1], n=50,
-                                   legend_name=dataset.fit_function_name[-1],
+                                   pars=dataset.fit_pars[index], n=50,
+                                   legend_name=dataset.fit_function_name[index],
                                    color=color, errorbandfactor=self.errorband_sigma)
             
             if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
-                self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[-1].get_means(),
+                self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[index].get_means(),
                                                xerr=dataset.xerr,yerr=dataset.yerr,
                                                fmt='o',color=color,markeredgecolor = 'none')
             
@@ -813,12 +815,15 @@ class Plot:
         
         #expand the y-range to accomodate the fit results text
         yrange_recall = self.y_range[1]
+     
         if self.show_fit_results:
             pixelcount = 0
             for dataset in self.datasets:
                 if dataset.nfits > 0:
                     pixelcount += dataset.fit_npars[-1] * 25
             self.y_range[1] += pixelcount * self.y_range[1]/self.dimensions_px[1]
+            
+            
         self.initialize_bokeh_figure(residuals=False)
         self.y_range[1] = yrange_recall
         
@@ -921,24 +926,26 @@ class Plot:
             self.bkfigure.add_layout(tbox)
         return offset
         
-    def bk_plot_dataset(self, dataset, residual=False, color='black', show_fit_function=True):
+    def bk_plot_dataset(self, dataset, residual=False, color='black', show_fit_function=True, fit_index = -1):
         '''Add a dataset to the bokeh figure for the plot - it is better to 
         use add_dataset() to add a dataset to the Plot object and let
         populate_bokeh_figure take care of calling this function'''
         
+        index = fit_index if fit_index < dataset.nfits else -1
+        
         if residual == True:
             if not hasattr(self, 'bkfigure'):
                 self.bkres = self.initialize_bokeh_figure(residuals=True)
-            return qpu.bk_plot_dataset(self.bkres, dataset, residual=True, color=color)
+            return qpu.bk_plot_dataset(self.bkres, dataset, residual=True, color=color, fit_index = index)
             
         if not hasattr(self, 'bkfigure'):
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
             
         qpu.bk_plot_dataset(self.bkfigure, dataset, residual=False, color=color)
         if dataset.nfits > 0 and show_fit_function:
-            self.bk_plot_function(function=dataset.fit_function[-1], xdata=dataset.xdata,
-                               pars=dataset.fit_pars[-1], n=50,
-                               legend_name=dataset.name+"_"+dataset.fit_function_name[-1],
+            self.bk_plot_function(function=dataset.fit_function[index], xdata=dataset.xdata,
+                               pars=dataset.fit_pars[index], n=50,
+                               legend_name=dataset.name+"_"+dataset.fit_function_name[index],
                                color=color, errorbandfactor=self.errorband_sigma)
     
     def bk_add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
