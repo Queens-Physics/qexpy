@@ -1124,14 +1124,14 @@ class Measurement_Array(np.ndarray):
    
     def get_error_weighted_mean(self):
         '''Return error weighted mean and error of the measurements, as a measurement'''
-        sumw2=2
+        sumw2=0
         mean=0
         for mes in self:
             if mes is not None:           
                 if mes.std == 0.0:
                     continue
                 w2=1./(mes.std**2)
-                mean+=w2*mes.mean
+                mean+=w2*mes.mean                
                 sumw2+=w2
             
         self.error_weighted_mean =  (0. if sumw2==0 else mean/sumw2)
