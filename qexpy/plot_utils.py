@@ -5,16 +5,18 @@ import qexpy.utils as qu
 CONSTANT = qu.number_types
 ARRAY = qu.array_types
 
-def bk_plot_dataset(figure, dataset, residual=False, color='black'):
+def bk_plot_dataset(figure, dataset, residual=False, color='black', fit_index=-1):
     '''Given a bokeh figure, this will add data points with errors from a dataset'''
   
     xdata = dataset.xdata
     xerr = dataset.xerr
     data_name = dataset.name
     
+    index = fit_index if fit_index < dataset.nfits else -1.
+    
     if residual is True and dataset.nfits>0:
-        ydata = dataset.fit_yres[-1].get_means()
-        yerr = dataset.fit_yres[-1].get_stds()
+        ydata = dataset.fit_yres[index].get_means()
+        yerr = dataset.fit_yres[index].get_stds()
         data_name=None
     else:
         ydata = dataset.ydata
