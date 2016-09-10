@@ -12,10 +12,9 @@ bokeh_ouput_notebook_called = False
 mpl_ouput_notebook_called = False   
 
 def mpl_output_notebook():
-    
-#   import IPython.core.ipapi  
-#   ipython = IPython.ipapi.get()
-#   ipython.magic('matplotlib inline')
+    from IPython import get_ipython
+    ipython = get_ipython()
+    #ipython.magic('matplotlib inline')
     mpl_ouput_notebook_called = True
 
 #These are used for checking whether something is an instance of
