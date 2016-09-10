@@ -4,8 +4,9 @@ plot_engine_synonyms = {"bokeh":["bokeh", "Bokeh", "Bk", "bk", "Bo", "bo", "B", 
    
                         
                         "mpl":["mpl","matplotlib","MPL","Mpl","Matplotlib", "M","m"]}
-        
-#Things we want to make accessible from sub modules:
+
+#Default parameters for things:
+from qexpy.defaults import plotting_params
 
 #Error propagation
 from qexpy.error import Measurement, MeasurementArray, Measurement_Array,\
@@ -29,8 +30,10 @@ __version__ = '0.3.5'
 
 import qexpy.utils as qu
 import bokeh.io as bi
+
 if qu.in_notebook():
-    qu.mpl_output_notebook()
+    
+    qu.mpl_output_notebook() # calls matplotlib inline
     
     bi.output_notebook()
     qu.bokeh_ouput_notebook_called = True

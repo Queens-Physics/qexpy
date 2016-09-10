@@ -8,7 +8,6 @@ import qexpy.plot_utils as qpu
 import bokeh.plotting as bp
 import bokeh.io as bi
 import bokeh.models as mo
-import bokeh.palettes as bpal
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -92,26 +91,14 @@ class Plot:
         '''                                    
     
         #Colors to be used for coloring elements automatically
-        self.color_palette = bpal.Set1_9+bpal.Set2_8
+        self.color_palette = q.plotting_params["color_palette"]
         self.color_count = 0
-        
-        #Add margins to the range of the plot
-        self.x_range_margin = 0.5
-        self.y_range_margin = 0.5  
-        
+
         #Dimensions of the figure in pixels
-        self.dimensions_px = [600, 400]
+        self.dimensions_px = [ q.plotting_params["fig_x_px"], 
+                               q.plotting_params["fig_y_px"] ]
         #Screen dots per inch, required for mpl
-        self.screen_dpi = plt.gcf().get_dpi()
-        if self.screen_dpi == 0:
-            self.screen_dpi = 100
-        
-        #Functions that the user can add to be plotted
-        self.user_functions_count=0
-        self.user_functions = []
-        self.user_functions_pars = []
-        self.user_functions_names = []
-        self.user_functions_colors = []
+        self.screen_dpi = q.plotting_params["screen_dpi"]
                 
         #Where to save the plot              
         self.save_filename = 'myplot.html'
@@ -137,15 +124,29 @@ class Plot:
         #colors for each dataset
         self.datasets_colors=[]      
         
-        #Things to initialize from a data set:
-        self.xunits = ""
-        self.xname = "x"      
-        self.yunits = ""
-        self.yname = "y"
+        #Functions to be plotted are held in a list of functions
+        self.user_functions = []
+        self.user_functions_count=0
+        self.user_functions_pars = []
+        self.user_functions_names = []
+        self.user_functions_colors = []
+        
+        #Add margins to the range of the plot
+        self.x_range_margin = 0.5
+        self.y_range_margin = 0.5 
+        #Default range for the axes
         self.x_range = [0,1]
         self.y_range = [0,1]
         self.yres_range = [0,0.1]
-        self.title = "y as a function of x"
+        
+        
+        #Labels for axes
+        self.axes = {'xscale': 'linear', 'yscale': 'linear'}         
+        self.labels = {
+            'title': "y as a function of x",
+            'xtitle': "x",
+            'ytitle': "y"}
+        
         
         if dataset != None:
             self.datasets.append(dataset)            
@@ -153,32 +154,22 @@ class Plot:
             self.initialize_from_dataset(dataset)
         else:
             self.initialized_from_dataset = False
-        
-        #Some parameters to make the plots have proper labels
-        self.axes = {'xscale': 'linear', 'yscale': 'linear'}      
-        self.labels = {
-            'title': self.title,
-            'xtitle': self.xname+' ['+self.xunits+']',
-            'ytitle': self.yname+' ['+self.yunits+']'}
- 
+
 
     def initialize_from_dataset(self, dataset):
-        self.xunits = dataset.xunits
-        self.xname = dataset.xname      
-        self.yunits = dataset.yunits
-        self.yname = dataset.yname 
-        self.title = dataset.name
+        '''Initialize axes labels and ranges from the dataset'''
         self.labels = {
-            'title': self.title,
-            'xtitle': self.xname+' ['+self.xunits+']',
-            'ytitle': self.yname+' ['+self.yunits+']'}
+            'title': dataset.name,
+            'xtitle': dataset.xname +' ['+dataset.xunits+']',
+            'ytitle': dataset.yname +' ['+dataset.yunits+']'}
         
         #Get the range from the dataset (will include the margin)
         self.set_range_from_dataset(dataset)
         self.initialized_from_dataset = True
         
     def _get_color_from_palette(self):
-        '''Automatically select a color from the palette'''
+        '''Automatically select a color from the palette and increment
+        the color counter'''
         self.color_count += 1
         if self.color_count>len(self.color_palette):
             self.color_count = 1
@@ -197,7 +188,7 @@ class Plot:
         else: pass
         
     def check_user_functions_color_array(self):
-        '''Make sure that color array is the same length as dataset array'''
+        '''Make sure that color array is the same length as function array'''
         if len(self.user_functions) == len(self.user_functions_colors):
             return
         elif len(self.user_functions) > len(self.user_functions_colors):
@@ -209,11 +200,13 @@ class Plot:
         else: pass                     
     
     def set_range_from_datasets(self):
+        '''Make sure the x and y range can accomodate all datasets'''
         for ds in self.datasets:
             self.set_range_from_dataset(ds)
         
     def set_range_from_dataset(self, dataset):
-        '''Use a dataset to set the range for the figure'''
+        '''Use a dataset to set the range for the figure - 
+        will only expand the current range (if needed) and will not shrink the range'''
         xr = dataset.get_x_range(self.x_range_margin)
         self.x_range = [min(xr[0], self.x_range[0]), max(xr[1], self.x_range[1])]
         yr = dataset.get_y_range(self.y_range_margin)
@@ -333,18 +326,6 @@ class Plot:
             self.datasets[-1].name=name
           
         self.set_range_from_dataset(dataset)
-        #x_range = dataset.get_x_range(self.x_range_margin)
-        #y_range = dataset.get_y_range(self.y_range_margin)    
-        
-        #if x_range[0] < self.x_range[0]:
-        #    self.x_range[0]=x_range[0]
-        #if x_range[1] > self.x_range[1]:
-        #    self.x_range[1]=x_range[1]
-            
-        #if y_range[0] < self.y_range[0]:
-        #    self.y_range[0]=y_range[0]
-        #if y_range[1] > self.y_range[1]:
-        #    self.y_range[1]=y_range[1] 
             
         self.set_yres_range_from_fits()
 
@@ -392,13 +373,6 @@ class Plot:
         self.dimensions_px = [width, height]
 
 
-    def set_errorband_sigma(self, sigma=1):
-        '''Change the confidence bounds of the error range on a fit.
-        '''
-        self.errorband_sigma = sigma
-
-
-            
     def show(self, output='inline', populate_figure=True, refresh = True):
         '''
         Show the figure, will call one of the populate methods
@@ -409,12 +383,12 @@ class Plot:
                
             self.set_bokeh_output(output)      
             if populate_figure:
-                bp.show(self.populate_bokeh_figure())
+                bp.show(self.populate_bokeh_figure(), notebook_handle=True)
             else:
-                bp.show(self.bkfigure)
+                bp.show(self.bkfigure, notebook_handle=True)
                 
         elif q.plot_engine in q.plot_engine_synonyms["mpl"]:
-            self.set_mpl_output()
+            self.set_mpl_output(output)
             if populate_figure:
                 self.populate_mpl_figure(refresh=refresh)
             plt.show()
@@ -429,9 +403,11 @@ class Plot:
     def set_mpl_output(self, output='inline'):
         '''Choose where to output (in a notebook or to a file)'''
         #TODO not tested, the output notebook part does not work
-        if output == 'file' or not qu.in_notebook():
-            plt.savefig(self.save_filename, bbox_inches='tight')
-        elif not qu.mpl_ouput_notebook_called:
+        
+        #if output == 'file' or not qu.in_notebook():
+            #plt.savefig(self.save_filename, bbox_inches='tight')
+        #elif not qu.mpl_ouput_notebook_called:
+        if not qu.mpl_ouput_notebook_called:
             qu.mpl_output_notebook()
             # This must be the first time calling output_notebook,
             # keep track that it's been called:
@@ -475,7 +451,8 @@ class Plot:
                                errorbandfactor=self.errorband_sigma)
             
         if self.mpl_show_legend:
-            self.mplfigure_main_ax.legend(loc=self.mpl_legend_location,fontsize=11)
+            self.mplfigure_main_ax.legend(loc=self.mpl_legend_location,
+                                          fontsize = q.plotting_params["fig_leg_ftsize"])
 
     def initialize_mpl_figure(self):
         '''Build a matplotlib figure with the desired size to draw on'''
@@ -492,8 +469,10 @@ class Plot:
                                                             sharex=self.mplfigure_main_ax)    
             self.set_yres_range_from_fits()
             self.mplfigure_res_ax.set_ylim([self.yres_range[0], self.yres_range[1]])
-            self.mplfigure_res_ax.set_xlabel(self.labels['xtitle'])
-            self.mplfigure_res_ax.set_ylabel("Residuals")
+            self.mplfigure_res_ax.set_xlabel(self.labels['xtitle'],
+                                             fontsize=q.plotting_params["fig_xtitle_ftsize"])
+            self.mplfigure_res_ax.set_ylabel("Residuals",
+                                             fontsize=q.plotting_params["fig_ytitle_ftsize"])
             self.mplfigure_res_ax.grid()
             
         else:
@@ -502,9 +481,15 @@ class Plot:
         #Regardless of residuals, create the main axes
         self.mplfigure_main_ax.axis([self.x_range[0], self.x_range[1], 
                  self.y_range[0], self.y_range[1]])
-        self.mplfigure_main_ax.set_xlabel(self.labels['xtitle'])
-        self.mplfigure_main_ax.set_ylabel(self.labels['ytitle'])
-        self.mplfigure_main_ax.set_title(self.labels['title'])
+        self.mplfigure_main_ax.set_xscale(self.axes['xscale'])
+        self.mplfigure_main_ax.set_yscale(self.axes['yscale'])
+        
+        self.mplfigure_main_ax.set_xlabel(self.labels['xtitle'],
+                                          fontsize=q.plotting_params["fig_xtitle_ftsize"])
+        self.mplfigure_main_ax.set_ylabel(self.labels['ytitle'],
+                                          fontsize=q.plotting_params["fig_ytitle_ftsize"])
+        self.mplfigure_main_ax.set_title(self.labels['title'],
+                                         fontsize=q.plotting_params["fig_title_ftsize"])
         self.mplfigure_main_ax.grid()        
                        
     def mpl_show_fit_results_box(self, datasets=None, add_space = True):
@@ -544,10 +529,11 @@ class Plot:
         start_x = 0.99 + self.fit_results_x_offset
         start_y = 0.99 + self.fit_results_y_offset
         
-        an = self.mplfigure_main_ax.annotate(textfit,xy=(start_x, start_y), fontsize=11,
-                                        horizontalalignment='right',verticalalignment='top',
-                                        xycoords = 'axes fraction',
-                                        bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
+        an = self.mplfigure_main_ax.annotate(textfit,xy=(start_x, start_y),
+                                             fontsize=q.plotting_params["fig_fitres_ftsize"],
+                                             horizontalalignment='right',verticalalignment='top',
+                                             xycoords = 'axes fraction',
+                                             bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
         return an
                     
         
@@ -631,7 +617,7 @@ class Plot:
                                                 alpha=0.3, edgecolor = 'none',
                                                 interpolate=True)
         
-    def interactive_linear_fit(self, error_range=5):
+    def interactive_linear_fit(self, error_range=5, randomize = False, show_chi2 = True):
         '''Fits the last dataset to a linear function and displays the
         result as an interactive fit'''
                 
@@ -678,7 +664,12 @@ class Plot:
         slope_max = pars[1].mean+error_range*pars[1].std
         slope_step = (slope_max-slope_min)/50.
         
-            
+        o = pars[0].mean if not randomize else np.random.uniform(off_min, off_max, 1)
+        oe = pars[0].std if not randomize else np.random.uniform(0, error_range*pars[0].std , 1)
+        s = pars[1].mean if not randomize else np.random.uniform(slope_min, slope_max, 1)
+        se = pars[1].std if not randomize else np.random.uniform(0, error_range*pars[1].std , 1)
+        c = dataset.fit_pcorr[-1][0][1] if not randomize else np.random.uniform(-1, 1, 1)   
+        
         @interact(offset=(off_min, off_max, off_step),
                   offset_err = (0, error_range*pars[0].std, error_range*pars[0].std/50.),
                   slope=(slope_min, slope_max, slope_step),
@@ -686,8 +677,8 @@ class Plot:
                   correlation = (-1,1,0.05)                 
                  )
         
-        def update(offset=pars[0].mean, offset_err=pars[0].std, slope=pars[1].mean,
-                   slope_err=pars[1].std, correlation=dataset.fit_pcorr[-1][0][1]):  
+        def update(offset=o, offset_err=oe, slope=s,
+                   slope_err=se, correlation=c):  
             
             fig = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
                                          self.dimensions_px[1]/self.screen_dpi))
@@ -738,18 +729,25 @@ class Plot:
                     ndof += 1
             ndof -= 3 #2 parameters, -1
             
-            textfit=str(omes)+"\n"+str(smes)+"\n chi2/ndof: {:.3f}/{}".format(chi2, ndof)
+            textfit=str(omes)+"\n"+str(smes)+\
+                        ("\n chi2/ndof: {:.3f}/{}".format(chi2, ndof) if show_chi2 else "")
                
-            ax.annotate(textfit,xy=(start_x, start_y), fontsize=11, horizontalalignment='right',
-                        verticalalignment='top', xycoords = 'axes fraction',
+            ax.annotate(textfit,
+                        xy=(start_x, start_y), xycoords = 'axes fraction',
+                        fontsize=q.plotting_params["fig_fitres_ftsize"],
+                        horizontalalignment='right', verticalalignment='top',
                         bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
   
             ax.axis([self.x_range[0], self.x_range[1], 
                                          self.y_range[0], self.y_range[1]])
-            ax.set_xlabel(self.labels['xtitle'])
-            ax.set_ylabel(self.labels['ytitle'])
-            ax.set_title(self.labels['title'])
-            ax.legend(loc=self.mpl_legend_location)
+            ax.set_xlabel(self.labels['xtitle'],
+                          fontsize=q.plotting_params["fig_xtitle_ftsize"])
+            ax.set_ylabel(self.labels['ytitle'],
+                          fontsize=q.plotting_params["fig_ytitle_ftsize"])
+            ax.set_title(self.labels['title'],
+                          fontsize=q.plotting_params["fig_title_ftsize"])
+            ax.legend(loc=self.mpl_legend_location,
+                      fontsize = q.plotting_params["fig_leg_ftsize"])
             ax.grid()
             plt.show()
             
