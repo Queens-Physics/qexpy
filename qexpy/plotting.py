@@ -617,7 +617,7 @@ class Plot:
                                                 alpha=0.3, edgecolor = 'none',
                                                 interpolate=True)
         
-    def interactive_linear_fit(self, error_range=5, randomize = False, show_chi2 = True):
+    def interactive_linear_fit(self, error_range=5, randomize = False, show_chi2 = True, show_errors=True):
         '''Fits the last dataset to a linear function and displays the
         result as an interactive fit'''
                 
@@ -670,87 +670,147 @@ class Plot:
         se = pars[1].std if not randomize else np.random.uniform(0, error_range*pars[1].std , 1)
         c = dataset.fit_pcorr[-1][0][1] if not randomize else np.random.uniform(-1, 1, 1)   
         
-        @interact(offset=(off_min, off_max, off_step),
-                  offset_err = (0, error_range*pars[0].std, error_range*pars[0].std/50.),
-                  slope=(slope_min, slope_max, slope_step),
-                  slope_err = (0, error_range*pars[1].std, error_range*pars[1].std/50.),
-                  correlation = (-1,1,0.05)                 
-                 )
-        
-        def update(offset=o, offset_err=oe, slope=s,
-                   slope_err=se, correlation=c):  
+        if show_errors:
+            @interact(offset=(off_min, off_max, off_step),
+                      offset_err = (0, error_range*pars[0].std, error_range*pars[0].std/50.),
+                      slope=(slope_min, slope_max, slope_step),
+                      slope_err = (0, error_range*pars[1].std, error_range*pars[1].std/50.),
+                      correlation = (-1,1,0.05)                 
+                     )
+       
+            def update(offset=o, offset_err=oe, slope=s,
+                       slope_err=se, correlation=c):  
             
-            fig = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
+                fig = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
                                          self.dimensions_px[1]/self.screen_dpi))
             
-            ax = fig.add_axes([0,0,1.,1.])
+                ax = fig.add_axes([0,0,1.,1.])
             
-            xvals = np.linspace(self.x_range[0], self.x_range[1], 20)
+                xvals = np.linspace(self.x_range[0], self.x_range[1], 20)
             
-            omes = qe.Measurement(offset,offset_err, name="offset")
-            smes = qe.Measurement(slope,slope_err, name="slope")
-            omes.set_correlation(smes,correlation)
+                omes = qe.Measurement(offset,offset_err, name="offset")
+                smes = qe.Measurement(slope,slope_err, name="slope")
+                omes.set_correlation(smes,correlation)
             
-            recall = qe.Measurement.minmax_n
-            qe.Measurement.minmax_n=1
-            fmes = omes + smes*xvals
-            qe.Measurement.minmax_n=recall
-            fvals = fmes.get_means()
-            ferr = fmes.get_stds()
+                recall = qe.Measurement.minmax_n
+                qe.Measurement.minmax_n=1
+                fmes = omes + smes*xvals
+                qe.Measurement.minmax_n=recall
+                fvals = fmes.get_means()
+                ferr = fmes.get_stds()
             
-            fmax = fvals + ferr
-            fmin = fvals - ferr
+                fmax = fvals + ferr
+                fmin = fvals - ferr
             
-            ax.errorbar(dataset.xdata, dataset.ydata,
+                ax.errorbar(dataset.xdata, dataset.ydata,
                     xerr=dataset.xerr,yerr=dataset.yerr,
                     fmt='o',color=color,markeredgecolor = 'none',
                     label=dataset.name)
             
-            ax.plot(xvals,fvals, color=color, label ="linear fit")
-            ax.fill_between(xvals, fmin, fmax, facecolor=color,
+                ax.plot(xvals,fvals, color=color, label ="linear fit")
+                ax.fill_between(xvals, fmin, fmax, facecolor=color,
                                                 alpha=0.3, edgecolor = 'none',
                                                 interpolate=True)
             
             
-            start_x = 0.99 + self.fit_results_x_offset
-            start_y = 0.99 + self.fit_results_y_offset
+                start_x = 0.99 + self.fit_results_x_offset
+                start_y = 0.99 + self.fit_results_y_offset
            
-            #calculate chi2
-            xdata = dataset.xdata
-            ydata = dataset.ydata
-            yerr = dataset.yerr
-            ymodel = offset+slope*xdata
-            yres = ydata-ymodel
-            chi2 = 0
-            ndof = 0
-            for i in range(xdata.size):
-                if yerr[i] != 0:
-                    chi2 += (yres[i]/yerr[i])**2
-                    ndof += 1
-            ndof -= 3 #2 parameters, -1
+                #calculate chi2
+                xdata = dataset.xdata
+                ydata = dataset.ydata
+                yerr = dataset.yerr
+                ymodel = offset+slope*xdata
+                yres = ydata-ymodel
+                chi2 = 0
+                ndof = 0
+                for i in range(xdata.size):
+                    if yerr[i] != 0:
+                        chi2 += (yres[i]/yerr[i])**2
+                        ndof += 1
+                ndof -= 3 #2 parameters, -1
             
-            textfit=str(omes)+"\n"+str(smes)+\
+                textfit=str(omes)+"\n"+str(smes)+\
                         ("\n chi2/ndof: {:.3f}/{}".format(chi2, ndof) if show_chi2 else "")
                
-            ax.annotate(textfit,
+                ax.annotate(textfit,
                         xy=(start_x, start_y), xycoords = 'axes fraction',
                         fontsize=q.plotting_params["fig_fitres_ftsize"],
                         horizontalalignment='right', verticalalignment='top',
                         bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
   
-            ax.axis([self.x_range[0], self.x_range[1], 
+                ax.axis([self.x_range[0], self.x_range[1], 
                                          self.y_range[0], self.y_range[1]])
-            ax.set_xlabel(self.labels['xtitle'],
+                ax.set_xlabel(self.labels['xtitle'],
                           fontsize=q.plotting_params["fig_xtitle_ftsize"])
-            ax.set_ylabel(self.labels['ytitle'],
+                ax.set_ylabel(self.labels['ytitle'],
                           fontsize=q.plotting_params["fig_ytitle_ftsize"])
-            ax.set_title(self.labels['title'],
+                ax.set_title(self.labels['title'],
                           fontsize=q.plotting_params["fig_title_ftsize"])
-            ax.legend(loc=self.mpl_legend_location,
+                ax.legend(loc=self.mpl_legend_location,
                       fontsize = q.plotting_params["fig_leg_ftsize"])
-            ax.grid()
-            plt.show()
+                ax.grid()
+                plt.show()
+        else: #no errors
+            @interact(offset=(off_min, off_max, off_step),
+                      slope=(slope_min, slope_max, slope_step)       
+                     )
+       
+            def update(offset=o, slope=s):  
             
+                fig = plt.figure(figsize=(self.dimensions_px[0]/self.screen_dpi,
+                                         self.dimensions_px[1]/self.screen_dpi))
+            
+                ax = fig.add_axes([0,0,1.,1.])
+            
+                xvals = np.linspace(self.x_range[0], self.x_range[1], 20)
+                fvals = offset+slope*xvals
+   
+                ax.errorbar(dataset.xdata, dataset.ydata,
+                    xerr=dataset.xerr,yerr=dataset.yerr,
+                    fmt='o',color=color,markeredgecolor = 'none',
+                    label=dataset.name)
+            
+                ax.plot(xvals,fvals, color=color, label ="linear fit")
+
+                start_x = 0.99 + self.fit_results_x_offset
+                start_y = 0.99 + self.fit_results_y_offset
+                
+                #calculate chi2
+                xdata = dataset.xdata
+                ydata = dataset.ydata
+                yerr = dataset.yerr
+                ymodel = offset+slope*xdata
+                yres = ydata-ymodel
+                chi2 = 0
+                ndof = 0
+                for i in range(xdata.size):
+                    if yerr[i] != 0:
+                        chi2 += (yres[i]/yerr[i])**2
+                        ndof += 1
+                ndof -= 3 #2 parameters, -1
+           
+                textfit="offset = {:.2f}\nslope = {:.2f}".format(offset, slope)+\
+                        ("\n chi2/ndof: {:.3f}/{}".format(chi2, ndof) if show_chi2 else "")
+               
+                ax.annotate(textfit,
+                        xy=(start_x, start_y), xycoords = 'axes fraction',
+                        fontsize=q.plotting_params["fig_fitres_ftsize"],
+                        horizontalalignment='right', verticalalignment='top',
+                        bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
+  
+                ax.axis([self.x_range[0], self.x_range[1], 
+                                         self.y_range[0], self.y_range[1]])
+                ax.set_xlabel(self.labels['xtitle'],
+                          fontsize=q.plotting_params["fig_xtitle_ftsize"])
+                ax.set_ylabel(self.labels['ytitle'],
+                          fontsize=q.plotting_params["fig_ytitle_ftsize"])
+                ax.set_title(self.labels['title'],
+                          fontsize=q.plotting_params["fig_title_ftsize"])
+                ax.legend(loc=self.mpl_legend_location,
+                      fontsize = q.plotting_params["fig_leg_ftsize"])
+                ax.grid()
+                plt.show()   
 
 ###Some wrapped matplotlib functions
     def mpl_plot(self, *args, **kwargs):
