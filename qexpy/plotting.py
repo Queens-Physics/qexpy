@@ -91,14 +91,14 @@ class Plot:
         '''                                    
     
         #Colors to be used for coloring elements automatically
-        self.color_palette = q.plotting_params["color_palette"]
+        self.color_palette = q.settings["plot_color_palette"]
         self.color_count = 0
 
         #Dimensions of the figure in pixels
-        self.dimensions_px = [ q.plotting_params["fig_x_px"], 
-                               q.plotting_params["fig_y_px"] ]
+        self.dimensions_px = [ q.settings["plot_fig_x_px"], 
+                               q.settings["plot_fig_y_px"] ]
         #Screen dots per inch, required for mpl
-        self.screen_dpi = q.plotting_params["screen_dpi"]
+        self.screen_dpi = q.settings["plot_screen_dpi"]
                 
         #Where to save the plot              
         self.save_filename = 'myplot.html'
@@ -221,13 +221,17 @@ class Plot:
                 yr = dataset.get_yres_range(self.y_range_margin)
                 self.yres_range = [min(yr[0], self.yres_range[0]), max(yr[1], self.yres_range[1])]               
         
-    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, datasetindex=-1):
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True,
+            datasetindex=-1, fitcolor=None):
         '''Fit a dataset to model - calls XYDataset.fit and returns a 
         Measurement_Array of fitted parameters'''
-        results = self.datasets[datasetindex].fit(model, parguess, fit_range) 
+        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor) 
         return results
         
     def print_fit_parameters(self, dataset=-1):
+        if len(self.datasets)<1:
+            print("No datasets")
+            return
         if self.datasets[-1].nfits>0:
             print("Fit parameters:\n"+str(self.datasets[dataset].fit_pars[-1]))    
         else:
@@ -446,13 +450,13 @@ class Plot:
                                             self.user_functions_names,
                                             self.user_functions_colors):
         
-            self.mpl_plot_function(function=func, xdata=xvals,pars=pars, n=100,
+            self.mpl_plot_function(function=func, xdata=xvals,pars=pars, n=q.settings["plot_fcn_npoints"],
                                legend_name= fname, color=color,
                                errorbandfactor=self.errorband_sigma)
             
         if self.mpl_show_legend:
             self.mplfigure_main_ax.legend(loc=self.mpl_legend_location,
-                                          fontsize = q.plotting_params["fig_leg_ftsize"])
+                                          fontsize = q.settings["plot_fig_leg_ftsize"])
 
     def initialize_mpl_figure(self):
         '''Build a matplotlib figure with the desired size to draw on'''
@@ -470,9 +474,9 @@ class Plot:
             self.set_yres_range_from_fits()
             self.mplfigure_res_ax.set_ylim([self.yres_range[0], self.yres_range[1]])
             self.mplfigure_res_ax.set_xlabel(self.labels['xtitle'],
-                                             fontsize=q.plotting_params["fig_xtitle_ftsize"])
+                                             fontsize=q.settings["plot_fig_xtitle_ftsize"])
             self.mplfigure_res_ax.set_ylabel("Residuals",
-                                             fontsize=q.plotting_params["fig_ytitle_ftsize"])
+                                             fontsize=q.settings["plot_fig_ytitle_ftsize"])
             self.mplfigure_res_ax.grid()
             
         else:
@@ -485,11 +489,11 @@ class Plot:
         self.mplfigure_main_ax.set_yscale(self.axes['yscale'])
         
         self.mplfigure_main_ax.set_xlabel(self.labels['xtitle'],
-                                          fontsize=q.plotting_params["fig_xtitle_ftsize"])
+                                          fontsize=q.settings["plot_fig_xtitle_ftsize"])
         self.mplfigure_main_ax.set_ylabel(self.labels['ytitle'],
-                                          fontsize=q.plotting_params["fig_ytitle_ftsize"])
+                                          fontsize=q.settings["plot_fig_ytitle_ftsize"])
         self.mplfigure_main_ax.set_title(self.labels['title'],
-                                         fontsize=q.plotting_params["fig_title_ftsize"])
+                                         fontsize=q.settings["plot_fig_title_ftsize"])
         self.mplfigure_main_ax.grid()        
                        
     def mpl_show_fit_results_box(self, datasets=None, add_space = True):
@@ -530,7 +534,7 @@ class Plot:
         start_y = 0.99 + self.fit_results_y_offset
         
         an = self.mplfigure_main_ax.annotate(textfit,xy=(start_x, start_y),
-                                             fontsize=q.plotting_params["fig_fitres_ftsize"],
+                                             fontsize=q.settings["plot_fig_fitres_ftsize"],
                                              horizontalalignment='right',verticalalignment='top',
                                              xycoords = 'axes fraction',
                                              bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
@@ -569,9 +573,10 @@ class Plot:
         if dataset.nfits > 0 and show_fit_function:   
             self.mpl_plot_function(function=dataset.fit_function[index],
                                    xdata=dataset.xdata,
-                                   pars=dataset.fit_pars[index], n=50,
+                                   pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
                                    legend_name=dataset.fit_function_name[index],
-                                   color=color, errorbandfactor=self.errorband_sigma)
+                                   color=color if dataset.fit_color[index] is None else dataset.fit_color[index],
+                                   errorbandfactor=self.errorband_sigma)
             
             if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
                 self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[index].get_means(),
@@ -735,20 +740,20 @@ class Plot:
                
                 ax.annotate(textfit,
                         xy=(start_x, start_y), xycoords = 'axes fraction',
-                        fontsize=q.plotting_params["fig_fitres_ftsize"],
+                        fontsize=q.settings["plot_fig_fitres_ftsize"],
                         horizontalalignment='right', verticalalignment='top',
                         bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
   
                 ax.axis([self.x_range[0], self.x_range[1], 
                                          self.y_range[0], self.y_range[1]])
                 ax.set_xlabel(self.labels['xtitle'],
-                          fontsize=q.plotting_params["fig_xtitle_ftsize"])
+                          fontsize=q.settings["plot_fig_xtitle_ftsize"])
                 ax.set_ylabel(self.labels['ytitle'],
-                          fontsize=q.plotting_params["fig_ytitle_ftsize"])
+                          fontsize=q.settings["plot_fig_ytitle_ftsize"])
                 ax.set_title(self.labels['title'],
-                          fontsize=q.plotting_params["fig_title_ftsize"])
+                          fontsize=q.settings["plot_fig_title_ftsize"])
                 ax.legend(loc=self.mpl_legend_location,
-                      fontsize = q.plotting_params["fig_leg_ftsize"])
+                      fontsize = q.settings["plot_fig_leg_ftsize"])
                 ax.grid()
                 plt.show()
         else: #no errors
@@ -795,20 +800,20 @@ class Plot:
                
                 ax.annotate(textfit,
                         xy=(start_x, start_y), xycoords = 'axes fraction',
-                        fontsize=q.plotting_params["fig_fitres_ftsize"],
+                        fontsize=q.settings["plot_fig_fitres_ftsize"],
                         horizontalalignment='right', verticalalignment='top',
                         bbox=dict(facecolor='white', alpha=0.0, edgecolor='none'))
   
                 ax.axis([self.x_range[0], self.x_range[1], 
                                          self.y_range[0], self.y_range[1]])
                 ax.set_xlabel(self.labels['xtitle'],
-                          fontsize=q.plotting_params["fig_xtitle_ftsize"])
+                          fontsize=q.settings["plot_fig_xtitle_ftsize"])
                 ax.set_ylabel(self.labels['ytitle'],
-                          fontsize=q.plotting_params["fig_ytitle_ftsize"])
+                          fontsize=q.settings["plot_fig_ytitle_ftsize"])
                 ax.set_title(self.labels['title'],
-                          fontsize=q.plotting_params["fig_title_ftsize"])
+                          fontsize=q.settings["plot_fig_title_ftsize"])
                 ax.legend(loc=self.mpl_legend_location,
-                      fontsize = q.plotting_params["fig_leg_ftsize"])
+                      fontsize = q.settings["plot_fig_leg_ftsize"])
                 ax.grid()
                 plt.show()   
 
@@ -912,7 +917,7 @@ class Plot:
                                             self.user_functions_names,
                                             self.user_functions_colors):
         
-            self.bk_plot_function(function=func, xdata=xvals,pars=pars, n=100,
+            self.bk_plot_function(function=func, xdata=xvals,pars=pars, n=q.settings["plot_fcn_npoints"],
                                legend_name= fname, color=color,
                                errorbandfactor=self.errorband_sigma)
 
@@ -1002,9 +1007,10 @@ class Plot:
         qpu.bk_plot_dataset(self.bkfigure, dataset, residual=False, color=color)
         if dataset.nfits > 0 and show_fit_function:
             self.bk_plot_function(function=dataset.fit_function[index], xdata=dataset.xdata,
-                               pars=dataset.fit_pars[index], n=50,
+                               pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
                                legend_name=dataset.name+"_"+dataset.fit_function_name[index],
-                               color=color, errorbandfactor=self.errorband_sigma)
+                               color=color if dataset.fit_color[index] is None else dataset.fit_color[index],
+                               errorbandfactor=self.errorband_sigma)
     
     def bk_add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
                                    color='black', data_name='dataset'):

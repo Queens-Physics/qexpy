@@ -1,5 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
+import qexpy as q
 import qexpy.error as qe
 import qexpy.utils as qu
 from math import pi
@@ -109,6 +110,18 @@ class XYFitter:
         xerr = dataset.xerr
         yerr = dataset.yerr
         
+        nz = np.count_nonzero(yerr)
+        if nz < ydata.size and nz != 0:
+            print("Warning: some errors on data are zero, switching to MC errors")
+            yerr = dataset.y.get_stds(method="MC")
+            #now, check again
+            nz = np.count_nonzero(yerr)    
+            if nz < ydata.size and nz != 0:
+                print("Error: Some MC errors are zero as well, I give up")
+                return None
+            #We're ok, modify the errors in the dataset to be the MC ones
+            dataset.yerr = yerr
+        
         #If user specified a fit range, reduce the data:    
         if type(fit_range) in ARRAY and len(fit_range) is 2:
             indices = np.where(np.logical_and(xdata>=fit_range[0], xdata<=fit_range[1]))
@@ -119,10 +132,13 @@ class XYFitter:
             
         #if the x errors are not zero, convert them to equivalent errors in y
         #TODO: check the math on this...
-    
+        
+        #The maximum number of function evaluations
+        maxfev = 200 *(xdata.size+1) if q.settings["fit_max_fcn_calls"] == -1 else q.settings["fit_max_fcn_calls"]
         try:
             self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
-                                                    sigma=yerr, p0=self.parguess)
+                                                    sigma=yerr, p0=self.parguess,
+                                                    maxfev=maxfev)
 
             self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
         except RuntimeError:
@@ -136,7 +152,8 @@ class XYFitter:
 
             try:
                 self.fit_pars, self.fit_pcov  = sp.curve_fit(self.fit_function, xdata, ydata,
-                                                    sigma=yerr_eff, p0=self.parguess)
+                                                    sigma=yerr_eff, p0=self.parguess,
+                                                    maxfev=maxfev)
                 self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
             except RuntimeError:
                 print("Error: Fit could not converge; are the y errors too small? Is the function defined?")
@@ -303,9 +320,10 @@ class XYDataSet:
         self.fit_yres = []
         self.fit_chi2 = []
         self.fit_ndof = []
+        self.fit_color = []
         self.nfits=0
         
-    def fit(self, model=None, parguess=None, fit_range=None, print_results=True):
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None):
         '''Fit a data set to a model using XYFitter. Everytime this function
         is called on a data set, it adds a new XYFitter to the dataset. This
         is to allow multiple functions to be fit to the same data set'''
@@ -322,6 +340,7 @@ class XYDataSet:
             self.fit_function_name.append(fitter.fit_function_name) 
             self.fit_chi2.append(fitter.fit_chi2)
             self.fit_ndof.append(fitter.fit_ndof)
+            self.fit_color.append(fitcolor) # colour of the fit function
             self.nfits += 1
         
             if print_results:
