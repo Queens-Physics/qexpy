@@ -4,7 +4,7 @@ plot_engine_synonyms = {"bokeh":["bokeh", "Bokeh", "Bk", "bk", "Bo", "bo", "B", 
                         "mpl":["mpl","matplotlib","MPL","Mpl","Matplotlib", "M","m"]}
 
 #Default parameters for things:
-from qexpy.defaults import plotting_params
+from qexpy.defaults import settings
 
 #Error propagation
 from qexpy.error import Measurement, MeasurementArray,\

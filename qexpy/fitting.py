@@ -1,5 +1,6 @@
 import scipy.optimize as sp
 import numpy as np
+import qexpy as q
 import qexpy.error as qe
 import qexpy.utils as qu
 from math import pi
@@ -119,10 +120,13 @@ class XYFitter:
             
         #if the x errors are not zero, convert them to equivalent errors in y
         #TODO: check the math on this...
-    
+        
+        #The maximum number of function evaluations
+        maxfev = 200 *(xdata.size+1) if q.settings["fit_max_fcn_calls"] == -1 else q.settings["fit_max_fcn_calls"]
         try:
             self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
-                                                    sigma=yerr, p0=self.parguess)
+                                                    sigma=yerr, p0=self.parguess,
+                                                    maxfev=maxfev)
 
             self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
         except RuntimeError:
@@ -136,7 +140,8 @@ class XYFitter:
 
             try:
                 self.fit_pars, self.fit_pcov  = sp.curve_fit(self.fit_function, xdata, ydata,
-                                                    sigma=yerr_eff, p0=self.parguess)
+                                                    sigma=yerr_eff, p0=self.parguess,
+                                                    maxfev=maxfev)
                 self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
             except RuntimeError:
                 print("Error: Fit could not converge; are the y errors too small? Is the function defined?")
