@@ -110,6 +110,18 @@ class XYFitter:
         xerr = dataset.xerr
         yerr = dataset.yerr
         
+        nz = np.count_nonzero(yerr)
+        if nz < ydata.size and nz != 0:
+            print("Warning: some errors are zero, switching to MC errors")
+            yerr = dataset.y.get_stds(method="MC")
+            #now, check again
+            nz = np.count_nonzero(yerr)    
+            if nz < ydata.size and nz != 0:
+                print("Error: Some MC errors are zero as well, I give up")
+                return None
+            #We're ok, modify the errors in the dataset to be the MC ones
+            dataset.yerr = yerr
+        
         #If user specified a fit range, reduce the data:    
         if type(fit_range) in ARRAY and len(fit_range) is 2:
             indices = np.where(np.logical_and(xdata>=fit_range[0], xdata<=fit_range[1]))
