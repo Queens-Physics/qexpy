@@ -112,7 +112,7 @@ class XYFitter:
         
         nz = np.count_nonzero(yerr)
         if nz < ydata.size and nz != 0:
-            print("Warning: some errors are zero, switching to MC errors")
+            print("Warning: some errors on data are zero, switching to MC errors")
             yerr = dataset.y.get_stds(method="MC")
             #now, check again
             nz = np.count_nonzero(yerr)    
@@ -320,9 +320,10 @@ class XYDataSet:
         self.fit_yres = []
         self.fit_chi2 = []
         self.fit_ndof = []
+        self.fit_color = []
         self.nfits=0
         
-    def fit(self, model=None, parguess=None, fit_range=None, print_results=True):
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None):
         '''Fit a data set to a model using XYFitter. Everytime this function
         is called on a data set, it adds a new XYFitter to the dataset. This
         is to allow multiple functions to be fit to the same data set'''
@@ -339,6 +340,7 @@ class XYDataSet:
             self.fit_function_name.append(fitter.fit_function_name) 
             self.fit_chi2.append(fitter.fit_chi2)
             self.fit_ndof.append(fitter.fit_ndof)
+            self.fit_color.append(fitcolor) # colour of the fit function
             self.nfits += 1
         
             if print_results:

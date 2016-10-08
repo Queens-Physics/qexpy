@@ -221,10 +221,11 @@ class Plot:
                 yr = dataset.get_yres_range(self.y_range_margin)
                 self.yres_range = [min(yr[0], self.yres_range[0]), max(yr[1], self.yres_range[1])]               
         
-    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, datasetindex=-1):
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True,
+            datasetindex=-1, fitcolor=None):
         '''Fit a dataset to model - calls XYDataset.fit and returns a 
         Measurement_Array of fitted parameters'''
-        results = self.datasets[datasetindex].fit(model, parguess, fit_range) 
+        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor) 
         return results
         
     def print_fit_parameters(self, dataset=-1):
@@ -574,7 +575,8 @@ class Plot:
                                    xdata=dataset.xdata,
                                    pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
                                    legend_name=dataset.fit_function_name[index],
-                                   color=color, errorbandfactor=self.errorband_sigma)
+                                   color=color if dataset.fit_color[index] is None else dataset.fit_color[index],
+                                   errorbandfactor=self.errorband_sigma)
             
             if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
                 self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[index].get_means(),
@@ -1007,7 +1009,8 @@ class Plot:
             self.bk_plot_function(function=dataset.fit_function[index], xdata=dataset.xdata,
                                pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
                                legend_name=dataset.name+"_"+dataset.fit_function_name[index],
-                               color=color, errorbandfactor=self.errorband_sigma)
+                               color=color if dataset.fit_color[index] is None else dataset.fit_color[index],
+                               errorbandfactor=self.errorband_sigma)
     
     def bk_add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
                                    color='black', data_name='dataset'):
