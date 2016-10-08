@@ -19,7 +19,7 @@ settings = {
     "plot_fig_leg_ftsize": 11, #font size for legends
     "plot_screen_dpi": screen_dpi, #default dpi used by matplotlib
     "plot_color_palette": bpal.Set1_9+bpal.Set2_8, #color palette to choose colors from
-    "plot_fcn_npoints": 50, #number of points to use for plotting functions and error bands
+    "plot_fcn_npoints": 100, #number of points to use for plotting functions and error bands
     "fit_max_fcn_calls": -1, #max number of function calls when fitting before giving up (-1 default)
     }   
 
