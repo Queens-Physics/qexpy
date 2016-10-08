@@ -1,15 +1,13 @@
 #Whether to use Bokeh or matplotlib:
 plot_engine="bokeh"
-plot_engine_synonyms = {"bokeh":["bokeh", "Bokeh", "Bk", "bk", "Bo", "bo", "B", "b"],
-   
-                        
+plot_engine_synonyms = {"bokeh":["bokeh", "Bokeh", "Bk", "bk", "Bo", "bo", "B", "b"],  
                         "mpl":["mpl","matplotlib","MPL","Mpl","Matplotlib", "M","m"]}
 
 #Default parameters for things:
 from qexpy.defaults import plotting_params
 
 #Error propagation
-from qexpy.error import Measurement, MeasurementArray, Measurement_Array,\
+from qexpy.error import Measurement, MeasurementArray,\
                         set_print_style, set_sigfigs_centralvalue, set_sigfigs_error, set_sigfigs, set_error_method,\
                         sqrt, sin, cos, tan, sec, csc, cot, log, exp, e, asin, acos, atan
         
