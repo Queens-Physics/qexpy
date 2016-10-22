@@ -177,7 +177,7 @@ def asin(x):
     if type(x) in CONSTANT:
         return m.asin(x)   
     elif type(x) in ARRAY:
-        return np.asin(x)
+        return np.arcsin(x)
     elif isinstance(x,MEASUREMENT):
         return m.asin(x.mean)
     else:
@@ -203,7 +203,7 @@ def acos(x):
     if type(x) in CONSTANT:
         return m.acos(x)
     elif type(x) in ARRAY:
-        return np.acos(x)
+        return np.arccos(x)
     elif isinstance(x,MEASUREMENT):
         return m.acos(x.mean)
     else:
@@ -229,7 +229,7 @@ def atan(x):
     if type(x) in CONSTANT:
         return m.atan(x)
     elif type(x) in ARRAY:
-        return np.atan(x)
+        return np.arctan(x)
     elif isinstance(x,MEASUREMENT):
         return m.atan(x.mean)
     else:
