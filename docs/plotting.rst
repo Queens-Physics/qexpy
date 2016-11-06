@@ -18,16 +18,19 @@ of the plot, such as lines of fit, user-defined functions or simply the
 colour of data point.
 
 .. bokeh-plot::
-   :source-position: above
 
-   import qexpy.plotting as p
+    from bokeh.plotting import figure, output_file, show
 
-   # This produces two sets of data which should be fit to a line with a
-   # slope of 3 and an intercept 2
+    output_file("example.html")
 
-   figure = p.Plot([1, 2, 3, 4, 5], [5, 7, 11, 14, 17],
-					xerr=0.5, yerr=1)
-   figure.show()
+    x = [1, 2, 3, 4, 5]
+    y = [6, 7, 6, 4, 5]
+
+    p = figure(title="example", plot_width=300, plot_height=300)
+    p.line(x, y, line_width=2)
+    p.circle(x, y, size=10, fill_color="white")
+
+    show(p)
 	
 Using methods such as *.fit* or *.residuals* will create a best fit of
 the data and display the residual output.  The *.fit* attribute also has
