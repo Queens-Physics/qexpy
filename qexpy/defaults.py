@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 screen_dpi = plt.gcf().get_dpi()
 if screen_dpi == 0:
         screen_dpi = 100
+plt.close()
         
 import bokeh.palettes as bpal        
    
