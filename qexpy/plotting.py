@@ -622,7 +622,9 @@ class Plot:
                                                 alpha=0.3, edgecolor = 'none',
                                                 interpolate=True)
         
-    def interactive_linear_fit(self, error_range=5, randomize = False, show_chi2 = True, show_errors=True):
+    def interactive_linear_fit(self, error_range=5, randomize = False,
+                               show_chi2 = True, show_errors=True,
+                               x_range=None, y_range=None):
         '''Fits the last dataset to a linear function and displays the
         result as an interactive fit'''
                 
@@ -660,6 +662,12 @@ class Plot:
         fminvals = fvals-error_range*max(dataset.yerr)
         self.y_range[0] = fminvals.min()
         self.y_range[1] = fmaxvals.max()
+
+        #Set fit range to user if specified
+        if x_range is not None:
+            self.x_range = x_range
+        if y_range is not None:
+            self.y_range = y_range
            
         off_min = pars[0].mean-error_range*pars[0].std
         off_max = pars[0].mean+error_range*pars[0].std
