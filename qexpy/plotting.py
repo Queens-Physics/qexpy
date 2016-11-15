@@ -395,6 +395,8 @@ class Plot:
             self.set_mpl_output(output)
             if populate_figure:
                 self.populate_mpl_figure(refresh=refresh)
+            if output == 'file':
+                plt.savefig(self.user_save_filename, bbox_inches='tight')
             plt.show()
             
         else:
@@ -408,10 +410,12 @@ class Plot:
         '''Choose where to output (in a notebook or to a file)'''
         #TODO not tested, the output notebook part does not work
         
-        #if output == 'file' or not qu.in_notebook():
+        if output == 'file' or not qu.in_notebook():
+            #Prompt user for filename
+            self.user_save_filename = input('Enter a filename: ')
+            #TODO Decide what to do about this
             #plt.savefig(self.save_filename, bbox_inches='tight')
-        #elif not qu.mpl_ouput_notebook_called:
-        if not qu.mpl_ouput_notebook_called:
+        elif not qu.mpl_ouput_notebook_called:
             qu.mpl_output_notebook()
             # This must be the first time calling output_notebook,
             # keep track that it's been called:
@@ -480,7 +484,12 @@ class Plot:
             self.mplfigure_res_ax.grid()
             
         else:
-            self.mplfigure_main_ax = self.mplfigure.add_axes([0,0,1.,1.])
+            #TODO The latter fixes the issues of axis not showing when
+            #PyPlot is shown outside of notebook. Need to translate to
+            # residual case and decide if this is wanted.
+
+            #self.mplfigure_main_ax = self.mplfigure.add_axes([0,0,1.,1.])
+            self.mplfigure_main_ax = self.mplfigure.add_subplot(111)
         
         #Regardless of residuals, create the main axes
         self.mplfigure_main_ax.axis([self.x_range[0], self.x_range[1], 
