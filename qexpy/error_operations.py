@@ -460,7 +460,7 @@ def operation_wrap(operation, *args, func_flag=False):
 
 
 diff = {
-        sqrt: lambda key, x: (0. if x.mean ==0 else -0.5/m.sqrt(x.mean)*x.derivative[key]),
+        sqrt: lambda key, x: (0. if x.mean ==0 else 0.5/m.sqrt(x.mean)*x.derivative[key]),
         sin: lambda key, x: m.cos(x.mean)*x.derivative[key],
         cos: lambda key, x: -m.sin(x.mean)*x.derivative[key],
         tan: lambda key, x: m.cos(x.mean)**-2*x.derivative[key],
