@@ -23,4 +23,4 @@ Up to date examples are maintained in the examples directory of the repository. 
 #More information
 **The documentation is currently out of date, please refer to the example notebooks in the examples/jupyter directory above to learn how to use the package**
 
-Read the documentation at http://qexpy.readthedocs.io/en/latest/
+<!--- Read the documentation at http://qexpy.readthedocs.io/en/latest/ --->
