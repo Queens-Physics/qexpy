@@ -55,6 +55,14 @@ class ExperimentalValue:
                 data = np.ndarray(1)
                 error_data = np.ndarray(1)
                 data[0] = self.mean
+            elif isinstance(args[0], qu.array_types) and isinstance(args[1], qu.array_types):
+                raise TypeError('''Input must be either a single array of values,
+                      or the central value and uncertainty in one measurement.
+                      
+                      The feature of passing a list of measurements and their corresponding
+                      uncertanties is now deprecated. Please use a MeasurementArray insted.
+                      More info: 
+                      https://github.com/Queens-Physics/qexpy/blob/master/examples/jupyter/1_Intro_to_Error_Propagation.ipynb''')
             else:
                 raise TypeError('''Input must be either a single array of values,
                       or the central value and uncertainty in one measurement''')
