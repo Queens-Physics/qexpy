@@ -156,11 +156,11 @@ class ExperimentalValue:
         the Min-Max is the upper bound of the error.
         '''
         if self.print_style == "Latex":
-            string = _tex_print(self, method=self.Derivative)
+            string = _tex_print(self, method=self.der)
         elif self.print_style == "Default":
-            string = _def_print(self, method=self.Derivative)
+            string = _def_print(self, method=self.der)
         elif self.print_style == "Scientific":
-            string = _sci_print(self, method=self.Derivative)
+            string = _sci_print(self, method=self.der)
         print(string)
 
     def get_derivative(self, variable=None):
@@ -622,6 +622,12 @@ class ExperimentalValue:
 # Operations on measurement objects
 ###############################################################################
 
+    ###########################################################################
+    # ARITHMETIC OPERATIONS
+    # Called whenever an operation (+, -, /, *, **) is encountered
+    # Call operation_wrap() in error_operations.py
+    ###########################################################################
+
     def __add__(self, other):
         #TODO: is this the correct implementation??? or should ARRAy create an ndarray???
         import qexpy.error_operations as op
@@ -762,14 +768,21 @@ class ExperimentalValue:
             return other**self
         else:
             return op.operation_wrap(op.power, other, self)
-    
+
+    # Calls neg() in error_operations, which returns the negative of the value
     def __neg__(self):
         import qexpy.error_operations as op
         return op.neg(self)
 
+    # Returns the length of the ExperimentalValue
     def __len__(self):
         return self.info['Data'].size
 
+    ###########################################################################
+    # COMPARISON OPERATIONS
+    # Called whenever a comparison (>, <, >=, ==, ...) is made
+    # Makes the relevant comparison and return a boolean
+    ###########################################################################
     def __eq__(self, other):
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean == other
@@ -884,7 +897,16 @@ class ExperimentalValue:
             except AttributeError:
                 raise TypeError
             else:
-                return self.mean >= other.mean            
+                return self.mean >= other.mean      
+
+
+    ###########################################################################
+    # FUNCTION OPERATIONS
+    # Called for functions in the form: ExperimentalValue.func()
+    # Calls the relevant function defined later in this file using the form:
+    # error.func(ExperimentalValue)
+    ###########################################################################
+
     def sqrt(x):
         return sqrt(x)
     
@@ -1327,6 +1349,8 @@ def MeasurementArray(data, error=None, name=None, units=None):
 
 ###############################################################################
 # Mathematical Functions
+# These are called for functions in the form: error.func(ExperimentalValue)
+# They call operation_wrap() in the error_operations.py file
 ###############################################################################
 
 ExperimentalValue.ARRAY = ExperimentalValue.ARRAY +(Measurement_Array,)
@@ -1350,7 +1374,6 @@ def sqrt(x):
 
 def sin(x):
     import qexpy.error_operations as op
-    
     if type(x) in ExperimentalValue.ARRAY:
         if len(x) <1:
             return np.ndarray(0, dtype=float)

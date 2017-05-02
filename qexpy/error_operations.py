@@ -499,7 +499,7 @@ def dev(*args, der=None):
     '''
     Returns the standard deviation of a function of N arguments.
 
-    Using the tuple of variables,  passed in each operation that composes a
+    Using the tuple of variables,  passed in each operations that composes a
     function,  the standard deviation is calculated by the derivative error
     propagation formula,  including the covariance factor between each pair
     of variables. The derivative dictionary of a function must be passes by
@@ -515,9 +515,12 @@ def dev(*args, der=None):
         for i in range(len(arg.root)):
             if arg.root[i] not in roots:
                 roots += (arg.root[i], )
+
+    # Partial derivative times uncertainty terms
     for root in roots:
         std += (der[root]*e.ExperimentalValue.register[root].std)**2
 
+    # Covariance terms
     for i in range(len(roots)):
         for j in range(len(roots)-i-1):
             cov = e.ExperimentalValue.register[roots[i]].get_covariance(
