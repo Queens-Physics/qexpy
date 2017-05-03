@@ -23,7 +23,7 @@ class TestError(unittest.TestCase):
         '''Tests creating a MeasurementArray from multiple measurements
         '''
         x = e.MeasurementArray([9, 10, 11], error=1)
-        self.assertEqual(x.mean(), 10)
+        self.assertEqual(x.mean, 10)
         self.assertEqual(x.std(), 1)
 
 

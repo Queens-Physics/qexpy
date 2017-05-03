@@ -16,7 +16,7 @@ class ExperimentalValue:
     formulation can be instanced. (ie. the result of an operation of
     measured values, called Funciton and Measured respectivly)
     '''
-    error_method = "Derivative"  # Default error propogation method
+    _error_method = "Derivative"  # Default error propogation method
     print_style = "Default"  # Default printing style
     mc_trial_number = 10000  # number of trial in Monte Carlo simulation
     minmax_n = 100 # grid size in MinMax calculation
@@ -192,32 +192,35 @@ class ExperimentalValue:
 
     @property
     def mean(self):
-        return self.__mean
+        return self._mean
 
     @mean.setter
     def mean(self, mean):
         if(type(mean) in ExperimentalValue.CONSTANT):
-            self.__mean = mean
+            self._mean = mean
         else:
             print("Mean must be a number")
-            self.__mean = 0
+            self._mean = 0
 
     @property
     def std(self):
-        return self.__std
+        return self._std
 
     @std.setter
     def std(self, std):
         if(type(std) in ExperimentalValue.CONSTANT):
-            self.__std = std
+            self.der = [self.mean, std]
+            self.MinMax = [self.mean, std]
+            self.MC = [self.mean, std]
+            self._std = std
         else:
             print("Standard deviation must be a number")
-            self.__std = 0
+            self._std = 0
 
     @property
     def error_on_mean(self):
-        if self.__error_on_mean:
-            return self.__error_on_mean
+        if self._error_on_mean:
+            return self._error_on_mean
         else:
             print("Error: error on mean not calculated")
             return 0
@@ -225,22 +228,22 @@ class ExperimentalValue:
     @error_on_mean.setter
     def error_on_mean(self, error_on_mean):
         if(type(error_on_mean) in ExperimentalValue.CONSTANT):
-            self.__error_on_mean = error_on_mean
+            self._error_on_mean = error_on_mean
         else:
             print("Error on mean must be a number")
-            self.__error_on_mean = 0
+            self._error_on_mean = 0
 
     @property
     def name(self):
-        return self.__name
+        return self._name
 
     @name.setter
     def name(self, name):
         if isinstance(name, str):
-            self.__name = name
+            self._name = name
         else:
             print("Name must be a string")
-            self.__name = 'unnamed_var%d' % (Measurement.id_number)
+            self._name = 'unnamed_var%d' % (Measurement.id_number)
 
     @property
     def data_array(self):
@@ -251,7 +254,29 @@ class ExperimentalValue:
 
     @property
     def relative_error(self):
-        return self.__std/self.__mean if self.__mean !=0 else 0.    
+        return self._std/self._mean if self._mean !=0 else 0. 
+
+    @property
+    def error_method(self):
+        return self._error_method
+
+    @error_method.setter
+    def error_method(self, method):
+        mc_list = ('MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
+                   'monte carlo',)
+        min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
+        derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
+                     'default',)
+
+        if method in mc_list:
+            self._error_method = "Monte Carlo"
+        elif method in min_max_list:
+            self._error_method = "Min Max"
+        elif method in derr_list:
+            self._error_method = "Derivative"
+        else:
+            print("Method not recognized, using derivative method.")
+            self._error_method = "Derivative"
 
     def get_units(self):
         '''Returns the units of the associated Measurement.
@@ -583,7 +608,7 @@ class ExperimentalValue:
             ExperimentalValue.formula_register.update(
                 {self.info["Formula"]: self.info["ID"]})
             self.info['Method'] += "Errors propagated by " +\
-                ExperimentalValue.error_method + ' method.\n'
+                self.error_method + ' method.\n'
             for root in var1.root:
                 if root not in self.root:
                     self.root += var1.root
@@ -624,7 +649,7 @@ class ExperimentalValue:
             self.info['Function']['variables'] += (var1,),
             self.info['Function']['operation'] += operation,
             self.info['Method'] += "Errors propagated by " + \
-                ExperimentalValue.error_method + ' method.\n'
+                self.error_method + ' method.\n'
             ExperimentalValue.formula_register.update(
                 {self.info["Formula"]: self.info["ID"]})
             for root in var1.root:
@@ -1044,15 +1069,16 @@ class Measurement_Array(np.ndarray):
     ''' A numpy-based array of Measurement objects'''
     id_number = 0
     def __new__(subtype, shape, dtype=Measurement, buffer=None, offset=0,
-          strides=None, order=None, name = None, units = None):
+          strides=None, order=None, name = None, units = None, error_method='Derivative'):
         obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
                          order)
-        
         if name is not None:
             obj.name = name
         else:
             obj.name = 'unnamed_arr%d' % (Measurement_Array.id_number)
-            
+
+        obj.error_method = error_method
+
         obj.units = {}
         if units is not None:
             if type(units) is str:
@@ -1074,27 +1100,51 @@ class Measurement_Array(np.ndarray):
         # then just call the parent
         return np.ndarray.__array_wrap__(self, out_arr, context)
 
-    def get_means(self, method="der"):
+    @property
+    def error_method(self):
+        return self._error_method
+
+    @error_method.setter
+    def error_method(self, method):
+        mc_list = ('MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
+                   'monte carlo',)
+        min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
+        derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
+                     'default',)
+
+        if method in mc_list:
+            self._error_method = "Monte Carlo"
+        elif method in min_max_list:
+            self._error_method = "Min Max"
+        elif method in derr_list:
+            self._error_method = "Derivative"
+        else:
+            print("Method not recognized, using derivative method.")
+            self._error_method = "Derivative"
+
+    @property
+    def means(self):
         '''Returns a numpy array with the means of the measurements, as calculated
         by the method (der, MC, MinMax)'''
         if self.size == 0:
             return np.ndarray(0)
-        
+
         means = np.ndarray(shape=self.shape)
-        
+
         for index, item in np.ndenumerate(self):
             if item is not None:
-                if method == "MinMax":
+                if self.error_method == "MinMax":
                     means[index] = item.MinMax[0]
-                elif method == "MC":
+                elif self.error_method == "MC":
                     means[index] = item.MC[0]
                 else:
                     means[index] = item.mean
             else:
                 means[index] = 0
         return means
-    
-    def get_stds(self, method="der"):
+
+    @property
+    def stds(self):
         '''Returns an array with the errors of the measurements, as calculated
         by the method (der, MC, MinMax)'''
         if self.size == 0:
@@ -1104,48 +1154,49 @@ class Measurement_Array(np.ndarray):
         
         for index, item in np.ndenumerate(self):
             if item is not None:              
-                if method == "MinMax":
-                    stds[index] = item.MinMax[1]
-                elif method == "MC":
+                if self.error_method == "MinMax":
+                    stds[index] = 9
+                elif self.error_method == "MC":
                     stds[index] = item.MC[1]
                 else:
                     stds[index] = item.std
             else:
                 stds[index] = 0
         return stds
-    
-    def mean(self, method="der"):
-        '''Return mean of the means of the measurements'''
-        #overides numpy mean()
-        nparr = self.get_means(method)
-        self.mean = nparr.mean()
-        return self.mean
 
-    def get_mean(self, method="der"):
-        '''Return mean of the means of the measurements'''
-        return self.mean(method)
-    
-    def std(self, ddof=1, method="der"):
-        '''Return standard deviation of the means of each measurement'''
-        nparr = self.get_means(method)
-        self.std = nparr.std(ddof=ddof)
-        return self.std 
-    
-    def get_std(self, ddof=1, method="der"):
-        '''Return standard deviation of the means of each measurement'''
-        return self.std(method)
+    @property
+    def mean(self):
+        nparr = self.means
+        self._mean = nparr.mean()
+        return self._mean
 
-   
-    def get_error_weighted_mean(self, method="der"):
-        '''Return error weighted mean and error of the measurements, as a measurement'''
-        
-        means = self.get_means(method)
-        stds = self.get_stds(method)
+    @stds.setter
+    def stds(self, error):
+        n = self.size
+
+        if isinstance(error, qu.number_types):#MA([,,,,], error = x)
+            for i in range(n):
+                self[i].std=error
+
+        elif isinstance(error, qu.array_types):#MA([,,,,], error = [])
+            if len(error)==n:#MA([,,,,], error = [,,,,])
+                for i in range(n):
+                    self[i].std=error[i]
+
+            elif len(error)==1: #MA([,,,,], error = [x])
+                for i in range(n):
+                    self[i].std=error[0]
+            else:
+                print("Error list must be the same length as the original list")
+
+    @property
+    def error_weighted_mean(self):
+        means = self.means
+        stds = self.stds
         stds2 = stds**2
-        
         sumw2=0
         mean=0
-        
+
         #Needs to be a loop to catch the case of std == 0
         for i in range(means.size):
             if stds[i] == 0.0:
@@ -1153,11 +1204,21 @@ class Measurement_Array(np.ndarray):
             w2 = 1./stds2[i]
             mean += w2*means[i]
             sumw2 += w2
-                   
-        self.error_weighted_mean =  (0. if sumw2==0 else mean/sumw2)
-        self.error_weighted_std =  (0. if sumw2==0 else np.sqrt(1./sumw2))
-            
-        return Measurement(self.error_weighted_mean, self.error_weighted_std)
+
+        self._error_weighted_mean =  (0. if sumw2==0 else mean/sumw2)
+        self._error_weighted_std =  (0. if sumw2==0 else np.sqrt(1./sumw2))
+
+        return Measurement(self._error_weighted_mean, self._error_weighted_std)
+    
+    def std(self, ddof=1, method="der"):
+        '''Return standard deviation of the means of each measurement'''
+        nparr = self.means
+        self.std = nparr.std(ddof=ddof)
+        return self.std 
+    
+    def get_std(self, ddof=1, method="der"):
+        '''Return standard deviation of the means of each measurement'''
+        return self.std(method)
     
     def get_units_str(self):
         '''Returns a string with the units.
@@ -1189,25 +1250,6 @@ class Measurement_Array(np.ndarray):
             else:
                 for i in range(len(units)//2):
                     self.units[units[2*i]] = units[2*i+1]
-
-    def set_errors(self, error):
-        '''Set all of the errors on the data points - either to a constant value, or to an array of values'''
-        n = self.size
-        
-        if isinstance(error, qu.number_types):#MA([,,,,], error = x)
-            for i in range(n):
-                self[i].std=error
-                
-        elif isinstance(error, qu.array_types):#MA([,,,,], error = [])
-            if len(error)==n:#MA([,,,,], error = [,,,,])
-                for i in range(n):
-                    self[i].std=error[i]
-                    
-            elif len(error)==1: #MA([,,,,], error = [x])
-                for i in range(n):
-                    self[i].std=error[0]
-        else:
-            print("error array must be same length as data")
     
     def __str__(self):
         theString=''
@@ -1217,10 +1259,10 @@ class Measurement_Array(np.ndarray):
                 theString += ',\n'
         return theString
             
-def MeasurementArray(data, error=None, name=None, units=None):
+def MeasurementArray(data, error=None, name=None, units=None, error_method='Derivative'):
     '''Function to easily construct a Measurement_Array'''
     
-    array = Measurement_Array(0, name=name, units=units)
+    array = Measurement_Array(0, name=name, units=units, error_method='Derivative')
     user_name= True if name != None else False
         
     if error is None: #MA(data)
@@ -1669,30 +1711,30 @@ def set_print_style(style=None, sigfigs=None):
         print('''A style must be a string of either: Scientific notation,
         Latex, or the default style. Using ''')
 
+# #No longer needed
+# def set_error_method(chosen_method):
+#     '''
+#     Choose the method of error propagation to be used. Enter a string.
 
-def set_error_method(chosen_method):
-    '''
-    Choose the method of error propagation to be used. Enter a string.
+#     Function to change default error propogation method used in
+#     measurement functions.
+#     '''
+#     mc_list = (
+#         'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
+#         'monte carlo',)
+#     min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
+#     derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
+#                  'default',)
 
-    Function to change default error propogation method used in
-    measurement functions.
-    '''
-    mc_list = (
-        'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
-        'monte carlo',)
-    min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
-    derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
-                 'default',)
-
-    if chosen_method in mc_list:
-        ExperimentalValue.error_method = "Monte Carlo"
-    elif chosen_method in min_max_list:
-        ExperimentalValue.error_method = "Min Max"
-    elif chosen_method in derr_list:
-        ExperimentalValue.error_method = "Derivative"
-    else:
-        print("Method not recognized, using derivative method.")
-        ExperimentalValue.error_method = "Derivative"
+#     if chosen_method in mc_list:
+#         ExperimentalValue.error_method = "Monte Carlo"
+#     elif chosen_method in min_max_list:
+#         ExperimentalValue.error_method = "Min Max"
+#     elif chosen_method in derr_list:
+#         ExperimentalValue.error_method = "Derivative"
+#     else:
+#         print("Method not recognized, using derivative method.")
+#         ExperimentalValue.error_method = "Derivative"
 
 
 def set_sigfigs_error(sigfigs=3):
@@ -1760,21 +1802,20 @@ def _return_print_values(variable, method):
     if isinstance(variable, Constant):
         return (variable.mean, 0,)
     
-    if ExperimentalValue.error_method == 'Derivative':
+    if ExperimentalValue._error_method == 'Derivative':
         [mean, std] = variable.der
-    elif ExperimentalValue.error_method == 'Monte Carlo':
+    elif ExperimentalValue._error_method == 'Monte Carlo':
         [mean, std] = variable.MC
-    elif ExperimentalValue.error_method == 'Min Max':
+    elif ExperimentalValue._error_method == 'Min Max':
         [mean, std] = variable.MinMax
 
     if method is not None:
-        if ExperimentalValue.error_method is 'Derivative':
+        if ExperimentalValue._error_method is 'Derivative':
             [mean, std] = variable.der
-        elif ExperimentalValue.error_method is 'Monte Carlo':
+        elif ExperimentalValue._error_method is 'Monte Carlo':
             [mean, std] = variable.MC
-        elif ExperimentalValue.error_method is 'Min Max':
+        elif ExperimentalValue._error_method is 'Min Max':
             [mean, std] = variable.MinMax
-
     return (mean, std,)
 
 

@@ -1,0 +1,18 @@
+Metadata-Version: 1.1
+Name: qexpy
+Version: 0.3.8
+Summary: Package to handle error analysis and data plotting aimed
+    at undergraduate physics.
+Home-page: https://github.com/Queens-Physics/QExPy
+Author: Connor Kapahi and Prof. Ryan Martin
+Author-email: ryan.martin@queensu.ca
+License: GNU GLP v3
+Download-URL: https://github.com/Queens-Physics/QExPy/tarball/0.3.7
+Description: UNKNOWN
+Keywords: physics,laboratories,labs,undergraduate,data analysis,uncertainties,plotting,error analysis,error propagation,uncertainty propagation
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Programming Language :: Python

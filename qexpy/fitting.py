@@ -291,14 +291,14 @@ class XYDataSet:
             _yerr=yerr
         
         self.x = qe.MeasurementArray(_xdata,error=_xerr, name=xname, units=xunits)
-        self.xdata = self.x.get_means()
-        self.xerr = self.x.get_stds()
+        self.xdata = self.x.means
+        self.xerr = self.x.stds
         self.xunits = self.x.get_units_str()
         self.xname = self.x.name
         
         self.y = qe.MeasurementArray(_ydata,error=_yerr, name=yname, units=yunits)
-        self.ydata = self.y.get_means()
-        self.yerr = self.y.get_stds()
+        self.ydata = self.y.means
+        self.yerr = self.y.stds
         self.yunits = self.y.get_units_str()
         self.yname = self.y.name
         
@@ -409,8 +409,8 @@ class XYDataSet:
     
     def get_yres_range(self, margin=0, fitindex=-1):
         '''Get range of the y residuals, including errors and a specified margin'''
-        return [self.fit_yres[fitindex].get_means().min()-self.yerr.max()-margin,\
-                self.fit_yres[fitindex].get_means().max()+self.yerr.max()+margin] 
+        return [self.fit_yres[fitindex].means.min()-self.yerr.max()-margin,\
+                self.fit_yres[fitindex].means.max()+self.yerr.max()+margin]
     
 def cov2corr(pcov):
     '''Return a correlation matrix given a covariance matrix'''
