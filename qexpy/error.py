@@ -190,41 +190,68 @@ class ExperimentalValue:
         derivative = self.derivative[variable.info["ID"]]
         return derivative
 
-    def get_error(self):
-        '''Returns the error associated the Measurement for whatever error
-        propagation method is selected.
-        '''
-        return self.std
-    
-    def get_uncertainty(self):
-        return self.get_error()
-    
-    def get_relative_error(self):
-        return self.std/self.mean if self.mean !=0 else 0.
-    
-    def get_relative_uncertainty(self):
-        return self.get_relative_error()
-    
-    def get_error_on_mean(self):
-        '''Returns the error on the mean if the Measurement is from a set 
-        of data'''
-        if self.error_on_mean:
-            return self.error_on_mean
+    @property
+    def mean(self):
+        return self.__mean
+
+    @mean.setter
+    def mean(self, mean):
+        if(type(mean) in ExperimentalValue.CONSTANT):
+            self.__mean = mean
+        else:
+            print("Mean must be a number")
+            self.__mean = 0
+
+    @property
+    def std(self):
+        return self.__std
+
+    @std.setter
+    def std(self, std):
+        if(type(std) in ExperimentalValue.CONSTANT):
+            self.__std = std
+        else:
+            print("Standard deviation must be a number")
+            self.__std = 0
+
+    @property
+    def error_on_mean(self):
+        if self.__error_on_mean:
+            return self.__error_on_mean
         else:
             print("Error: error on mean not calculated")
             return 0
-    
-    def get_mean(self):
-        ''' Returns the central value associated with the Measurement object
-        using whatever error propagation method is selected.
-        '''
-        return self.mean
 
-    def get_name(self):
-        '''Returns the name of the associated object, whether user-specified
-        or auto-generated.
-        '''
-        return self.name
+    @error_on_mean.setter
+    def error_on_mean(self, error_on_mean):
+        if(type(error_on_mean) in ExperimentalValue.CONSTANT):
+            self.__error_on_mean = error_on_mean
+        else:
+            print("Error on mean must be a number")
+            self.__error_on_mean = 0
+
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, name):
+        if isinstance(name, str):
+            self.__name = name
+        else:
+            print("Name must be a string")
+            self.__name = 'unnamed_var%d' % (Measurement.id_number)
+
+    @property
+    def data_array(self):
+        if self.info['Data'] is None:
+            print('No data array exists.')
+            return None
+        return self.info['Data']
+
+    @property
+    def relative_error(self):
+        return self.__std/self.__mean if self.__mean !=0 else 0.    
 
     def get_units(self):
         '''Returns the units of the associated Measurement.
@@ -241,14 +268,6 @@ class ExperimentalValue:
                 if unit_string == '':
                     unit_string = 'unitless'
         return unit_string
-
-    def get_data_array(self):
-        '''Returns the array of data used to create this Measurement.
-        '''
-        if self.info['Data'] is None:
-            print('No data array exists.')
-            return None
-        return self.info['Data']
     
     def show_histogram(self, bins=50, title=None, output='inline'):
         '''Creates a histogram of the inputted data using Bokeh.
@@ -899,53 +918,6 @@ class ExperimentalValue:
             else:
                 return self.mean >= other.mean      
 
-
-    ###########################################################################
-    # FUNCTION OPERATIONS
-    # Called for functions in the form: ExperimentalValue.func()
-    # Calls the relevant function defined later in this file using the form:
-    # error.func(ExperimentalValue)
-    ###########################################################################
-
-    def sqrt(x):
-        return sqrt(x)
-    
-    def log(x):
-        return log(x)
-
-    def exp(x):
-        return exp(x)
-
-    def e(x):
-        return exp(x)
-
-    def sin(x):
-        return sin(x)
-
-    def cos(x):
-        return cos(x)
-
-    def tan(x):
-        return tan(x)
-
-    def csc(x):
-        return csc(x)
-
-    def sec(x):
-        return sec(x)
-
-    def cot(x):
-        return cot(x)
-
-    def asin(x):
-        return asin(x)
-
-    def acos(x):
-        return acos(x)
-
-    def atan(x):
-        return atan(x)
-
 ###############################################################################
 # Miscellaneous Methods
 ###############################################################################
@@ -1101,7 +1073,7 @@ class Measurement_Array(np.ndarray):
     def __array_wrap__(self, out_arr, context=None):
         # then just call the parent
         return np.ndarray.__array_wrap__(self, out_arr, context)
- 
+
     def get_means(self, method="der"):
         '''Returns a numpy array with the means of the measurements, as calculated
         by the method (der, MC, MinMax)'''
@@ -1202,7 +1174,7 @@ class Measurement_Array(np.ndarray):
                 if unit_string == '':
                     unit_string = 'unitless'
         return unit_string
-    
+
     def set_units(self, units=None):
         if units is not None:
             for mes in self:
@@ -1217,8 +1189,7 @@ class Measurement_Array(np.ndarray):
             else:
                 for i in range(len(units)//2):
                     self.units[units[2*i]] = units[2*i+1]
-        
-    
+
     def set_errors(self, error):
         '''Set all of the errors on the data points - either to a constant value, or to an array of values'''
         n = self.size

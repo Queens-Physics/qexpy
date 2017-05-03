@@ -170,9 +170,9 @@ class TestMisc(unittest.TestCase):
         t = e.Measurement(7, 2, name='Interval', units='s')
         v = d/t
 
-        self.assertEqual(x.get_mean(), 10)
-        self.assertEqual(y.get_error(), 2)
+        self.assertEqual(x.mean, 10)
+        self.assertEqual(y.std, 2)
         self.assertEqual(a.get_derivative(x), 1)
-        self.assertEqual(a.get_name(), 'x+y')
+        self.assertEqual(a.name, 'x+y')
         self.assertEqual(a.get_units(), 'm')
         self.assertTrue(v.get_units() == 'm^1 s^-1 ' or v.get_units() == 's^-1 m^1 ')
