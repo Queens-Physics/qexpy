@@ -2,6 +2,7 @@ import math as m
 import qexpy.error as e
 import qexpy.plotting as p
 import unittest
+import numpy as np
 
 
 class TestError(unittest.TestCase):
@@ -11,6 +12,10 @@ class TestError(unittest.TestCase):
         x = e.Measurement(10, 1)
         self.assertEqual(x.mean, 10)
         self.assertEqual(x.std, 1)
+        x.mean = 3
+        x.std = 0.1
+        self.assertEqual(x.mean, 3)
+        self.assertEqual(x.std, 0.1)
 
     def test_multiple_measurements(self):
         '''Tests creating a Measurement from a multiple measurements
@@ -28,11 +33,13 @@ class TestError(unittest.TestCase):
 
 
 class TestFunctions(unittest.TestCase):
-    def test_elementary(self):
+
+    def test_measurement_elementary(self):
         '''Tests elementary operations on Measurement objects
         '''
         x = e.Measurement(2, 0.01)
         y = e.Measurement(5, 0.2)
+
         self.assertEqual(x+y, e.Measurement(7, 0.2))
         self.assertEqual(y+x, e.Measurement(7, 0.2))
         self.assertEqual(x-y, e.Measurement(-3, .2))
@@ -44,11 +51,29 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(x**y, e.Measurement(32, 5))
         self.assertEqual(y**x, e.Measurement(25, 2))
 
-    def test_functions(self):
+    def test_array_elementary(self):
+        '''Tests elementary operations on Measurement objects
+        '''
+        x = e.MeasurementArray([4, 9, 2], error = [0.1, 0.2, 0.3])
+        y = e.MeasurementArray([2, 3, 3], error = 0.1)
+
+        self.assertListEqual((x+y).means.tolist(), [6, 12, 5])
+        self.assertListEqual((y+x).means.tolist(), [6, 12, 5])
+        self.assertListEqual((x-y).means.tolist(), [2, 6, -1])
+        self.assertListEqual((y-x).means.tolist(), [-2, -6, 1])
+        self.assertListEqual((x*y).means.tolist(), [8, 27, 6])
+        self.assertListEqual((y*x).means.tolist(), [8, 27, 6])
+        self.assertListEqual((x/y).means.tolist(), [2, 3, 2/3])
+        self.assertListEqual((y/x).means.tolist(), [0.5, 1/3, 3/2])
+        self.assertListEqual((x**y).means.tolist(), [16, 729, 8])
+        self.assertListEqual((y**x).means.tolist(), [16, 19683, 9])
+
+    def test_measurement_functions(self):
         '''Tests mathematical functions on Measurement objects
         '''
         x = e.Measurement(3.2, 0.01)
         y = e.Measurement(0.23, 0.04)
+
         self.assertEqual(e.sin(x), m.sin(x.mean))
         self.assertEqual(e.cos(x), m.cos(x.mean))
         self.assertEqual(e.tan(x), m.tan(x.mean))
@@ -60,6 +85,46 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(e.asin(y), m.asin(y.mean))
         self.assertEqual(e.acos(y), m.acos(y.mean))
         self.assertEqual(e.atan(x), m.atan(x.mean))
+
+    def test_measurement_comparisons(self):
+        '''Tests comparisons of Measurement objects
+        '''
+        x = e.Measurement(3.2, 0.01)
+        y = e.Measurement(0.23, 0.04)
+        z = e.Measurement(0.23, 0.01)
+
+        self.assertFalse(x == y)
+        self.assertFalse(y == x)
+        self.assertTrue(y == z)
+        self.assertTrue(z == y)
+
+        self.assertFalse(x <= y)
+        self.assertFalse(y >= x)
+        self.assertTrue(y >= z)
+        self.assertTrue(z <= y)
+
+        self.assertTrue(x > y)
+        self.assertTrue(y < x)
+        self.assertFalse(y > z)
+        self.assertFalse(z < y)
+
+    def test_array_functions(self):
+        '''Tests mathematical functions on Measurement objects
+        '''
+        x = e.MeasurementArray([4, 9, 2], error = [0.1, 0.2, 0.3])
+        y = e.MeasurementArray([0.3, 0.56, 0.2], error = 0.01)
+
+        self.assertEqual(e.sin(x).means.tolist(), np.sin(x.means).tolist())
+        self.assertEqual(e.cos(x).means.tolist(), np.cos(x.means).tolist())
+        self.assertEqual(e.tan(x).means.tolist(), np.tan(x.means).tolist())
+        self.assertEqual(e.csc(x).means.tolist(), (1/np.sin(x.means)).tolist())
+        self.assertEqual(e.sec(x).means.tolist(), (1/np.cos(x.means)).tolist())
+        self.assertEqual(e.cot(x).means.tolist(), (1/np.tan(x.means)).tolist())
+        self.assertEqual(e.exp(x).means.tolist(), np.exp(x.means).tolist())
+        self.assertEqual(e.log(x).means.tolist(), np.log(x.means).tolist())
+        self.assertEqual(e.asin(y).means.tolist(), np.arcsin(y.means).tolist())
+        self.assertEqual(e.acos(y).means.tolist(), np.arccos(y.means).tolist())
+        self.assertEqual(e.atan(x).means.tolist(), np.arctan(x.means).tolist())
 
     def test_derivative(self):
         '''Tests derivative of functions of Measurement objects
