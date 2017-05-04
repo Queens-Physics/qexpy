@@ -37,9 +37,19 @@ class ExperimentalValue:
         Creates a variable that contains a mean, standard deviation,
         and name for inputted data.
         '''
+        self.der = [0, 0]
+        self.MinMax = [0, 0]
+        self.MC = [0, 0]
+
+        self.info = {
+                'ID': '', 'Formula': '', 'Method': '', 'Data': [],\
+                'Function': {
+                        'operation': (), 'variables': ()}, }
+
         if len(args) ==1:
             if isinstance(args[0], qu.array_types):
                 data = np.ndarray(len(args[0]))
+                self.info['Data'] = data
                 for index in range(len(args[0])):
                     data[index] = args[0][index]
                 self.mean = data.mean()
@@ -51,10 +61,11 @@ class ExperimentalValue:
         elif len(args)==2:
             if isinstance(args[0], qu.number_types) and isinstance(args[1], qu.number_types):
                 self.mean = float(args[0])
-                self.std = float(args[1])
                 data = np.ndarray(1)
                 error_data = np.ndarray(1)
                 data[0] = self.mean
+                self.info['Data'] = data
+                self.std = float(args[1])
             elif isinstance(args[0], qu.array_types) and isinstance(args[1], qu.array_types):
                 raise TypeError('''Input must be either a single array of values,
                       or the central value and uncertainty in one measurement.
@@ -69,15 +80,6 @@ class ExperimentalValue:
         else:
             raise TypeError('''Input must be either a single array of values,
                   or the central value and uncertainty in one measurement''')
-       
-        self.der = [self.mean, self.std]
-        self.MinMax = [self.mean, self.std]
-        self.MC = [self.mean, self.std]
-        
-        self.info = {
-                'ID': '', 'Formula': '', 'Method': '', 'Data': data,\
-                'Function': {
-                        'operation': (), 'variables': ()}, }
 
         ExperimentalValue.id_register[id(self)] = self
         self.print_style = ExperimentalValue.print_style
@@ -197,6 +199,9 @@ class ExperimentalValue:
     @mean.setter
     def mean(self, mean):
         if(type(mean) in ExperimentalValue.CONSTANT):
+            self.der[0] = mean
+            self.MinMax[0] = mean
+            self.MC[0] = mean
             self._mean = mean
         else:
             print("Mean must be a number")
@@ -209,9 +214,10 @@ class ExperimentalValue:
     @std.setter
     def std(self, std):
         if(type(std) in ExperimentalValue.CONSTANT):
-            self.der = [self.mean, std]
-            self.MinMax = [self.mean, std]
-            self.MC = [self.mean, std]
+            self.der[1] = std
+            self.MinMax[1] = std
+            self.MC[1] = std
+            self._error_on_mean = std/np.sqrt(len(self.get_data_array()))
             self._std = std
         else:
             print("Standard deviation must be a number")
@@ -229,6 +235,7 @@ class ExperimentalValue:
     def error_on_mean(self, error_on_mean):
         if(type(error_on_mean) in ExperimentalValue.CONSTANT):
             self._error_on_mean = error_on_mean
+            self._std = error_on_mean*np.sqrt(len(self.get_data_array()))
         else:
             print("Error on mean must be a number")
             self._error_on_mean = 0
@@ -246,15 +253,15 @@ class ExperimentalValue:
             self._name = 'unnamed_var%d' % (Measurement.id_number)
 
     @property
-    def data_array(self):
-        if self.info['Data'] is None:
-            print('No data array exists.')
-            return None
-        return self.info['Data']
-
-    @property
     def relative_error(self):
-        return self._std/self._mean if self._mean !=0 else 0. 
+        return self.std/self.mean if self.mean !=0 else 0. 
+
+    @relative_error.setter
+    def relative_error(self, rel_error):
+        if(type(rel_error) in qu.number_types):
+            self._std = self.mean*rel_error
+        else:
+            print("Relative error must be a number")
 
     @property
     def error_method(self):
@@ -277,6 +284,12 @@ class ExperimentalValue:
         else:
             print("Method not recognized, using derivative method.")
             self._error_method = "Derivative"
+
+    def get_data_array(self):
+        if self.info['Data'] is None:
+            print('No data array exists.')
+            return None
+        return self.info['Data']
 
     def get_units(self):
         '''Returns the units of the associated Measurement.
@@ -748,7 +761,7 @@ class ExperimentalValue:
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
             for i in range(result.size):
-                result[i]=op.operation_wrap(op.sub, self, other[i])
+                result[i]=op.operation_wrap(op.sub, other[i], self)
                 #result.append(op.operation_wrap(op.sub, value, self))
             return result
         elif type(self) in ExperimentalValue.CONSTANT and\
@@ -850,7 +863,6 @@ class ExperimentalValue:
                 return self.mean == other.mean
             
     def __gt__(self, other):
-        
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean > other
         else:
@@ -862,7 +874,6 @@ class ExperimentalValue:
                 return self.mean > other.mean
             
     def __rgt__(self, other):
-        
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean < other
         else:
@@ -874,7 +885,6 @@ class ExperimentalValue:
                 return self.mean < other.mean 
             
     def __ge__(self, other):
-        
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean >=other
         else:
@@ -886,7 +896,6 @@ class ExperimentalValue:
                 return self.mean >= other.mean
             
     def __rge__(self, other):
-        
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean <= other
         else:
@@ -898,7 +907,6 @@ class ExperimentalValue:
                 return self.mean <= other.mean
             
     def __lt__(self, other):
-        
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean < other
         else:
@@ -909,7 +917,7 @@ class ExperimentalValue:
             else:
                 return self.mean < other.mean
             
-    def __rlt__(self, other):        
+    def __rlt__(self, other):
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean > other
         else:
@@ -921,7 +929,6 @@ class ExperimentalValue:
                 return self.mean > other.mean
             
     def __le__(self, other):
-        
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean <= other
         else:
@@ -932,7 +939,7 @@ class ExperimentalValue:
             else:
                 return self.mean <= other.mean
             
-    def __rle__(self, other):        
+    def __rle__(self, other):
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean >= other
         else:
@@ -1068,6 +1075,7 @@ class Constant(ExperimentalValue):
 class Measurement_Array(np.ndarray):
     ''' A numpy-based array of Measurement objects'''
     id_number = 0
+    _error_method = "Derivative"
     def __new__(subtype, shape, dtype=Measurement, buffer=None, offset=0,
           strides=None, order=None, name = None, units = None, error_method='Derivative'):
         obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
@@ -1164,12 +1172,6 @@ class Measurement_Array(np.ndarray):
                 stds[index] = 0
         return stds
 
-    @property
-    def mean(self):
-        nparr = self.means
-        self._mean = nparr.mean()
-        return self._mean
-
     @stds.setter
     def stds(self, error):
         n = self.size
@@ -1188,6 +1190,12 @@ class Measurement_Array(np.ndarray):
                     self[i].std=error[0]
             else:
                 print("Error list must be the same length as the original list")
+
+    @property
+    def mean(self):
+        nparr = self.means
+        self._mean = nparr.mean()
+        return self._mean
 
     @property
     def error_weighted_mean(self):
@@ -1213,12 +1221,11 @@ class Measurement_Array(np.ndarray):
     def std(self, ddof=1, method="der"):
         '''Return standard deviation of the means of each measurement'''
         nparr = self.means
-        self.std = nparr.std(ddof=ddof)
-        return self.std 
+        return nparr.std(ddof=ddof)
     
-    def get_std(self, ddof=1, method="der"):
-        '''Return standard deviation of the means of each measurement'''
-        return self.std(method)
+    # def get_std(self, ddof=1, method="der"):
+    #     '''Return standard deviation of the means of each measurement'''
+    #     return self.std(ddof)
     
     def get_units_str(self):
         '''Returns a string with the units.
@@ -1261,7 +1268,7 @@ class Measurement_Array(np.ndarray):
             
 def MeasurementArray(data, error=None, name=None, units=None, error_method='Derivative'):
     '''Function to easily construct a Measurement_Array'''
-    
+
     array = Measurement_Array(0, name=name, units=units, error_method='Derivative')
     user_name= True if name != None else False
         
@@ -1709,7 +1716,8 @@ def set_print_style(style=None, sigfigs=None):
         ExperimentalValue.print_style = "Default"
     else:
         print('''A style must be a string of either: Scientific notation,
-        Latex, or the default style. Using ''')
+        Latex, or the default style. Using default.''')
+        ExperimentalValue.print_style = "Default"
 
 # #No longer needed
 # def set_error_method(chosen_method):
