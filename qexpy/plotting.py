@@ -286,8 +286,8 @@ class Plot:
             recall = qe.Measurement.minmax_n
             qe.Measurement.minmax_n=1
             fmes = function(xvals, *(pars))
-            fvals = fmes.get_means()
-            ferr = fmes.get_stds()
+            fvals = fmes.means
+            ferr = fmes.stds
             qe.Measurement.minmax_n=recall
         elif isinstance(pars,(list, np.ndarray)):
             fvals = function(xvals, *pars)
@@ -588,7 +588,7 @@ class Plot:
                                    errorbandfactor=self.errorband_sigma)
             
             if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
-                self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[index].get_means(),
+                self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[index].means,
                                                xerr=dataset.xerr,yerr=dataset.yerr,
                                                fmt='o',color=color,markeredgecolor = 'none')
             
@@ -613,8 +613,8 @@ class Plot:
             recall = qe.Measurement.minmax_n
             qe.Measurement.minmax_n=1
             fmes = function(xvals, *pars)
-            fvals = fmes.get_means()
-            ferr = fmes.get_stds()
+            fvals = fmes.means
+            ferr = fmes.stds
             qe.Measurement.minmax_n=recall
         elif isinstance(pars,(list, np.ndarray)):
             fvals = function(xvals, *pars)
@@ -652,7 +652,7 @@ class Plot:
         
         func = dataset.fit_function[-1]
         pars = dataset.fit_pars[-1]
-        parmeans = pars.get_means()
+        parmeans = pars.means
         fname = "linear"     
         
         #Reset the range
@@ -718,8 +718,8 @@ class Plot:
                 qe.Measurement.minmax_n=1
                 fmes = omes + smes*xvals
                 qe.Measurement.minmax_n=recall
-                fvals = fmes.get_means()
-                ferr = fmes.get_stds()
+                fvals = fmes.means
+                ferr = fmes.stds
             
                 fmax = fvals + ferr
                 fmin = fvals - ferr
@@ -1074,7 +1074,7 @@ class Plot:
         #Extend the x range to 0
         if self.x_range[0] > -0.5:
             self.x_range[0] = -0.5
-            self.y_range[0] = dataset.fit_function[-1](self.x_range[0], *pars.get_means())
+            self.y_range[0] = dataset.fit_function[-1](self.x_range[0], *pars.means)
         
         self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         
@@ -1137,10 +1137,10 @@ class Plot:
             fmes = omes+ smes*xdata
             qe.Measurement.minmax_n=recall
             
-            ymax = fmes.get_means()+fmes.get_stds()
-            ymin = fmes.get_means()-fmes.get_stds()        
+            ymax = fmes.means+fmes.stds
+            ymin = fmes.means-fmes.stds      
             
-            self.linear_fit_line.data_source.data['y'] = fmes.get_means()
+            self.linear_fit_line.data_source.data['y'] = fmes.means
             self.linear_fit_patches.data_source.data['y'] = np.append(ymax,ymin[::-1])
 
             bi.push_notebook()

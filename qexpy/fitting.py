@@ -113,7 +113,8 @@ class XYFitter:
         nz = np.count_nonzero(yerr)
         if nz < ydata.size and nz != 0:
             print("Warning: some errors on data are zero, switching to MC errors")
-            yerr = dataset.y.get_stds(method="MC")
+            dataset.y.error_method="MC"
+            yerr = dataset.y.stds
             #now, check again
             nz = np.count_nonzero(yerr)    
             if nz < ydata.size and nz != 0:
