@@ -128,11 +128,11 @@ class ExperimentalValue:
         Monte Carlo propagation with whatever method is chosen.
         '''
         if self.print_style == "Latex":
-            string = _tex_print(self, method=self.MC)
+            string = _tex_print(self, method="Monte Carlo")
         elif self.print_style == "Default":
-            string = _def_print(self, method=self.MC)
+            string = _def_print(self, method="Monte Carlo")
         elif self.print_style == "Scientific":
-            string = _sci_print(self, method=self.MC)
+            string = _sci_print(self, method="Monte Carlo")
         print(string)
 
     def print_min_max_error(self):
@@ -143,11 +143,11 @@ class ExperimentalValue:
         the Min-Max is the upper bound of the error.
         '''
         if self.print_style == "Latex":
-            string = _tex_print(self, method=self.MinMax)
+            string = _tex_print(self, method="Min Max")
         elif self.print_style == "Default":
-            string = _def_print(self, method=self.MinMax)
+            string = _def_print(self, method="Min Max")
         elif self.print_style == "Scientific":
-            string = _sci_print(self, method=self.MinMax)
+            string = _sci_print(self, method="Min Max")
         print(string)
 
     def print_deriv_error(self):
@@ -158,11 +158,11 @@ class ExperimentalValue:
         the Min-Max is the upper bound of the error.
         '''
         if self.print_style == "Latex":
-            string = _tex_print(self, method=self.der)
+            string = _tex_print(self, method="Derivative")
         elif self.print_style == "Default":
-            string = _def_print(self, method=self.der)
+            string = _def_print(self, method="Derivative")
         elif self.print_style == "Scientific":
-            string = _sci_print(self, method=self.der)
+            string = _sci_print(self, method="Derivative")
         print(string)
 
     def get_derivative(self, variable=None):
@@ -547,7 +547,8 @@ class ExperimentalValue:
         the correlation factor of two measurements is returned.
         '''
         x = self
-        if y.name in x.covariance:
+
+        if y.info['ID'] in x.covariance:
             pass
         else:
             # ExperimentalValue._find_covariance(x, y)
@@ -1719,30 +1720,30 @@ def set_print_style(style=None, sigfigs=None):
         Latex, or the default style. Using default.''')
         ExperimentalValue.print_style = "Default"
 
-# #No longer needed
-# def set_error_method(chosen_method):
-#     '''
-#     Choose the method of error propagation to be used. Enter a string.
+#needed
+def set_error_method(chosen_method):
+    '''
+    Choose the method of error propagation to be used. Enter a string.
 
-#     Function to change default error propogation method used in
-#     measurement functions.
-#     '''
-#     mc_list = (
-#         'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
-#         'monte carlo',)
-#     min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
-#     derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
-#                  'default',)
+    Function to change default error propogation method used in
+    measurement functions.
+    '''
+    mc_list = (
+        'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
+        'monte carlo',)
+    min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
+    derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
+                 'default',)
 
-#     if chosen_method in mc_list:
-#         ExperimentalValue.error_method = "Monte Carlo"
-#     elif chosen_method in min_max_list:
-#         ExperimentalValue.error_method = "Min Max"
-#     elif chosen_method in derr_list:
-#         ExperimentalValue.error_method = "Derivative"
-#     else:
-#         print("Method not recognized, using derivative method.")
-#         ExperimentalValue.error_method = "Derivative"
+    if chosen_method in mc_list:
+        ExperimentalValue._error_method = "Monte Carlo"
+    elif chosen_method in min_max_list:
+        ExperimentalValue._error_method = "Min Max"
+    elif chosen_method in derr_list:
+        ExperimentalValue._error_method = "Derivative"
+    else:
+        print("Method not recognized, using derivative method.")
+        ExperimentalValue._error_method = "Derivative"
 
 
 def set_sigfigs_error(sigfigs=3):
@@ -1809,7 +1810,6 @@ def _return_print_values(variable, method):
     '''
     if isinstance(variable, Constant):
         return (variable.mean, 0,)
-    
     if ExperimentalValue._error_method == 'Derivative':
         [mean, std] = variable.der
     elif ExperimentalValue._error_method == 'Monte Carlo':
@@ -1818,11 +1818,11 @@ def _return_print_values(variable, method):
         [mean, std] = variable.MinMax
 
     if method is not None:
-        if ExperimentalValue._error_method is 'Derivative':
+        if method is 'Derivative':
             [mean, std] = variable.der
-        elif ExperimentalValue._error_method is 'Monte Carlo':
+        elif method is 'Monte Carlo':
             [mean, std] = variable.MC
-        elif ExperimentalValue._error_method is 'Min Max':
+        elif method is 'Min Max':
             [mean, std] = variable.MinMax
     return (mean, std,)
 
@@ -1885,6 +1885,7 @@ def _def_print(self, method=None):
     to either the first non-zero digit of error or to a specified number of
     significant figures.
     '''
+    method = self.error_method if not method else method
     mean, std = _return_print_values(self, method)
 
     if ExperimentalValue.figs is not None and\
@@ -2085,29 +2086,6 @@ def _variance(*args, ddof=1):
     mean = Sum/N
 
     return (mean, std, )
-
-def set_error_method(chosen_method):
-    '''
-    Choose the method of error propagation to be used. Enter a string.
-    Function to change default error propogation method used in
-    measurement functions.
-    '''
-    mc_list = (
-        'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
-        'monte carlo',)
-    min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
-    derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
-                 'default',)
-
-    if chosen_method in mc_list:
-        ExperimentalValue.error_method = "Monte Carlo"
-    elif chosen_method in min_max_list:
-        ExperimentalValue.error_method = "Min Max"
-    elif chosen_method in derr_list:
-        ExperimentalValue.error_method = "Derivative"
-    else:
-        print("Method not recognized, using derivative method.")
-        ExperimentalValue.error_method = "Derivative"
 
 def _weighted_variance(mean, std, ddof=1):
     from math import sqrt

@@ -8,7 +8,7 @@ from qexpy.defaults import settings
 
 #Error propagation
 from qexpy.error import Measurement, MeasurementArray,\
-                        set_print_style, set_sigfigs_centralvalue, set_sigfigs_error, set_sigfigs, \
+                        set_print_style, set_sigfigs_centralvalue, set_sigfigs_error, set_sigfigs, set_error_method, \
                         sqrt, sin, cos, tan, sec, csc, cot, log, exp, e, asin, acos, atan
         
 
