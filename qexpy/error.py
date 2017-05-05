@@ -2086,6 +2086,28 @@ def _variance(*args, ddof=1):
 
     return (mean, std, )
 
+def set_error_method(chosen_method):
+    '''
+    Choose the method of error propagation to be used. Enter a string.
+    Function to change default error propogation method used in
+    measurement functions.
+    '''
+    mc_list = (
+        'MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
+        'monte carlo',)
+    min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
+    derr_list = ('Derivative', 'derivative', 'diff', 'der', 'Default',
+                 'default',)
+
+    if chosen_method in mc_list:
+        ExperimentalValue.error_method = "Monte Carlo"
+    elif chosen_method in min_max_list:
+        ExperimentalValue.error_method = "Min Max"
+    elif chosen_method in derr_list:
+        ExperimentalValue.error_method = "Derivative"
+    else:
+        print("Method not recognized, using derivative method.")
+        ExperimentalValue.error_method = "Derivative"
 
 def _weighted_variance(mean, std, ddof=1):
     from math import sqrt
