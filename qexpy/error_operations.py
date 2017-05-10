@@ -368,6 +368,7 @@ def monte_carlo(func, *args):
     n = e.ExperimentalValue.mc_trial_number
     value = np.zeros((N, n))
     result = np.zeros(n)
+    rand = np.zeros((N, n))
     for i in range(N):
         if args[i].MC_list is not None:
             value[i] = args[i].MC_list
@@ -376,13 +377,19 @@ def monte_carlo(func, *args):
             args[i].MC_list = value[i]
         else:
             #value[i] = np.random.normal(args[i].mean, args[i].std, n)
-            value[i] = np.random.normal(args[i].MC[0], args[i].MC[1], n)
-            args[i].MC_list = value[i]
+            rand[i] = np.random.normal(size=n)
+            norm1 = args[0].MC[0]+args[0].MC[1]*rand[0]
+            args[0].MC_list = norm1
+            value[0] = norm1
 
     if len(args) == 2:
         rho = args[0]._get_correlation(args[1])
-        value[1] = rho*value[1] + np.sqrt(1-rho*rho)*value[1]
+        factor = rho*rand[0] + np.sqrt(1-rho*rho)*rand[1]
+        rand[i] = np.random.normal(size = n)
+        value[1] = args[1].MC[0]+np.random.normal(0, args[1].MC[1], n)*factor
 
+    #print(value)
+    print()
     result = _np_func[func](*value)
     data = np.mean(result)
     error = np.std(result, ddof=1)
@@ -421,7 +428,6 @@ def operation_wrap(operation, *args, func_flag=False):
     result.der = [mean, std]
     result.MinMax = find_minmax(operation, *args)
     result.MC, result.MC_list = monte_carlo(operation, *args)
-
     
     #TODO: This is wrong: should not keep changing the mean and std
     # the error method should only change this on a print!!!
@@ -456,8 +462,8 @@ def operation_wrap(operation, *args, func_flag=False):
 
     result.derivative.update(df)
     result._update_info(operation, *args, func_flag=func_flag)
-    return result
 
+    return result
 
 diff = {
         sqrt: lambda key, x: (0. if x.mean ==0 else 0.5/m.sqrt(x.mean)*x.derivative[key]),
