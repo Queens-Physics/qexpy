@@ -383,6 +383,8 @@ class ExperimentalValue:
             print('Histogram title must be a string.')
             hist_title = self.name+' Histogram'
 
+        MC_mean, MC_std = self.MC
+
         p1 = bp.figure(title=hist_title, tools='''save, pan, box_zoom,
                        wheel_zoom, reset''',
                        background_fill_color="#FFFFFF")
@@ -399,10 +401,10 @@ class ExperimentalValue:
             p.y_range_margin=hist.max()*0.2
             p.y_range[0]=0.
             
-            p.mpl_plot([self.mean]*2, [0, hist.max()*1.1],color='red',lw=2)
-            p.mpl_plot([self.mean-self.std]*2, [0, hist.max()], color='red',
+            p.mpl_plot([MC_mean]*2, [0, hist.max()*1.1],color='red',lw=2)
+            p.mpl_plot([MC_mean-MC_std]*2, [0, hist.max()], color='red',
                 ls='--', lw=2)
-            p.mpl_plot([self.mean+self.std]*2, [0, hist.max()], color='red',
+            p.mpl_plot([MC_mean+MC_std]*2, [0, hist.max()], color='red',
                 ls='--', lw=2)
             
             p.show(refresh=False)
@@ -411,10 +413,10 @@ class ExperimentalValue:
             p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                     fill_color="#036564", line_color="#033649")
 
-            p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
-            p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
+            p1.line([MC_mean]*2, [0, hist.max()*1.1], line_color='red')
+            p1.line([MC_mean-MC_std]*2, [0, hist.max()], line_color='red',
                     line_dash='dashed')
-            p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
+            p1.line([MC_mean+MC_std]*2, [0, hist.max()], line_color='red',
                 line_dash='dashed')
     
             if output == 'file' or not qu.in_notebook():
