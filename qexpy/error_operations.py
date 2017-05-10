@@ -376,10 +376,8 @@ def monte_carlo(func, *args):
             value[i] = args[i].mean
             args[i].MC_list = value[i]
         else:
-            #value[i] = np.random.normal(args[i].mean, args[i].std, n)
             rand[i] = np.random.normal(size=n)
             norm1 = args[0].MC[0]+args[0].MC[1]*rand[0]
-            args[0].MC_list = norm1
             value[0] = norm1
 
     if len(args) == 2:
@@ -388,8 +386,6 @@ def monte_carlo(func, *args):
         rand[i] = np.random.normal(size = n)
         value[1] = args[1].MC[0]+np.random.normal(0, args[1].MC[1], n)*factor
 
-    #print(value)
-    print()
     result = _np_func[func](*value)
     data = np.mean(result)
     error = np.std(result, ddof=1)
