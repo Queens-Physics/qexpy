@@ -304,6 +304,7 @@ class XYDataSet:
         self.yname = self.y.name
         
         self.is_histogram=is_histogram
+        self.bins = bins
         
         if self.x.size != self.y.size:
             print("Error: x and y data should have the same number of points")

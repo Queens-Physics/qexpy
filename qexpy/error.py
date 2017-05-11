@@ -307,7 +307,7 @@ class ExperimentalValue:
                     unit_string = 'unitless'
         return unit_string
     
-    def show_histogram(self, bins=50, title=None, output='inline'):
+    def show_histogram(self, bins=50, color="#036564", title=None, output='inline'):
         '''Creates a histogram of the inputted data using Bokeh.
         '''
         if self.info['Data'] is None:
@@ -321,57 +321,30 @@ class ExperimentalValue:
         else:
             print('Histogram title must be a string.')
             hist_title = self.name+' Histogram'                     
-            
-        hist, edges = np.histogram(self.info['Data'], bins=bins)
         
-        if q.plot_engine in q.plot_engine_synonyms["mpl"]:              
-            p = q.MakePlot(q.XYDataSet(self.info['Data'],
-                                     data_name=hist_title,
-                                     is_histogram=True, bins=bins))
-            p.datasets_colors[-1]='blue'
-            
-            p.x_range_margin=edges[1]-edges[0]
-            p.y_range_margin=hist.max()*0.2
-            p.y_range[0]=0.
-            
-            p.mpl_plot([self.mean]*2, [0, hist.max()*1.1],color='red',lw=2)
-            p.mpl_plot([self.mean-self.std]*2, [0, hist.max()], color='red',
-                ls='--', lw=2)
-            p.mpl_plot([self.mean+self.std]*2, [0, hist.max()], color='red',
-                ls='--', lw=2)
-            
-            p.show(refresh=False)
-            return p
-        else:
-        
-            p1 = bp.figure(title=hist_title, tools='save, pan, box_zoom, wheel_zoom, reset',
-                    background_fill_color="#FFFFFF")
+        data_arr = self.info['Data']
 
-            p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                fill_color="#036564", line_color="#033649")
+        data = q.XYDataSet(xdata = data_arr, is_histogram = True, data_name=hist_title)
+        fig = q.MakePlot()
+        fig.add_dataset(data, color = color)
+        fig.x_range = [min(data_arr)*.95,max(data_arr)*1.05]
+        fig.y_range = [0,max(data.ydata)*1.2]
 
-            p1.line([self.mean]*2, [0, hist.max()*1.1], line_color='red')
-            p1.line([self.mean-self.std]*2, [0, hist.max()], line_color='red',
-                line_dash='dashed')
-            p1.line([self.mean+self.std]*2, [0, hist.max()], line_color='red',
-                line_dash='dashed')
-        
-            if output =='file' or not qu.in_notebook():
-                bi.output_file(self.name+' histogram.html', title=hist_title)
-            elif not qu.bokeh_ouput_notebook_called:
-                bi.output_notebook()
-                #This must be the first time calling output_notebook,
-                #keep track that it's been called:
-                qu.bokeh_ouput_notebook_called = True
-            
-            bp.show(p1)
-            return p1
+        mean = self.mean
+        std = self.std
+        fig.add_line(x=mean, dashed=False, color='red')
+        fig.add_line(x=mean+std, dashed=True, color='red')
+        fig.add_line(x=mean-std, dashed=True, color='red')
+
+        fig.show()
+        return fig
     
-    def show_MC_histogram(self, bins=50, title=None, output='inline'):
+    def show_MC_histogram(self, bins=50, color="#036564", title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
         calculated by a Monte Carlo error propagation.
         '''
-        if self.MC_list is None:
+        MC_data = self.MC_list
+        if MC_data is None:
             print("no MC data to histogram")
             return None
 
@@ -383,52 +356,19 @@ class ExperimentalValue:
             print('Histogram title must be a string.')
             hist_title = self.name+' Histogram'
 
+        data = q.XYDataSet(xdata = MC_data, is_histogram = True, data_name=hist_title)
+        fig = q.MakePlot()
+        fig.add_dataset(data, color = color)
+        fig.x_range = [min(MC_data)*.95,max(MC_data)*1.05]
+        fig.y_range = [0,max(data.ydata)*1.2]
+
         MC_mean, MC_std = self.MC
+        fig.add_line(x=MC_mean, dashed=False, color='red')
+        fig.add_line(x=MC_mean+MC_std, dashed=True, color='red')
+        fig.add_line(x=MC_mean-MC_std, dashed=True, color='red')
 
-        p1 = bp.figure(title=hist_title, tools='''save, pan, box_zoom,
-                       wheel_zoom, reset''',
-                       background_fill_color="#FFFFFF")
-
-        hist, edges = np.histogram(self.MC_list, bins=bins)
-        
-        if q.plot_engine in q.plot_engine_synonyms["mpl"]:              
-            p = q.MakePlot(q.XYDataSet(self.MC_list,
-                                     data_name=hist_title,
-                                     is_histogram=True, bins=bins))
-            p.datasets_colors[-1]='blue'
-            
-            p.x_range_margin=edges[1]-edges[0]
-            p.y_range_margin=hist.max()*0.2
-            p.y_range[0]=0.
-            
-            p.mpl_plot([MC_mean]*2, [0, hist.max()*1.1],color='red',lw=2)
-            p.mpl_plot([MC_mean-MC_std]*2, [0, hist.max()], color='red',
-                ls='--', lw=2)
-            p.mpl_plot([MC_mean+MC_std]*2, [0, hist.max()], color='red',
-                ls='--', lw=2)
-            
-            p.show(refresh=False)
-            return p
-        else:
-            p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                    fill_color="#036564", line_color="#033649")
-
-            p1.line([MC_mean]*2, [0, hist.max()*1.1], line_color='red')
-            p1.line([MC_mean-MC_std]*2, [0, hist.max()], line_color='red',
-                    line_dash='dashed')
-            p1.line([MC_mean+MC_std]*2, [0, hist.max()], line_color='red',
-                line_dash='dashed')
-    
-            if output == 'file' or not qu.in_notebook():
-                bi.output_file(self.name+' histogram.html', title=hist_title)
-            elif not qu.bokeh_ouput_notebook_called:
-                bi.output_notebook()
-                # This must be the first time calling output_notebook,
-                # keep track that it's been called:
-                qu.bokeh_ouput_notebook_called = True
-
-            bp.show(p1)
-        return p1
+        fig.show()
+        return fig
 
     def show_error_contribution(self, title=None, output='inline'):
 
@@ -2069,6 +2009,10 @@ def _sci_print(self, method=None):
 def show_histogram(data, title=None, output='inline'):
     '''Creates a histogram of the inputted data using Bokeh.
     '''
+    if type(data) not in ARRAY:
+        print('''Input histogram data must be an array''')
+        return
+
     if type(title) is str:
         hist_title = title
     elif title is None:
@@ -2079,30 +2023,20 @@ def show_histogram(data, title=None, output='inline'):
 
     mean, std = _variance(data)
 
-    p1 = bp.figure(title=hist_title, tools="save",
-                   background_fill_color="#FFFF")
+    xy_data = q.XYDataSet(xdata = data, is_histogram = True, data_name=hist_title)
+    fig = q.MakePlot()
+    fig.add_dataset(xy_data, color = color)
+    fig.x_range = [min(data)*.95,max(data)*1.05]
+    fig.y_range = [0,max(xy_data.ydata)*1.2]
 
-    hist, edges = np.histogram(data, bins=50)
+    mean = self.mean
+    std = self.std
+    fig.add_line(x=mean, dashed=False, color='red')
+    fig.add_line(x=mean+std, dashed=True, color='red')
+    fig.add_line(x=mean-std, dashed=True, color='red')
 
-    p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-            fill_color="#036564", line_color="#033649")
-
-    p1.line([mean]*2, [0, hist.max()*1.05], line_color='red',
-            line_dash='dashed')
-    p1.line([mean-std]*2, [0, hist.max()*1.1], line_color='red',
-            line_dash='dashed')
-    p1.line([mean+std]*2, [0, hist.max()*1.1], line_color='red',
-            line_dash='dashed')
-
-    if output == 'inline':
-        bp.output_notebook()
-    elif output == 'file':
-        bp.output_file(hist_title+' histogram.html', title=hist_title)
-    else:
-        print('''Output must be either "file" or "inline", using "file"
-              by default.''')
-        bp.output_file(hist_title+' histogram.html', title=hist_title)
-    bp.show(p1)
+    fig.show()
+    return fig
 
 
 def numerical_partial_derivative(func, var, *args):

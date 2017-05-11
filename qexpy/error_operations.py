@@ -384,7 +384,7 @@ def monte_carlo(func, *args):
         rho = args[0]._get_correlation(args[1])
         factor = rho*rand[0] + np.sqrt(1-rho*rho)*rand[1]
         rand[i] = np.random.normal(size = n)
-        value[1] = args[1].MC[0]+np.random.normal(0, args[1].MC[1], n)*factor
+        value[1] = args[1].MC[0]+(np.random.normal(0, args[1].MC[1], n)*factor if args[1].MC[1] else 0)
 
     result = _np_func[func](*value)
     data = np.mean(result)
