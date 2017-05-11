@@ -4,6 +4,7 @@ import qexpy as q
 import qexpy.error as qe
 import qexpy.utils as qu
 from math import pi
+import re
 
 ARRAY = qu.array_types
 
@@ -38,9 +39,9 @@ def Rgauss(x, *pars):
 class XYFitter:
     '''A class to fit an XYDatatset to a function/model using scipy.optimize'''
     
-    def __init__(self, model = None, parguess=None):
+    def __init__(self, model = None, parguess=None, name=None):
         self.xydataset=None   
-        self.initialize_fit_function(model, parguess)
+        self.initialize_fit_function(model, parguess, name)
         
     def set_fit_func(self, func, npars, funcname=None, parguess=None):
         '''Set the fit function and the number of parameter, given
@@ -56,7 +57,7 @@ class XYFitter:
                 
         #self.fit_pars = MeasurementArray(self.fit_npars)
            
-    def initialize_fit_function(self, model=None, parguess=None):
+    def initialize_fit_function(self, model=None, parguess=None, name=None):
         '''Set the model and parameter guess'''
         
         wlinear = ('linear', 'Linear', 'line', 'Line',)
@@ -64,22 +65,33 @@ class XYFitter:
         wexponential = ('exponential', 'Exponential', 'exp', 'Exp',)
         
         if model is None:
-            self.set_fit_func(func=Rlinear,npars=2,funcname="linear",parguess=parguess)
+            fit_name = name if name else 'linear' 
+            self.set_fit_func(func=Rlinear,npars=2,funcname=fit_name,parguess=parguess)
                 
         elif isinstance(model, str):
             if model in wlinear:
-                self.set_fit_func(func=Rlinear,npars=2,funcname="linear",parguess=parguess)
+                fit_name = name if name else 'linear' 
+                self.set_fit_func(func=Rlinear,npars=2,funcname=fit_name,parguess=parguess)
             elif model in wgaussian:
-                self.set_fit_func(func=Rgauss,npars=3,funcname="gaussian",parguess=parguess) 
+                fit_name = name if name else 'gaussian' 
+                self.set_fit_func(func=Rgauss,npars=3,funcname=fit_name,parguess=parguess) 
             elif model in wexponential:
-                self.set_fit_func(func=Rexp,npars=2,funcname="exponential",parguess=parguess) 
+                fit_name = name if name else 'exponential' 
+                self.set_fit_func(func=Rexp,npars=2,funcname=fit_name,parguess=parguess) 
             elif 'pol' in model or 'Pol' in model:
-                #TODO change this to regex, as it would not catch a poly of order 10 or bigger
-                degree = int(model[len(model)-1]) + 1
-                self.set_fit_func(func=Rpolynomial,npars=degree,funcname="polynomial",parguess=parguess)
+                match = re.findall('[0-9]+$', model)
+                if len(match):
+                    degree = int(match[0])+1
+                else:
+                    print('''Please provide the degree of the polynomial at the end of the string,
+                             using linear by default.''')
+                    degree = 2
+                fit_name = name if name else 'degree_{}_polynomial'.format(degree-1)
+                self.set_fit_func(func=Rpolynomial,npars=degree,funcname=fit_name,parguess=parguess)
             else:
                 print("Unrecognized model string: "+model+", defaulting to linear")
-                self.set_fit_func(func=Rlinear,npars=2,funcname="linear",parguess=parguess)
+                fit_name = name if name else 'linear' 
+                self.set_fit_func(func=Rlinear,npars=2,funcname=fit_name,parguess=parguess)
         else:
             import inspect
             if not inspect.isfunction(model):
@@ -98,7 +110,7 @@ class XYFitter:
             
             self.set_fit_func(func=model, npars=len(parguess), funcname="custom", parguess=parguess)
 
-    def fit(self, dataset, fit_range=None, fit_count=0):
+    def fit(self, dataset, fit_range=None, fit_count=0, name=None):
         ''' Perform a fit of the fit_function to a data set'''
         if self.fit_function is None:
             print("Error: fit function not set!")
@@ -325,11 +337,11 @@ class XYDataSet:
         self.fit_color = []
         self.nfits=0
         
-    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None):
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None, name=None):
         '''Fit a data set to a model using XYFitter. Everytime this function
         is called on a data set, it adds a new XYFitter to the dataset. This
         is to allow multiple functions to be fit to the same data set'''
-        fitter = XYFitter(model=model, parguess=parguess)
+        fitter = XYFitter(model=model, parguess=parguess, name=name)
         fit_pars = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
         if(fit_pars is not None):
             self.xyfitter.append(fitter)

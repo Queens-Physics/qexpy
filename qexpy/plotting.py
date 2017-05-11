@@ -224,10 +224,10 @@ class Plot:
                 self.yres_range = [min(yr[0], self.yres_range[0]), max(yr[1], self.yres_range[1])]               
         
     def fit(self, model=None, parguess=None, fit_range=None, print_results=True,
-            datasetindex=-1, fitcolor=None):
+            datasetindex=-1, fitcolor=None, name=None):
         '''Fit a dataset to model - calls XYDataset.fit and returns a 
         Measurement_Array of fitted parameters'''
-        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor) 
+        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor, name=name) 
         return results
         
     def print_fit_parameters(self, dataset=-1):
