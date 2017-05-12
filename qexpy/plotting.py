@@ -472,7 +472,7 @@ class Plot:
             self.mpl_plot_function(function=func, xdata=xvals,pars=pars, n=q.settings["plot_fcn_npoints"],
                                legend_name= fname, color=color,
                                errorbandfactor=self.errorband_sigma)
-        
+        # Adds lines to the plot
         if self.lines['x'] or self.lines['y']:
             self.mpl_add_lines(self.lines)
 
@@ -524,7 +524,7 @@ class Plot:
         self.mplfigure_main_ax.grid()  
 
     def mpl_add_lines(self, lines):
-        '''Adds vertical and horizontal lines to an mpl plot'''
+        '''Adds vertical and horizontal lines to an mpl plot.'''
         if not hasattr(self, 'mplfigure_main_ax'):
             self.initialize_mpl_figure()
 
@@ -971,6 +971,7 @@ class Plot:
                                legend_name= fname, color=color,
                                errorbandfactor=self.errorband_sigma)
 
+        # Adds lines to the plot
         if self.lines['x'] or self.lines['y']:
             self.bk_add_lines(self.lines)
 
@@ -1014,7 +1015,7 @@ class Plot:
             return self.bkres
         
     def bk_add_lines(self, lines):
-        '''Adds vertical and horizontal lines to a Bokeh plot'''
+        '''Adds vertical and horizontal lines to a Bokeh plot.'''
         if not hasattr(self, 'bkfigure'):
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
 
@@ -1203,6 +1204,3 @@ class Plot:
             self.linear_fit_patches.data_source.data['y'] = np.append(ymax,ymin[::-1])
 
             bi.push_notebook()
-
-            
-        

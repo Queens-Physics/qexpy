@@ -10,8 +10,7 @@ import qexpy as q
 
 
 class ExperimentalValue:
-    '''
-    Root class of objects which containt a mean and standard deviation.
+    '''Root class of objects which containt a mean and standard deviation.
     From this class, objects with properties pertaining to their use or
     formulation can be instanced. (ie. the result of an operation of
     measured values, called Funciton and Measured respectivly)
@@ -33,8 +32,7 @@ class ExperimentalValue:
     ARRAY = qu.array_types #(list, tuple, ndarray)
 
     def __init__(self, *args, name=None):
-        '''
-        Creates a variable that contains a mean, standard deviation,
+        '''Creates a variable that contains a mean, standard deviation,
         and name for inputted data.
         '''
         self.der = [0, 0]
@@ -97,9 +95,7 @@ class ExperimentalValue:
 ###############################################################################
 
     def __str__(self):
-        '''
-        Method called when printing measurement objects.
-        '''
+        '''Method called when printing measurement objects.'''
         if self.user_name:
             string = self.name+' = '
         else:
@@ -166,8 +162,7 @@ class ExperimentalValue:
         print(string)
 
     def get_derivative(self, variable=None):
-        '''
-        Returns the numerical value of the derivative with respect to the
+        '''Returns the numerical value of the derivative with respect to the
         inputed variable.
 
         Function to find the derivative of a measurement or measurement like
@@ -179,7 +174,7 @@ class ExperimentalValue:
         if variable is not None \
                 and type(variable) is not Measurement:
             print('''The derivative of a Measurement with respect to anything
-                  other than a Measuremnt is zero.''')
+                  other than a Measurement is zero.''')
             return 0
 
         elif variable is None:
@@ -194,10 +189,14 @@ class ExperimentalValue:
 
     @property
     def mean(self):
+        '''Returns the mean of a Measurement object.
+        '''
         return self._mean
 
     @mean.setter
     def mean(self, mean):
+        '''Sets the mean of a Measurement object.
+        '''
         if(type(mean) in ExperimentalValue.CONSTANT):
             self.der[0] = mean
             self.MinMax[0] = mean
@@ -209,10 +208,14 @@ class ExperimentalValue:
 
     @property
     def std(self):
+        '''Returns the standard deviation of a Measurement object.
+        '''
         return self._std
 
     @std.setter
     def std(self, std):
+        '''Sets the standard deviation of a Measurement object.
+        '''
         if(type(std) in ExperimentalValue.CONSTANT):
             self.der[1] = std
             self.MinMax[1] = std
@@ -225,6 +228,8 @@ class ExperimentalValue:
 
     @property
     def error_on_mean(self):
+        '''Returns the error on the mean of a Measurement object.
+        '''
         if self._error_on_mean:
             return self._error_on_mean
         else:
@@ -233,6 +238,8 @@ class ExperimentalValue:
 
     @error_on_mean.setter
     def error_on_mean(self, error_on_mean):
+        '''Sets the error on the mean of a Measurement object.
+        '''
         if(type(error_on_mean) in ExperimentalValue.CONSTANT):
             self._error_on_mean = error_on_mean
             self._std = error_on_mean*np.sqrt(len(self.get_data_array()))
@@ -242,10 +249,14 @@ class ExperimentalValue:
 
     @property
     def name(self):
+        '''Returns the name of a Measurement object.
+        '''
         return self._name
 
     @name.setter
     def name(self, name):
+        '''Sets the name of a Measurement object.
+        '''
         if isinstance(name, str):
             self._name = name
         else:
@@ -254,10 +265,14 @@ class ExperimentalValue:
 
     @property
     def relative_error(self):
+        '''Returns the relative error (error/mean) of a Measurement object.
+        '''
         return self.std/self.mean if self.mean !=0 else 0. 
 
     @relative_error.setter
     def relative_error(self, rel_error):
+        '''Sets the relative error (error/mean) of a Measurement object.
+        '''
         if(type(rel_error) in qu.number_types):
             self._std = self.mean*rel_error
         else:
@@ -265,10 +280,16 @@ class ExperimentalValue:
 
     @property
     def error_method(self):
+        '''Returns the method (Monte Carlo, derivative or min max) 
+        used to calculate error of a Measurement object.
+        '''
         return self._error_method
 
     @error_method.setter
     def error_method(self, method):
+        '''Sets the method (Monte Carlo, derivative or min max) 
+        used to calculate error of a Measurement object.
+        '''
         mc_list = ('MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
                    'monte carlo',)
         min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
@@ -286,6 +307,8 @@ class ExperimentalValue:
             self._error_method = "Derivative"
 
     def get_data_array(self):
+        '''Returns the underlying data array used to create the Measurement object.
+        '''
         if self.info['Data'] is None:
             print('No data array exists.')
             return None
@@ -308,7 +331,7 @@ class ExperimentalValue:
         return unit_string
     
     def show_histogram(self, bins=50, color="#036564", title=None, output='inline'):
-        '''Creates a histogram of the inputted data using Bokeh.
+        '''Creates a histogram of the inputted data using Bokeh or mpl.
         '''
         if self.info['Data'] is None:
             print("no data to histogram")
@@ -341,7 +364,7 @@ class ExperimentalValue:
     
     def show_MC_histogram(self, bins=50, color="#036564", title=None, output='inline'):
         '''Creates and shows a Bokeh plot of a histogram of the values
-        calculated by a Monte Carlo error propagation.
+        calculated by Monte Carlo error simulation.
         '''
         MC_data = self.MC_list
         if MC_data is None:
@@ -362,6 +385,7 @@ class ExperimentalValue:
         fig.x_range = [min(MC_data)*.95,max(MC_data)*1.05]
         fig.y_range = [0,max(data.ydata)*1.2]
 
+        # Adds a line at the mean and at the range corresponding to 68% coverage.
         MC_mean, MC_std = self.MC
         fig.add_line(x=MC_mean, dashed=False, color='red')
         fig.add_line(x=MC_mean+MC_std, dashed=True, color='red')
@@ -371,10 +395,16 @@ class ExperimentalValue:
         return fig
 
     def show_error_contribution(self, title=None, output='inline'):
-
+        '''Creates and shows a Bokeh or mpl plot of a histogram of the relative
+        contribution of individual measurements to the variance of a calculated value.
+        '''
         terms = {}
         formula = self.info['Formula']
 
+        # For each measurement that goes into the calculation, evaluate the calculation
+        # at that measurement +/- the std. Take the output of that and do .5*(output-mean)^2.
+        # Add the +std and -std term. 
+        # This process is described in this paper: http://pubs.acs.org/doi/abs/10.1021/ed1004307 
         for i in self.root:
             maxx = formula
             minn = formula
@@ -398,13 +428,14 @@ class ExperimentalValue:
             names.append(k)
             vals.append(v)
 
+        # Change the absolute terms into relative terms.
         summ = sum(vals)
         for index in range(N):
             vals[index] = vals[index]/summ
 
+        # Add spacing to make the histogram look like a bar chart.
         new_vals = []
         new_names = []
-
         for index in range(N):
             new_vals.append(vals[index])
             new_vals.append(0)
@@ -415,7 +446,7 @@ class ExperimentalValue:
         data = q.XYDataSet(xdata=np.arange(2*N-1), ydata=new_vals, is_histogram = True, bins=N,
                     data_name='Relative contribution to variance of {}'.format(self.name))
 
-        # Populates the mpl figure in case it is plotted
+        # Populates the mpl figure in case it is plotted.
         fig = q.MakePlot()
         fig.add_dataset(data, color='blue')
         fig.x_range = [-1,2*N-1]
@@ -425,8 +456,9 @@ class ExperimentalValue:
         fig.mplfigure_main_ax.axes.set_xticklabels(new_names)
         fig.mplfigure_main_ax.axes.grid(False, which='both', axis='x')
 
-        # Populates the boken figure in case it is plotted
-        # The messy stuff comes from the fact that mpl boxes, mpl labels and bokeh boxes are 0-indexed, but mpl labels are 1 indexed
+        # Populates the boken figure in case it is plotted.
+        # The messy stuff comes from the fact that mpl boxes, 
+        # mpl labels and bokeh boxes are 0-indexed, but mpl labels are 1 indexed.
         fig.axes['xscale'] = 'auto'
         fig.datasets[0].ydata = np.insert(fig.datasets[0].ydata, [0, 0, 2*N-1], [0, 0, 0])
         fig.datasets[0].xdata = np.append(fig.datasets[0].xdata, [2*N-1, 2*N, 2*N+1])
@@ -436,6 +468,7 @@ class ExperimentalValue:
         fig.bkfigure.xaxis.major_tick_line_color = None
         fig.bkfigure.xaxis.minor_tick_line_color = None
 
+        # Will use whatever plotting engine is in use.
         fig.show(populate_figure=False, refresh = True)
 
 ###############################################################################
@@ -443,8 +476,7 @@ class ExperimentalValue:
 ###############################################################################
 
     def _find_covariance(x, y):
-        '''
-        Uses the data from which x and y were generated to calculate
+        '''Uses the data from which x and y were generated to calculate
         covariance and add this informaiton to x and y.
 
         Requires data arrays to be stored in the .info of both objects
@@ -487,8 +519,7 @@ class ExperimentalValue:
         y.correlation[x.info['ID']] = factor
 
     def set_correlation(self, y, factor):
-        '''
-        Manually set the correlation between two quantities
+        '''Manually set the correlation between two quantities
 
         Given a correlation factor, the covariance and correlation
         between two variables is added to both objects.
@@ -497,8 +528,8 @@ class ExperimentalValue:
             raise ValueError('Correlation factor must be between -1 and 1.')
 
         x = self
-        ro_xy = factor
-        sigma_xy = ro_xy*x.std*y.std
+        rho_xy = factor
+        sigma_xy = rho_xy*x.std*y.std
 
         x.correlation[y.info['ID']] = factor
         y.correlation[x.info['ID']] = factor
@@ -507,8 +538,7 @@ class ExperimentalValue:
         y.covariance[x.info['ID']] = sigma_xy
 
     def set_covariance(self, y, sigma_xy):
-        '''
-        Manually set the covariance between two quantities
+        '''Manually set the covariance between two quantities
 
         Given a covariance value, the covariance and correlation
         between two variables is added to both objects.
@@ -527,8 +557,7 @@ class ExperimentalValue:
         y.covariance[x.info['ID']] = sigma_xy
 
     def get_covariance(self, variable):
-        '''
-        Returns the covariance of the object and a specified variable.
+        '''Returns the covariance of the object and a specified variable.
 
         This funciton checks for the existance of a data array in each
         object and that the covariance of the two objects is not already
@@ -550,8 +579,7 @@ class ExperimentalValue:
             return 0
 
     def _get_correlation(self, y):
-        '''
-        Returns the correlation factor of two measurements.
+        '''Returns the correlation factor of two measurements.
 
         Using the covariance, or finding the covariance if not defined,
         the correlation factor of two measurements is returned.
@@ -581,8 +609,7 @@ class ExperimentalValue:
 ###############################################################################
 
     def rename(self, newName=None, units=None):
-        '''
-        Renames an object, requires a string.
+        '''Renames an object, requires a string.
         '''
         if newName is not None:
             self.name = newName
@@ -697,6 +724,12 @@ class ExperimentalValue:
     ###########################################################################
 
     def __add__(self, other):
+        '''Handles addition with Measurements.
+
+        Ensures that the two objects can be added and then sends them to 
+        error_operations.operation_wrap, which handles the addition and
+        error propagation.
+        '''
         #TODO: is this the correct implementation??? or should ARRAy create an ndarray???
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
@@ -712,6 +745,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __radd__(self, other):
+        '''Handles addition with Measurements.
+
+        Ensures that the two objects can be added and then sends them to 
+        error_operations.operation_wrap, which handles the addition and
+        error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -726,6 +765,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.add, self, other)
 
     def __mul__(self, other):
+        '''Handles multiplication with Measurements.
+
+        Ensures that the two objects can be multiplied and then sends them to 
+        error_operations.operation_wrap, which handles the multiplication and
+        error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -740,6 +785,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __rmul__(self, other):
+        '''Handles multiplication with Measurements.
+
+        Ensures that the two objects can be multiplied and then sends them to 
+        error_operations.operation_wrap, which handles the multiplication and
+        error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -754,6 +805,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.mul, self, other)
 
     def __sub__(self, other):
+        '''Handles subtraction with Measurements.
+
+        Ensures that the object can be subtracted and then sends them to 
+        error_operations.operation_wrap, which handles the subtraction and
+        error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -768,6 +825,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, self, other)
 
     def __rsub__(self, other):
+        '''Handles subtraction with Measurements.
+
+        Ensures that the object can be subtracted and then sends them to 
+        error_operations.operation_wrap, which handles the subtraction and
+        error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -782,6 +845,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.sub, other, self)
 
     def __truediv__(self, other):
+        '''Handles division with Measurements.
+
+        Ensures that the object can be divided by and then sends them to 
+        error_operations.operation_wrap, which handles the division and
+        error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -796,6 +865,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, self, other)
 
     def __rtruediv__(self, other):
+        '''Handles division with Measurements.
+
+        Ensures that the object can be divided by and then sends them to 
+        error_operations.operation_wrap, which handles the division and
+        error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -810,6 +885,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.div, other, self)
 
     def __pow__(self, other):
+        '''Handles exponentiation with Measurements.
+
+        Ensures that the object can be raised to the power of the other
+        and then sends them to error_operations.operation_wrap, which
+        handles the exponentiation and error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -824,6 +905,12 @@ class ExperimentalValue:
             return op.operation_wrap(op.power, self, other)
 
     def __rpow__(self, other):
+        '''Handles exponentiation with Measurements.
+
+        Ensures that the object can be raised to the power of the other
+        and then sends them to error_operations.operation_wrap, which
+        handles the exponentiation and error propagation.
+        '''
         import qexpy.error_operations as op
         if type(other) in ExperimentalValue.ARRAY:
             result = Measurement_Array(len(other))
@@ -839,11 +926,14 @@ class ExperimentalValue:
 
     # Calls neg() in error_operations, which returns the negative of the value
     def __neg__(self):
+        '''Returns the negative of a Measurement object.
+        '''
         import qexpy.error_operations as op
         return op.neg(self)
 
     # Returns the length of the ExperimentalValue
     def __len__(self):
+        '''Returns the length of a the array used to create the Measurement object.'''
         return self.info['Data'].size
 
     ###########################################################################
@@ -852,6 +942,10 @@ class ExperimentalValue:
     # Makes the relevant comparison and return a boolean
     ###########################################################################
     def __eq__(self, other):
+        '''Checks if two Measurements are the same.
+
+        Returns True if the means of the two Measurements are the same.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean == other
         else:
@@ -863,6 +957,10 @@ class ExperimentalValue:
                 return self.mean == other.mean
 
     def __req__(self, other):
+        '''Checks if two Measurements are the same.
+
+        Returns True if the means of the two Measurements are the same.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean == other
         else:
@@ -874,6 +972,11 @@ class ExperimentalValue:
                 return self.mean == other.mean
             
     def __gt__(self, other):
+        '''Checks if a Measurement is greater than another Measurement.
+
+        Returns True if the mean of the Measurement is greater than the mean
+        of the other Measurement.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean > other
         else:
@@ -885,6 +988,11 @@ class ExperimentalValue:
                 return self.mean > other.mean
             
     def __rgt__(self, other):
+        '''Checks if a Measurement is less than another Measurement.
+
+        Returns True if the mean of the Measurement is less than the mean
+        of the other Measurement.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean < other
         else:
@@ -896,6 +1004,11 @@ class ExperimentalValue:
                 return self.mean < other.mean 
             
     def __ge__(self, other):
+        '''Checks if a Measurement is greater than or equal to another Measurement.
+
+        Returns True if the mean of the Measurement is greater than or equal to
+        the mean of the other Measurement.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean >=other
         else:
@@ -907,6 +1020,11 @@ class ExperimentalValue:
                 return self.mean >= other.mean
             
     def __rge__(self, other):
+        '''Checks if a Measurement is less than or equal to another Measurement.
+
+        Returns True if the mean of the Measurement is less than or equal to
+        the mean of the other Measurement.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean <= other
         else:
@@ -918,6 +1036,11 @@ class ExperimentalValue:
                 return self.mean <= other.mean
             
     def __lt__(self, other):
+        '''Checks if a Measurement is less than another Measurement.
+
+        Returns True if the mean of the Measurement is less than the mean
+        of the other Measurement.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean < other
         else:
@@ -929,6 +1052,11 @@ class ExperimentalValue:
                 return self.mean < other.mean
             
     def __rlt__(self, other):
+        '''Checks if a Measurement is greater than another Measurement.
+
+        Returns True if the mean of the Measurement is greater than the mean
+        of the other Measurement.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean > other
         else:
@@ -940,6 +1068,11 @@ class ExperimentalValue:
                 return self.mean > other.mean
             
     def __le__(self, other):
+        '''Checks if a Measurement is less than or equal to another Measurement.
+
+        Returns True if the mean of the Measurement is less than or equal to
+        the mean of the other Measurement.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean <= other
         else:
@@ -951,6 +1084,11 @@ class ExperimentalValue:
                 return self.mean <= other.mean
             
     def __rle__(self, other):
+        '''Checks if a Measurement is greater than or equal to another Measurement.
+
+        Returns True if the mean of the Measurement is greater than or equal to
+        the mean of the other Measurement.
+        '''
         if type(other) in ExperimentalValue.CONSTANT:
             return self.mean >= other
         else:
@@ -990,7 +1128,7 @@ class ExperimentalValue:
 
 class Measurement(ExperimentalValue):
     '''
-    Subclass of measurements, specified by the user and treated as variables
+    Subclass of ExperimentalValue, specified by the user and treated as variables
     or arguments of functions when propagating error.
     '''
     id_number = 0
@@ -1026,7 +1164,7 @@ class Measurement(ExperimentalValue):
 
 class Function(ExperimentalValue):
     '''
-    Subclass of objects, which are measurements created by operations or
+    Subclass of ExperimentalValue, which are measurements created by operations or
     functions of other measurement type objects.
     '''
     id_number = 0
@@ -1052,7 +1190,7 @@ class Function(ExperimentalValue):
 
 class Constant(ExperimentalValue):
     '''
-    Subclass of measurement objects, not neccesarily specified by the user,
+    Subclass of ExperimentalValue, not neccesarily specified by the user,
     called when a consant (int, float, etc.) is used in operation with a
     measurement. This class is called before calculating operations to
     ensure objects can be combined. The mean of a constant is the specified
@@ -1111,20 +1249,31 @@ class Measurement_Array(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
+        '''Sets the name and units of the MeasurementArray during creation.
+        '''
         if obj is None: return
         self.units = getattr(obj, 'units', None)
         self.name = getattr(obj, 'name', None)
         
     def __array_wrap__(self, out_arr, context=None):
+        '''Used to make sure that numpy functions work on MeasurementArrays
+        and they return MeasurementArrays.
+        '''
         # then just call the parent
         return np.ndarray.__array_wrap__(self, out_arr, context)
 
     @property
     def error_method(self):
+        '''Returns the method (Monte Carlo, derivative or min max) 
+        used to calculate error of a MeasurementArray object.
+        '''
         return self._error_method
 
     @error_method.setter
     def error_method(self, method):
+        '''Sets the method (Monte Carlo, derivative or min max) 
+        used to calculate error of a MeasurementArray object.
+        '''
         mc_list = ('MC', 'mc', 'montecarlo', 'Monte Carlo', 'MonteCarlo',
                    'monte carlo',)
         min_max_list = ('Min Max', 'MinMax', 'minmax', 'min max',)
@@ -1143,8 +1292,9 @@ class Measurement_Array(np.ndarray):
 
     @property
     def means(self):
-        '''Returns a numpy array with the means of the measurements, as calculated
-        by the method (der, MC, MinMax)'''
+        '''Returns a numpy array with the means of each value in the MeasurementArray,
+        as calculated by the method (der, MC, MinMax).
+        '''
         if self.size == 0:
             return np.ndarray(0)
 
@@ -1164,8 +1314,9 @@ class Measurement_Array(np.ndarray):
 
     @property
     def stds(self):
-        '''Returns an array with the errors of the measurements, as calculated
-        by the method (der, MC, MinMax)'''
+        '''Returns a numpy array with the standard deviations of each value
+        in the MeasurementArray, as calculated by the method (der, MC, MinMax).
+        '''
         if self.size == 0:
             return np.ndarray(0)
         
@@ -1185,6 +1336,10 @@ class Measurement_Array(np.ndarray):
 
     @stds.setter
     def stds(self, error):
+        '''Sets the standard deviations of each value in the MeasurementArray,
+        either to the same value for all Measurements or to a different value
+        for each Measurement.
+        '''
         n = self.size
 
         if isinstance(error, qu.number_types):#MA([,,,,], error = x)
@@ -1204,12 +1359,18 @@ class Measurement_Array(np.ndarray):
 
     @property
     def mean(self):
+        '''Returns the mean of the means of the Measurements in the MeasurementArray.
+        '''
         nparr = self.means
         self._mean = nparr.mean()
         return self._mean
 
     @property
     def error_weighted_mean(self):
+        '''Returns the error weighted mean and error of a MeasurementArray.
+
+        The error weighted mean gives more weight to more precise Measurements.
+        '''
         means = self.means
         stds = self.stds
         stds2 = stds**2
@@ -1234,12 +1395,8 @@ class Measurement_Array(np.ndarray):
         nparr = self.means
         return nparr.std(ddof=ddof)
     
-    # def get_std(self, ddof=1, method="der"):
-    #     '''Return standard deviation of the means of each measurement'''
-    #     return self.std(ddof)
-    
     def get_units_str(self):
-        '''Returns a string with the units.
+        '''Returns a string representation of the units.
         '''
         unit_string = ''
         if self.units != {}:
@@ -1255,6 +1412,8 @@ class Measurement_Array(np.ndarray):
         return unit_string
 
     def set_units(self, units=None):
+        '''Sets the units of a MeasurementArray.
+        '''
         if units is not None:
             for mes in self:
                 if type(units) is str:
@@ -1270,6 +1429,8 @@ class Measurement_Array(np.ndarray):
                     self.units[units[2*i]] = units[2*i+1]
     
     def __str__(self):
+        '''Returns a string representation of the MeasurementArray.
+        '''
         theString=''
         for i in range(self.size):
             theString += self[i].__str__()
@@ -1278,7 +1439,8 @@ class Measurement_Array(np.ndarray):
         return theString
             
 def MeasurementArray(data, error=None, name=None, units=None, error_method='Derivative'):
-    '''Function to easily construct a Measurement_Array'''
+    '''Function to easily construct a Measurement_Array object.
+    '''
 
     array = Measurement_Array(0, name=name, units=units, error_method='Derivative')
     user_name= True if name != None else False
@@ -1730,10 +1892,9 @@ def set_print_style(style=None, sigfigs=None):
         Latex, or the default style. Using default.''')
         ExperimentalValue.print_style = "Default"
 
-#needed
+
 def set_error_method(chosen_method):
-    '''
-    Choose the method of error propagation to be used. Enter a string.
+    '''Choose the method of error propagation to be used. Enter a string.
 
     Function to change default error propogation method used in
     measurement functions.
@@ -1838,8 +1999,7 @@ def _return_print_values(variable, method):
 
 
 def _tex_print(self, method=None):
-    '''
-    Creates string used by __str__ in a style useful for printing in Latex,
+    '''Creates string used by __str__ in a style useful for printing in Latex,
     as a value with error, in brackets multiplied by a power of ten. (ie.
     15+/-0.3 is (150 \pm 3)\e-1. Where Latex parses \pm as +\- and \e as
     *10**-1)
@@ -1890,8 +2050,7 @@ def _tex_print(self, method=None):
 
 
 def _def_print(self, method=None):
-    '''
-    Returns string used by __str__ as two numbers representing mean and error
+    '''Returns string used by __str__ as two numbers representing mean and error
     to either the first non-zero digit of error or to a specified number of
     significant figures.
     '''
@@ -1961,8 +2120,7 @@ def _def_print(self, method=None):
 
 
 def _sci_print(self, method=None):
-    '''
-    Returns string used by __str__ as two numbers representing mean and
+    '''Returns string used by __str__ as two numbers representing mean and
     error, each in scientific notation to a specified numebr of significant
     figures, or 3 if none is given.
     '''
@@ -2017,7 +2175,7 @@ def _sci_print(self, method=None):
 
 
 def show_histogram(data, title=None, output='inline'):
-    '''Creates a histogram of the inputted data using Bokeh.
+    '''Creates a histogram of the inputted data using Bokeh or mpl.
     '''
     if type(data) not in ARRAY:
         print('''Input histogram data must be an array''')
@@ -2039,6 +2197,7 @@ def show_histogram(data, title=None, output='inline'):
     fig.x_range = [min(data)*.95,max(data)*1.05]
     fig.y_range = [0,max(xy_data.ydata)*1.2]
 
+    # Draws lines at the mean and location of the mean +/- standard deviation.
     mean = self.mean
     std = self.std
     fig.add_line(x=mean, dashed=False, color='red')
@@ -2050,8 +2209,7 @@ def show_histogram(data, title=None, output='inline'):
 
 
 def numerical_partial_derivative(func, var, *args):
-    '''
-    Returns the parital derivative of a dunction with respect to var.
+    '''Returns the parital derivative of a dunction with respect to var.
 
     This function wraps the inputted function to become a function
     of only one variable, the derivative is taken with respect to said
@@ -2065,15 +2223,13 @@ def numerical_partial_derivative(func, var, *args):
 
 
 def numerical_derivative(function, point, dx=1e-10):
-    '''
-    Returns the first order derivative of a function.
+    '''Returns the first order derivative of a function.
     '''
     return (function(point+dx)-function(point))/dx
 
 
 def _variance(*args, ddof=1):
-    '''
-    Returns a tuple of the mean and standard deviation of a data array.
+    '''Returns a tuple of the mean and standard deviation of a data array.
 
     Uses a more sophisticated variance calculation to speed up calculation of
     mean and standard deviation.
@@ -2092,6 +2248,8 @@ def _variance(*args, ddof=1):
     return (mean, std, )
 
 def _weighted_variance(mean, std, ddof=1):
+    '''Calculates the variance weighted mean and standard deviation.
+    '''
     from math import sqrt
 
     w = np.power(std, -2)
@@ -2101,8 +2259,7 @@ def _weighted_variance(mean, std, ddof=1):
 
 
 def reset_variables():
-    '''
-    Resets the ID number, directories and methods to their original values.
+    '''Resets the ID number, directories and methods to their original values.
     Useful in Jupyter Notebooks if variables were unintentionally repeated.
     '''
     Measurement.id_number = 0
