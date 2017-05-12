@@ -146,7 +146,9 @@ class Plot:
             'title': "y as a function of x",
             'xtitle': "x",
             'ytitle': "y"}
-        
+
+        self.lines = {'x':[],
+                      'y':[]}
         
         if dataset != None:
             self.datasets.append(dataset)            
@@ -222,10 +224,10 @@ class Plot:
                 self.yres_range = [min(yr[0], self.yres_range[0]), max(yr[1], self.yres_range[1])]               
         
     def fit(self, model=None, parguess=None, fit_range=None, print_results=True,
-            datasetindex=-1, fitcolor=None):
+            datasetindex=-1, fitcolor=None, name=None):
         '''Fit a dataset to model - calls XYDataset.fit and returns a 
         Measurement_Array of fitted parameters'''
-        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor) 
+        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor, name=name, print_results=print_results) 
         return results
         
     def print_fit_parameters(self, dataset=-1):
@@ -286,8 +288,8 @@ class Plot:
             recall = qe.Measurement.minmax_n
             qe.Measurement.minmax_n=1
             fmes = function(xvals, *(pars))
-            fvals = fmes.get_means()
-            ferr = fmes.get_stds()
+            fvals = fmes.means
+            ferr = fmes.stds
             qe.Measurement.minmax_n=recall
         elif isinstance(pars,(list, np.ndarray)):
             fvals = function(xvals, *pars)
@@ -332,6 +334,21 @@ class Plot:
         self.set_range_from_dataset(dataset)
             
         self.set_yres_range_from_fits()
+
+    def add_line(self, x=None, y=None, color='black', dashed=False):
+        '''Add a vertical or horizontal line to the Plot object.'''
+        x_pos = x
+        y_pos = y
+        if bool(x_pos) == bool(y_pos): # Can't have both x and y data
+            print('''Lines must be given either an x or a y value, but not both.''')
+        if type(x_pos) in CONSTANT:
+            x_line_data = {'pos':float(x_pos), 'color':color, 'dashed':dashed}
+            self.lines['x'].append(x_line_data)
+        elif type(y_pos) in CONSTANT:
+            y_line_data = {'pos':float(y_pos), 'color':color, 'dashed':dashed}
+            self.lines['y'].append(y_line_data)
+        else:
+            print('''Line input must be a number.''')
 
 #
 ###############################################################################
@@ -382,9 +399,7 @@ class Plot:
         Show the figure, will call one of the populate methods
         by default to build a figure.
         '''
-        
         if q.plot_engine in q.plot_engine_synonyms["bokeh"]:
-               
             self.set_bokeh_output(output)      
             if populate_figure:
                 bp.show(self.populate_bokeh_figure(), notebook_handle=True)
@@ -457,7 +472,10 @@ class Plot:
             self.mpl_plot_function(function=func, xdata=xvals,pars=pars, n=q.settings["plot_fcn_npoints"],
                                legend_name= fname, color=color,
                                errorbandfactor=self.errorband_sigma)
-            
+        # Adds lines to the plot
+        if self.lines['x'] or self.lines['y']:
+            self.mpl_add_lines(self.lines)
+
         if self.mpl_show_legend:
             self.mplfigure_main_ax.legend(loc=self.mpl_legend_location,
                                           fontsize = q.settings["plot_fig_leg_ftsize"])
@@ -503,7 +521,20 @@ class Plot:
                                           fontsize=q.settings["plot_fig_ytitle_ftsize"])
         self.mplfigure_main_ax.set_title(self.labels['title'],
                                          fontsize=q.settings["plot_fig_title_ftsize"])
-        self.mplfigure_main_ax.grid()        
+        self.mplfigure_main_ax.grid()  
+
+    def mpl_add_lines(self, lines):
+        '''Adds vertical and horizontal lines to an mpl plot.'''
+        if not hasattr(self, 'mplfigure_main_ax'):
+            self.initialize_mpl_figure()
+
+        for x_data in lines['x']:
+            dashed = 'dashed' if x_data['dashed'] else 'solid'
+            self.mpl_plot([x_data['pos']]*2, self.y_range, color=x_data['color'], ls=dashed, lw=1)
+
+        for y_data in lines['y']:
+            dashed = 'dashed' if y_data['dashed'] else 'solid'
+            self.mpl_plot(self.x_range, [y_data['pos']]*2, color=y_data['color'], ls=dashed, lw=1)
                        
     def mpl_show_fit_results_box(self, datasets=None, add_space = True):
         '''Show a box with the fit results for the given list of datasets. If 
@@ -578,8 +609,7 @@ class Plot:
                                             xerr=dataset.xerr,yerr=dataset.yerr,
                                             fmt='o',color=color,markeredgecolor = 'none',
                                              label=dataset.name)
-            
-        if dataset.nfits > 0 and show_fit_function:   
+        if dataset.nfits > 0 and show_fit_function:
             self.mpl_plot_function(function=dataset.fit_function[index],
                                    xdata=dataset.xdata,
                                    pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
@@ -588,7 +618,7 @@ class Plot:
                                    errorbandfactor=self.errorband_sigma)
             
             if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
-                self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[index].get_means(),
+                self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[index].means,
                                                xerr=dataset.xerr,yerr=dataset.yerr,
                                                fmt='o',color=color,markeredgecolor = 'none')
             
@@ -613,8 +643,8 @@ class Plot:
             recall = qe.Measurement.minmax_n
             qe.Measurement.minmax_n=1
             fmes = function(xvals, *pars)
-            fvals = fmes.get_means()
-            ferr = fmes.get_stds()
+            fvals = fmes.means
+            ferr = fmes.stds
             qe.Measurement.minmax_n=recall
         elif isinstance(pars,(list, np.ndarray)):
             fvals = function(xvals, *pars)
@@ -652,7 +682,7 @@ class Plot:
         
         func = dataset.fit_function[-1]
         pars = dataset.fit_pars[-1]
-        parmeans = pars.get_means()
+        parmeans = pars.means
         fname = "linear"     
         
         #Reset the range
@@ -718,8 +748,8 @@ class Plot:
                 qe.Measurement.minmax_n=1
                 fmes = omes + smes*xvals
                 qe.Measurement.minmax_n=recall
-                fvals = fmes.get_means()
-                ferr = fmes.get_stds()
+                fvals = fmes.means
+                ferr = fmes.stds
             
                 fmax = fvals + ferr
                 fmin = fvals - ferr
@@ -923,11 +953,14 @@ class Plot:
                 if self.show_residuals:
                     self.bk_plot_dataset(dataset, residual=True, color=color)
 
-
         #Now add any user defined functions:
         #The range over which to plot the functions:
-        xvals = [self.x_range[0]+self.x_range_margin, 
-                 self.x_range[1]-self.x_range_margin]
+        if type(self.x_range[0]) in CONSTANT:
+            xvals = [self.x_range[0]+self.x_range_margin, 
+                     self.x_range[1]-self.x_range_margin]
+        else:
+            xvals = [0, len(self.x_range)]
+
         self.check_user_functions_color_array()
         for func, pars, fname, color in zip(self.user_functions,
                                             self.user_functions_pars, 
@@ -937,6 +970,10 @@ class Plot:
             self.bk_plot_function(function=func, xdata=xvals,pars=pars, n=q.settings["plot_fcn_npoints"],
                                legend_name= fname, color=color,
                                errorbandfactor=self.errorband_sigma)
+
+        # Adds lines to the plot
+        if self.lines['x'] or self.lines['y']:
+            self.bk_add_lines(self.lines)
 
         #Specify the location of the legend (must be done after stuff has been added)
         self.bkfigure.legend.location = self.bk_legend_location
@@ -977,6 +1014,19 @@ class Plot:
             )
             return self.bkres
         
+    def bk_add_lines(self, lines):
+        '''Adds vertical and horizontal lines to a Bokeh plot.'''
+        if not hasattr(self, 'bkfigure'):
+            self.bkfigure = self.initialize_bokeh_figure(residuals=False)
+
+        for x_data in lines['x']:
+            dashed = 'dashed' if x_data['dashed'] else 'solid'
+            self.bkfigure.line([x_data['pos']]*2, self.y_range, line_color=x_data['color'], line_dash=dashed)
+
+        for y_data in lines['y']:
+            dashed = 'dashed' if y_data['dashed'] else 'solid'
+            self.bkfigure.line(self.x_range, [y_data['pos']]*2, line_color=y_data[color], line_dash=dashed)
+
     def bk_plot_fit_results_text_box(self, dataset, yoffset=0):
         '''Add a text box with the fit parameters from the last fit to
         the data set'''
@@ -1012,7 +1062,7 @@ class Plot:
         populate_bokeh_figure take care of calling this function'''
         
         index = fit_index if fit_index < dataset.nfits else -1
-        
+
         if residual == True:
             if not hasattr(self, 'bkfigure'):
                 self.bkres = self.initialize_bokeh_figure(residuals=True)
@@ -1020,14 +1070,24 @@ class Plot:
             
         if not hasattr(self, 'bkfigure'):
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
-            
-        qpu.bk_plot_dataset(self.bkfigure, dataset, residual=False, color=color)
+
+        if dataset.is_histogram:
+            if hasattr(dataset, 'hist_data'):
+                hist, bins = np.histogram(dataset.hist_data, dataset.bins)
+                self.bkfigure.quad(top=hist, bottom=0, left=bins[:-1], right=bins[1:],
+                        color=color, alpha=0.7, legend=dataset.name)
+            else:
+                width = dataset.xdata[-1]-dataset.xdata[-2]
+                self.bkfigure.quad(top=dataset.ydata, bottom=0, left=dataset.xdata-width/2,
+                        right = dataset.xdata+width/2, color=color, alpha=0.7, legend=dataset.name)
+        else:  
+            qpu.bk_plot_dataset(self.bkfigure, dataset, residual=False, color=color)
         if dataset.nfits > 0 and show_fit_function:
             self.bk_plot_function(function=dataset.fit_function[index], xdata=dataset.xdata,
-                               pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
-                               legend_name=dataset.name+"_"+dataset.fit_function_name[index],
-                               color=color if dataset.fit_color[index] is None else dataset.fit_color[index],
-                               errorbandfactor=self.errorband_sigma)
+                                pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
+                                legend_name=dataset.name+"_"+dataset.fit_function_name[index],
+                                color=color if dataset.fit_color[index] is None else dataset.fit_color[index],
+                                errorbandfactor=self.errorband_sigma)
     
     def bk_add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
                                    color='black', data_name='dataset'):
@@ -1074,7 +1134,7 @@ class Plot:
         #Extend the x range to 0
         if self.x_range[0] > -0.5:
             self.x_range[0] = -0.5
-            self.y_range[0] = dataset.fit_function[-1](self.x_range[0], *pars.get_means())
+            self.y_range[0] = dataset.fit_function[-1](self.x_range[0], *pars.means)
         
         self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         
@@ -1137,13 +1197,10 @@ class Plot:
             fmes = omes+ smes*xdata
             qe.Measurement.minmax_n=recall
             
-            ymax = fmes.get_means()+fmes.get_stds()
-            ymin = fmes.get_means()-fmes.get_stds()        
+            ymax = fmes.means+fmes.stds
+            ymin = fmes.means-fmes.stds      
             
-            self.linear_fit_line.data_source.data['y'] = fmes.get_means()
+            self.linear_fit_line.data_source.data['y'] = fmes.means
             self.linear_fit_patches.data_source.data['y'] = np.append(ymax,ymin[::-1])
 
             bi.push_notebook()
-
-            
-        

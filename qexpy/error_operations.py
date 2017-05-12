@@ -14,8 +14,7 @@ MEASUREMENT = (Measurement, Constant, Function)
 
 
 def neg(x):
-    '''
-    Returns the negitive of a measurement object
+    '''Returns the negitive of a Measurement object
     '''
     import qexpy.error as e
 
@@ -31,8 +30,7 @@ def neg(x):
 
 
 def add(a, b):
-    '''
-    Returns a measurement object that is the sum of two other measurements.
+    '''Returns a Measurement object that is the sum of two other Measurements.
 
     The sum can be taken by multiple methods,  specified by the measurement
     class variable measurement.error_method. The derivative of this new object
@@ -63,8 +61,7 @@ def add(a, b):
 
 
 def sub(a, b):
-    '''
-    Returns a measurement object that is the subtraction of two measurements.
+    '''Returns a Measurement object that is the subtraction of two Measurements.
     '''
     if type(a) in ARRAY or type(b) in ARRAY:
         import numpy as np
@@ -84,7 +81,8 @@ def sub(a, b):
 
 
 def mul(a, b):
-    '''Returns the product of two values with propagated errors.'''
+    '''Returns the product of two values with propagated errors.
+    '''
     if type(a) in ARRAY or type(b) in ARRAY:
         import numpy as np
         return np.multiply(a, b)
@@ -103,7 +101,8 @@ def mul(a, b):
 
 
 def div(a, b):
-    '''Returns the quotient of two values with propagated errors.'''
+    '''Returns the quotient of two values with propagated errors.
+    '''
     if type(a) in ARRAY or type(b) in ARRAY:
         import numpy as np
         return np.divide(a, b)
@@ -122,7 +121,8 @@ def div(a, b):
 
 
 def power(a, b):
-    '''Returns the power of two values with propagated errors.'''
+    '''Returns the power of two values with propagated errors.
+    '''
     if type(a) in ARRAY or type(b) in ARRAY:
         import numpy as np
         return np.power(a, b)
@@ -145,7 +145,8 @@ def power(a, b):
 ###############################################################################
 
 def sqrt(x):
-    '''Returns the square root of a measurement with propagated errors'''
+    '''Returns the square root of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -158,7 +159,8 @@ def sqrt(x):
         raise TypeError("Unsupported type: "+str(type(x)))
     
 def sin(x):
-    '''Returns the sine of a measurement with propagated errors'''
+    '''Returns the sine of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -171,7 +173,8 @@ def sin(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def asin(x):
-    '''Returns the arctangent of a measurement with propagated errors'''
+    '''Returns the arctangent of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -184,7 +187,8 @@ def asin(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def cos(x):
-    '''Returns the cosine of a measurement with propagated errors'''
+    '''Returns the cosine of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -197,7 +201,8 @@ def cos(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def acos(x):
-    '''Returns the arctangent of a measurement with propagated errors'''
+    '''Returns the arctangent of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -210,7 +215,8 @@ def acos(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def tan(x):
-    '''Returns the tangent of a measurement with propagated errors'''
+    '''Returns the tangent of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -223,7 +229,8 @@ def tan(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def atan(x):
-    '''Returns the arctangent of a measurement with propagated errors'''
+    '''Returns the arctangent of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -236,7 +243,8 @@ def atan(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def sec(x):
-    '''Returns the secant of a measurement with propagated errors'''
+    '''Returns the secant of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -249,7 +257,8 @@ def sec(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def csc(x):
-    '''Returns the cosecant of a measurement with propagated errors'''
+    '''Returns the cosecant of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -262,7 +271,8 @@ def csc(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def cot(x):
-    '''Returns the cotangent of a measurement with propagated errors'''
+    '''Returns the cotangent of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -275,7 +285,8 @@ def cot(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def exp(x):
-    '''Returns the exponent of a measurement with propagated errors'''
+    '''Returns the exponent of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -288,7 +299,8 @@ def exp(x):
         raise TypeError("Unsupported type: "+str(type(x)))
 
 def log(x):
-    '''Returns the natural logarithm of a measurement with propagated errors'''
+    '''Returns the natural logarithm of a Measurement with propagated errors.
+    '''
     import math as m
 
     if type(x) in CONSTANT:
@@ -342,8 +354,7 @@ def find_minmax(function, *args):
 
 
 def monte_carlo(func, *args):
-    '''
-    Uses a Monte Carlo simulation to determine the mean and standard
+    '''Uses a Monte Carlo simulation to determine the mean and standard
     deviation of a function.
 
     Inputted arguments must be measurement type. Constants can be used
@@ -368,6 +379,7 @@ def monte_carlo(func, *args):
     n = e.ExperimentalValue.mc_trial_number
     value = np.zeros((N, n))
     result = np.zeros(n)
+    rand = np.zeros((N, n))
     for i in range(N):
         if args[i].MC_list is not None:
             value[i] = args[i].MC_list
@@ -375,13 +387,16 @@ def monte_carlo(func, *args):
             value[i] = args[i].mean
             args[i].MC_list = value[i]
         else:
-            #value[i] = np.random.normal(args[i].mean, args[i].std, n)
-            value[i] = np.random.normal(args[i].MC[0], args[i].MC[1], n)
-            args[i].MC_list = value[i]
+            rand[i] = np.random.normal(size=n) # Generates standard mean=0, sigma=1 normal distribution
+            norm1 = args[0].MC[0]+args[0].MC[1]*rand[0]
+            value[0] = norm1
 
+    # Converts the mean=0, error=1 distribution into the desired normal distribution, taking correlation into account
     if len(args) == 2:
         rho = args[0]._get_correlation(args[1])
-        value[1] = rho*value[1] + np.sqrt(1-rho*rho)*value[1]
+        factor = rho*rand[0] + np.sqrt(1-rho*rho)*rand[1]
+        rand[i] = np.random.normal(size = n)
+        value[1] = args[1].MC[0]+(np.random.normal(0, args[1].MC[1], n)*factor if args[1].MC[1] else 0)
 
     result = _np_func[func](*value)
     data = np.mean(result)
@@ -395,8 +410,7 @@ def monte_carlo(func, *args):
 
 
 def operation_wrap(operation, *args, func_flag=False):
-    '''
-    e.Function wrapper to convert existing,  constant functions into functions
+    '''e.Function wrapper to convert existing,  constant functions into functions
     which can handle measurement objects and return an error propagated by
     derivative,  min-max,  or Monte Carlo method.
     '''
@@ -421,7 +435,6 @@ def operation_wrap(operation, *args, func_flag=False):
     result.der = [mean, std]
     result.MinMax = find_minmax(operation, *args)
     result.MC, result.MC_list = monte_carlo(operation, *args)
-
     
     #TODO: This is wrong: should not keep changing the mean and std
     # the error method should only change this on a print!!!
@@ -456,8 +469,8 @@ def operation_wrap(operation, *args, func_flag=False):
 
     result.derivative.update(df)
     result._update_info(operation, *args, func_flag=func_flag)
-    return result
 
+    return result
 
 diff = {
         sqrt: lambda key, x: (0. if x.mean ==0 else 0.5/m.sqrt(x.mean)*x.derivative[key]),
@@ -496,10 +509,9 @@ op_string = {sin: 'sin', cos: 'cos', tan: 'tan', csc: 'csc', sec: 'sec', sqrt: '
 
 #def dev(*args, der=None, manual_args=None):
 def dev(*args, der=None):    
-    '''
-    Returns the standard deviation of a function of N arguments.
+    '''Returns the standard deviation of a function of N arguments.
 
-    Using the tuple of variables,  passed in each operation that composes a
+    Using the tuple of variables,  passed in each operations that composes a
     function,  the standard deviation is calculated by the derivative error
     propagation formula,  including the covariance factor between each pair
     of variables. The derivative dictionary of a function must be passes by
@@ -515,9 +527,12 @@ def dev(*args, der=None):
         for i in range(len(arg.root)):
             if arg.root[i] not in roots:
                 roots += (arg.root[i], )
+
+    # Partial derivative times uncertainty terms
     for root in roots:
         std += (der[root]*e.ExperimentalValue.register[root].std)**2
 
+    # Covariance terms
     for i in range(len(roots)):
         for j in range(len(roots)-i-1):
             cov = e.ExperimentalValue.register[roots[i]].get_covariance(
@@ -530,8 +545,7 @@ def dev(*args, der=None):
 
 
 def check_values(*args):
-    '''
-    Checks that the arguments are measurement type,  otherwise a measurement
+    '''Checks that the arguments are measurement type,  otherwise a measurement
     is returned.
 
     All returned values are of measurement type,  if values need to be
@@ -550,8 +564,7 @@ def check_values(*args):
 
 
 def check_formula(operation, a, b=None, func_flag=False):
-    '''
-    Checks if quantity being calculated is already in memory
+    '''Checks if quantity being calculated is already in memory
 
     Using the formula string created for each operation as a key,  the
     register of previously calculated operations is checked. If the

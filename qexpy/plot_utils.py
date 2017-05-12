@@ -15,8 +15,8 @@ def bk_plot_dataset(figure, dataset, residual=False, color='black', fit_index=-1
     index = fit_index if fit_index < dataset.nfits else -1.
     
     if residual is True and dataset.nfits>0:
-        ydata = dataset.fit_yres[index].get_means()
-        yerr = dataset.fit_yres[index].get_stds()
+        ydata = dataset.fit_yres[index].means
+        yerr = dataset.fit_yres[index].stds
         data_name=None
     else:
         ydata = dataset.ydata
@@ -111,7 +111,7 @@ def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None
         recall = qe.Measurement.minmax_n
         qe.Measurement.minmax_n=1
         fmes = function(xvals, *(pars))
-        fvals = fmes.get_means()
+        fvals = fmes.means
         qe.Measurement.minmax_n=recall
     elif isinstance(pars,(list, np.ndarray)):
         fvals = function(xvals, *pars)
@@ -122,8 +122,8 @@ def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None
     
     #Add error band
     if isinstance(pars, qe.Measurement_Array):
-        ymax = fmes.get_means()+errorbandfactor*fmes.get_stds()
-        ymin = fmes.get_means()-errorbandfactor*fmes.get_stds()
+        ymax = fmes.means+errorbandfactor*fmes.stds
+        ymin = fmes.means-errorbandfactor*fmes.stds
 
         patch = figure.patch(x=np.append(xvals,xvals[::-1]),y=np.append(ymax,ymin[::-1]),
                      fill_alpha=0.3,
