@@ -326,7 +326,7 @@ class ExperimentalValue:
 
         data = q.XYDataSet(xdata = data_arr, is_histogram = True, data_name=hist_title)
         fig = q.MakePlot()
-        fig.add_dataset(data, color = color)
+        fig.add_dataset(data, color=color)
         fig.x_range = [min(data_arr)*.95,max(data_arr)*1.05]
         fig.y_range = [0,max(data.ydata)*1.2]
 
@@ -372,12 +372,7 @@ class ExperimentalValue:
 
     def show_error_contribution(self, title=None, output='inline'):
 
-        import numpy as np
-        import matplotlib.pyplot as plt
-        import bokeh.plotting as bp
-
         terms = {}
-
         formula = self.info['Formula']
 
         for i in self.root:
@@ -393,40 +388,55 @@ class ExperimentalValue:
                 else:
                     maxx = maxx.replace(j, str(meas.mean))
                     minn = minn.replace(j, str(meas.mean))
-            
             terms[name] = .5*(eval(maxx)-self.mean)**2+.5*(eval(minn)-self.mean)**2
             
         N = len(terms)
-
         names = []
         vals = []
+
         for k, v in sorted(terms.items()):
             names.append(k)
             vals.append(v)
 
         summ = sum(vals)
-        for index in range(len(vals)):
+        for index in range(N):
             vals[index] = vals[index]/summ
 
-        ind = np.arange(N)  # the x locations for the groups
-        width = 0.35       # the width of the bars
+        new_vals = []
+        new_names = []
 
-        fig, ax = plt.subplots(figsize=(20, 10))
-        plt.hlines(1, -width/2, N-1+width/2)
-        rects1 = ax.bar(ind, vals, width, color='r')
+        for index in range(N):
+            new_vals.append(vals[index])
+            new_vals.append(0)
+            new_names.append('')
+            new_names.append(names[index])
+        new_vals = new_vals[0:-1]
 
-        # add some text for labels, title and axes ticks
-        ax.set_ylabel('Relative contribution to variance of {}'.format(self.name))
-        ax.set_title('Contribution to total variance of {}'.format(self.name))
-        ax.set_xticks(ind)
-        ax.set_xticklabels(names)
-        plt.ylim([0,1])
+        data = q.XYDataSet(xdata=np.arange(2*N-1), ydata=new_vals, is_histogram = True, bins=N,
+                    data_name='Relative contribution to variance of {}'.format(self.name))
 
-        ax.grid(True, which='both', axis='y')
+        # Populates the mpl figure in case it is plotted
+        fig = q.MakePlot()
+        fig.add_dataset(data, color='blue')
+        fig.x_range = [-1,2*N-1]
+        fig.y_range = [0,1]
+        fig.set_labels(xtitle="", ytitle="")
+        fig.populate_mpl_figure()
+        fig.mplfigure_main_ax.axes.set_xticklabels(new_names)
+        fig.mplfigure_main_ax.axes.grid(False, which='both', axis='x')
 
-        ax.axhline(y=0, color='k')
+        # Populates the boken figure in case it is plotted
+        # The messy stuff comes from the fact that mpl boxes, mpl labels and bokeh boxes are 0-indexed, but mpl labels are 1 indexed
+        fig.axes['xscale'] = 'auto'
+        fig.datasets[0].ydata = np.insert(fig.datasets[0].ydata, [0, 0, 2*N-1], [0, 0, 0])
+        fig.datasets[0].xdata = np.append(fig.datasets[0].xdata, [2*N-1, 2*N, 2*N+1])
+        fig.x_range = new_names+['']
+        fig.populate_bokeh_figure()
+        fig.bkfigure.xgrid.grid_line_color = None
+        fig.bkfigure.xaxis.major_tick_line_color = None
+        fig.bkfigure.xaxis.minor_tick_line_color = None
 
-        plt.show()
+        fig.show(populate_figure=False, refresh = True)
 
 ###############################################################################
 # Methods for Correlation and Covariance

@@ -227,7 +227,7 @@ class Plot:
             datasetindex=-1, fitcolor=None, name=None):
         '''Fit a dataset to model - calls XYDataset.fit and returns a 
         Measurement_Array of fitted parameters'''
-        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor, name=name) 
+        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor, name=name, print_results=print_results) 
         return results
         
     def print_fit_parameters(self, dataset=-1):
@@ -399,9 +399,7 @@ class Plot:
         Show the figure, will call one of the populate methods
         by default to build a figure.
         '''
-        
         if q.plot_engine in q.plot_engine_synonyms["bokeh"]:
-               
             self.set_bokeh_output(output)      
             if populate_figure:
                 bp.show(self.populate_bokeh_figure(), notebook_handle=True)
@@ -611,8 +609,7 @@ class Plot:
                                             xerr=dataset.xerr,yerr=dataset.yerr,
                                             fmt='o',color=color,markeredgecolor = 'none',
                                              label=dataset.name)
-            
-        if dataset.nfits > 0 and show_fit_function:   
+        if dataset.nfits > 0 and show_fit_function:
             self.mpl_plot_function(function=dataset.fit_function[index],
                                    xdata=dataset.xdata,
                                    pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
@@ -958,8 +955,12 @@ class Plot:
 
         #Now add any user defined functions:
         #The range over which to plot the functions:
-        xvals = [self.x_range[0]+self.x_range_margin, 
-                 self.x_range[1]-self.x_range_margin]
+        if type(self.x_range[0]) in CONSTANT:
+            xvals = [self.x_range[0]+self.x_range_margin, 
+                     self.x_range[1]-self.x_range_margin]
+        else:
+            xvals = [0, len(self.x_range)]
+
         self.check_user_functions_color_array()
         for func, pars, fname, color in zip(self.user_functions,
                                             self.user_functions_pars, 
@@ -1074,6 +1075,10 @@ class Plot:
                 hist, bins = np.histogram(dataset.hist_data, dataset.bins)
                 self.bkfigure.quad(top=hist, bottom=0, left=bins[:-1], right=bins[1:],
                         color=color, alpha=0.7, legend=dataset.name)
+            else:
+                width = dataset.xdata[-1]-dataset.xdata[-2]
+                self.bkfigure.quad(top=dataset.ydata, bottom=0, left=dataset.xdata-width/2,
+                        right = dataset.xdata+width/2, color=color, alpha=0.7, legend=dataset.name)
         else:  
             qpu.bk_plot_dataset(self.bkfigure, dataset, residual=False, color=color)
         if dataset.nfits > 0 and show_fit_function:
