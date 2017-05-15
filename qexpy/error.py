@@ -1160,7 +1160,8 @@ class Measurement(ExperimentalValue):
         self.der = [self.mean, self.std]
         self.MC = [self.mean, self.std]
         self.MinMax = [self.mean, self.std]
-
+        for name, meas in ExperimentalValue.register.items():
+            self.get_covariance(meas)
 
 class Function(ExperimentalValue):
     '''

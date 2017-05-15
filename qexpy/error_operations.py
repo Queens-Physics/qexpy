@@ -3,7 +3,6 @@ import math as m
 import qexpy.utils as qu
 from qexpy.error import Measurement_Array, Measurement, Constant, Function
 
-
 CONSTANT = qu.number_types 
 ARRAY = qu.array_types +(Measurement_Array,)
 MEASUREMENT = (Measurement, Constant, Function)
@@ -162,7 +161,6 @@ def sin(x):
     '''Returns the sine of a Measurement with propagated errors.
     '''
     import math as m
-
     if type(x) in CONSTANT:
         return m.sin(x)
     elif type(x) in ARRAY:
@@ -435,7 +433,7 @@ def operation_wrap(operation, *args, func_flag=False):
     result.der = [mean, std]
     result.MinMax = find_minmax(operation, *args)
     result.MC, result.MC_list = monte_carlo(operation, *args)
-    
+
     #TODO: This is wrong: should not keep changing the mean and std
     # the error method should only change this on a print!!!
     
@@ -469,6 +467,9 @@ def operation_wrap(operation, *args, func_flag=False):
 
     result.derivative.update(df)
     result._update_info(operation, *args, func_flag=func_flag)
+
+    for var, cov in _calculate_covariance(result).items():#covariances.items():
+       result.set_covariance(e.ExperimentalValue.register[var], cov)
 
     return result
 
@@ -596,3 +597,29 @@ def check_formula(operation, a, b=None, func_flag=False):
             ID = e.ExperimentalValue.formula_register[
                 op + '(' + a.info["Formula"] + ')']
             return e.ExperimentalValue.register[ID]
+
+def _calculate_covariance(result):
+    '''Propagates the covariances between the variables in the
+    calculation and any variables they are covariant with, using
+    the derivative method of propagating covariances. This returns
+    a dictionary of variables and their covariance with f.
+
+    The covariance of f(x, y) and some variable z is approximately:
+    (df/dx)*(covariance of x and z)+(df/dy)*(covariance of y and z)
+    This is similar to the derivative method of error propagation, which
+    uses the variance of each variable, which is just the covariance of
+    each variable and itself.
+    '''
+    import qexpy.error as e
+
+    covariances = {}
+
+    for root in result.root:
+        root_obj = e.ExperimentalValue.register[root]
+        for var, cov in root_obj.covariance.items():
+            partial_der = result.derivative[root]
+            term = partial_der*cov
+            if term:
+                covariances[var]=covariances.get(var,0)+term
+
+    return covariances
