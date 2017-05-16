@@ -202,18 +202,29 @@ class Plot:
         else: pass                     
     
     def set_range_from_datasets(self):
-        '''Make sure the x and y range can accomodate all datasets'''
+        '''Make sure the x and y range can accomodate all datasets. 
+        Expands the range if needed.
+        '''
         for ds in self.datasets:
-            self.set_range_from_dataset(ds)
+            xr = ds.get_x_range(self.x_range_margin)
+            yr = ds.get_y_range(self.y_range_margin)
+            self.x_range = [min(xr[0], self.x_range[0]), max(xr[1], self.x_range[1])]
+            self.y_range = [min(yr[0], self.y_range[0]), max(yr[1], self.y_range[1])]
         
     def set_range_from_dataset(self, dataset):
-        '''Use a dataset to set the range for the figure - 
-        will only expand the current range (if needed) and will not shrink the range'''
-        xr = dataset.get_x_range(self.x_range_margin)
-        self.x_range = [min(xr[0], self.x_range[0]), max(xr[1], self.x_range[1])]
-        yr = dataset.get_y_range(self.y_range_margin)
-        self.y_range = [min(yr[0], self.y_range[0]), max(yr[1], self.y_range[1])]
-        self.set_yres_range_from_fits()
+        '''Use a dataset to set the range for the figure. 
+        Adds margins of 5%. of the range.
+        '''
+        xr = dataset.get_x_range()
+        self.x_range_margin = (xr[1]-xr[0])*0.05
+        xr_margin = dataset.get_x_range(self.x_range_margin)
+
+        yr = dataset.get_y_range()
+        self.y_range_margin = (yr[1]-yr[0])*0.05
+        yr_margin = dataset.get_y_range(self.y_range_margin)
+
+        self.x_range = xr_margin
+        self.y_range = yr_margin
         
     def set_yres_range_from_fits(self):
         '''Set the range for the residual plot, based on all datasets that
@@ -323,6 +334,8 @@ class Plot:
         
         if len(self.datasets) < 2:    
             self.initialize_from_dataset(self.datasets[0])
+        else:
+            self.set_range_from_dataset(dataset)
             
         if color is None:
             self.datasets_colors.append(self._get_color_from_palette())
@@ -331,7 +344,7 @@ class Plot:
         if name != None:
             self.datasets[-1].name=name
           
-        self.set_range_from_dataset(dataset)
+        self.set_range_from_datasets()
             
         self.set_yres_range_from_fits()
 
