@@ -391,7 +391,7 @@ def monte_carlo(func, *args):
 
     # Converts the mean=0, error=1 distribution into the desired normal distribution, taking correlation into account
     if len(args) == 2:
-        rho = args[0]._get_correlation(args[1])
+        rho = round(args[0]._get_correlation(args[1]), 8)
         factor = rho*rand[0] + np.sqrt(1-rho*rho)*rand[1]
         rand[i] = np.random.normal(size = n)
         value[1] = args[1].MC[0]+(np.random.normal(0, args[1].MC[1], n)*factor if args[1].MC[1] else 0)
@@ -415,6 +415,9 @@ def operation_wrap(operation, *args, func_flag=False):
     import qexpy.error as e
 
     args = check_values(*args)
+
+    if len(args) > 1:
+        args[0].get_covariance(args[1])
 
     if func_flag is False:
         args[0]._check_der(args[1])
@@ -467,9 +470,6 @@ def operation_wrap(operation, *args, func_flag=False):
 
     result.derivative.update(df)
     result._update_info(operation, *args, func_flag=func_flag)
-
-    for var, cov in _calculate_covariance(result).items():#covariances.items():
-       result.set_covariance(e.ExperimentalValue.register[var], cov)
 
     return result
 
@@ -597,29 +597,3 @@ def check_formula(operation, a, b=None, func_flag=False):
             ID = e.ExperimentalValue.formula_register[
                 op + '(' + a.info["Formula"] + ')']
             return e.ExperimentalValue.register[ID]
-
-def _calculate_covariance(result):
-    '''Propagates the covariances between the variables in the
-    calculation and any variables they are covariant with, using
-    the derivative method of propagating covariances. This returns
-    a dictionary of variables and their covariance with f.
-
-    The covariance of f(x, y) and some variable z is approximately:
-    (df/dx)*(covariance of x and z)+(df/dy)*(covariance of y and z)
-    This is similar to the derivative method of error propagation, which
-    uses the variance of each variable, which is just the covariance of
-    each variable and itself.
-    '''
-    import qexpy.error as e
-
-    covariances = {}
-
-    for root in result.root:
-        root_obj = e.ExperimentalValue.register[root]
-        for var, cov in root_obj.covariance.items():
-            partial_der = result.derivative[root]
-            term = partial_der*cov
-            if term:
-                covariances[var]=covariances.get(var,0)+term
-
-    return covariances

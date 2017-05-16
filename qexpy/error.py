@@ -565,6 +565,8 @@ class ExperimentalValue:
         the data arrays are of different lengths or do not exist, in that
         case a covariance of zero is returned.
         '''
+        if isinstance(self, Constant) or isinstance(variable, Constant):
+            return 0
         if self.info['ID'] in variable.covariance:
             return self.covariance[variable.info['ID']]
 
@@ -574,7 +576,24 @@ class ExperimentalValue:
             ExperimentalValue._find_covariance(self, variable)
             var = self.covariance[variable.info['ID']]
             return var
-
+        elif isinstance(self, Function):
+            term = 0
+            for root in self.root:
+                root_obj = ExperimentalValue.register[root]
+                partial_der = self.derivative[root]
+                term += partial_der*root_obj.get_covariance(variable)
+            if term:
+                self.set_covariance(variable, term)
+            return term
+        elif isinstance(variable, Function):
+            term = 0
+            for root in variable.root:
+                root_obj = ExperimentalValue.register[root]
+                partial_der = variable.derivative[root]
+                term += partial_der*root_obj.get_covariance(variable)
+            if term:
+                self.set_covariance(variable, term)
+            return term
         else:
             return 0
 
@@ -585,7 +604,9 @@ class ExperimentalValue:
         the correlation factor of two measurements is returned.
         '''
         x = self
-
+        if isinstance(x, Constant) or isinstance(y, Constant):
+            return 0
+        y.get_covariance(x)
         if y.info['ID'] in x.covariance:
             pass
         else:
@@ -1160,8 +1181,6 @@ class Measurement(ExperimentalValue):
         self.der = [self.mean, self.std]
         self.MC = [self.mean, self.std]
         self.MinMax = [self.mean, self.std]
-        for name, meas in ExperimentalValue.register.items():
-            self.get_covariance(meas)
 
 class Function(ExperimentalValue):
     '''
@@ -1485,7 +1504,7 @@ def MeasurementArray(data, error=None, name=None, units=None, error_method='Deri
     else: #error is not None
         if isinstance(data, Measurement_Array):
             array = data
-            array.set_errors(error)
+            array.stds = error
             array.set_units(units)
             #allow the name to be updated:
             if name is not None:
