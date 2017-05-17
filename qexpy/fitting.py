@@ -39,9 +39,10 @@ def Rgauss(x, *pars):
 class XYFitter:
     '''A class to fit an XYDatatset to a function/model using scipy.optimize'''
     
-    def __init__(self, model = None, parguess=None, name=None):
+    def __init__(self, model = None, parguess=None, name=None, sigmas=1.0):
         self.xydataset=None   
         self.initialize_fit_function(model, parguess, name)
+        self.sigmas = sigmas
         
     def set_fit_func(self, func, npars, funcname=None, parguess=None):
         '''Set the fit function and the number of parameter, given
@@ -109,6 +110,22 @@ class XYFitter:
                 return
             
             self.set_fit_func(func=model, npars=len(parguess), funcname="custom", parguess=parguess)
+
+    @property
+    def sigmas(self):
+        '''Returns the mean of a Measurement object.
+        '''
+        return self._sigmas
+
+    @sigmas.setter
+    def sigmas(self, sigma):
+        '''Sets the mean of a Measurement object.
+        '''
+        if(type(sigma) in qe.ExperimentalValue.CONSTANT and float(sigma).is_integer()):
+            self._sigmas = sigma
+        else:
+            print("Simgas parameter must be a whole number, using sigmas=1")
+            self._sigmas = 1.0
 
     def fit(self, dataset, fit_range=None, fit_count=0, name=None):
         ''' Perform a fit of the fit_function to a data set'''
@@ -337,11 +354,11 @@ class XYDataSet:
         self.fit_color = []
         self.nfits=0
         
-    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None, name=None):
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None, name=None, sigmas=1.0):
         '''Fit a data set to a model using XYFitter. Everytime this function
         is called on a data set, it adds a new XYFitter to the dataset. This
         is to allow multiple functions to be fit to the same data set'''
-        fitter = XYFitter(model=model, parguess=parguess, name=name)
+        fitter = XYFitter(model=model, parguess=parguess, name=name, sigmas=sigmas)
         fit_pars = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
         if(fit_pars is not None):
             self.xyfitter.append(fitter)

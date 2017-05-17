@@ -93,7 +93,7 @@ def make_np_arrays(*args):
             np_tuple = np_tuple +(None,)
     return np_tuple
     
-def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None, color='black', errorbandfactor=1.0):
+def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None, color='black', sigmas=1.0, errorbandfactor=1.0):
     '''Plot a function evaluated over the range of xdata - xdata only needs 2 values
     The function can be either f(x) or f(x, *pars). In the later case, if pars is
     a Measurement_Array (e.g. the parameters from a fit), then an error band is also
@@ -122,14 +122,15 @@ def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None
     
     #Add error band
     if isinstance(pars, qe.Measurement_Array):
-        ymax = fmes.means+errorbandfactor*fmes.stds
-        ymin = fmes.means-errorbandfactor*fmes.stds
+        for i in range(1, sigmas+1):
+            ymax = fmes.means+i*errorbandfactor*fmes.stds
+            ymin = fmes.means-i*errorbandfactor*fmes.stds
 
-        patch = figure.patch(x=np.append(xvals,xvals[::-1]),y=np.append(ymax,ymin[::-1]),
-                     fill_alpha=0.3,
-                     fill_color=color,
-                     line_alpha=0.0,
-                     legend=legend_name)
+            patch = figure.patch(x=np.append(xvals,xvals[::-1]),y=np.append(ymax,ymin[::-1]),
+                         fill_alpha=0.3/(sigmas-0.3*(i-1)),
+                         fill_color=color,
+                         line_alpha=0.0,
+                         legend=legend_name)
        
         return line, patch
     else:

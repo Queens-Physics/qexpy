@@ -505,7 +505,6 @@ class ExperimentalValue:
         nmin1 = len(data_x)-1
         if nmin1 != 0:
             sigma_xy /= nmin1
-                    
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
 
@@ -594,8 +593,7 @@ class ExperimentalValue:
             if term:
                 self.set_covariance(variable, term)
                 return term
-        else:
-            return 0
+        return 0
 
     def _get_correlation(self, y):
         '''Returns the correlation factor of two measurements.

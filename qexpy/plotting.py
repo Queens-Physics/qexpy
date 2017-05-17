@@ -235,10 +235,10 @@ class Plot:
                 self.yres_range = [min(yr[0], self.yres_range[0]), max(yr[1], self.yres_range[1])]               
         
     def fit(self, model=None, parguess=None, fit_range=None, print_results=True,
-            datasetindex=-1, fitcolor=None, name=None):
+            datasetindex=-1, fitcolor=None, name=None, sigmas=1.0):
         '''Fit a dataset to model - calls XYDataset.fit and returns a 
         Measurement_Array of fitted parameters'''
-        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor, name=name, print_results=print_results) 
+        results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor, name=name, print_results=print_results, sigmas=sigmas) 
         return results
         
     def print_fit_parameters(self, dataset=-1):
@@ -628,7 +628,7 @@ class Plot:
                                    pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
                                    legend_name=dataset.fit_function_name[index],
                                    color=color if dataset.fit_color[index] is None else dataset.fit_color[index],
-                                   errorbandfactor=self.errorband_sigma)
+                                   errorbandfactor=self.errorband_sigma, sigmas=dataset.xyfitter[index].sigmas)
             
             if self.show_residuals and hasattr(self, 'mplfigure_res_ax') and show_residuals:           
                 self.mplfigure_res_ax.errorbar(dataset.xdata, dataset.fit_yres[index].means,
@@ -638,7 +638,7 @@ class Plot:
                     
      
     def mpl_plot_function(self, function, xdata, pars=None, n=100,
-                      legend_name=None, color='black', errorbandfactor=1.0):
+                      legend_name=None, color='black', errorbandfactor=1.0, sigmas=1.0):
         '''Add a function to the main figure. It is better to use add_function() and to
         let populate_mpl_plot() actually add the function.
         
@@ -668,11 +668,12 @@ class Plot:
         self.mplfigure_main_ax.plot(xvals,fvals, color=color, label = legend_name)
         
         if isinstance(pars, qe.Measurement_Array):
-            fmax = fvals + ferr
-            fmin = fvals - ferr
-            self.mplfigure_main_ax.fill_between(xvals, fmin, fmax, facecolor=color,
-                                                alpha=0.3, edgecolor = 'none',
-                                                interpolate=True)
+            for i in range(1, sigmas+1):
+                fmax = fvals + i*errorbandfactor*ferr
+                fmin = fvals - i*errorbandfactor*ferr
+                self.mplfigure_main_ax.fill_between(xvals, fmin, fmax, facecolor=color,
+                                                    alpha=0.3/(sigmas-0.3*(i-1)), edgecolor = 'none',
+                                                    interpolate=True)
         
     def interactive_linear_fit(self, error_range=5, randomize = False,
                                show_chi2 = True, show_errors=True,
@@ -1100,7 +1101,7 @@ class Plot:
                                 pars=dataset.fit_pars[index], n=q.settings["plot_fcn_npoints"],
                                 legend_name=dataset.name+"_"+dataset.fit_function_name[index],
                                 color=color if dataset.fit_color[index] is None else dataset.fit_color[index],
-                                errorbandfactor=self.errorband_sigma)
+                                sigmas=dataset.xyfitter[index].sigmas, errorbandfactor=self.errorband_sigma)
     
     def bk_add_points_with_error_bars(self, xdata, ydata, xerr=None, yerr=None,
                                    color='black', data_name='dataset'):
@@ -1113,7 +1114,7 @@ class Plot:
                                               data_name=data_name)
     
     def bk_plot_function(self, function, xdata, pars=None, n=100,
-                      legend_name=None, color='black', errorbandfactor=1.0):
+                      legend_name=None, color='black', sigmas=1.0, errorbandfactor=1.0):
         '''Add a function to the main figure. It is better to use add_function() and to
         let populate_bokeh_plot() actually add the function.
         
@@ -1123,7 +1124,7 @@ class Plot:
         if not hasattr(self, 'bkfigure'):
             self.bkfigure = self.initialize_bokeh_figure(residuals=False)
         return qpu.bk_plot_function(self.bkfigure, function, xdata, pars=pars, n=n,
-                      legend_name=legend_name, color=color, errorbandfactor=errorbandfactor)       
+                      legend_name=legend_name, color=color, sigmas=sigmas, errorbandfactor=errorbandfactor)       
         
     def bk_show_linear_fit(self, output='inline'):
         '''Fits the last dataset to a linear function and displays the
