@@ -581,7 +581,7 @@ class ExperimentalValue:
             for root in self.root:
                 root_obj = ExperimentalValue.register[root]
                 partial_der = self.derivative[root]
-                term += partial_der*root_obj.get_covariance(variable)
+                term += partial_der*variable.get_covariance(root_obj)
             if term:
                 self.set_covariance(variable, term)
                 return term
@@ -590,7 +590,7 @@ class ExperimentalValue:
             for root in variable.root:
                 root_obj = ExperimentalValue.register[root]
                 partial_der = variable.derivative[root]
-                term += partial_der*root_obj.get_covariance(variable)
+                term += partial_der*self.get_covariance(root_obj)
             if term:
                 self.set_covariance(variable, term)
                 return term
