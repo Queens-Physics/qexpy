@@ -150,7 +150,7 @@ class TestFitting(unittest.TestCase):
         Y = e.MeasurementArray([3, 5, 7, 9, 11], [0.05])
 
         figure = p.MakePlot(xdata = X, ydata = Y)
-        figure.fit('linear')
+        figure.fit('linear', print_results=False)
         intercept = figure.get_dataset().xyfitter[0].fit_pars[0]
         slope = figure.get_dataset().xyfitter[0].fit_pars[1]
 

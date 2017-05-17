@@ -572,7 +572,7 @@ class ExperimentalValue:
 
         elif self.info["Data"] is not None \
                 and variable.info["Data"] is not None\
-                and len(self) == len(variable):
+                and len(self) == len(variable) and len(self) != 1:
             ExperimentalValue._find_covariance(self, variable)
             var = self.covariance[variable.info['ID']]
             return var
@@ -584,7 +584,7 @@ class ExperimentalValue:
                 term += partial_der*root_obj.get_covariance(variable)
             if term:
                 self.set_covariance(variable, term)
-            return term
+                return term
         elif isinstance(variable, Function):
             term = 0
             for root in variable.root:
@@ -593,7 +593,7 @@ class ExperimentalValue:
                 term += partial_der*root_obj.get_covariance(variable)
             if term:
                 self.set_covariance(variable, term)
-            return term
+                return term
         else:
             return 0
 
@@ -606,7 +606,7 @@ class ExperimentalValue:
         x = self
         if isinstance(x, Constant) or isinstance(y, Constant):
             return 0
-        y.get_covariance(x)
+
         if y.info['ID'] in x.covariance:
             pass
         else:
