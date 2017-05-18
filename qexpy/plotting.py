@@ -543,11 +543,11 @@ class Plot:
 
         for x_data in lines['x']:
             dashed = 'dashed' if x_data['dashed'] else 'solid'
-            self.mpl_plot([x_data['pos']]*2, self.y_range, color=x_data['color'], ls=dashed, lw=1)
+            self.mpl_plot([x_data['pos']]*2, self.y_range, color=x_data['color'], ls=dashed, lw=1, zorder=5)
 
         for y_data in lines['y']:
             dashed = 'dashed' if y_data['dashed'] else 'solid'
-            self.mpl_plot(self.x_range, [y_data['pos']]*2, color=y_data['color'], ls=dashed, lw=1)
+            self.mpl_plot(self.x_range, [y_data['pos']]*2, color=y_data['color'], ls=dashed, lw=1, zorder=5)
                        
     def mpl_show_fit_results_box(self, datasets=None, add_space = True):
         '''Show a box with the fit results for the given list of datasets. If 
@@ -665,7 +665,7 @@ class Plot:
             print("Error: unrecognized parameters for function")
             pass
         
-        self.mplfigure_main_ax.plot(xvals,fvals, color=color, label = legend_name)
+        self.mplfigure_main_ax.plot(xvals,fvals, color=color, label = legend_name, zorder=5)
         
         if isinstance(pars, qe.Measurement_Array):
             for i in range(1, int(sigmas)+1):
@@ -673,7 +673,7 @@ class Plot:
                 fmin = fvals - i*errorbandfactor*ferr
                 self.mplfigure_main_ax.fill_between(xvals, fmin, fmax, facecolor=color,
                                                     alpha=0.3/(sigmas-0.3*(i-1)), edgecolor = 'none',
-                                                    interpolate=True)
+                                                    interpolate=True, zorder=0)
         
     def interactive_linear_fit(self, error_range=5, randomize = False,
                                show_chi2 = True, show_errors=True,
