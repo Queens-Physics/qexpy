@@ -122,7 +122,7 @@ def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None
     
     #Add error band
     if isinstance(pars, qe.Measurement_Array):
-        for i in range(1, sigmas+1):
+        for i in range(1, int(sigmas)+1):
             ymax = fmes.means+i*errorbandfactor*fmes.stds
             ymin = fmes.means-i*errorbandfactor*fmes.stds
 

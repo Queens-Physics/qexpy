@@ -668,7 +668,7 @@ class Plot:
         self.mplfigure_main_ax.plot(xvals,fvals, color=color, label = legend_name)
         
         if isinstance(pars, qe.Measurement_Array):
-            for i in range(1, sigmas+1):
+            for i in range(1, int(sigmas)+1):
                 fmax = fvals + i*errorbandfactor*ferr
                 fmin = fvals - i*errorbandfactor*ferr
                 self.mplfigure_main_ax.fill_between(xvals, fmin, fmax, facecolor=color,

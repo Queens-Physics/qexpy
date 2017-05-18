@@ -1116,7 +1116,46 @@ class ExperimentalValue:
             except AttributeError:
                 raise TypeError
             else:
-                return self.mean >= other.mean      
+                return self.mean >= other.mean
+
+    def sqrt(x):
+        return sqrt(x)
+
+    def log(x):
+        return log(x)
+
+    def exp(x):
+        return exp(x)
+
+    def e(x):
+        return exp(x)
+
+    def sin(x):
+        return sin(x)
+
+    def cos(x):
+        return cos(x)
+
+    def tan(x):
+        return tan(x)
+
+    def csc(x):
+        return csc(x)
+
+    def sec(x):
+        return sec(x)
+
+    def cot(x):
+        return cot(x)
+
+    def asin(x):
+        return asin(x)
+
+    def acos(x):
+        return acos(x)
+
+    def atan(x):
+        return atan(x)
 
 ###############################################################################
 # Miscellaneous Methods
