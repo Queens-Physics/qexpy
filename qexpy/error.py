@@ -1572,6 +1572,11 @@ def MeasurementArray(data, error=None, name=None, units=None, error_method='Deri
                     data_name = "{}_{}".format(array.name,i)
                     array[i]=Measurement(float(data[i]),0., units=units, name=data_name)
                     array[i].user_name=user_name
+            elif isinstance(data[0], ExperimentalValue): #MA([Measurement,Measurment,Measurement,])
+                for i in range(n):
+                    data[i].rename(units=units)
+                    array[i]=data[i]
+                    array[i].user_name=user_name
             else:
                 print("unsupported type for data")
              
