@@ -258,6 +258,7 @@ class ExperimentalValue:
         '''Sets the name of a Measurement object.
         '''
         if isinstance(name, str):
+            self.user_name = True
             self._name = name
         else:
             print("Name must be a string")
@@ -1318,6 +1319,51 @@ class Measurement_Array(np.ndarray):
         '''
         # then just call the parent
         return np.ndarray.__array_wrap__(self, out_arr, context)
+
+    def append(self, meas):
+        '''Appends a value to the end of a MeasurementArray.
+        '''
+        data_name = "{}_{}".format(self.name,len(self))
+        if type(meas) in ExperimentalValue.CONSTANT:
+            meas = Constant(meas)
+        if isinstance(meas, ExperimentalValue):
+            meas.name = data_name
+            meas.units = self.units
+            return self.__array_wrap__(np.append(self, meas))
+        else:
+            print("Object to append must be a Measurement or a number")
+            return self
+
+    def insert(self, pos, meas):
+        '''Inserts a value in a position in a MeasurementArray.
+        '''
+        if pos not in range(len(self)):
+            print("Index for inserting out of bounds.")
+            return self
+        data_name = "{}_{}".format(self.name,len(self))
+        if type(meas) in ExperimentalValue.CONSTANT:
+            meas = Constant(meas)
+        if isinstance(meas, ExperimentalValue):
+            meas.name = data_name
+            meas.units = self.units
+            result = np.insert(self, pos, meas)
+            for index in range(len(result)):
+                result[index].name = "{}_{}".format(self.name,index)
+            return self.__array_wrap__(result)
+        else:
+            print("Object to insert must be a Measurement or a number")
+            return self
+
+    def delete(self, pos):
+        '''Removes an element from a MeasurementArray.
+        '''
+        if pos not in range(len(self)):
+            print("Index for deleting out of bounds.")
+            return self
+        result = np.delete(self, pos)
+        for index in range(len(result)):
+            result[index].name = "{}_{}".format(self.name,index)
+        return self.__array_wrap__(result)
 
     @property
     def error_method(self):
