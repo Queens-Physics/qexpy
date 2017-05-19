@@ -30,6 +30,65 @@ class TestError(unittest.TestCase):
         self.assertEqual(x.mean, 10)
         self.assertEqual(x.std(), 1)
 
+class TestCovariance(unittest.TestCase):
+    def test_array_covariance(self):
+        '''Tests covariance calculated from the data arrays
+        from the two Measurement objects.
+        '''
+        x = e.Measurement([1, 2, 3, 4, 5])
+        y = e.Measurement([2, 4, 6, 8, 10])
+
+        self.assertEqual(x.get_covariance(y), 5)
+
+    def test_set_covariance(self):
+        '''Tests setting covariance between two objects.
+        '''
+        x = e.Measurement(10, 1)
+        y = e.Measurement(20, 2)
+        x.set_covariance(y, 2)
+
+        self.assertEqual(x.get_covariance(y), 2)
+
+    def test_propagated_covariance(self):
+        '''Tests the propagation of correlation between two
+        objects through the derivative method.
+        '''
+        x = e.Measurement(10, 1)
+        y = e.Measurement(20, 2)
+        x.set_covariance(y, 2)
+
+        result = x*y+x
+
+        self.assertEqual(result.get_covariance(y), 82)
+
+    def test_array_correlation(self):
+        '''Tests covariance calculated from the data arrays
+        from the two Measurement objects.
+        '''
+        x = e.Measurement([1, 2, 3, 4, 5])
+        y = e.Measurement([2, 4, 6, 8, 10])
+        x.get_covariance(y)
+
+        self.assertAlmostEqual(x._get_correlation(y), 1, places=7)
+
+    def test_set_correlation(self):
+        '''Tests setting covariance between two objects.
+        '''
+        x = e.Measurement([1, 2, 3, 4])
+        y = e.Measurement([2, 3, 4, 1])
+
+        result = x*y+x
+        result.get_covariance(y)
+        self.assertAlmostEqual(x._get_correlation(y), -.2)
+
+    def test_propagated_correlation(self):
+        '''Tests setting covariance between two objects.
+        '''
+        x = e.Measurement(10, 1)
+        y = e.Measurement(20, 2)
+        x.set_correlation(y, 0.5)
+
+        self.assertEqual(x._get_correlation(y), 0.5)
 
 class TestFunctions(unittest.TestCase):
 
@@ -141,6 +200,39 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(e.tan(x).get_derivative(x), m.cos(x.mean)**-2)
         self.assertEqual(e.exp(x).get_derivative(x), m.exp(x.mean))
 
+class TestArrayOps(unittest.TestCase):
+    def test_append(self):
+        '''Tests appending new values to a MeasurementArray.
+        '''
+        x = e.MeasurementArray([3, 2], 1)
+        x = x.append(1)
+
+        to_append = e.Measurement(4, 1)
+        x = x.append(to_append)
+
+        self.assertEqual(x[2], 1)
+        self.assertEqual(x[3], to_append)
+
+    def test_insert(self):
+        '''Tests inserting new values into a MeasurementArray.
+        '''
+        x = e.MeasurementArray([3, 1], 1)
+        x = x.insert(1, 2)
+
+        to_insert = e.Measurement(4, 1)
+        x = x.insert(2, to_insert)
+
+        self.assertEqual(x[1], 2)
+        self.assertEqual(x[2], to_insert)
+
+    def test_delete(self):
+        '''Tests inserting new values into a MeasurementArray.
+        '''
+        x = e.MeasurementArray([3, 2, 1], 1)
+        x = x.delete(1)
+
+        self.assertEqual(len(x), 2)
+
 class TestFitting(unittest.TestCase):
     def test_linear_fit(self):
         ''' Test of plotting fit
@@ -216,7 +308,7 @@ class TestMisc(unittest.TestCase):
         test1 = e.Measurement(10, 1, units='kg*m/s^2')
         test2 = e.Measurement(10, 1, units='kg^1m^1s^-2')
         test3 = e.Measurement(10, 1, units='kg^1*m^1/s^2')
-        
+
         units = {'kg':1, 'm':1, 's':-2}
 
         self.assertEqual(test1.units, units)

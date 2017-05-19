@@ -1201,7 +1201,7 @@ class Measurement(ExperimentalValue):
 
         if units is not None:
             if type(units) is str:
-                self.units = parse_units(units)
+                self.units = _parse_units(units)
             else:
                 for i in range(len(units)//2):
                     self.units[units[2*i]] = units[2*i+1]
@@ -1296,7 +1296,7 @@ class Measurement_Array(np.ndarray):
         obj.units = {}
         if units is not None:
             if type(units) is str:
-                obj.units = parse_units(units)
+                obj.units = _parse_units(units)
             else:
                 for i in range(len(units)//2):
                     obj.units[units[2*i]] = units[2*i+1]
@@ -2282,7 +2282,7 @@ def _sci_print(self, method=None):
 # Random Methods
 ###############################################################################
 
-def parse_units(unit_str):
+def _parse_units(unit_str):
     '''Parses the string representation of an objects units and
     breaks it into it's constituent parts and their powers. 
     '''
