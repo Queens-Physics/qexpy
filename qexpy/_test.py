@@ -4,7 +4,6 @@ import qexpy.plotting as p
 import unittest
 import numpy as np
 
-
 class TestError(unittest.TestCase):
     def test_single_measurement(self):
         '''Tests creating a Measurement from a single measurement with uncertainty
@@ -157,7 +156,41 @@ class TestFitting(unittest.TestCase):
         self.assertEqual(slope, 2)
         self.assertEqual(intercept, 1)
 
-# TODO: add tests of other fits
+    def test_polynomial_fit(self):
+        ''' Test of plotting fit
+        '''
+        X = e.MeasurementArray([-2, -1, 0, 1, 2], [0.1])
+        Y = 3*X**2+2*X+1
+
+        figure = p.MakePlot(xdata = X, ydata = Y)
+        figure.fit('pol2', print_results=False)
+        par0 = figure.get_dataset().xyfitter[0].fit_pars[0]
+        par1 = figure.get_dataset().xyfitter[0].fit_pars[1]
+        par2 = figure.get_dataset().xyfitter[0].fit_pars[2]
+
+        self.assertAlmostEqual(par0, 1, places=7)
+        self.assertAlmostEqual(par1, 2, places=7)
+        self.assertAlmostEqual(par2, 3, places=7)
+
+    def test_gaussian_fit(self):
+        ''' Test of plotting fit
+        '''
+        X = e.MeasurementArray([-1, -1/3, 1/3, 1], [0.1])
+        mean = 0.1
+        std = 0.5
+        norm = .5
+        Y = norm*(2*m.pi*std**2)**(-0.5)*np.exp(-0.5*(X-mean)**2/std**2)
+
+        figure = p.MakePlot(xdata = X, ydata = Y)
+        figure.fit('gauss', print_results=False)
+
+        par0 = figure.get_dataset().xyfitter[0].fit_pars[0]
+        par1 = figure.get_dataset().xyfitter[0].fit_pars[1]
+        par2 = figure.get_dataset().xyfitter[0].fit_pars[2]
+
+        self.assertAlmostEqual(par0, mean, places=7)
+        self.assertAlmostEqual(par1, std, places=7)
+        self.assertAlmostEqual(par2, norm, places=7)
 
 class TestMisc(unittest.TestCase):
     def test_unit_propagation(self):
@@ -177,6 +210,18 @@ class TestMisc(unittest.TestCase):
         L = v*t
         self.assertEqual(L.units, {'m': 1})
 
+    def test_unit_parsing(self):
+        '''Tests parsing of unit strings.
+        '''
+        test1 = e.Measurement(10, 1, units='kg*m/s^2')
+        test2 = e.Measurement(10, 1, units='kg^1m^1s^-2')
+        test3 = e.Measurement(10, 1, units='kg^1*m^1/s^2')
+        
+        units = {'kg':1, 'm':1, 's':-2}
+
+        self.assertEqual(test1.units, units)
+        self.assertEqual(test2.units, units)
+        self.assertEqual(test3.units, units)
 
     def test_printing(self):
         '''Test of printing methods and sigfigs.

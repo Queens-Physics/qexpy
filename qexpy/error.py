@@ -7,6 +7,7 @@ import bokeh.io as bi
 import qexpy.utils as qu
 #used to check plot_engine:
 import qexpy as q
+import re
 
 
 class ExperimentalValue:
@@ -258,7 +259,6 @@ class ExperimentalValue:
         '''Sets the name of a Measurement object.
         '''
         if isinstance(name, str):
-            self.user_name = True
             self._name = name
         else:
             print("Name must be a string")
@@ -1194,7 +1194,6 @@ class Measurement(ExperimentalValue):
 
     def __init__(self, *args, name=None, units=None):
         super().__init__(*args, name=name)
-
         if name is not None:
             self.name = name
         else:
@@ -1202,7 +1201,7 @@ class Measurement(ExperimentalValue):
 
         if units is not None:
             if type(units) is str:
-                self.units[units] = 1
+                self.units = parse_units(units)
             else:
                 for i in range(len(units)//2):
                     self.units[units[2*i]] = units[2*i+1]
@@ -1297,7 +1296,7 @@ class Measurement_Array(np.ndarray):
         obj.units = {}
         if units is not None:
             if type(units) is str:
-                obj.units[units] = 1
+                obj.units = parse_units(units)
             else:
                 for i in range(len(units)//2):
                     obj.units[units[2*i]] = units[2*i+1]
@@ -1327,7 +1326,7 @@ class Measurement_Array(np.ndarray):
         if type(meas) in ExperimentalValue.CONSTANT:
             meas = Constant(meas)
         if isinstance(meas, ExperimentalValue):
-            meas.name = data_name
+            meas.rename(newName=data_name)
             meas.units = self.units
             return self.__array_wrap__(np.append(self, meas))
         else:
@@ -1344,11 +1343,11 @@ class Measurement_Array(np.ndarray):
         if type(meas) in ExperimentalValue.CONSTANT:
             meas = Constant(meas)
         if isinstance(meas, ExperimentalValue):
-            meas.name = data_name
+            meas.rename(newName=data_name)
             meas.units = self.units
             result = np.insert(self, pos, meas)
             for index in range(len(result)):
-                result[index].name = "{}_{}".format(self.name,index)
+                result[index].rename(newName="{}_{}".format(self.name,index))
             return self.__array_wrap__(result)
         else:
             print("Object to insert must be a Measurement or a number")
@@ -2209,7 +2208,10 @@ def _def_print(self, method=None):
         
         if mean == float('inf'):
             return "inf"
-                        
+
+        if std == 0:
+            return str(mean)+" +/- "+str(std)
+
         i = _return_exponent(std)
 
         if i < 0:
@@ -2217,13 +2219,12 @@ def _def_print(self, method=None):
             n = "%."+n+"f"
         else:
             n = '%.0f'
-            
+
         mean = float(round(mean, -i))
         if std == float('inf'):
             return  n % (mean)+" +/- inf"
         
         std = float(round(std, -i))
-        
         return n % (mean)+" +/- "+n % (std)
 
 
@@ -2281,6 +2282,20 @@ def _sci_print(self, method=None):
 # Random Methods
 ###############################################################################
 
+def parse_units(unit_str):
+    '''Parses the string representation of an objects units and
+    breaks it into it's constituent parts and their powers. 
+    '''
+    unit_dict = {}
+    div_split = unit_str.split("/")
+    for index in range(len(div_split)):
+        mult_split = re.findall('[a-zA-Z]+\^[+-]?\d+|[a-zA-Z]+', div_split[index]) # regex that finds [string^(+/- number)] or [string]
+        for term2 in mult_split:
+            pow_split = term2.split("^")
+            power_factor = -1 if index else 1
+            power = power_factor*int(pow_split[1]) if len(pow_split)>1 else power_factor*1
+            unit_dict[pow_split[0]] = power
+    return unit_dict
 
 def show_histogram(data, title=None, output='inline'):
     '''Creates a histogram of the inputted data using Bokeh or mpl.
