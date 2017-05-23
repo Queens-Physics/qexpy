@@ -212,7 +212,7 @@ covariance of two variables.
 
 .. automethod:: qexpy.error.Measurement.set_correlation
 
-.. automethod:: qexpy.error.Measurement.return_covariance
+.. automethod:: qexpy.error.Measurement.get_covariance
 
 Furthermore, the covariance and correlation of the fitted parameters found
 by the *.fit* method in QExPy.plotting 

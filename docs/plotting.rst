@@ -148,8 +148,6 @@ To add a theoretical curve, or any other curve:
    figure.function(x, theoretical)
    figure.show()
     
-.. automethod:: qexpy.plotting.Plot.function
-
 The final method relevant to Plot objects is the show method.
 This, by default will output the Bokeh plot in a terminal, or output of a
 Jupyter notebook, if that is where the code is executed.
@@ -184,7 +182,7 @@ In many cases, multiple sets of data must be shown on a single plot,
 possibly with multiple residuals. In this case, another Dataset object
 must be created and 
 
-.. automethod:: qexpy.plotting.Plot.
+.. autoclass:: qexpy.plotting.Plot
 
 This method is used by creating two separate plot objects and acting upon
 each as you would with any other plot. When showing the plot, instead of

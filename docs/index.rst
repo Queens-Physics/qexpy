@@ -18,7 +18,6 @@ Contents
    plotting
    LICENSE
 
-
 Indices and tables
 ==================
 
