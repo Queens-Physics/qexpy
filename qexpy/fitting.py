@@ -5,6 +5,7 @@ import qexpy.error as qe
 import qexpy.utils as qu
 from math import pi
 import re
+import warnings
 
 ARRAY = qu.array_types
 
@@ -166,9 +167,17 @@ class XYFitter:
         #The maximum number of function evaluations
         maxfev = 200 *(xdata.size+1) if q.settings["fit_max_fcn_calls"] == -1 else q.settings["fit_max_fcn_calls"]
         try:
-            self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
+            warns = []
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always", sp.OptimizeWarning)
+                self.fit_pars, self.fit_pcov = sp.curve_fit(self.fit_function, xdata, ydata,
                                                     sigma=yerr, p0=self.parguess,
                                                     maxfev=maxfev)
+                warns = w
+            if len(warns) == 1 and (self.fit_function==Rlinear or self.fit_function==Rpolynomial):
+                p, V = np.polyfit(x=xdata, y=ydata, deg=self.fit_npars-1, cov=True, w=1/yerr)
+                self.fit_pars = p[::-1]
+                self.fit_pcov = np.flipud(np.fliplr(V))
 
             self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
         except RuntimeError:
@@ -181,9 +190,18 @@ class XYFitter:
             yerr_eff = np.sqrt((yerr**2 + np.multiply(xerr, num_der(lambda x: self.fit_function(x, *self.fit_pars), xdata))**2))
 
             try:
-                self.fit_pars, self.fit_pcov  = sp.curve_fit(self.fit_function, xdata, ydata,
-                                                    sigma=yerr_eff, p0=self.parguess,
-                                                    maxfev=maxfev)
+                warns = []
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always", sp.OptimizeWarning)
+                    self.fit_pars, self.fit_pcov  = sp.curve_fit(self.fit_function, xdata, ydata,
+                                                        sigma=yerr_eff, p0=self.parguess,
+                                                        maxfev=maxfev)
+                    warns = w
+                if len(warns) == 1 and (self.fit_function==Rlinear or self.fit_function==Rpolynomial):
+                    p, V = np.polyfit(x=xdata, y=ydata, deg=self.fit_npars-1, cov=True, w=1/yerr)
+                    self.fit_pars = p[::-1]
+                    self.fit_pcov = np.flipud(np.fliplr(V))
+
                 self.fit_pars_err = np.sqrt(np.diag(self.fit_pcov))
             except RuntimeError:
                 print("Error: Fit could not converge; are the y errors too small? Is the function defined?")
