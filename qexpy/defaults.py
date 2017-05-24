@@ -7,7 +7,7 @@ import bokeh
 screen_dpi = 0
 try:
     screen_dpi = plt.gcf().get_dpi()
-except bokeh.sphinxext.bokeh_plot.PlotScriptError:
+except Exception:
     pass
 if screen_dpi == 0:
         screen_dpi = 100
