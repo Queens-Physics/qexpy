@@ -79,17 +79,17 @@ The example below shows a case of plotting data and fitting them to a straight l
 .. nboutput:: ipython3
 
    -----------------Fit results-------------------
-   Fit of  mydata  to  linear
-   Fit parameters:
-   mydata_linear_fit0_fitpars_intercept = -0.3 +/- 0.4,
-   mydata_linear_fit0_fitpars_slope = 1.06 +/- 0.06
+Fit of  mydata  to  linear
+Fit parameters:
+mydata_linear_fit0_fitpars_intercept = -0.3 +/- 0.4,
+mydata_linear_fit0_fitpars_slope = 1.06 +/- 0.06
 
-   Correlation matrix: 
-   [[ 1.    -0.886]
-    [-0.886  1.   ]]
+Correlation matrix: 
+[[ 1.    -0.886]
+ [-0.886  1.   ]]
 
-   chi2/ndof = 0.71/7
-   ---------------End fit results----------------
+chi2/ndof = 0.71/7
+---------------End fit results----------------
    
 .. bokeh-plot::
    :source-position: none
