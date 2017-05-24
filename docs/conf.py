@@ -22,6 +22,7 @@ import sphinx_rtd_theme
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('.'))
+sys.path.append(os.path.abspath('sphinxext'))
 os.environ['BOKEH_DOCS_MISSING_API_KEY_OK'] = str(1)
 
 # -- General configuration ------------------------------------------------
@@ -33,6 +34,8 @@ os.environ['BOKEH_DOCS_MISSING_API_KEY_OK'] = str(1)
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'matplotlib.sphinxext.only_directives',
+    'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
