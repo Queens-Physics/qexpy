@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-This is a test to see if things change
-======================================
+Welcome to QExPy’s Documentation!
+=================================
 
 Contents
 ========

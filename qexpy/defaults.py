@@ -3,11 +3,7 @@
 import matplotlib.pyplot as plt
 #Matplotlib needs to know the dpi to convert between
 #actual size and pixels
-screen_dpi = 0
-try:
-    screen_dpi = plt.gcf().get_dpi()
-except Exception:
-    pass
+screen_dpi = plt.gcf().get_dpi()
 if screen_dpi == 0:
         screen_dpi = 100
 plt.close()
