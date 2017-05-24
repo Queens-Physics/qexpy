@@ -1,9 +1,14 @@
 #Default parameters
 
 import matplotlib.pyplot as plt
+import bokeh
 #Matplotlib needs to know the dpi to convert between
 #actual size and pixels
-screen_dpi = plt.gcf().get_dpi()
+screen_dpi = 0
+try:
+    screen_dpi = plt.gcf().get_dpi()
+except bokeh.sphinxext.bokeh_plot.PlotScriptError:
+    pass
 if screen_dpi == 0:
         screen_dpi = 100
 plt.close()
