@@ -2,6 +2,7 @@ import numpy as np
 import math as m
 import qexpy.utils as qu
 from qexpy.error import Measurement_Array, Measurement, Constant, Function
+import scipy.stats as st
 
 CONSTANT = qu.number_types 
 ARRAY = qu.array_types +(Measurement_Array,)
@@ -323,21 +324,49 @@ def find_minmax(function, *args):
     import numpy as np
     N=Measurement.minmax_n
     
+    include = {csc: lambda x: x%m.pi != 0,
+               sec: lambda x: x%m.pi != m.pi/2,
+               cot: lambda x: x%m.pi != 0,
+               div: lambda x: x != 0,
+               log: lambda x: x >= 0,
+               sqrt: lambda x: x >= 0,
+               atan: lambda x: (x <= 1) & (x >= -1),
+               acos: lambda x: (x <= 1) & (x >= -1),
+               asin: lambda x: (x <= 1) & (x >= -1)}
+
     if len(args) is 1:
         x = args[0]
         #vals = np.linspace(x.mean-x.std, x.mean + x.std, N)
         vals = np.linspace(x.MinMax[0]-x.MinMax[1], x.MinMax[0] + x.MinMax[1], N)
+        vals = vals[include[function](vals)]
         results = function(vals)
             
     elif len(args) is 2:     
         a = args[0]
         b = args[1]
+
+        if function == power:
+            a_vals = np.ndarray([])
+            b_vals = np.ndarray([])
+            for i in range(m.ceil(a.MinMax[0]-a.MinMax[1]), m.floor(a.MinMax[0]+a.MinMax[1])):
+                np.append(a_vals, i)
+            for i in range(m.ceil(b.MinMax[0]-b.MinMax[1]), m.floor(b.MinMax[0]+b.MinMax[1])):
+                np.append(b_vals, i)
+            if a.MinMax[0]+a.MinMax[1] > 0:
+                np.append(a_vals, np.linspace(0, a.MinMax[0]+a.MinMax[1], N))
+            if b.MinMax[0]+b.MinMax[1] > 0:
+                np.append(b_vals, np.linspace(0, b.MinMax[0]+b.MinMax[1], N))
+        else:
+            a_vals = np.linspace(a.MinMax[0]-a.MinMax[1], a.MinMax[0] + a.MinMax[1], N)
+            b_vals = np.linspace(b.MinMax[0]-b.MinMax[1], b.MinMax[0] + b.MinMax[1], N)
+
+        if function == div:
+            b_vals = b_vals[include[function](b_vals)]
+
         results = np.ndarray(shape=(N,N))
-        a_vals = np.linspace(a.MinMax[0]-a.MinMax[1], a.MinMax[0] + a.MinMax[1], N)
-        b_vals = np.linspace(b.MinMax[0]-b.MinMax[1], b.MinMax[0] + b.MinMax[1], N)
         
-        for i in range(N):
-            for j in range(N):
+        for i in range(len(a_vals)):
+            for j in range(len(b_vals)):
                 results[i][j]= function(a_vals[i], b_vals[j])
     else:
         print("unsupported number of parameters")
@@ -373,34 +402,68 @@ def monte_carlo(func, *args):
                 asin: np.arcsin, acos: np.arccos, atan: np.arctan,
                 }
 
+    # Domains of functions that have undefined points in their domain.
+    # Returns True if the function is undefined at x.
+    exclude = {csc: lambda x: x%m.pi == 0,
+               sec: lambda x: x%m.pi == m.pi/2,
+               cot: lambda x: x%m.pi == 0,
+               div: lambda x: x == 0,
+               log: lambda x: x < 0,
+               sqrt: lambda x: x < 0,
+               power: lambda x: x < 0,
+               atan: lambda x: (x > 1) | (x < -1),
+               acos: lambda x: (x > 1) | (x < -1),
+               asin: lambda x: (x > 1) | (x < -1)}
+
     N = len(args)
     n = e.ExperimentalValue.mc_trial_number
     value = np.zeros((N, n))
     result = np.zeros(n)
     rand = np.zeros((N, n))
-    for i in range(N):
-        if args[i].MC_list is not None:
-            value[i] = args[i].MC_list
-        elif args[i].std == 0:
-            value[i] = args[i].mean
-            args[i].MC_list = value[i]
-        else:
-            rand[i] = np.random.normal(size=n) # Generates standard mean=0, sigma=1 normal distribution
-            norm1 = args[0].MC[0]+args[0].MC[1]*rand[0]
-            value[0] = norm1
 
-    # Converts the mean=0, error=1 distribution into the desired normal distribution, taking correlation into account
+    if(func == power and args[0].mean<0 and args[1].std!=0):
+        return([np.nan, np.nan], result)
+    if func in exclude:
+        rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[func])
+    elif args[0].MC_list is not None:
+        value[0] = args[0].MC_list
+    elif args[0].std == 0:
+        value[0] = args[0].mean
+        args[0].MC_list = value[0]
+    else:
+        rand[0] = np.random.normal(size=n) 
+
     if len(args) == 2:
+        rand[1] = np.random.normal(size=n)
+        args[0].get_covariance(args[1])
         rho = round(args[0]._get_correlation(args[1]), 8)
-        factor = rho*rand[0] + np.sqrt(1-rho*rho)*rand[1]
-        rand[i] = np.random.normal(size = n)
-        value[1] = args[1].MC[0]+(np.random.normal(0, args[1].MC[1], n)*factor if args[1].MC[1] else 0)
+        factor = rho*rand[0] + np.sqrt(1-rho*rho)*rand[1] # rand[0] stores the excluded normal distribution
+        if func == div:
+            value[0] = factor*args[0].std+args[0].mean
+            value[1] = rand[0]*args[1].std+args[1].mean
+        else:
+            value[1] = factor*args[1].std+args[1].mean
+            if np.all(value[0]==0):
+                value[0] = rand[0]*args[0].std+args[0].mean
+    elif np.all(value[0]==0):
+        value[0] = rand[0]*args[0].std+args[0].mean
 
     result = _np_func[func](*value)
     data = np.mean(result)
     error = np.std(result, ddof=1)
     return ([data, error], result,)
 
+def _generate_excluded_normal(mean, sigma, n, excluded):
+    '''Recursively generates random normal variables that are undefined 
+    on some part of their codomain. Returns the normal distribution and
+    the underlying standard normal distribution that was used to create it.
+    '''
+    standard = np.random.normal(size=n) # mean=0, std=1 normal distribution
+    x = standard*sigma+mean             # mean=mean, std=std random normal distribution
+    if np.any(excluded(x)):
+        print('excluding')
+        standard[excluded(x)], x[excluded(x)] = _generate_excluded_normal(mean, sigma, len(x[excluded(x)]), excluded)
+    return standard, x
 
 ###############################################################################
 # Methods for Propagation
