@@ -330,7 +330,6 @@ def find_minmax(function, *args):
                div: lambda x: x != 0,
                log: lambda x: x >= 0,
                sqrt: lambda x: x >= 0,
-               atan: lambda x: (x <= 1) & (x >= -1),
                acos: lambda x: (x <= 1) & (x >= -1),
                asin: lambda x: (x <= 1) & (x >= -1)}
 
@@ -338,7 +337,8 @@ def find_minmax(function, *args):
         x = args[0]
         #vals = np.linspace(x.mean-x.std, x.mean + x.std, N)
         vals = np.linspace(x.MinMax[0]-x.MinMax[1], x.MinMax[0] + x.MinMax[1], N)
-        vals = vals[include[function](vals)]
+        if function in include:
+            vals = vals[include[function](vals)]
         results = function(vals)
             
     elif len(args) is 2:     
@@ -352,10 +352,14 @@ def find_minmax(function, *args):
                 np.append(a_vals, i)
             for i in range(m.ceil(b.MinMax[0]-b.MinMax[1]), m.floor(b.MinMax[0]+b.MinMax[1])):
                 np.append(b_vals, i)
-            if a.MinMax[0]+a.MinMax[1] > 0:
-                np.append(a_vals, np.linspace(0, a.MinMax[0]+a.MinMax[1], N))
-            if b.MinMax[0]+b.MinMax[1] > 0:
-                np.append(b_vals, np.linspace(0, b.MinMax[0]+b.MinMax[1], N))
+            if a.MinMax[0]-a.MinMax[1] > 0:
+                a_vals = np.append(a_vals, np.linspace(a.MinMax[0]-a.MinMax[1], a.MinMax[0] + a.MinMax[1], N))
+            elif a.MinMax[0]+a.MinMax[1] > 0:
+                a_vals = np.append(a_vals, np.linspace(0, a.MinMax[0]+a.MinMax[1], N))   
+            if b.MinMax[0]-b.MinMax[1] > 0:
+                b_vals = np.append(b_vals, np.linspace(b.MinMax[0]-b.MinMax[1], b.MinMax[0] + b.MinMax[1], N))
+            elif b.MinMax[0]+b.MinMax[1] > 0:
+                b_vals = np.append(b_vals, np.linspace(0, b.MinMax[0]+b.MinMax[1], N))
         else:
             a_vals = np.linspace(a.MinMax[0]-a.MinMax[1], a.MinMax[0] + a.MinMax[1], N)
             b_vals = np.linspace(b.MinMax[0]-b.MinMax[1], b.MinMax[0] + b.MinMax[1], N)
@@ -363,7 +367,7 @@ def find_minmax(function, *args):
         if function == div:
             b_vals = b_vals[include[function](b_vals)]
 
-        results = np.ndarray(shape=(N,N))
+        results = np.ndarray(shape=(len(a_vals),len(b_vals)))
         
         for i in range(len(a_vals)):
             for j in range(len(b_vals)):
@@ -411,7 +415,6 @@ def monte_carlo(func, *args):
                log: lambda x: x < 0,
                sqrt: lambda x: x < 0,
                power: lambda x: x < 0,
-               atan: lambda x: (x > 1) | (x < -1),
                acos: lambda x: (x > 1) | (x < -1),
                asin: lambda x: (x > 1) | (x < -1)}
 
@@ -461,7 +464,6 @@ def _generate_excluded_normal(mean, sigma, n, excluded):
     standard = np.random.normal(size=n) # mean=0, std=1 normal distribution
     x = standard*sigma+mean             # mean=mean, std=std random normal distribution
     if np.any(excluded(x)):
-        print('excluding')
         standard[excluded(x)], x[excluded(x)] = _generate_excluded_normal(mean, sigma, len(x[excluded(x)]), excluded)
     return standard, x
 
