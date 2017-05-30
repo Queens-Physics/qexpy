@@ -2,7 +2,6 @@ import numpy as np
 import math as m
 import qexpy.utils as qu
 from qexpy.error import Measurement_Array, Measurement, Constant, Function
-import scipy.stats as st
 
 CONSTANT = qu.number_types 
 ARRAY = qu.array_types +(Measurement_Array,)
@@ -324,53 +323,21 @@ def find_minmax(function, *args):
     import numpy as np
     N=Measurement.minmax_n
     
-    include = {csc: lambda x: x%m.pi != 0,
-               sec: lambda x: x%m.pi != m.pi/2,
-               cot: lambda x: x%m.pi != 0,
-               div: lambda x: x != 0,
-               log: lambda x: x >= 0,
-               sqrt: lambda x: x >= 0,
-               acos: lambda x: (x <= 1) & (x >= -1),
-               asin: lambda x: (x <= 1) & (x >= -1)}
-
     if len(args) is 1:
         x = args[0]
         #vals = np.linspace(x.mean-x.std, x.mean + x.std, N)
         vals = np.linspace(x.MinMax[0]-x.MinMax[1], x.MinMax[0] + x.MinMax[1], N)
-        if function in include:
-            vals = vals[include[function](vals)]
         results = function(vals)
             
     elif len(args) is 2:     
         a = args[0]
         b = args[1]
-
-        if function == power:
-            a_vals = np.ndarray([])
-            b_vals = np.ndarray([])
-            for i in range(m.ceil(a.MinMax[0]-a.MinMax[1]), m.floor(a.MinMax[0]+a.MinMax[1])):
-                np.append(a_vals, i)
-            for i in range(m.ceil(b.MinMax[0]-b.MinMax[1]), m.floor(b.MinMax[0]+b.MinMax[1])):
-                np.append(b_vals, i)
-            if a.MinMax[0]-a.MinMax[1] > 0:
-                a_vals = np.append(a_vals, np.linspace(a.MinMax[0]-a.MinMax[1], a.MinMax[0] + a.MinMax[1], N))
-            elif a.MinMax[0]+a.MinMax[1] > 0:
-                a_vals = np.append(a_vals, np.linspace(0, a.MinMax[0]+a.MinMax[1], N))   
-            if b.MinMax[0]-b.MinMax[1] > 0:
-                b_vals = np.append(b_vals, np.linspace(b.MinMax[0]-b.MinMax[1], b.MinMax[0] + b.MinMax[1], N))
-            elif b.MinMax[0]+b.MinMax[1] > 0:
-                b_vals = np.append(b_vals, np.linspace(0, b.MinMax[0]+b.MinMax[1], N))
-        else:
-            a_vals = np.linspace(a.MinMax[0]-a.MinMax[1], a.MinMax[0] + a.MinMax[1], N)
-            b_vals = np.linspace(b.MinMax[0]-b.MinMax[1], b.MinMax[0] + b.MinMax[1], N)
-
-        if function == div:
-            b_vals = b_vals[include[function](b_vals)]
-
-        results = np.ndarray(shape=(len(a_vals),len(b_vals)))
+        results = np.ndarray(shape=(N,N))
+        a_vals = np.linspace(a.MinMax[0]-a.MinMax[1], a.MinMax[0] + a.MinMax[1], N)
+        b_vals = np.linspace(b.MinMax[0]-b.MinMax[1], b.MinMax[0] + b.MinMax[1], N)
         
-        for i in range(len(a_vals)):
-            for j in range(len(b_vals)):
+        for i in range(N):
+            for j in range(N):
                 results[i][j]= function(a_vals[i], b_vals[j])
     else:
         print("unsupported number of parameters")

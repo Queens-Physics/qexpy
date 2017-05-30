@@ -12,7 +12,7 @@ underlying code can be useful to understand.
 Creating Measurement Objects
 ----------------------------
 
-The method that will be used most commonly is the Measured class.  This
+The method that will be used most commonly is the Measurement class.  This
 object can store the mean, standard deviation, original data, name, units,
 and other attributes which can be used by other elements of this package.
 
@@ -24,8 +24,8 @@ A mean and standard deviation can be entered directly.
 
 .. nbinput:: ipython3
    
-   import qexpy.error as e
-   x = e.Measurement(10, 1)
+   import qexpy as q
+   x = q.Measurement(10, 1)
    # This would create an object with a mean of 10 and a standard
    # deviation of 1.
 
@@ -36,7 +36,7 @@ created.
 
 .. nbinput:: ipython3
    
-   x = e.Measurement([9, 10, 11])
+   x = q.Measurement([9, 10, 11])
    # This would also produce an object with a mean of 10 and a standard
    # deviation of 1.  This can be shown by calling for x.mean and x.std:
 	
@@ -47,16 +47,15 @@ created.
    10, 1
 
 If several measurements, each with an associated error needs to be entered,
-the data can be entered either as pairs of a value and error, or as two
-lists of data and error respectively.
+a MeasurementArray should be used. There are a few ways to create a MeasurementArray:
 
 For example, given measurements 10 +/- 1, 9 +/- 0.5 and 11 +/- 0.25, the
 data can be entered as either
 
 .. nbinput:: ipython3
    
-   x = e.Measurement([10, 1], [9, 0.5], [11, 0.25])
-   y = e.Measurement([10, 9, 11], [1, 0.5, 0.25])
+   x = q.MeasurementArray([10, 1], [9, 0.5], [11, 0.25])
+   y = q.MeasurementArray([10, 9, 11], [1, 0.5, 0.25])
    # The mean and standard deviation of x and y are the same
    
 If the error associated with each measured value is the same, a single
@@ -66,16 +65,21 @@ values by the module.
 
 .. nbinput:: ipython3
 
-   x = e.Measurement([9, 10, 11], [1])
+   x = q.Measurement([9, 10, 11], 1)
    # This is equivalent to:
-   y = e.Measurement([9, 10, 11], [1, 1, 1])
+   y = q.Measurement([9, 10, 11], [1, 1, 1])
 
 In all cases, the optional arguments *name* and *units* can be used to
 include strings for both of these parameters as shown below:
 
 .. nbinput:: ipython3
 
-   x = e.Measurement(10, 1, name='Length', units='cm')
+   x = q.Measurement(10, 1, name='Length', units='cm')
+   print(x)
+
+.. nboutput:: ipython3
+
+   Length = 10 +/- 1 [cm]
 
 Working with Measurement Objects
 --------------------------------
@@ -84,41 +88,40 @@ Once created, these objects can be operated on just as any other value:
 
 .. nbinput:: ipython3
    
-   import qexpy.error as e
+   import qexpy as q
 
-   x = e.Measurement(10, 1)
-   y = e.Measurement(3, 0.1)
+   x = q.Measurement(10, 1)
+   y = q.Measurement(3, 0.1)
    z = x-y
-   f = e.sin(z)
 
    print(z)
 
 .. nboutput:: ipython3
 
-   10 +/- 1
+   7 +/- 1
 
 Elementary functions such as the trig functions, inverse trig functions,
 natural logarithm and exponential function can also be used:
 
 .. nbinput:: ipython3
 
-   f = e.sin(z)
+   f = q.sin(z)
    print(f)
 	
 .. nboutput:: ipython3
 
    0.7 +/- 0.8
 
-Furthermore, the use of Measured objects in equations also allows for the
+Furthermore, the use of Measurement objects in equations also allows for the
 calculation of the derivative of these expressions with respect to any of
-the Measured objects used.
+the Measurement objects used.
 
 .. nbinput:: ipython3
 
-   d1 = f.derivative(x)
+   d1 = f.get_derivative(x)
 
    # This can be compared to the analytic expression of the derivative
-   d2 = m.cos(10+3)*3
+   d2 = m.cos(10-3)
    print(d1 == d2)
 
 .. nboutput:: ipython3
@@ -150,10 +153,10 @@ chosen as shown below.
 
 .. nbinput:: ipython3
 
-   import qexpy.error as e
+   import qexpy as q
 	
-   x = e.Measurement(13,2)
-   y = e.Measurement(2,0.23)
+   x = q.Measurement(13,2)
+   y = q.Measurement(2,0.23)
    z = x**2 - x/y
 	
    print([z.mean, z.std])
@@ -164,7 +167,7 @@ chosen as shown below.
 
    [162.5, 51.00547770828149]
    [162.88454043577516, 51.509516186100562]
-   [162.5, 53.24850160192128]
+   [166.29634415140231, 53.770920422588731]
 
 While the Monte Carlo and min-max output of the default method are not as
 elegant as the derivative method, it does provide an easy avenue to check
@@ -176,29 +179,29 @@ method is chosen.
 
 .. nbinput:: ipython3
 	
-   x = e.Measurement(10,2)
-   y = e.Measurement(5,1)
+   x = q.Measurement(10,2)
+   y = q.Measurement(5,1)
 
-   e.Measurement.set_method("Derivative")
+   q.set_eror_method("Derivative")
    # This option will limit the error calculation to using the derivative
    # formula
 
    z = x-y
-   z.rename('Derivative Method')
+   z.rename(name='Derivative Method')
 
-   e.Measurement.set_method("Monte Carlo")
+   q.set_error_method("Monte Carlo")
    # This option will limit the error calculation to using the derivative
    # formula
 
    z = x-y
-   z.rename('Monte Carlo')
+   z.rename(name='Monte Carlo')
 
-   e.Measurement.set_method("Min-Max")
+   q.set_error_method("Min Max")
    # This option will limit the error calculation to using the derivative
    # formula
 
    z = x-y
-   z.rename("Min-Max")
+   z.rename(name="Min Max")
 
 Correlation
 -----------
