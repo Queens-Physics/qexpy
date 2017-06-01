@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Introduction &mdash; QExPy 0.1.1 documentation</title>
+  <title>Formatting &mdash; QExPy 0.1.1 documentation</title>
   
 
   
@@ -36,8 +36,8 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="QExPy 0.1.1 documentation" href="index.html"/>
-        <link rel="next" title="Error Propagation" href="uncertainties.html"/>
-        <link rel="prev" title="Welcome to QExPy’s Documentation!" href="index.html"/> 
+        <link rel="next" title="Plotting" href="plotting.html"/>
+        <link rel="prev" title="Error Propagation" href="uncertainties.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -91,12 +91,14 @@
             
             
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Error Propagation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Formatting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#naming">Naming</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#units">Units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#print-styles">Print Styles</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Error Propagation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="operations.html">Formatting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="measurement.html">The Measurement Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
@@ -144,13 +146,13 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Introduction</li>
+      <li>Formatting</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/intro.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/operations.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -357,100 +359,33 @@ div.nboutput div.output_area.stderr {
     margin-right: 4px;  /* make room for the exclamation icon */
 }
 </style>
-<div class="section" id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
-<p>QExPy (Queen&#8217;s Experimental Physics) is a python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser.</p>
-<dl class="docutils">
-<dt>Highlights:</dt>
-<dd><ul class="first last simple">
-<li>Easily propagate uncertainties in measured quantities</li>
-<li>Compare different uncertainty calculations (e.g. Min-Max, quadrature errors, Monte Carlo errors)</li>
-<li>Correctly include correlations between quantities when propagating uncertainties (e.g. the uncertainty on x-x should always be 0!)</li>
-<li>Calculate exact numerical values of derivatives</li>
-<li>Choose display format (standard, Latex, scientific notation)</li>
-<li>Control the number of significant figures</li>
-<li>Handle ensembles of measurements (e.g. combine multiple measurements, with uncertainties, of a single quantity)</li>
-<li>Produce interactive plots of data in the browser</li>
-<li>Fit data to common functions (polynomials, gaussians) or provide custom functions</li>
-<li>Examine residual plots after fits</li>
-<li>Track units in calculations (still in development)</li>
-<li>Plot confidence bands from the errors in fitted parameters (still in development)</li>
-<li>Integrates with Jupyter notebooks, numpy, bokeh</li>
-</ul>
-</dd>
-</dl>
-<div class="section" id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
-<p>Up to date Jupyter notebooks highlighting the features of QExPy can be found on <a class="reference external" href="https://github.com/Queens-Physics/qexpy/tree/master/examples/jupyter">Github</a>. Some of the examples in this documentation may be out of date.</p>
-<p>We can create &#8220;Measurement&#8221; objects to represent quantities with uncertainties, and propagate the error in those quantities.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [1]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1">#import the error propagation module</span>
-<span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
-<span class="c1">#declare 2 Measurements, x and y</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
-<span class="c1">#define a quantitiy that depends on x and y:</span>
-<span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">y</span><span class="p">)</span>
-<span class="c1">#print z, with the correct error</span>
-<span class="k">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area highlight-none"><div class="highlight"><pre>
-<span></span>3.0 +/- 0.6
-</pre></div>
-</div>
-</div>
-<p>The example below shows a case of plotting data and fitting them to a straight line:</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [1]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
-
-<span class="c1"># This cell loads the module</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [2]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1"># There are several ways to produce a Plot Object from a set of data.</span>
-<span class="c1"># Here, we pass the data directly to the plot object:</span>
-
-<span class="n">fig1</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MakePlot</span><span class="p">(</span><span class="n">xdata</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
-                  <span class="n">ydata</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.4</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">,</span> <span class="mf">5.7</span><span class="p">,</span> <span class="mf">6.</span><span class="p">,</span> <span class="mf">7.3</span><span class="p">,</span> <span class="mf">7.1</span><span class="p">,</span> <span class="mf">8.9</span><span class="p">,</span> <span class="mf">10.8</span><span class="p">],</span>
-                  <span class="n">yerr</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-                  <span class="n">xname</span> <span class="o">=</span> <span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="n">xunits</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">,</span>
-                  <span class="n">yname</span> <span class="o">=</span> <span class="s1">&#39;force&#39;</span><span class="p">,</span> <span class="n">yunits</span><span class="o">=</span><span class="s1">&#39;N&#39;</span><span class="p">,</span>
-                  <span class="n">data_name</span> <span class="o">=</span> <span class="s1">&#39;mydata&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
+<div class="section" id="formatting">
+<h1>Formatting<a class="headerlink" href="#formatting" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="naming">
+<h2>Naming<a class="headerlink" href="#naming" title="Permalink to this headline">¶</a></h2>
+<p>In addition to containing a mean and standard deviation, Measurement
+objects can also have a string name and unit associated with it.
+These can then be used both in printing values and in labelling any plots
+created with these values.  By default, Measured objects are named
+unnamed_var0, with a unique number assigned to each object.
+The name and units of a Measured object can be declared either when the
+object is created or altered after.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1"># We can now fit the data, and display a plot (optionally) showing the residuals</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
 
-<span class="n">fig1</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
-<span class="n">fig1</span><span class="o">.</span><span class="n">add_residuals</span><span class="p">()</span>
-<span class="n">fig1</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
+<span class="c1"># This value can be changed using the following method</span>
+
+<span class="n">x</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Cable Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+<span class="c1"># Note that units are only a marker and changing units does not change</span>
+<span class="c1"># any values with a Measurement</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -458,28 +393,137 @@ div.nboutput div.output_area.stderr {
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area highlight-none"><div class="highlight"><pre>
-<span></span>-----------------Fit results-------------------
-Fit of  mydata  to  linear
-Fit parameters:
-mydata_linear_fit0_fitpars_intercept = -0.3 +/- 0.4,
-mydata_linear_fit0_fitpars_slope = 1.06 +/- 0.06
-
-Correlation matrix:
-[[ 1.    -0.886]
-[-0.886  1.   ]]
-
-chi2/ndof = 0.71/7
----------------End fit results----------------
+<span></span>Cable Length = 10 +/- 1
 </pre></div>
 </div>
 </div>
+</div>
+<div class="section" id="units">
+<h2>Units<a class="headerlink" href="#units" title="Permalink to this headline">¶</a></h2>
+<p>Values which have more complicated units can also be entered using the
+following syntax.  Consider a measurement of acceleration, with units of
+m/s^2 or meters per second squared, this can be entered as a list of the
+unit letters followed by the exponent of the unit, for every base unit,
+such as meter order second:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
 
-<script
-    src="/scripts/bokeh-plot-intro-inline-0.js"
-    id="7de8d529-9a4c-4a1e-aae4-2067832a1b69"
-    data-bokeh-model-id="20c9682b-6be9-46a9-b1a9-e038530747d1"
-    data-bokeh-doc-id="ca2a63f1-9296-44f9-bcb0-332876958f43"
-></script></div>
+<span class="n">t</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Acceleration&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>This also allows for the units of values produced by operations such as
+multiplication to be generated automatically.  Consider the calculation of
+the velocity of some object that accelerates at a for t seconds:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="n">v</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">t</span>
+<span class="k">print</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">units</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>[&#39;m&#39;,1,&#39;s&#39;,&#39;-1&#39;]
+</pre></div>
+</div>
+</div>
+<p>This unit list, when used in a plot will appear as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s1">&#39;m^1s^-1&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="print-styles">
+<h2>Print Styles<a class="headerlink" href="#print-styles" title="Permalink to this headline">¶</a></h2>
+<p>The default format of printing a value with an uncertainty is:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>10 +/- 1
+</pre></div>
+</div>
+</div>
+<p>However, there are three ways of outputting a Measurement object.
+Furthermore, each method also allows for a specific number of significant
+digits to be shown.</p>
+<p>One method is called scientific and will output the number in scientific
+notation with the error being shown as a value with only a single whole
+digit.  In order to change between any printing method, the following
+function will change how the package prints a Measurement object:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">print_style</span><span class="p">(</span><span class="s2">&quot;Scientific&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>(12 +/- 1)*10**1
+</pre></div>
+</div>
+</div>
+<p>The same process is used for a print style called Latex which, as the name
+suggests, is formatted for use in Latex documents.  This may be useful in
+the creation of labs by allowing variables to be copied and pasted
+directly into a Latex document.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">print_style</span><span class="p">(</span><span class="s2">&quot;Latex&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>(12 \pm 1)\e1
+</pre></div>
+</div>
+</div>
+</div>
 </div>
 
 
@@ -492,10 +536,10 @@ chi2/ndof = 0.71/7
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="uncertainties.html" class="btn btn-neutral float-right" title="Error Propagation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="plotting.html" class="btn btn-neutral float-right" title="Plotting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="Welcome to QExPy’s Documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="uncertainties.html" class="btn btn-neutral" title="Error Propagation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

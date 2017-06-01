@@ -1,0 +1,637 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Measurement Object &mdash; QExPy 0.1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="QExPy 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="The MeasurementArray Object" href="measurement_arr.html"/>
+        <link rel="prev" title="Plotting" href="plotting.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> QExPy
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Error Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operations.html">Formatting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The Measurement Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="measurement_arr.html">The MeasurementArray Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">QExPy</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>The Measurement Object</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/measurement.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+/* nice headers on first paragraph of info/warning boxes */
+.admonition .first {
+    margin: -12px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    color: #fff;
+    line-height: 1;
+    display: block;
+}
+.admonition.warning .first {
+    background: #f0b37e;
+}
+.admonition.note .first {
+    background: #6ab0de;
+}
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+</style>
+<div class="section" id="the-measurement-object">
+<h1>The Measurement Object<a class="headerlink" href="#the-measurement-object" title="Permalink to this headline">¶</a></h1>
+<p>The propagation of measurements, including the propagation of errors is at
+the heart of this package. This section will describe how Measurement
+objects are created as well as all the methods available to operate on Measurements.</p>
+<dl class="class">
+<dt id="qexpy.error.Measurement">
+<em class="property">class </em><code class="descclassname">qexpy.error.</code><code class="descname">Measurement</code><span class="sig-paren">(</span><em>*args</em>, <em>name=None</em>, <em>units=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subclass of ExperimentalValue, specified by the user and treated as variables
+or arguments of functions when propagating error. Stores the mean and
+standard deviation of an experimentally measured value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) &#8211; The name of the Measurement object.</li>
+<li><strong>units</strong> (<em>str</em>) &#8211; The units of the Measurement.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="qexpy.error.Measurement.error_method">
+<code class="descname">error_method</code><a class="headerlink" href="#qexpy.error.Measurement.error_method" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the method (Monte Carlo, derivative or min max) 
+used to calculate error of a Measurement object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The method used to propagate error for a Measurement.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement.error_on_mean">
+<code class="descname">error_on_mean</code><a class="headerlink" href="#qexpy.error.Measurement.error_on_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the error on the mean of a Measurement object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The error on the mean of the Measurement object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.get_covariance">
+<code class="descname">get_covariance</code><span class="sig-paren">(</span><em>variable</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.get_covariance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the covariance of the object and a specified variable.</p>
+<p>This funciton checks for the existance of a data array in each
+object and that the covariance of the two objects is not already
+specified. In each case, the covariance is returned, unless
+the data arrays are of different lengths or do not exist, in that
+case a covariance of zero is returned.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>variable</strong> (<a class="reference internal" href="#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a>) &#8211; The variable to get the covariance with respect to.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The covariance term between the two variables.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.get_data_array">
+<code class="descname">get_data_array</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.get_data_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the underlying data array used to create the Measurement object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A python list of the data used to create the Measurement object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.get_derivative">
+<code class="descname">get_derivative</code><span class="sig-paren">(</span><em>variable=None</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.get_derivative" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to find the derivative of a measurement or measurement like
+object. By default, derivative is with respect to itself, which will
+always yeild 1. Operator acts by acessing the self.derivative
+dictionary and returning the value stored there under the specific
+variable inputted (ie. deriving with respect to variable = ???)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>variable</strong> (<a class="reference internal" href="#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a>) &#8211; The variable that the derivative is to be taken with respect to.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the numerical value of the derivative with respect to the variable</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.get_units">
+<code class="descname">get_units</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.get_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the units of the associated Measurement.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The units of the Measurement.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement.mean">
+<code class="descname">mean</code><a class="headerlink" href="#qexpy.error.Measurement.mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the mean of a Measurement object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The mean of the Measurement object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement.name">
+<code class="descname">name</code><a class="headerlink" href="#qexpy.error.Measurement.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the name of a Measurement object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The name of the Measurement object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.print_deriv_error">
+<code class="descname">print_deriv_error</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.print_deriv_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the result of a Min-Max method error propagation.</p>
+<p>The purpose of this method is to easily compare the results of a
+Min-Max propagation with whatever method is chosen to confirm that
+the Min-Max is the upper bound of the error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.print_mc_error">
+<code class="descname">print_mc_error</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.print_mc_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the result of a Monte Carlo error propagation.</p>
+<p>The purpose of this method is to easily compare the results of a
+Monte Carlo propagation with whatever method is chosen.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.print_min_max_error">
+<code class="descname">print_min_max_error</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.print_min_max_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the result of a Min-Max method error propagation.</p>
+<p>The purpose of this method is to easily compare the results of a
+Min-Max propagation with whatever method is chosen to confirm that
+the Min-Max is the upper bound of the error.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement.relative_error">
+<code class="descname">relative_error</code><a class="headerlink" href="#qexpy.error.Measurement.relative_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the relative error (error/mean) of a Measurement object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The error as a fraction of the mean 
+(ie. 0.1 corresponds to a 10% error).</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.rename">
+<code class="descname">rename</code><span class="sig-paren">(</span><em>name=None</em>, <em>units=None</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.rename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to rename an object or change its units.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) &#8211; The new name of the Measurement.</li>
+<li><strong>units</strong> (<em>str</em>) &#8211; The new units of the Measurement.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.set_correlation">
+<code class="descname">set_correlation</code><span class="sig-paren">(</span><em>y</em>, <em>factor</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.set_correlation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manually set the correlation between two quantities</p>
+<p>Given a correlation factor, the covariance and correlation
+between two variables is added to both objects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>y</strong> (<em>str</em>) &#8211; The variable to set the correlation with respect to.</li>
+<li><strong>factor</strong> (<em>float</em>) &#8211; The correlation term between the two variables.
+Must be between -1 and 1 inclusive.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.set_covariance">
+<code class="descname">set_covariance</code><span class="sig-paren">(</span><em>y</em>, <em>sigma_xy</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.set_covariance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manually set the covariance between two quantities</p>
+<p>Given a covariance value, the covariance and correlation
+between two variables is added to both objects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>y</strong> (<a class="reference internal" href="#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a>) &#8211; The variable to set the covariance with respect to.</li>
+<li><strong>sigma_xy</strong> (<em>float</em>) &#8211; The covariance term between the two variables.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.show_MC_histogram">
+<code class="descname">show_MC_histogram</code><span class="sig-paren">(</span><em>bins=50</em>, <em>color='#036564'</em>, <em>title=None</em>, <em>output='inline'</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.show_MC_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and shows a Bokeh plot of a histogram of the values
+calculated by Monte Carlo error simulation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bins</strong> (<em>int</em>) &#8211; The number of bins for the histogram.</li>
+<li><strong>color</strong> (<em>str</em>) &#8211; The color of the bars.</li>
+<li><strong>title</strong> (<em>str</em>) &#8211; The title that will appear at the top of the histogram.</li>
+<li><strong>output</strong> (<em>str</em>) &#8211; How the histogram is to be output. Can be &#8216;inline&#8217; or &#8216;file&#8217;.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The Plot object used to create the histogram.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="plotting.html#qexpy.plotting.Plot" title="qexpy.plotting.Plot">Plot</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.show_error_contribution">
+<code class="descname">show_error_contribution</code><span class="sig-paren">(</span><em>color='#036564'</em>, <em>title=None</em>, <em>output='inline'</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.show_error_contribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and shows a Bokeh or mpl plot of a histogram of the relative
+contribution of individual measurements to the variance of a calculated value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>color</strong> (<em>str</em>) &#8211; The color of the bars.</li>
+<li><strong>title</strong> (<em>str</em>) &#8211; The title that will appear at the top of the histogram.</li>
+<li><strong>output</strong> (<em>str</em>) &#8211; How the histogram is to be output. Can be &#8216;inline&#8217; or &#8216;file&#8217;.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The Plot object used to create the histogram.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="plotting.html#qexpy.plotting.Plot" title="qexpy.plotting.Plot">Plot</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement.show_histogram">
+<code class="descname">show_histogram</code><span class="sig-paren">(</span><em>bins=50</em>, <em>color='#036564'</em>, <em>title=None</em>, <em>output='inline'</em><span class="sig-paren">)</span><a class="headerlink" href="#qexpy.error.Measurement.show_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a histogram of the inputted data using Bokeh or mpl.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bins</strong> (<em>int</em>) &#8211; The number of bins for the histogram.</li>
+<li><strong>color</strong> (<em>str</em>) &#8211; The color of the bars.</li>
+<li><strong>title</strong> (<em>str</em>) &#8211; The title that will appear at the top of the histogram.</li>
+<li><strong>output</strong> (<em>str</em>) &#8211; How the histogram is to be output. Can be &#8216;inline&#8217; or &#8216;file&#8217;.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The Plot object used to create the histogram.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="plotting.html#qexpy.plotting.Plot" title="qexpy.plotting.Plot">Plot</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement.std">
+<code class="descname">std</code><a class="headerlink" href="#qexpy.error.Measurement.std" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the standard deviation of a Measurement object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The standard deviation/error of the Measurement object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="measurement_arr.html" class="btn btn-neutral float-right" title="The MeasurementArray Object" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="plotting.html" class="btn btn-neutral" title="Plotting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Connor Kapahi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

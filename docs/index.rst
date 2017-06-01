@@ -16,6 +16,11 @@ Contents
    uncertainties
    operations
    plotting
+   measurement
+   measurement_arr
+   plot
+   xyfitter
+   xydataset
    LICENSE
 
 Indices and tables

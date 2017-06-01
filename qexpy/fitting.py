@@ -11,7 +11,8 @@ ARRAY = qu.array_types
 
 
 def Rlinear(x, *pars):
-    '''Linear function p[0]+p[1]*x'''
+    '''Linear function p[0]+p[1]*x
+    '''
     return pars[0]+pars[1]*x
 
 def Rpolynomial(x, *pars):
@@ -31,14 +32,23 @@ def Rexp(x, *pars):
 
 def Rgauss(x, *pars):
     '''Function for a Gaussian p[2]*Gaus(p[0],p[1])'''
-    #from qexpy.error import exp
     mean = pars[0]
     std = pars[1]
     norm = pars[2]
     return (0 if std==0 else norm*(2*pi*std**2)**(-0.5)*np.exp(-0.5*(x-mean)**2/std**2))
 
 class XYFitter:
-    '''A class to fit an XYDatatset to a function/model using scipy.optimize'''
+    '''A class to fit an XYDataset to a function/model using scipy.optimize
+
+    :param model: The model (linear, gaussian...) to be fit to the data.
+    :type model: Function
+    :param parguess: Guesses for the parameters of the fit.
+    :type parguess: list
+    :param name: The name of the fit.
+    :type name: str
+    :param sigmas: The number of sigmas to show in the error band.
+    :type sigmas: int
+    '''
     
     def __init__(self, model = None, parguess=None, name=None, sigmas=1.0):
         self.xydataset=None   
@@ -47,7 +57,17 @@ class XYFitter:
         
     def set_fit_func(self, func, npars, funcname=None, parguess=None):
         '''Set the fit function and the number of parameter, given
-        the expected number of parameters, npars'''
+        the expected number of parameters, npars
+
+        :param func: The fit function.
+        :type func: Function
+        :param npars: The number of parameters of the fit function.
+        :type npars: int
+        :param funcname: The name of the fit function.
+        :type funcname: str
+        :param parguess: The best guesses for the values of the parameters of the fit.
+        :type parguess: list
+        '''
         
         self.fit_function=func
         self.fit_npars=npars
@@ -60,7 +80,15 @@ class XYFitter:
         #self.fit_pars = MeasurementArray(self.fit_npars)
            
     def initialize_fit_function(self, model=None, parguess=None, name=None):
-        '''Set the model and parameter guess'''
+        '''Set the model and parameter guess.
+
+        :param model: The fit function.
+        :type model: Function
+        :param parguess: The best guesses for the values of the parameters of the fit.
+        :type parguess: list
+        :param name: The name of the fit function.
+        :type name: str
+        '''
         
         wlinear = ('linear', 'Linear', 'line', 'Line',)
         wgaussian = ('gaussian', 'Gaussian', 'Gauss', 'gauss', 'normal',)
@@ -129,7 +157,20 @@ class XYFitter:
             self._sigmas = 1.0
 
     def fit(self, dataset, fit_range=None, fit_count=0, name=None):
-        ''' Perform a fit of the fit_function to a data set'''
+        ''' Perform a fit of the fit_function to a data set.
+
+        :param dataset: The dataset to be fit.
+        :type dataset: XYDataset
+        :param fit_range: The range to plot the fit on.
+        :type fit_range: list
+        :param fit_count: The number of the fit.
+        :type fit_count: int
+        :param name: The name of the fit function.
+        :type name: str
+
+        :returns: The parameters of the fit.
+        :rtype: Measurement_Array
+        '''
         if self.fit_function is None:
             print("Error: fit function not set!")
             return
@@ -272,11 +313,39 @@ class XYFitter:
 def DataSetFromFile(filename, xcol=0, ycol=1, xerrcol=2, yerrcol=3, delim= ' ',
                     data_name=None, xname=None, xunits=None, yname=None, yunits=None,
                     is_histogram=False):
-    '''Create a DatatSet from a file, where the data is organized into 4 columns delimited
+    '''Create a DataSet from a file, where the data is organized into 4 columns delimited
     by delim. User can specify which columns contain what information, the default is
     x,y,xerr,yerr. User MUST specify if xerr or yerr are missing by setting those columns to
     'None', and the method will automatically assign error of zero.
-     '''
+
+    :param filename: The name of the file to open.
+    :type filename: str
+    :param xcol: The index of the column containing the x data.
+    :type xcol: int
+    :param ycol: The index of the column containing the y data.
+    :type ycol: int
+    :param xerrcol: The index of the column containing the x error data.
+    :type xerrcol: int
+    :param yerrcol: The index of the column containing the y error data.
+    :type yerrcol: int
+    :param delim: The delimiter in the text file.
+    :type delim: str
+    :param data_name: The name of the data.
+    :type param: str
+    :param xname: The name of the x axis.
+    :type xname: str
+    :param xunits: The units of the x values.
+    :type xunits: str
+    :param yname: The name of the y axis.
+    :type yname: str
+    :param yunits: The units of the y values.
+    :type yunits: str
+    :param is_histogram: Whether the data is a histogram.
+    :type is_histogram: bool
+
+    :returns: An XYDataSet containing the x and y data.
+    :rtype: XYDataSet
+    ''' 
     data = np.loadtxt(filename, delimiter=delim)
     xdata = data[:,xcol]
     
@@ -303,8 +372,31 @@ class XYDataSet:
     typically, a set of x and y values to be used for a plot, as well
     as a method to fit that dataset. If the data set is fit multiple times
     the various fits are all recorded in a list of XYFitter objects.
-    One can also construct an XYDatatSet from histogram data, which then
+    One can also construct an XYDataSet from histogram data, which then
     gets converted to equivalent X and Y measurements.
+
+    :param xdata: The data to be plotted on the x axis.
+    :type xdata: array, Measurement_Array, XYDataSet
+    :param ydata: The data to be plotted on the y axis.
+    :type ydata: array, Measurement_Array
+    :param xerr: The error on the data on the x axis.
+    :type xerr: array
+    :param yerr: The error on the data on the y axis.
+    :type yerr: array
+    :param data_name: The name of the data to be plotted.
+    :type data_name: str
+    :param xname: The name x axis.
+    :type xname: str
+    :param xunits: The units of the x axis.
+    :type xname: str
+    :param yname: The name y axis.
+    :type xname: str
+    :param yunits: The units of the y axis.
+    :type yunits: str
+    :param is_histogram: Whether the data is a histogram.
+    :type is_histogram: bool
+    :param bins: The number of bins to plot the histogram data in.
+    :type bins: int
     '''
     
     #So that each dataset has a unique name (at least by default):
@@ -372,10 +464,29 @@ class XYDataSet:
         self.fit_color = []
         self.nfits=0
         
-    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None, name=None, sigmas=1.0):
+    def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None, name=None, sigmas=1):
         '''Fit a data set to a model using XYFitter. Everytime this function
         is called on a data set, it adds a new XYFitter to the dataset. This
-        is to allow multiple functions to be fit to the same data set'''
+        is to allow multiple functions to be fit to the same data set.
+
+        :param model: The model (linear, gaussian...) to be fit to the data.
+        :type model: Function
+        :param parguess: A guess for the values of the parameter of the fit.
+        :type parguess: list
+        :param fit_range: The range to plot the fit on.
+        :type fit_range: list
+        :param print_results: Whether to print the results of the fit.
+        :type print_results: bool
+        :param fitcolor: The color of the fit.
+        :type fitcolor: str
+        :param name: The name of the fit.
+        :type name: str
+        :param sigmas: The number of sigmas to show in the error band.
+        :type sigmas: int
+
+        :returns: The parameters of the fit.
+        :rtype: Measurement_Array
+        '''
         fitter = XYFitter(model=model, parguess=parguess, name=name, sigmas=sigmas)
         fit_pars = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
         if(fit_pars is not None):
@@ -400,6 +511,12 @@ class XYDataSet:
             return None
     
     def print_fit_results(self, fitindex=-1):
+        '''Prints the results of a fit. Includes the data name, fit name, fit
+        parameter values, correlation matrix and chi-squared.
+
+        :param fitindex: The index of the fit to print.
+        :type fitindex: int
+        '''
         if self.nfits == 0:
             print("no fit results to print")
             return
@@ -413,14 +530,19 @@ class XYDataSet:
         print("---------------End fit results----------------\n")
     
     def __str__(self):
-        
         theString=""
         for i in range(self.xdata.size):
             theString += str(self.x[i])+" , "+str(self.y[i])+"\n"
         return theString
             
     def save_textfile(self, filename="dataset.dat", delim=' '):
-        '''Save the data set to a file'''
+        '''Save the data set to a file.
+
+        :param filename: The name of the text file.
+        :type filename: str
+        :param delim: The delimiter between entries in the text file.
+        :type delim: str
+        '''
         data = np.ndarray(shape=(self.xdata.size,4))
         data[:,0]=self.xdata
         data[:,1]=self.ydata
@@ -439,7 +561,14 @@ class XYDataSet:
         self.nfits=0
     
     def get_x_range(self, margin=0):
-        '''Get range of the x data, including errors and a specified margin'''
+        '''Get range of the x data, including errors and a specified margin.
+
+        :param margin: The margin at either side of the graph.
+        :type margin: float
+
+        :returns: The x range of the plot.
+        :rtype: list
+        '''
         if self.is_histogram:
             return [self.xdata.min()-margin,\
                     self.xdata.max()+margin]
@@ -448,7 +577,14 @@ class XYDataSet:
                     self.xdata.max()+self.xerr.max()+margin]
     
     def get_y_range(self, margin=0):
-        '''Get range of the y data, including errors and a specified margin'''
+        '''Get range of the y data, including errors and a specified margin.
+
+        :param margin: The margin at the top and bottom of the graph.
+        :type margin: float
+
+        :returns: The y range of the plot.
+        :rtype: list
+        '''
         if self.is_histogram:
             return [self.ydata.min()-margin,\
                     self.ydata.max()+margin]
@@ -457,12 +593,28 @@ class XYDataSet:
                     self.ydata.max()+self.yerr.max()+margin] 
     
     def get_yres_range(self, margin=0, fitindex=-1):
-        '''Get range of the y residuals, including errors and a specified margin'''
+        '''Get range of the y residuals, including errors and a specified margin.
+
+        :param margin: The margin at the top and bottom of the graph.
+        :type margin: float
+        :param fitindex: The index of the fit get the residual range for.
+        :type fitindex: int
+
+        :returns: The y range of the residuals.
+        :rtype: list
+        '''
         return [self.fit_yres[fitindex].means.min()-self.yerr.max()-margin,\
                 self.fit_yres[fitindex].means.max()+self.yerr.max()+margin]
     
 def cov2corr(pcov):
-    '''Return a correlation matrix given a covariance matrix'''
+    '''Return a correlation matrix given a covariance matrix.
+
+    :param pcov: A covariance matrix.
+    :type pcov: np.ndarray
+
+    :returns: A correlation matrix corresponding to the covariance matrix.
+    :rtype: np.ndarray
+    '''
     sigmas = np.sqrt(np.diag(pcov))
     dim = sigmas.size
     pcorr = np.ndarray(shape=(dim,dim))
@@ -482,7 +634,14 @@ def num_der(function, point, dx=1e-10):
     '''
     Returns the first order derivative of a function.
     Used in combining xerr and yerr. Used to include
-    x errors in XYFitter
+    x errors in XYFitter.
+
+    :param function: The function to take the derivative of.
+    :type function: Function
+    :param point: The point at which to take the derivative.
+    :type point: float
+    :param dx: The width of the interval that the numerical derivative is evaluated on.
+    :type dx: float
     '''
     import numpy as np
     point = np.array(point)

@@ -23,9 +23,29 @@ def MakePlot(xdata=None, ydata=None, xerr=None, yerr=None, data_name=None,
              dataset=None, xname=None, xunits=None, yname=None, yunits=None):
     '''Use this function to create a plot object, by providing either arrays
     corresponding to the x and y data, Measurement_Arrays for x and y, or
-    an XYDataset. If providing a dataset, it can be specified as either the 
+    an XYDataSet. If providing a dataset, it can be specified as either the 
     x argument or the dataset argument.
-   
+
+    :param xdata: The data to be plotted on the x axis.
+    :type xdata: array, Measurement_Array, XYDataSet
+    :param ydata: The data to be plotted on the y axis.
+    :type ydata: array, Measurement_Array
+    :param xerr: The error on the data on the x axis.
+    :type xerr: array
+    :param yerr: The error on the data on the y axis.
+    :type yerr: array
+    :param data_name: The name of the data to be plotted.
+    :type data_name: str
+    :param dataset: An XYDataSet to be plotted.
+    :type dataset: XYDataSet
+    :param xname: The name x axis.
+    :type xname: str
+    :param xunits: The units of the x axis.
+    :type xname: str
+    :param yname: The name y axis.
+    :type xname: str
+    :param yunits: The units of the y axis.
+    :type yunits: str
     '''
     
     if xdata is None and ydata is None and dataset is None:
@@ -77,7 +97,7 @@ class Plot:
     '''Object for plotting and fitting datasets built on
     Measurement_Arrays
 
-    The Plot object holds a list of XYDatasets, themselves containing
+    The Plot object holds a list of XYDataSets, themselves containing
     pairs of MeasurementArrays holding x and y values to be plotted and 
     fitted. The Plot object uses bokeh or matplotlib to display the data,
     along with fit functions, and user-specified functions. One should configure
@@ -236,8 +256,29 @@ class Plot:
         
     def fit(self, model=None, parguess=None, fit_range=None, print_results=True,
             datasetindex=-1, fitcolor=None, name=None, sigmas=1.0):
-        '''Fit a dataset to model - calls XYDataset.fit and returns a 
-        Measurement_Array of fitted parameters'''
+        '''Fit a dataset to model - calls XYDataSet.fit and returns a 
+        Measurement_Array of fitted parameters
+
+        :param model: The fit function
+        :type model: Function
+        :param parguess: Guesses for the parameters of the fit.
+        :type parguess: list
+        :param fit_range: The range over which the fit function is to be shown.
+        :type fit_range: list
+        :param print_results: Whether to display the results of the fit.
+        :type print_results: bool
+        :param datasetindex: The index of the XYDataSet to be fit.
+        :type datasetindex: int
+        :param fitcolor: The color of the fit.
+        :type fitcolor: str
+        :param name: The name of the fit.
+        :type name: str
+        :param sigmas: How many sigmas to include in the error band.
+        :type sigmas: int
+
+        :returns: The parameters of the fit
+        :rtype: Measurement_Array
+        '''
         results = self.datasets[datasetindex].fit(model, parguess, fit_range, fitcolor=fitcolor, name=name, print_results=print_results, sigmas=sigmas) 
         return results
         
@@ -264,7 +305,8 @@ class Plot:
 ###############################################################################
 
     def add_residuals(self):
-        '''Add a subfigure with residuals to the main figure when plotting'''
+        '''Add a subfigure with residuals to the main figure when plotting.
+        '''
         self.set_yres_range_from_fits()
         for ds in self.datasets:
             if ds.nfits > 0:
@@ -276,7 +318,18 @@ class Plot:
         '''Add a user-specifed function to the list of functions to be plotted.
         
         All datasets are functions when populate_bokeh_figure is called
-        - usually when show() is called
+        - usually when show() is called.
+
+        :param function: The function to be added to the Plot.
+        :type function: Function
+        :param pars: The parameters of the function.
+        :type pars: list, array, Measurement_Array
+        :param name: The name of the function.
+        :type name: str
+        :param color: The color of the function.
+        :type color: str
+        :param x_range: The range on which the function is to be plotted.
+        :type x_range: array
         '''
         
         if x_range is not None:
@@ -329,7 +382,15 @@ class Plot:
         
     def add_dataset(self, dataset, color=None, name=None):
         '''Add a dataset to the Plot object. All datasets are plotted
-        when populate_bokeh_figure is called - usually when show() is called'''
+        when populate_bokeh_figure is called - usually when show() is called
+
+        :param dataset: The dataset to be added to the plot.
+        :type dataset: XYDataSet
+        :param color: The color of the dataset.
+        :type color: str
+        :param name: The name of the dataset.
+        :type name: str
+        '''
         self.datasets.append(dataset)
         
         if len(self.datasets) < 2:    
@@ -349,7 +410,19 @@ class Plot:
         self.set_yres_range_from_fits()
 
     def add_line(self, x=None, y=None, color='black', dashed=False):
-        '''Add a vertical or horizontal line to the Plot object.'''
+        '''Add a vertical or horizontal line to the Plot object.
+
+        :param x: The x position of the line to be drawn 
+                  (x or y position can be specified, but not both).
+        :type x: float
+        :param y: The y position of the line to be drawn
+                  (x or y position can be specified, but not both).
+        :type y: float
+        :param color: The color of the line to be drawn.
+        :type color: str
+        :param dashed: Whether to draw a dashed line.
+        :type dashed: bool
+        '''
         x_pos = x
         y_pos = y
         if bool(x_pos) == bool(y_pos): # Can't have both x and y data
@@ -369,7 +442,13 @@ class Plot:
 ###############################################################################
         
     def set_plot_range(self, x_range=None, y_range=None):
-        '''Set the range for the figure'''
+        '''Set the range for the figure.
+
+        :param x_range: The x range of the graph.
+        :type x_range: array
+        :param y_range: The y range of the graph.
+        :type y_range: array
+        '''
         if type(x_range) in ARRAY and len(x_range) is 2:
             self.x_range = x_range
         elif x_range is not None:
@@ -387,7 +466,15 @@ class Plot:
         '''Change the labels for plot axis, datasets, or the plot itself.
 
         Method simply overwrites the automatically generated names used in
-        the Bokeh plot.'''
+        the Bokeh plot.
+
+        :param title: The title of the plot.
+        :type title: str
+        :param xtitle: The title of the x axis.
+        :type xtitle: str
+        :param ytitle: The title of the y axis.
+        :type ytitle: str
+        '''
         if title is not None:
             self.labels['title'] = title
 
@@ -411,6 +498,13 @@ class Plot:
         '''
         Show the figure, will call one of the populate methods
         by default to build a figure.
+
+        :param output: How the histogram is to be output. Can be 'inline' or 'file'.
+        :type output: str
+        :param populate_figure: Whether the figure needs to be populated.
+        :type populate_figure: bool
+        :param refresh: Whether the mpl figure should be refreshed.
+        :type refresh: bool
         '''
         if q.plot_engine in q.plot_engine_synonyms["bokeh"]:
             self.set_bokeh_output(output)      
@@ -679,7 +773,8 @@ class Plot:
                                show_chi2 = True, show_errors=True,
                                x_range=None, y_range=None):
         '''Fits the last dataset to a linear function and displays the
-        result as an interactive fit'''
+        result as an interactive fit
+        '''
                 
         if not qu.in_notebook():
             print("Can only use this feature in a notebook, sorry")
