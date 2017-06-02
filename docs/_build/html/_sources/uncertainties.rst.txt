@@ -239,8 +239,10 @@ which can be used to set the correlation of two variables, or return the
 covariance of two variables.
 
 .. automethod:: qexpy.error.Measurement.set_correlation
+   :noindex:
 
 .. automethod:: qexpy.error.Measurement.get_covariance
+   :noindex:
 
 Furthermore, the covariance and correlation of the fitted parameters found
 by the *.fit* method in QExPy.plotting 

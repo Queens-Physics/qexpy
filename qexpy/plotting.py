@@ -89,9 +89,6 @@ def MakePlot(xdata=None, ydata=None, xerr=None, yerr=None, data_name=None,
     
     else:
         return Plot(None)
-  
-    
-
 
 class Plot:
     '''Object for plotting and fitting datasets built on
@@ -107,7 +104,10 @@ class Plot:
 
     def __init__(self, dataset=None):
         '''
-        Constructor to make a plot based on a dataset
+        Constructor to make a plot based on a dataset.
+
+        :param dataset: The dataset to be plotted.
+        :type dataset: XYDataSet
         '''                                    
     
         #Colors to be used for coloring elements automatically
@@ -158,6 +158,7 @@ class Plot:
         self.x_range = [0,1]
         self.y_range = [0,1]
         self.yres_range = [0,0.1]
+        '''A list containing the residual y range.'''
         
         
         #Labels for axes
@@ -177,6 +178,13 @@ class Plot:
         else:
             self.initialized_from_dataset = False
 
+    def show_residuals(self, show):
+        '''Sets whether to show the residuals of the fit.
+
+        :param show: Whether to show the residuals.
+        :type show: bool
+        '''
+        self.show_residuals = bool(state)
 
     def initialize_from_dataset(self, dataset):
         '''Initialize axes labels and ranges from the dataset'''
@@ -248,7 +256,7 @@ class Plot:
         
     def set_yres_range_from_fits(self):
         '''Set the range for the residual plot, based on all datasets that
-        have a fit'''      
+        have a fit.'''      
         for dataset in self.datasets:
             if dataset.nfits > 0:
                 yr = dataset.get_yres_range(self.y_range_margin)
@@ -452,13 +460,13 @@ class Plot:
         if type(x_range) in ARRAY and len(x_range) is 2:
             self.x_range = x_range
         elif x_range is not None:
-            print('''X range must be a list containing a minimun and maximum
+            print('''X range must be a list containing a minimum and maximum
             value for the range of the plot.''')
 
         if type(y_range) in ARRAY and len(y_range) is 2:
             self.y_range = y_range
         elif y_range is not None:
-            print('''Y range must be a list containing a minimun and maximum
+            print('''Y range must be a list containing a minimum and maximum
             value for the range of the plot.''')
 
             

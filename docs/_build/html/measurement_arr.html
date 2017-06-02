@@ -36,7 +36,7 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="QExPy 0.1.1 documentation" href="index.html"/>
-        <link rel="next" title="License" href="LICENSE.html"/>
+        <link rel="next" title="The Plot Object" href="plot.html"/>
         <link rel="prev" title="The Measurement Object" href="measurement.html"/> 
 
   
@@ -97,6 +97,9 @@
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="measurement.html">The Measurement Object</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The MeasurementArray Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataset Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
 </ul>
 
@@ -235,9 +238,111 @@ Can be &#8216;Monte Carlo&#8217;, &#8216;Min Max&#8217; or&#8217;Derivative&#821
 <dd><p>A numpy-based array of Measurement objects. It is better to call
 MeasurementArray() and let it create a Measurement_Array object
 behind the scenes.</p>
+</dd></dl>
+
+<p>MeasurementArrays have a few properties that you can get and set. Each property has an example of how to get and set it.</p>
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.error_weighted_mean">
+<code class="descclassname">Measurement_Array.</code><code class="descname">error_weighted_mean</code><a class="headerlink" href="#qexpy.error.Measurement_Array.error_weighted_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the error weighted mean and error of a MeasurementArray.
+The error weighted mean gives more weight to more precise Measurements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Getter:</th><td class="field-body">Returns the weighted mean of all the Measurements in the
+MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body">tuple</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.mean">
+<code class="descclassname">Measurement_Array.</code><code class="descname">mean</code><a class="headerlink" href="#qexpy.error.Measurement_Array.mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the mean of the means of the Measurements in the MeasurementArray.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Getter:</th><td class="field-body">Returns the mean of the means of all the Measurements in the
+MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.means">
+<code class="descclassname">Measurement_Array.</code><code class="descname">means</code><a class="headerlink" href="#qexpy.error.Measurement_Array.means" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a numpy array with the means of each value in the MeasurementArray,
+as calculated by the method (der, MC, MinMax).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Getter:</th><td class="field-body">Returns a numpy array of the means of the Measurements
+in the MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.std">
+<code class="descclassname">Measurement_Array.</code><code class="descname">std</code><em class="property"> = &lt;function Measurement_Array.std&gt;</em><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.std" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.stds">
+<code class="descclassname">Measurement_Array.</code><code class="descname">stds</code><a class="headerlink" href="#qexpy.error.Measurement_Array.stds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a numpy array with the standard deviations of each value
+in the MeasurementArray, as calculated by the method (der, MC, MinMax).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Setter:</th><td class="field-body">Sets the errors of the Measurement_Array to either a single
+value if a number is provided, or to  different errors if a
+list is provided.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Getter:</th><td class="field-body">Returns a numpy array of the standard deviations of 
+the Measurements in the MeasurementArray.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.units">
+<code class="descclassname">Measurement_Array.</code><code class="descname">units</code><a class="headerlink" href="#qexpy.error.Measurement_Array.units" title="Permalink to this definition">¶</a></dt>
+<dd><p>The units of a Measurement_Array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Setter:</th><td class="field-body">Sets the units of the Measurement object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Getter:</th><td class="field-body">Returns the name of the Measurement object.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>MeasurementArrays also have a number of functions that can be used to change the MeasurementArray or get information about it.</p>
 <dl class="method">
 <dt id="qexpy.error.Measurement_Array.append">
-<code class="descname">append</code><span class="sig-paren">(</span><em>meas</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.append" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">Measurement_Array.</code><code class="descname">append</code><span class="sig-paren">(</span><em>meas</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Appends a value to the end of a MeasurementArray.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -255,7 +360,7 @@ behind the scenes.</p>
 
 <dl class="method">
 <dt id="qexpy.error.Measurement_Array.delete">
-<code class="descname">delete</code><span class="sig-paren">(</span><em>pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.delete" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">Measurement_Array.</code><code class="descname">delete</code><span class="sig-paren">(</span><em>pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.delete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes an element from a MeasurementArray.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -274,44 +379,9 @@ removed.</td>
 </table>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="qexpy.error.Measurement_Array.error_method">
-<code class="descname">error_method</code><a class="headerlink" href="#qexpy.error.Measurement_Array.error_method" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the method (Monte Carlo, derivative or min max) 
-used to calculate error of a MeasurementArray object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string of the error propagation method specified for
-the Measurement object.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="qexpy.error.Measurement_Array.error_weighted_mean">
-<code class="descname">error_weighted_mean</code><a class="headerlink" href="#qexpy.error.Measurement_Array.error_weighted_mean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the error weighted mean and error of a MeasurementArray.
-The error weighted mean gives more weight to more precise Measurements.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The weighted mean of all the Measurements in the MeasurementArray.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">tuple</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="method">
 <dt id="qexpy.error.Measurement_Array.get_units_str">
-<code class="descname">get_units_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.get_units_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.get_units_str" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">Measurement_Array.</code><code class="descname">get_units_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.get_units_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.get_units_str" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a string representation of the units.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -327,7 +397,7 @@ The error weighted mean gives more weight to more precise Measurements.</p>
 
 <dl class="method">
 <dt id="qexpy.error.Measurement_Array.insert">
-<code class="descname">insert</code><span class="sig-paren">(</span><em>pos</em>, <em>meas</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.insert" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">Measurement_Array.</code><code class="descname">insert</code><span class="sig-paren">(</span><em>pos</em>, <em>meas</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.insert" title="Permalink to this definition">¶</a></dt>
 <dd><p>Inserts a value in a position in a MeasurementArray.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -352,93 +422,6 @@ specified by the pos parameter.</p>
 </table>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="qexpy.error.Measurement_Array.mean">
-<code class="descname">mean</code><a class="headerlink" href="#qexpy.error.Measurement_Array.mean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the mean of the means of the Measurements in the MeasurementArray.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The mean of the means of all the Measurements in the MeasurementArray.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="qexpy.error.Measurement_Array.means">
-<code class="descname">means</code><a class="headerlink" href="#qexpy.error.Measurement_Array.means" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a numpy array with the means of each value in the MeasurementArray,
-as calculated by the method (der, MC, MinMax).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A numpy array of the means of the Measurements in the MeasurementArray.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="qexpy.error.Measurement_Array.set_units">
-<code class="descname">set_units</code><span class="sig-paren">(</span><em>units=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.set_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.set_units" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the units of a MeasurementArray.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>units</strong> (<em>str</em>) &#8211; The units of the MeasurementArray.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="qexpy.error.Measurement_Array.std">
-<code class="descname">std</code><span class="sig-paren">(</span><em>ddof=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.std" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the standard deviation of the means of 
-all the Measurements in the MeasurementArray.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ddof</strong> (<em>int</em>) &#8211; The degrees of freedom of the MeasurementArray.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The standard deviation of the means of all the 
-Measurements in the MeasurementArray.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="qexpy.error.Measurement_Array.stds">
-<code class="descname">stds</code><a class="headerlink" href="#qexpy.error.Measurement_Array.stds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a numpy array with the standard deviations of each value
-in the MeasurementArray, as calculated by the method (der, MC, MinMax).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A numpy array of the standard deviations of 
-the Measurements in the MeasurementArray.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 
 
@@ -451,7 +434,7 @@ the Measurements in the MeasurementArray.</td>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="LICENSE.html" class="btn btn-neutral float-right" title="License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="plot.html" class="btn btn-neutral float-right" title="The Plot Object" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="measurement.html" class="btn btn-neutral" title="The Measurement Object" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

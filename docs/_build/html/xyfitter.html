@@ -204,7 +204,7 @@
 <dl class="class">
 <dt id="qexpy.fitting.XYFitter">
 <em class="property">class </em><code class="descclassname">qexpy.fitting.</code><code class="descname">XYFitter</code><span class="sig-paren">(</span><em>model=None</em>, <em>parguess=None</em>, <em>name=None</em>, <em>sigmas=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYFitter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYFitter" title="Permalink to this definition">¶</a></dt>
-<dd><p>A class to fit an XYDatatset to a function/model using scipy.optimize</p>
+<dd><p>A class to fit an XYDataSet to a function/model using scipy.optimize</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -219,26 +219,32 @@
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
 <dl class="method">
 <dt id="qexpy.fitting.XYFitter.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>dataset</em>, <em>fit_range=None</em>, <em>fit_count=0</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYFitter.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYFitter.fit" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">XYFitter.</code><code class="descname">fit</code><span class="sig-paren">(</span><em>dataset</em>, <em>fit_range=None</em>, <em>fit_count=0</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYFitter.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYFitter.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform a fit of the fit_function to a data set.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataset</strong> (<em>XYDatatset</em>) &#8211; The dataset to be fit.</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> (<a class="reference internal" href="xydataset.html#qexpy.fitting.XYDataSet" title="qexpy.fitting.XYDataSet"><em>XYDataSet</em></a>) &#8211; The dataset to be fit.</li>
 <li><strong>fit_range</strong> (<em>list</em>) &#8211; The range to plot the fit on.</li>
 <li><strong>fit_count</strong> (<em>int</em>) &#8211; The number of the fit.</li>
 <li><strong>name</strong> (<em>str</em>) &#8211; The name of the fit function.</li>
 </ul>
 </td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The parameters of the fit.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="measurement_arr.html#qexpy.error.Measurement_Array" title="qexpy.error.Measurement_Array">Measurement_Array</a></p>
+</td>
+</tr>
 </tbody>
 </table>
-</dd></dl>
-
 </dd></dl>
 
 </div>

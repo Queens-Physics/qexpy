@@ -376,5 +376,5 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(y.std, 2)
         self.assertEqual(a.get_derivative(x), 1)
         self.assertEqual(a.name, 'x+y')
-        self.assertEqual(a.get_units(), 'm')
-        self.assertTrue(v.get_units() == 'm^1 s^-1 ' or v.get_units() == 's^-1 m^1 ')
+        self.assertEqual(a.get_units_str(), 'm')
+        self.assertTrue(v.get_units_str() == 'm^1 s^-1 ' or v.get_units_str() == 's^-1 m^1 ')

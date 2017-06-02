@@ -208,7 +208,7 @@
 typically, a set of x and y values to be used for a plot, as well
 as a method to fit that dataset. If the data set is fit multiple times
 the various fits are all recorded in a list of XYFitter objects.
-One can also construct an XYDatatSet from histogram data, which then
+One can also construct an XYDataSet from histogram data, which then
 gets converted to equivalent X and Y measurements.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -231,15 +231,17 @@ gets converted to equivalent X and Y measurements.</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
 <dl class="method">
 <dt id="qexpy.fitting.XYDataSet.clear_fits">
-<code class="descname">clear_fits</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.clear_fits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.clear_fits" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">XYDataSet.</code><code class="descname">clear_fits</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.clear_fits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.clear_fits" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove all fit records</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="qexpy.fitting.XYDataSet.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>model=None</em>, <em>parguess=None</em>, <em>fit_range=None</em>, <em>print_results=True</em>, <em>fitcolor=None</em>, <em>name=None</em>, <em>sigmas=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.fit" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">XYDataSet.</code><code class="descname">fit</code><span class="sig-paren">(</span><em>model=None</em>, <em>parguess=None</em>, <em>fit_range=None</em>, <em>print_results=True</em>, <em>fitcolor=None</em>, <em>name=None</em>, <em>sigmas=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a data set to a model using XYFitter. Everytime this function
 is called on a data set, it adds a new XYFitter to the dataset. This
 is to allow multiple functions to be fit to the same data set.</p>
@@ -247,7 +249,7 @@ is to allow multiple functions to be fit to the same data set.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>model</strong> (<em>Function</em>) &#8211; The model (linear, gaussian...) to be fit to the data.</li>
 <li><strong>parguess</strong> (<em>list</em>) &#8211; A guess for the values of the parameter of the fit.</li>
 <li><strong>fit_range</strong> (<em>list</em>) &#8211; The range to plot the fit on.</li>
@@ -258,13 +260,19 @@ is to allow multiple functions to be fit to the same data set.</p>
 </ul>
 </td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The parameters of the fit.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="measurement_arr.html#qexpy.error.Measurement_Array" title="qexpy.error.Measurement_Array">Measurement_Array</a></p>
+</td>
+</tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
 <dt id="qexpy.fitting.XYDataSet.get_x_range">
-<code class="descname">get_x_range</code><span class="sig-paren">(</span><em>margin=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.get_x_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.get_x_range" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">XYDataSet.</code><code class="descname">get_x_range</code><span class="sig-paren">(</span><em>margin=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.get_x_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.get_x_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get range of the x data, including errors and a specified margin.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -272,13 +280,17 @@ is to allow multiple functions to be fit to the same data set.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>margin</strong> (<em>float</em>) &#8211; The margin at either side of the graph.</td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The x range of the plot.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
 <dt id="qexpy.fitting.XYDataSet.get_y_range">
-<code class="descname">get_y_range</code><span class="sig-paren">(</span><em>margin=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.get_y_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.get_y_range" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">XYDataSet.</code><code class="descname">get_y_range</code><span class="sig-paren">(</span><em>margin=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.get_y_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.get_y_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get range of the y data, including errors and a specified margin.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -286,22 +298,32 @@ is to allow multiple functions to be fit to the same data set.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>margin</strong> (<em>float</em>) &#8211; The margin at the top and bottom of the graph.</td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The y range of the plot.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
 <dt id="qexpy.fitting.XYDataSet.get_yres_range">
-<code class="descname">get_yres_range</code><span class="sig-paren">(</span><em>margin=0</em>, <em>fitindex=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.get_yres_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.get_yres_range" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">XYDataSet.</code><code class="descname">get_yres_range</code><span class="sig-paren">(</span><em>margin=0</em>, <em>fitindex=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.get_yres_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.get_yres_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get range of the y residuals, including errors and a specified margin.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>margin</strong> (<em>float</em>) &#8211; The margin at the top and bottom of the graph.</li>
 <li><strong>fitindex</strong> (<em>int</em>) &#8211; The index of the fit get the residual range for.</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The y range of the residuals.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
 </td>
 </tr>
 </tbody>
@@ -310,7 +332,7 @@ is to allow multiple functions to be fit to the same data set.</p>
 
 <dl class="method">
 <dt id="qexpy.fitting.XYDataSet.print_fit_results">
-<code class="descname">print_fit_results</code><span class="sig-paren">(</span><em>fitindex=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.print_fit_results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.print_fit_results" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">XYDataSet.</code><code class="descname">print_fit_results</code><span class="sig-paren">(</span><em>fitindex=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.print_fit_results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.print_fit_results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints the results of a fit. Includes the data name, fit name, fit
 parameter values, correlation matrix and chi-squared.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -325,7 +347,7 @@ parameter values, correlation matrix and chi-squared.</p>
 
 <dl class="method">
 <dt id="qexpy.fitting.XYDataSet.save_textfile">
-<code class="descname">save_textfile</code><span class="sig-paren">(</span><em>filename='dataset.dat'</em>, <em>delim=' '</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.save_textfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.save_textfile" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">XYDataSet.</code><code class="descname">save_textfile</code><span class="sig-paren">(</span><em>filename='dataset.dat'</em>, <em>delim=' '</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.save_textfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.save_textfile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the data set to a file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -339,8 +361,6 @@ parameter values, correlation matrix and chi-squared.</p>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
 </dd></dl>
 
 </div>

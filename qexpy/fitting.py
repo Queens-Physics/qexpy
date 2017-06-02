@@ -38,7 +38,7 @@ def Rgauss(x, *pars):
     return (0 if std==0 else norm*(2*pi*std**2)**(-0.5)*np.exp(-0.5*(x-mean)**2/std**2))
 
 class XYFitter:
-    '''A class to fit an XYDataset to a function/model using scipy.optimize
+    '''A class to fit an XYDataSet to a function/model using scipy.optimize
 
     :param model: The model (linear, gaussian...) to be fit to the data.
     :type model: Function
@@ -143,6 +143,10 @@ class XYFitter:
     @property
     def sigmas(self):
         '''Returns the mean of a Measurement object.
+
+        :setter: Sets the number of sigmas to show in the error band.
+        :getter: Returns the number of sigmas shown in the error band.
+        :type: int
         '''
         return self._sigmas
 
@@ -160,7 +164,7 @@ class XYFitter:
         ''' Perform a fit of the fit_function to a data set.
 
         :param dataset: The dataset to be fit.
-        :type dataset: XYDataset
+        :type dataset: XYDataSet
         :param fit_range: The range to plot the fit on.
         :type fit_range: list
         :param fit_count: The number of the fit.
