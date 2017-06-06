@@ -1181,7 +1181,7 @@ class Plot:
         index = fit_index if fit_index < dataset.nfits else -1
 
         if residual == True:
-            if not hasattr(self, 'bkfigure'):
+            if not hasattr(self, 'bkres'):
                 self.bkres = self.initialize_bokeh_figure(residuals=True)
             return qpu.bk_plot_dataset(self.bkres, dataset, residual=True, color=color, fit_index = index)
             

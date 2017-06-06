@@ -782,10 +782,10 @@ class ExperimentalValue:
                 self.error_method + ' method.\n'
             for root in var1.root:
                 if root not in self.root:
-                    self.root += var1.root
+                    self.root += (root,)
             for root in var2.root:
                 if root not in self.root:
-                    self.root += var2.root
+                    self.root += (root,)
 
             if var1.units == var2.units and op_string[operation] in ('+', '-'):
                 self.units = var1.units
@@ -1743,12 +1743,6 @@ class Measurement_Array(np.ndarray):
                 else:
                     for i in range(len(units)//2):
                         mes._units[units[2*i]] = units[2*i+1]
-             
-            if type(units) is str:
-                self._units[units] = 1
-            else:
-                for i in range(len(units)//2):
-                    self._units[units[2*i]] = units[2*i+1]
     
     def get_units_str(self):
         '''Generates a string representation of the units.

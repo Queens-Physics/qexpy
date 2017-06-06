@@ -322,7 +322,7 @@ def find_minmax(function, *args):
     '''
     import numpy as np
     N=Measurement.minmax_n
-    
+    np.seterr(all='ignore')
     if len(args) is 1:
         x = args[0]
         #vals = np.linspace(x.mean-x.std, x.mean + x.std, N)
@@ -343,7 +343,7 @@ def find_minmax(function, *args):
         print("unsupported number of parameters")
         results = np.ndarray(0)
         
-    
+    np.seterr(all='raise')
     min_val = results.min()
     max_val = results.max()
     mid_val = (max_val + min_val)/2.
@@ -390,18 +390,32 @@ def monte_carlo(func, *args):
     value = np.zeros((N, n))
     result = np.zeros(n)
     rand = np.zeros((N, n))
+    
+    if func == power:
+        if args[1].std == 0:
+            if float(args[1].mean).is_integer():
+                if args[1].mean < 0: # 1/(x^a) -> need to avoid x=0
+                    rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[div])
+                else: # x can be anything
+                    rand[0] = np.random.normal(size=n)
+            else: # x^a, a is not an integer -> x > 0
+                rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[log])
+        else:
+            if args[0].mean<0: # can't have -x^a where a is not an integer
+                return([np.nan, np.nan], result)
+            else: # x must be positive, since a isn't an integer
+                rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[log])
 
-    if(func == power and args[0].mean<0 and args[1].std!=0):
-        return([np.nan, np.nan], result)
-    if func in exclude:
+    elif func in exclude:
         rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[func])
     elif args[0].MC_list is not None:
         value[0] = args[0].MC_list
+        rand[0] = (value[0]-args[0].mean)/(args[0].std if args[0].std else 1)
     elif args[0].std == 0:
         value[0] = args[0].mean
         args[0].MC_list = value[0]
     else:
-        rand[0] = np.random.normal(size=n) 
+        rand[0] = np.random.normal(size=n)
 
     if len(args) == 2:
         rand[1] = np.random.normal(size=n)
@@ -417,14 +431,19 @@ def monte_carlo(func, *args):
                 value[0] = rand[0]*args[0].std+args[0].mean
     elif np.all(value[0]==0):
         value[0] = rand[0]*args[0].std+args[0].mean
-
-    result = _np_func[func](*value)
-    data = np.mean(result)
-    error = np.std(result, ddof=1)
+    for i in range(N):
+        args[i].MC_list = value[i]
+    try:
+        result = _np_func[func](*value)
+        data = np.mean(result)
+        error = np.std(result, ddof=1)
+    except FloatingPointError:
+        print(args, min(value[0]), value[0])
+        raise FloatingPointError
     return ([data, error], result,)
 
 def _generate_excluded_normal(mean, sigma, n, excluded):
-    '''Recursively generates random normal variables that are undefined 
+    '''Recursively generates random normal variables that are undefined
     on some part of their codomain. Returns the normal distribution and
     the underlying standard normal distribution that was used to create it.
     '''
@@ -433,6 +452,17 @@ def _generate_excluded_normal(mean, sigma, n, excluded):
     if np.any(excluded(x)):
         standard[excluded(x)], x[excluded(x)] = _generate_excluded_normal(mean, sigma, len(x[excluded(x)]), excluded)
     return standard, x
+
+# def is_out_of_range(func, *args):
+#     warns = []
+#     with warnings.catch_warnings(record=True) as w:
+#         warnings.simplefilter("always", Warning)
+#         func(*args)
+#         warns = w
+#     if len(warns) > 0:
+#         p, V = np.polyfit(x=xdata, y=ydata, deg=self.fit_npars-1, cov=True, w=1/yerr)
+#         self.fit_pars = p[::-1]
+
 
 ###############################################################################
 # Methods for Propagation
@@ -502,6 +532,9 @@ def operation_wrap(operation, *args, func_flag=False):
 
     result.derivative.update(df)
     result._update_info(operation, *args, func_flag=func_flag)
+
+    for root in result.root:
+        result.get_covariance(e.ExperimentalValue.register[root])
 
     return result
 
