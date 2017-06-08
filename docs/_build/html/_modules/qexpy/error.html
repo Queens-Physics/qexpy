@@ -948,10 +948,10 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">error_method</span> <span class="o">+</span> <span class="s1">&#39; method.</span><span class="se">\n</span><span class="s1">&#39;</span>
             <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">var1</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">+=</span> <span class="n">var1</span><span class="o">.</span><span class="n">root</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">+=</span> <span class="p">(</span><span class="n">root</span><span class="p">,)</span>
             <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">var2</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">+=</span> <span class="n">var2</span><span class="o">.</span><span class="n">root</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">+=</span> <span class="p">(</span><span class="n">root</span><span class="p">,)</span>
 
             <span class="k">if</span> <span class="n">var1</span><span class="o">.</span><span class="n">units</span> <span class="o">==</span> <span class="n">var2</span><span class="o">.</span><span class="n">units</span> <span class="ow">and</span> <span class="n">op_string</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">var1</span><span class="o">.</span><span class="n">units</span>
@@ -1536,7 +1536,7 @@
 <span class="c1">###############################################################################</span>
 
 
-<div class="viewcode-block" id="Measurement"><a class="viewcode-back" href="../../measurement.html#qexpy.error.Measurement">[docs]</a><span class="k">class</span> <span class="nc">Measurement</span><span class="p">(</span><span class="n">ExperimentalValue</span><span class="p">):</span>
+<div class="viewcode-block" id="Measurement"><a class="viewcode-back" href="../../uncertainties.html#qexpy.error.Measurement">[docs]</a><span class="k">class</span> <span class="nc">Measurement</span><span class="p">(</span><span class="n">ExperimentalValue</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Subclass of ExperimentalValue, specified by the user and treated as variables</span>
 <span class="sd">    or arguments of functions when propagating error. Stores the mean and</span>
@@ -1909,12 +1909,6 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">units</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
                         <span class="n">mes</span><span class="o">.</span><span class="n">_units</span><span class="p">[</span><span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-             
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_units</span><span class="p">[</span><span class="n">units</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">units</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_units</span><span class="p">[</span><span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
     
 <div class="viewcode-block" id="Measurement_Array.get_units_str"><a class="viewcode-back" href="../../measurement_arr.html#qexpy.error.Measurement_Array.get_units_str">[docs]</a>    <span class="k">def</span> <span class="nf">get_units_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Generates a string representation of the units.</span>
@@ -2783,9 +2777,9 @@
             <span class="n">unit_dict</span><span class="p">[</span><span class="n">pow_split</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">power</span>
     <span class="k">return</span> <span class="n">unit_dict</span>
 
-<span class="k">def</span> <span class="nf">show_histogram</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;inline&#39;</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">show_histogram</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;inline&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#036564&quot;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Creates a histogram of the inputted data using Bokeh or mpl.</span>
-
+<span class="sd">    </span>
 <span class="sd">    :param title: The title that will appear at the top of the histogram.</span>
 <span class="sd">    :type title: str</span>
 <span class="sd">    :param output: How the histogram is to be output. Can be &#39;inline&#39; or &#39;file&#39;.</span>
@@ -2794,7 +2788,7 @@
 <span class="sd">    :returns: The Plot object used to create the histogram.</span>
 <span class="sd">    :rtype: Plot</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ARRAY</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ExperimentalValue</span><span class="o">.</span><span class="n">ARRAY</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;Input histogram data must be an array&#39;&#39;&#39;</span><span class="p">)</span>
         <span class="k">return</span>
 
@@ -2815,8 +2809,6 @@
     <span class="n">fig</span><span class="o">.</span><span class="n">y_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">xy_data</span><span class="o">.</span><span class="n">ydata</span><span class="p">)</span><span class="o">*</span><span class="mf">1.2</span><span class="p">]</span>
 
     <span class="c1"># Draws lines at the mean and location of the mean +/- standard deviation.</span>
-    <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
-    <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span>
     <span class="n">fig</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">dashed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
     <span class="n">fig</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">mean</span><span class="o">+</span><span class="n">std</span><span class="p">,</span> <span class="n">dashed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
     <span class="n">fig</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">mean</span><span class="o">-</span><span class="n">std</span><span class="p">,</span> <span class="n">dashed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>

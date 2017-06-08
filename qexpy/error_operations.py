@@ -381,7 +381,6 @@ def monte_carlo(func, *args):
                div: lambda x: x == 0,
                log: lambda x: x < 0,
                sqrt: lambda x: x < 0,
-               power: lambda x: x < 0,
                acos: lambda x: (x > 1) | (x < -1),
                asin: lambda x: (x > 1) | (x < -1)}
 
@@ -390,79 +389,165 @@ def monte_carlo(func, *args):
     value = np.zeros((N, n))
     result = np.zeros(n)
     rand = np.zeros((N, n))
-    
-    if func == power:
-        if args[1].std == 0:
-            if float(args[1].mean).is_integer():
-                if args[1].mean < 0: # 1/(x^a) -> need to avoid x=0
-                    rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[div])
-                else: # x can be anything
-                    rand[0] = np.random.normal(size=n)
-            else: # x^a, a is not an integer -> x > 0
-                rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[log])
-        else:
-            if args[0].mean<0: # can't have -x^a where a is not an integer
-                return([np.nan, np.nan], result)
-            else: # x must be positive, since a isn't an integer
-                rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[log])
 
-    elif func in exclude:
-        rand[0], x = _generate_excluded_normal(args[0].mean, args[0].std, n, exclude[func])
-    elif args[0].MC_list is not None:
-        value[0] = args[0].MC_list
-        rand[0] = (value[0]-args[0].mean)/(args[0].std if args[0].std else 1)
-    elif args[0].std == 0:
-        value[0] = args[0].mean
-        args[0].MC_list = value[0]
-    else:
-        rand[0] = np.random.normal(size=n)
-
-    if len(args) == 2:
-        rand[1] = np.random.normal(size=n)
-        args[0].get_covariance(args[1])
-        rho = round(args[0]._get_correlation(args[1]), 8)
-        factor = rho*rand[0] + np.sqrt(1-rho*rho)*rand[1] # rand[0] stores the excluded normal distribution
-        if func == div:
-            value[0] = factor*args[0].std+args[0].mean
-            value[1] = rand[0]*args[1].std+args[1].mean
+    if N == 1:
+        arg = args[0]
+        if arg.MC_list is None:
+            arg.MC_list = np.random.normal(arg.mean, arg.std, n)
+        if func in exclude:
+            value[0] = _truncate_normal(arg.MC_list, arg.MC[0], arg.MC[1], exclude[func])
         else:
-            value[1] = factor*args[1].std+args[1].mean
-            if np.all(value[0]==0):
-                value[0] = rand[0]*args[0].std+args[0].mean
-    elif np.all(value[0]==0):
-        value[0] = rand[0]*args[0].std+args[0].mean
-    for i in range(N):
-        args[i].MC_list = value[i]
-    try:
+            value[0] = arg.MC_list
         result = _np_func[func](*value)
-        data = np.mean(result)
-        error = np.std(result, ddof=1)
-    except FloatingPointError:
-        print(args, min(value[0]), value[0])
-        raise FloatingPointError
+    else:
+        args[0].get_covariance(args[1])
+        if args[0]._get_correlation(args[1]) < 0.001:
+            if func == power:
+                if args[1].std == 0 and float(args[1].mean).is_integer(): # x can be anything
+                    if args[0].MC_list is None:
+                        if args[0].std == 0:
+                            args[0].MC_list = np.empty(n)
+                            args[0].MC_list.fill(args[0].mean)
+                        else:
+                            args[0].MC_list = np.random.normal(args[0].mean, args[0].std, n)
+                    value[0] = args[0].MC_list
+                    if args[1].MC_list is None:
+                        args[1].MC_list = np.empty(n)
+                        args[1].MC_list.fill(args[1].mean)
+                    value[1] = args[1].MC_list
+                else:
+                    if args[0].mean < 0:
+                        return([np.nan, np.nan], result)
+                    elif args[0].MC_list is not None:
+                        value[0] = _truncate_normal(args[0].MC_list, args[0].MC[0], args[0].MC[1], exclude[log])
+                    else:
+                        args[0].MC_list = _generate_excluded_normal(args[0].MC[0], args[0].MC[1], n, exclude[log])
+                        value[0] = args[0].MC_list
+                    if args[1].MC_list is None:
+                        if args[1].std == 0:
+                            args[1].MC_list = np.empty(n)
+                            args[1].MC_list.fill(args[1].mean)
+                        else:
+                            args[1].MC_list = np.random.normal(args[1].mean, args[1].std, n)
+                    value[1] = args[1].MC_list
+            else:
+                if args[0].MC_list is None:
+                    if args[0].std == 0:
+                        args[0].MC_list = np.empty(n)
+                        args[0].MC_list.fill(args[0].mean)
+                    else:
+                        args[0].MC_list = np.random.normal(args[0].mean, args[0].std, n)
+                if args[1].MC_list is None:
+                    if args[1].std == 0:
+                        args[1].MC_list = np.empty(n)
+                        args[1].MC_list.fill(args[1].mean)
+                    else:
+                        args[1].MC_list = np.random.normal(args[1].mean, args[1].std, n)
+                value[0] = args[0].MC_list
+                if func == div:
+                    value[1] = _truncate_normal(args[1].MC_list, args[1].MC[0], args[1].MC[1], exclude[div])
+                else:
+                    value[1] = args[1].MC_list
+            result = _np_func[func](*value)
+        else: # Cholesky decomp
+            result = _correlated_MC(func, *args)
+    data = np.mean(result)
+    error = np.std(result, ddof=1)
     return ([data, error], result,)
 
-def _generate_excluded_normal(mean, sigma, n, excluded):
+def _correlated_MC(func, *args):
+    '''Uses Cholesky decomposition to generate correlated random normal
+    variables. Then does the calculation with those values and returns the
+    result.
+
+    :param func: The function being applied to the arguments.
+    :type func: function
+    :param *args: A tuple of the arguments of the function.
+    :type *args: tupe
+    '''
+    import qexpy.error as e
+    n = e.ExperimentalValue.mc_trial_number
+    roots = ()
+    for arg in args:
+        for root in arg.root:
+            if root not in roots:
+                roots += (root,)
+    N = len(roots)
+    C = np.ndarray(shape=(N, N))
+    for row in range(N):
+        row_obj = e.ExperimentalValue.register[roots[row]]
+        for col in range(N):
+            col_obj = e.ExperimentalValue.register[roots[col]]
+            C[row][col] = row_obj.get_covariance(col_obj)/(row_obj.std*col_obj.std)
+            
+    try:
+        U = np.linalg.cholesky(C).transpose() #need transpose to make upper diagonal
+    except np.linalg.linalg.LinAlgError:
+        #print("Problem with correlated Monte Carlo, ignoring correlation.")
+        U = np.linalg.cholesky(np.identity(N)).transpose()
+    
+    rand = np.zeros((n, N))
+    #3 rows of random numbers
+    for i in range(N):
+        rand_row = np.random.normal(0,1,n)
+        rand_col = rand_row.reshape((-1, 1))
+        rand[:, i] = rand_row
+    #combine
+    rc=np.empty_like(rand)
+    for i in range(n):
+        rc[i] = np.dot(rand[i],U)
+    #Get the columns back out
+    
+    root_dict={}
+    for j in range(N):
+        meas = e.ExperimentalValue.register[roots[j]]
+        root_dict[roots[j]] = rc[:,j]*meas.std+meas.mean
+    res = eval(args[0].info['Formula'], root_dict)*(rc[:,-1]*args[1].std+args[1].mean)
+
+    return res
+
+def _truncate_normal(distrib, mean, sigma, exclude):
+    ''' Truncates a normal distribution so that it fits within the range
+    of a function.
+
+    :param distrib: An array containing random normal values.
+    :type distrib: np.ndarray
+    :param mean: The mean of the random normal distribution.
+    :type mean: float
+    :param sigma: The standard deviation of the random normal distribution.
+    :type sigma: float
+    :param exclude: A function that returns whether to exclude a value.
+    :type std: function
+
+    :returns: A truncated normal distribution.
+    :rtype: np.ndarray
+    '''
+    x = distrib
+    if np.any(exclude(x)):
+        x[exclude(x)] = _generate_excluded_normal(mean, sigma, len(x[exclude(x)]), exclude)
+    return x
+
+def _generate_excluded_normal(distrib, mean, sigma, n, exclude):
     '''Recursively generates random normal variables that are undefined
     on some part of their codomain. Returns the normal distribution and
     the underlying standard normal distribution that was used to create it.
+
+    :param mean: The mean of the random normal distribution.
+    :type mean: float
+    :param sigma: The standard deviation of the random normal distribution.
+    :type sigma: float
+    :param sigma: The length of the normal distribution to be generated.
+    :type sigma: int
+    :param exclude: A function that returns whether to exclude a value.
+    :type std: function
+
+    :returns: A truncated normal distribution.
+    :rtype: np.ndarray
     '''
-    standard = np.random.normal(size=n) # mean=0, std=1 normal distribution
-    x = standard*sigma+mean             # mean=mean, std=std random normal distribution
-    if np.any(excluded(x)):
-        standard[excluded(x)], x[excluded(x)] = _generate_excluded_normal(mean, sigma, len(x[excluded(x)]), excluded)
-    return standard, x
-
-# def is_out_of_range(func, *args):
-#     warns = []
-#     with warnings.catch_warnings(record=True) as w:
-#         warnings.simplefilter("always", Warning)
-#         func(*args)
-#         warns = w
-#     if len(warns) > 0:
-#         p, V = np.polyfit(x=xdata, y=ydata, deg=self.fit_npars-1, cov=True, w=1/yerr)
-#         self.fit_pars = p[::-1]
-
+    x = np.random.normal(mean, sigma, n) # mean=mean, std=std random normal distribution           
+    if np.any(exclude(x)):
+        x[exclude(x)] = _generate_excluded_normal(mean, sigma, len(x[exclude(x)]), excluded)
+    return x
 
 ###############################################################################
 # Methods for Propagation

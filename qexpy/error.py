@@ -772,8 +772,8 @@ class ExperimentalValue:
         if func_flag == False and var2 is not None:
             self.rename(var1.name+op_string[operation]+var2.name)
             self.user_name = False
-            self.info['Formula'] = var1.info['Formula'] + \
-                op_string[operation] + var2.info['Formula']
+            self.info['Formula'] = '('+ var1.info['Formula'] + ')' + \
+                op_string[operation] + '(' + var2.info['Formula'] + ')'
             self.info['Function']['variables'] += (var1, var2),
             self.info['Function']['operation'] += operation,
             ExperimentalValue.formula_register.update(
@@ -1603,7 +1603,7 @@ class Measurement_Array(np.ndarray):
         means = np.ndarray(shape=self.shape)
 
         for index, item in np.ndenumerate(self):
-            if item is not None:
+            if item is not None and isinstance(item, ExperimentalValue):
                 if self.error_method == "MinMax":
                     means[index] = item.MinMax[0]
                 elif self.error_method == "MC":
@@ -2611,9 +2611,9 @@ def _parse_units(unit_str):
             unit_dict[pow_split[0]] = power
     return unit_dict
 
-def show_histogram(data, title=None, output='inline'):
+def show_histogram(data, title=None, output='inline', bins=50, color="#036564"):
     '''Creates a histogram of the inputted data using Bokeh or mpl.
-
+    
     :param title: The title that will appear at the top of the histogram.
     :type title: str
     :param output: How the histogram is to be output. Can be 'inline' or 'file'.
@@ -2622,7 +2622,7 @@ def show_histogram(data, title=None, output='inline'):
     :returns: The Plot object used to create the histogram.
     :rtype: Plot
     '''
-    if type(data) not in ARRAY:
+    if type(data) not in ExperimentalValue.ARRAY:
         print('''Input histogram data must be an array''')
         return
 
@@ -2643,8 +2643,6 @@ def show_histogram(data, title=None, output='inline'):
     fig.y_range = [0,max(xy_data.ydata)*1.2]
 
     # Draws lines at the mean and location of the mean +/- standard deviation.
-    mean = self.mean
-    std = self.std
     fig.add_line(x=mean, dashed=False, color='red')
     fig.add_line(x=mean+std, dashed=True, color='red')
     fig.add_line(x=mean-std, dashed=True, color='red')
