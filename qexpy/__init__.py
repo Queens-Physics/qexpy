@@ -29,6 +29,8 @@ __version__ = '0.3.8'
 import qexpy.utils as qu
 import bokeh.io as bi
 
+from qexpy.utils import get_data_from_file
+
 if qu.in_notebook():
     
     qu.mpl_output_notebook() # calls matplotlib inline

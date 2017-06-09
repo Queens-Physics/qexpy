@@ -505,8 +505,13 @@ class ExperimentalValue:
             new_names.append(names[index])
         new_vals = new_vals[0:-1]
 
+        if title is not None:
+            plot_title = title
+        else:
+            plot_title = 'Relative contribution to variance of {}'.format(self.name)
+
         data = q.XYDataSet(xdata=np.arange(2*N-1), ydata=new_vals, is_histogram = True, bins=N,
-                    data_name='Relative contribution to variance of {}'.format(self.name))
+                    data_name=plot_title)
 
         # Populates the mpl figure in case it is plotted.
         fig = q.MakePlot()

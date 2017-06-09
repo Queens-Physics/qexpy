@@ -20,6 +20,7 @@ def get_data_from_file(path, delim=','):
     '''Reads data from a file, splitting rows at the delimiter.
     Returns data in a 2-dimensional numpy array.
     '''
+    import csv
     with open(path, newline='') as openfile:
         reader = csv.reader(openfile, delimiter=delim)
         data=[]
@@ -33,7 +34,7 @@ def get_data_from_file(path, delim=','):
                     break
             if append:
                 data.append(row)
-        ret = np.array(data, dtype=float)
+        ret = np.transpose(np.array(data, dtype=float))
     return ret
 
 #These are used for checking whether something is an instance of

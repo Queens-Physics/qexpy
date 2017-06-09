@@ -391,13 +391,16 @@ def monte_carlo(func, *args):
     rand = np.zeros((N, n))
 
     if N == 1:
-        arg = args[0]
-        if arg.MC_list is None:
-            arg.MC_list = np.random.normal(arg.mean, arg.std, n)
+        if args[0].MC_list is None:
+            if args[0].std == 0:
+                args[0].MC_list = np.empty(n)
+                args[0].MC_list.fill(args[0].mean)
+            else:
+                args[0].MC_list = np.random.normal(args[0].mean, args[0].std, n)
         if func in exclude:
-            value[0] = _truncate_normal(arg.MC_list, arg.MC[0], arg.MC[1], exclude[func])
+            value[0] = _truncate_normal(args[0].MC_list, args[0].MC[0], args[0].MC[1], exclude[func])
         else:
-            value[0] = arg.MC_list
+            value[0] = args[0].MC_list
         result = _np_func[func](*value)
     else:
         args[0].get_covariance(args[1])
@@ -465,6 +468,15 @@ def _correlated_MC(func, *args):
     :param *args: A tuple of the arguments of the function.
     :type *args: tupe
     '''
+    funcs = {'log': np.log,
+                'exp': np.exp, 'sin': np.sin, 'cos': np.cos, 'sqrt': np.sqrt,
+                'tan': np.tan, atan: np.arctan,
+                'csc': lambda x: np.divide(1, np.sin(x)),
+                'sec': lambda x: np.divide(1, np.cos(x)),
+                'cot': lambda x: np.divide(1, np.tan(x)),
+                'asin': np.arcsin, 'acos': np.arccos, 'atan': np.arctan,
+                }
+
     import qexpy.error as e
     n = e.ExperimentalValue.mc_trial_number
     roots = ()
@@ -478,7 +490,7 @@ def _correlated_MC(func, *args):
         row_obj = e.ExperimentalValue.register[roots[row]]
         for col in range(N):
             col_obj = e.ExperimentalValue.register[roots[col]]
-            C[row][col] = row_obj.get_covariance(col_obj)/(row_obj.std*col_obj.std)
+            C[row][col] = row_obj.get_covariance(col_obj)/((row_obj.std if row_obj.std else 1)*(col_obj.std if col_obj.std else 1))
             
     try:
         U = np.linalg.cholesky(C).transpose() #need transpose to make upper diagonal
@@ -502,6 +514,7 @@ def _correlated_MC(func, *args):
     for j in range(N):
         meas = e.ExperimentalValue.register[roots[j]]
         root_dict[roots[j]] = rc[:,j]*meas.std+meas.mean
+    root_dict.update(funcs)
     res = eval(args[0].info['Formula'], root_dict)*(rc[:,-1]*args[1].std+args[1].mean)
 
     return res
