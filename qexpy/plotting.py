@@ -638,6 +638,8 @@ class Plot:
                                          fontsize=q.settings["plot_fig_title_ftsize"])
         self.mplfigure_main_ax.grid()  
 
+        return self.mplfigure
+
     def mpl_add_lines(self, lines):
         '''Adds vertical and horizontal lines to an mpl plot.'''
         if not hasattr(self, 'mplfigure_main_ax'):
