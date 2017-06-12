@@ -2,6 +2,7 @@
 plot_engine="bokeh"
 plot_engine_synonyms = {"bokeh":["bokeh", "Bokeh", "Bk", "bk", "Bo", "bo", "B", "b"],  
                         "mpl":["mpl","matplotlib","MPL","Mpl","Matplotlib", "M","m"]}
+quick_MC = False
 
 #Default parameters for things:
 from qexpy.defaults import settings
@@ -9,8 +10,7 @@ from qexpy.defaults import settings
 #Error propagation
 from qexpy.error import Measurement, MeasurementArray, ExperimentalValue, \
                         set_print_style, set_sigfigs_centralvalue, set_sigfigs_error, set_sigfigs, set_error_method, show_histogram, \
-                        sqrt, sin, cos, tan, sec, csc, cot, log, exp, e, asin, acos, atan
-        
+                        sqrt, sin, cos, tan, sec, csc, cot, log, exp, e, asin, acos, atan        
 
 #Plotting and fitting
 from qexpy.plotting import Plot, MakePlot

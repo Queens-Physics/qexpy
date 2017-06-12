@@ -150,6 +150,7 @@ class Plot:
         self.user_functions_pars = []
         self.user_functions_names = []
         self.user_functions_colors = []
+        self.user_functions_sigmas = []
         
         #Add margins to the range of the plot
         self.x_range_margin = 0.5
@@ -322,7 +323,7 @@ class Plot:
                 return
 
     
-    def add_function(self, function, pars = None, name=None, color=None, x_range = None):
+    def add_function(self, function, pars = None, name=None, color=None, x_range=None, sigmas=1):
         '''Add a user-specifed function to the list of functions to be plotted.
         
         All datasets are functions when populate_bokeh_figure is called
@@ -338,6 +339,8 @@ class Plot:
         :type color: str
         :param x_range: The range on which the function is to be plotted.
         :type x_range: array
+        :param sigmas: How many sigmas to include in the error band.
+        :type sigmas: int
         '''
         
         if x_range is not None:
@@ -379,6 +382,7 @@ class Plot:
             
         self.user_functions.append(function)
         self.user_functions_pars.append(pars)
+        self.user_functions_sigmas.append(sigmas)
         fname = "userf_{}".format(self.user_functions_count) if name==None else name
         self.user_functions_names.append(fname)
         self.user_functions_count +=1
@@ -502,7 +506,7 @@ class Plot:
         self.dimensions_px = [width, height]
 
 
-    def show(self, output='inline', populate_figure=True, refresh = True):
+    def show(self, output='inline', populate_figure=True, refresh=True):
         '''
         Show the figure, will call one of the populate methods
         by default to build a figure.
@@ -579,14 +583,15 @@ class Plot:
         xvals = [self.x_range[0]+self.x_range_margin, 
                  self.x_range[1]-self.x_range_margin]
         self.check_user_functions_color_array()
-        for func, pars, fname, color in zip(self.user_functions,
-                                            self.user_functions_pars, 
-                                            self.user_functions_names,
-                                            self.user_functions_colors):
+        for func, pars, fname, color, sigmas in zip(self.user_functions,
+                                                    self.user_functions_pars, 
+                                                    self.user_functions_names,
+                                                    self.user_functions_colors,
+                                                    self.user_functions_sigmas):
         
             self.mpl_plot_function(function=func, xdata=xvals,pars=pars, n=q.settings["plot_fcn_npoints"],
                                legend_name= fname, color=color,
-                               errorbandfactor=self.errorband_sigma)
+                               errorbandfactor=self.errorband_sigma, sigmas=sigmas)
         # Adds lines to the plot
         if self.lines['x'] or self.lines['y']:
             self.mpl_add_lines(self.lines)
@@ -1081,14 +1086,15 @@ class Plot:
             xvals = [0, len(self.x_range)]
 
         self.check_user_functions_color_array()
-        for func, pars, fname, color in zip(self.user_functions,
-                                            self.user_functions_pars, 
-                                            self.user_functions_names,
-                                            self.user_functions_colors):
+        for func, pars, fname, color, sigmas in zip(self.user_functions,
+                                                    self.user_functions_pars, 
+                                                    self.user_functions_names,
+                                                    self.user_functions_colors,
+                                                    self.user_functions_sigmas):
         
             self.bk_plot_function(function=func, xdata=xvals,pars=pars, n=q.settings["plot_fcn_npoints"],
                                legend_name= fname, color=color,
-                               errorbandfactor=self.errorband_sigma)
+                               errorbandfactor=self.errorband_sigma, sigmas=sigmas)
 
         # Adds lines to the plot
         if self.lines['x'] or self.lines['y']:
