@@ -100,6 +100,9 @@ class Plot:
     along with fit functions, and user-specified functions. One should configure
     the various aspects of the plot, and then call the show() function
     which will actually build the plot object and display it. 
+
+    :param dataset: The dataset to be plotted.
+    :type dataset: XYDataSet
     '''
 
     def __init__(self, dataset=None):

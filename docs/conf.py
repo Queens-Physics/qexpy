@@ -44,7 +44,9 @@ extensions = [
     'sphinx.ext.viewcode',
     'nbsphinx',
     'IPython.sphinxext.ipython_console_highlighting',
-    'bokeh.sphinxext.bokeh_plot'
+    'IPython.sphinxext.ipython_directive',
+    'bokeh.sphinxext.bokeh_plot',
+    'sphinx.ext.autosummary'
 ]
 
 # Default Pygments lexer for syntax highlighting in code cells
