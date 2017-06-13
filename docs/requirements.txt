@@ -1,6 +1,6 @@
 nbsphinx
 ipykernel
-bokeh=0.12.1
+bokeh==0.12.1
 qexpy
 sphinx>=1.4
 pandas
