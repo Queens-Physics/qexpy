@@ -92,10 +92,10 @@ The example below shows a case of plotting data and fitting them to a straight l
    chi2/ndof = 0.71/7
    ---------------End fit results----------------
    
-.. bokeh-plot::
-   :source-position: none
+.. plot::
    
    import qexpy as q
+   q.plot_engine = 'mpl'
    fig1 = q.MakePlot(xdata = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                   ydata = [0.9, 1.4, 2.5, 4.2, 5.7, 6., 7.3, 7.1, 8.9, 10.8],
                   yerr = 0.5,
@@ -103,5 +103,5 @@ The example below shows a case of plotting data and fitting them to a straight l
                   yname = 'force', yunits='N',
                   data_name = 'mydata')
    fig1.fit("linear")
-   fig1.add_residuals()
+   fig1.show_residuals = True
    fig1.show()
