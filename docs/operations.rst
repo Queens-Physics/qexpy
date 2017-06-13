@@ -7,16 +7,16 @@ Naming
 In addition to containing a mean and standard deviation, Measurement
 objects can also have a string name and unit associated with it.
 These can then be used both in printing values and in labelling any plots
-created with these values.  By default, Measured objects are named
+created with these values.  By default, Measurement objects are named
 unnamed_var0, with a unique number assigned to each object.
-The name and units of a Measured object can be declared either when the
+The name and units of a Measurement object can be declared either when the
 object is created or altered after.
 
 .. nbinput:: ipython3
 
-   import qexpy.error as e
+   import qexpy as q
 	
-   x = e.Measurement(10, 1, name='Length', units='cm')
+   x = q.Measurement(10, 1, name='Length', units='cm')
    # This value can be changed using the following method
 	
    x.rename(name='Cable Length', units='m')
@@ -34,16 +34,15 @@ Units
 
 Values which have more complicated units can also be entered using the
 following syntax.  Consider a measurement of acceleration, with units of
-m/s^2 or meters per second squared, this can be entered as a list of the
-unit letters followed by the exponent of the unit, for every base unit,
-such as meter order second:
+m/s^2 or meters per second squared. This can be entered as a string of the
+unit letters raised to the their respective powers:
 	
 .. nbinput:: ipython3
 
-   import qexpy.error as e
+   import qexpy as q
 	
-   t = e.Measurement(3,0.25, name='Time', units='s')
-   a = e.Measurement(10, 1, name='Acceleration', units=['m',1,'s',-2])
+   t = q.Measurement(3, 0.25, name='Time', units='s')
+   a = q.Measurement(10, 1, name='Acceleration', units='m^1 s^-2')
 
 This also allows for the units of values produced by operations such as
 multiplication to be generated automatically.  Consider the calculation of
@@ -56,13 +55,13 @@ the velocity of some object that accelerates at a for t seconds:
 	
 .. nboutput:: ipython3
 
-	['m',1,'s','-1']
+	{'m': 1, 's': -1}
 	
 This unit list, when used in a plot will appear as:
 
 .. code-block:: python
 
-   'm^1s^-1'
+   'm^1 s^-1'
 
 Print Styles
 ------------
@@ -71,15 +70,15 @@ The default format of printing a value with an uncertainty is:
    
 .. nbinput:: ipython3
    
-   import qexpy.error as e
-   x = e.Measurement(10, 1)
+   import qexpy as q
+   x = q.Measurement(10, 1)
    print(x)
 
 .. nboutput:: ipython3
 
    10 +/- 1
 	
-However, there are three ways of outputting a Measurement object.
+However, there are two other ways of outputting a Measurement object.
 Furthermore, each method also allows for a specific number of significant
 digits to be shown.
 
@@ -90,10 +89,10 @@ function will change how the package prints a Measurement object:
 
 .. nbinput:: ipython3
 
-   import qexpy.error as e
+   import qexpy as q
 	
-   x = e.Measurement(122, 10)
-   e.Measurement.print_style("Scientific")
+   x = q.Measurement(122, 10)
+   q.set_print_style("Scientific")
    print(x)
 	
 .. nboutput:: ipython3
@@ -107,10 +106,10 @@ directly into a Latex document.
 
 .. nbinput:: ipython3
 
-   import qexpy.error as e
+   import qexpy as q
 	
-   x = e.Measurement(122, 10)
-   e.Measurement.print_style("Latex")
+   x = q.Measurement(122, 10)
+   q.set_print_style("Latex")
    print(x)
 	
 .. nboutput:: ipython3

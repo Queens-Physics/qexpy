@@ -1129,7 +1129,7 @@ class Plot:
             )
             return self.bkfigure
         else:
-            self.set_yres_range_from_fits
+            self.set_yres_range_from_fits()
             self.bkres =  bp.figure(
                 width=self.dimensions_px[0], height=self.dimensions_px[1]//3,
                 tools='save, pan, box_zoom, wheel_zoom, reset',

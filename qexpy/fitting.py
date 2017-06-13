@@ -27,8 +27,8 @@ def Rpolynomial(x, *pars):
     return poly
 
 def Rexp(x, *pars):
-    '''Function for a decaying exponential p[0]*exp(-x/p[1])'''
-    return (0 if pars[1]==0 else pars[0]/pars[1]*np.exp(-x/pars[1]) )
+    '''Function for a decaying exponential p[0]*exp(-x*p[1])'''
+    return (0 if pars[1]==0 else pars[0]*np.exp(-x*pars[1]) )
 
 def Rgauss(x, *pars):
     '''Function for a Gaussian p[2]*Gaus(p[0],p[1])'''
