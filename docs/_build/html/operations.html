@@ -101,6 +101,10 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="measurement.html">The Measurement Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="measurement_arr.html">The MeasurementArray Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataset Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
 </ul>
 
@@ -366,9 +370,9 @@ div.nboutput div.output_area.stderr {
 <p>In addition to containing a mean and standard deviation, Measurement
 objects can also have a string name and unit associated with it.
 These can then be used both in printing values and in labelling any plots
-created with these values.  By default, Measured objects are named
+created with these values.  By default, Measurement objects are named
 unnamed_var0, with a unique number assigned to each object.
-The name and units of a Measured object can be declared either when the
+The name and units of a Measurement object can be declared either when the
 object is created or altered after.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
@@ -376,9 +380,9 @@ object is created or altered after.</p>
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
 
-<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">)</span>
 <span class="c1"># This value can be changed using the following method</span>
 
 <span class="n">x</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Cable Length&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
@@ -402,19 +406,18 @@ object is created or altered after.</p>
 <h2>Units<a class="headerlink" href="#units" title="Permalink to this headline">¶</a></h2>
 <p>Values which have more complicated units can also be entered using the
 following syntax.  Consider a measurement of acceleration, with units of
-m/s^2 or meters per second squared, this can be entered as a list of the
-unit letters followed by the exponent of the unit, for every base unit,
-such as meter order second:</p>
+m/s^2 or meters per second squared. This can be entered as a string of the
+unit letters raised to the their respective powers:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
 
-<span class="n">t</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-<span class="n">a</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Acceleration&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Acceleration&#39;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m^1 s^-2&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -436,12 +439,12 @@ the velocity of some object that accelerates at a for t seconds:</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area highlight-none"><div class="highlight"><pre>
-<span></span>[&#39;m&#39;,1,&#39;s&#39;,&#39;-1&#39;]
+<span></span>{&#39;m&#39;: 1, &#39;s&#39;: -1}
 </pre></div>
 </div>
 </div>
 <p>This unit list, when used in a plot will appear as:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s1">&#39;m^1s^-1&#39;</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s1">&#39;m^1 s^-1&#39;</span>
 </pre></div>
 </div>
 </div>
@@ -454,8 +457,8 @@ the velocity of some object that accelerates at a for t seconds:</p>
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -468,7 +471,7 @@ the velocity of some object that accelerates at a for t seconds:</p>
 </pre></div>
 </div>
 </div>
-<p>However, there are three ways of outputting a Measurement object.
+<p>However, there are two other ways of outputting a Measurement object.
 Furthermore, each method also allows for a specific number of significant
 digits to be shown.</p>
 <p>One method is called scientific and will output the number in scientific
@@ -481,10 +484,10 @@ function will change how the package prints a Measurement object:</p>
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
 
-<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">print_style</span><span class="p">(</span><span class="s2">&quot;Scientific&quot;</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">q</span><span class="o">.</span><span class="n">set_print_style</span><span class="p">(</span><span class="s2">&quot;Scientific&quot;</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -507,10 +510,10 @@ directly into a Latex document.</p>
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="kn">as</span> <span class="nn">e</span>
+<span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
 
-<span class="n">x</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-<span class="n">e</span><span class="o">.</span><span class="n">Measurement</span><span class="o">.</span><span class="n">print_style</span><span class="p">(</span><span class="s2">&quot;Latex&quot;</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">q</span><span class="o">.</span><span class="n">set_print_style</span><span class="p">(</span><span class="s2">&quot;Latex&quot;</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
 </div>

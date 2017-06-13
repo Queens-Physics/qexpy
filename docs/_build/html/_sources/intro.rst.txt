@@ -14,8 +14,8 @@ Highlights:
  * Produce interactive plots of data in the browser
  * Fit data to common functions (polynomials, gaussians) or provide custom functions
  * Examine residual plots after fits
- * Track units in calculations (still in development)
- * Plot confidence bands from the errors in fitted parameters (still in development)
+ * Track units in calculations
+ * Plot confidence bands from the errors in fitted parameters
  * Integrates with Jupyter notebooks, numpy, bokeh
 
 Examples
@@ -69,6 +69,7 @@ The example below shows a case of plotting data and fitting them to a straight l
  
 	
 .. nbinput:: ipython3
+   :execution-count: 3
 		      
    # We can now fit the data, and display a plot (optionally) showing the residuals
 

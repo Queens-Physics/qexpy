@@ -1315,7 +1315,7 @@ class Plot:
                   correlation = (-1,1,0.05)                 
                  )
         def update(offset=off_mean, offset_err=off_std, slope=slope_mean, slope_err=slope_std, correlation=self.linear_fit_corr):
-              
+
             recall = qe.Measurement.minmax_n
             qe.Measurement.minmax_n=1
             omes = qe.Measurement(offset,offset_err)

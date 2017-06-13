@@ -96,7 +96,11 @@
 <li class="toctree-l1"><a class="reference internal" href="operations.html">Formatting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="measurement.html">The Measurement Object</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">The MeasurementArray Object</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The MeasurementArray Object</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#properties">Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataset Object</a></li>
@@ -240,6 +244,8 @@ MeasurementArray() and let it create a Measurement_Array object
 behind the scenes.</p>
 </dd></dl>
 
+<div class="section" id="properties">
+<h2>Properties<a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h2>
 <p>MeasurementArrays have a few properties that you can get and set. Each property has an example of how to get and set it.</p>
 <dl class="attribute">
 <dt id="qexpy.error.Measurement_Array.error_weighted_mean">
@@ -294,10 +300,25 @@ in the MeasurementArray.</td>
 </table>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="qexpy.error.Measurement_Array.std">
-<code class="descclassname">Measurement_Array.</code><code class="descname">std</code><em class="property"> = &lt;function Measurement_Array.std&gt;</em><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.std" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="descclassname">Measurement_Array.</code><code class="descname">std</code><span class="sig-paren">(</span><em>ddof=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.std" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the standard deviation of the means of 
+all the Measurements in the MeasurementArray.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ddof</strong> (<em>int</em>) &#8211; The degrees of freedom of the MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The standard deviation of the means of all the 
+Measurements in the MeasurementArray.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="qexpy.error.Measurement_Array.stds">
@@ -339,6 +360,9 @@ the Measurements in the MeasurementArray.</td>
 </table>
 </dd></dl>
 
+</div>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
 <p>MeasurementArrays also have a number of functions that can be used to change the MeasurementArray or get information about it.</p>
 <dl class="method">
 <dt id="qexpy.error.Measurement_Array.append">
@@ -422,6 +446,7 @@ specified by the pos parameter.</p>
 </table>
 </dd></dl>
 
+</div>
 </div>
 
 

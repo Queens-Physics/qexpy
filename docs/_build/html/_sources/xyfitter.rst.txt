@@ -5,4 +5,6 @@ When fitting data, an XYFitter object is used behind the scenes. It contains the
 
 .. autoclass:: qexpy.fitting.XYFitter
 
+Functions
+---------
 .. automethod:: qexpy.fitting.XYFitter.fit

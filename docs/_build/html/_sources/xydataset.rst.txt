@@ -5,6 +5,8 @@ An XYDataset is used to store x and y data and is used in plotting.
 
 .. autoclass:: qexpy.fitting.XYDataSet
 
+Functions
+---------
 .. automethod:: qexpy.fitting.XYDataSet.clear_fits
 .. automethod:: qexpy.fitting.XYDataSet.fit
 .. automethod:: qexpy.fitting.XYDataSet.get_x_range

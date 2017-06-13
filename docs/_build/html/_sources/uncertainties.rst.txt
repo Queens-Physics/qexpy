@@ -12,7 +12,7 @@ underlying code can be useful to understand.
 Creating Measurement Objects
 ----------------------------
 
-The method that will be used most commonly is the Measurement class.  This
+The method that will be used most commonly is the :py:class:`.Measurement` class.  This
 object can store the mean, standard deviation, original data, name, units,
 and other attributes which can be used by other elements of this package.
 
@@ -247,11 +247,6 @@ covariance of two variables.
 Furthermore, the covariance and correlation of the fitted parameters found
 by the *.fit* method in QExPy.plotting 
 
-.. todo::
-
-   Build public method for finding name and ID of variable
-   Min Max propagation should be altered to represent true min and max with
-   a generalized function.
 
 Derivatives
 -----------
@@ -273,7 +268,3 @@ series of elementary operations and functions, the exact numerical
 derivative can be calculated.  All that is required is to be able to store
 the derivative of each of these elementary operations with respect to
 whatever variables are involved.
-
-.. todo::
-
-   Outline operation wrapper
