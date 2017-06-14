@@ -640,7 +640,7 @@ class ExperimentalValue:
         x.covariance[y.info['ID']] = sigma_xy
         y.covariance[x.info['ID']] = sigma_xy
 
-    def get_covariance(self, variable):
+    def get_covariance(self, y):
         '''Returns the covariance of the object and a specified variable.
 
         This funciton checks for the existance of a data array in each
@@ -649,44 +649,44 @@ class ExperimentalValue:
         the data arrays are of different lengths or do not exist, in that
         case a covariance of zero is returned.
 
-        :param variable: The variable to get the covariance with respect to.
-        :type variable: Measurement
+        :param y: The variable to get the covariance with respect to.
+        :type y: Measurement
 
         :returns: The covariance term between the two variables.
         :rtype: float
         '''
-        if isinstance(self, Constant) or isinstance(variable, Constant):
+        if isinstance(self, Constant) or isinstance(y, Constant):
             return 0
-        if self.info['ID'] in variable.covariance:
-            return self.covariance[variable.info['ID']]
+        if self.info['ID'] in y.covariance:
+            return self.covariance[y.info['ID']]
 
         elif self.info["Data"] is not None \
-                and variable.info["Data"] is not None\
-                and len(self) == len(variable) and len(self) != 1:
-            ExperimentalValue._find_covariance(self, variable)
-            var = self.covariance[variable.info['ID']]
+                and y.info["Data"] is not None\
+                and len(self) == len(y) and len(self) != 1:
+            ExperimentalValue._find_covariance(self, y)
+            var = self.covariance[y.info['ID']]
             return var
         elif isinstance(self, Function):
             term = 0
             for root in self.root:
                 root_obj = ExperimentalValue.register[root]
                 partial_der = self.derivative[root]
-                term += partial_der*variable.get_covariance(root_obj)
+                term += partial_der*y.get_covariance(root_obj)
             if term:
-                self.set_covariance(variable, term)
+                self.set_covariance(y, term)
                 return term
-        elif isinstance(variable, Function):
+        elif isinstance(y, Function):
             term = 0
-            for root in variable.root:
+            for root in y.root:
                 root_obj = ExperimentalValue.register[root]
-                partial_der = variable.derivative[root]
+                partial_der = y.derivative[root]
                 term += partial_der*self.get_covariance(root_obj)
             if term:
-                self.set_covariance(variable, term)
+                self.set_covariance(y, term)
                 return term
         return 0
 
-    def _get_correlation(self, y):
+    def get_correlation(self, y):
         '''Returns the correlation factor of two measurements.
 
         Using the covariance, or finding the covariance if not defined,
@@ -699,10 +699,10 @@ class ExperimentalValue:
         :rtype: float
         '''
         x = self
-        if isinstance(x, Constant) or isinstance(y, Constant):
+        if x.std == 0 or y.std == 0:
             return 0
 
-        if y.info['ID'] in x.covariance:
+        if y.get_covariance(x) is not 0:
             pass
         else:
             # ExperimentalValue._find_covariance(x, y)
@@ -713,11 +713,8 @@ class ExperimentalValue:
         sigma_y = y.std
         
         factor = sigma_xy
-        if x.std != 0:
-            factor /= x.std
-        if y.std != 0:
-            factor /= y.std
-            
+        factor /= (x.std*y.std)
+
         return factor
 
 ###############################################################################

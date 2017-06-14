@@ -404,8 +404,7 @@ def monte_carlo(func, *args):
             value[0] = args[0].MC_list
         result = _np_func[func](*value)
     else:
-        args[0].get_covariance(args[1])
-        if q.quick_MC or args[0]._get_correlation(args[1]) < 0.001:
+        if q.quick_MC or args[0].get_correlation(args[1]) < 0.001:
             if func == power:
                 if args[1].std == 0 and float(args[1].mean).is_integer(): # x can be anything
                     if args[0].MC_list is None:

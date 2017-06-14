@@ -69,7 +69,7 @@ class TestCovariance(unittest.TestCase):
         y = e.Measurement([2, 4, 6, 8, 10])
         x.get_covariance(y)
 
-        self.assertAlmostEqual(x._get_correlation(y), 1, places=7)
+        self.assertAlmostEqual(x.get_correlation(y), 1, places=7)
 
     def test_set_correlation(self):
         '''Tests setting covariance between two objects.
@@ -79,7 +79,7 @@ class TestCovariance(unittest.TestCase):
 
         result = x*y+x
         result.get_covariance(y)
-        self.assertAlmostEqual(x._get_correlation(y), -.2)
+        self.assertAlmostEqual(x.get_correlation(y), -.2)
 
     def test_propagated_correlation(self):
         '''Tests setting covariance between two objects.
@@ -88,7 +88,7 @@ class TestCovariance(unittest.TestCase):
         y = e.Measurement(20, 2)
         x.set_correlation(y, 0.5)
 
-        self.assertEqual(x._get_correlation(y), 0.5)
+        self.assertEqual(x.get_correlation(y), 0.5)
 
 class TestFunctions(unittest.TestCase):
 
