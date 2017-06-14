@@ -1,7 +1,7 @@
 Introduction
 ============
 
-QExPy (Queen's Experimental Physics) is a python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser. 
+QExPy (Queen's Experimental Physics) is a python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser.
 
 Highlights:
  * Easily propagate uncertainties in measured quantities
@@ -92,16 +92,12 @@ The example below shows a case of plotting data and fitting them to a straight l
    chi2/ndof = 0.71/7
    ---------------End fit results----------------
    
-.. plot::
-   
+.. bokeh-plot::
+   :source-position: above
+
    import qexpy as q
-   q.plot_engine = 'mpl'
-   fig1 = q.MakePlot(xdata = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                  ydata = [0.9, 1.4, 2.5, 4.2, 5.7, 6., 7.3, 7.1, 8.9, 10.8],
-                  yerr = 0.5,
-                  xname = 'length', xunits='m',
-                  yname = 'force', yunits='N',
-                  data_name = 'mydata')
-   fig1.fit("linear")
-   fig1.show_residuals = True
+
+   fig1 = q.MakePlot(xdata = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], ydata = [0.9, 1.4, 2.5, 4.2, 5.7, 6., 7.3, 7.1, 8.9, 10.8], yerr = 0.5, xname = 'length', xunits='m', yname = 'force', yunits='N', data_name = 'mydata') 
+   fig1.fit('linear')
+   fig1.add_residuals()
    fig1.show()

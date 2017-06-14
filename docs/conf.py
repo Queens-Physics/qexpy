@@ -22,7 +22,7 @@ import sphinx_rtd_theme
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath("../.."))
+sys.path.insert(0, os.path.abspath('../..'))
 sys.path.append(os.path.abspath('sphinxext'))
 os.environ['BOKEH_DOCS_MISSING_API_KEY_OK'] = str(1)
 
@@ -46,8 +46,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'bokeh.sphinxext.bokeh_plot',
-    'sphinx.ext.autosummary',
-    'numpydoc'
+    'sphinx.ext.autosummary'
 ]
 
 # Default Pygments lexer for syntax highlighting in code cells
