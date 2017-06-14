@@ -23,7 +23,6 @@ package, the *.plot_engine* setting can be set to either *'mpl'*, or
    :source-position: above
 
    import qexpy as q
-   q.plot_engine = 'mpl'
 
    # This produces two sets of data which should be fit to a line with a
    # slope of 3 and an intercept 2
@@ -65,7 +64,6 @@ easily be constructed.
    :source-position: above
 
    import qexpy as q
-   q.plot_engine = 'mpl'   
 
    x = q.MeasurementArray([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
    y = q.MeasurementArray([5, 7, 11, 14, 17], [1], name='Mass', units='g')
@@ -92,7 +90,6 @@ as equal to the *.fit* method.
    :source-position: above
 
    import qexpy as q
-   q.plot_engine = 'mpl'
 
    x = q.MeasurementArray([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
    y = q.MeasurementArray([5, 7, 11, 14, 17], [1], name='Mass', units='g')
@@ -113,7 +110,6 @@ as the linear fit function.
    :source-position: above
 
    import qexpy as q
-   q.plot_engine = 'mpl'
 
    x = q.MeasurementArray([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
    y = q.MeasurementArray([ 0.325,  0.882 ,  0.882 ,  0.325,  0.0439], [1], name='Mass', units='g')
@@ -134,7 +130,6 @@ To add a theoretical curve, or any other curve:
    :source-position: above
 
    import qexpy as q
-   q.plot_engine = 'mpl'
 
    x = q.MeasurementArray([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
    y = q.MeasurementArray([5, 7, 11, 14, 17], [1], name='Mass', units='g')
@@ -162,7 +157,6 @@ in.
    :source-position: above
 
    import qexpy as q
-   q.plot_engine = 'mpl'
 
    x = q.MeasurementArray([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
    y = q.MeasurementArray([5, 7, 11, 14, 17], [1], name='Applied Mass', units='g')
@@ -192,7 +186,6 @@ to the other plot.
    :source-position: above
 
    import qexpy as q
-   q.plot_engine = 'mpl'
 
    x1 = q.MeasurementArray([1, 2, 3, 4, 5], [0.5], name='Length', units='cm')
    y1 = q.MeasurementArray([5, 7, 11, 14, 17], [1], name='Applied Mass', units='g')
