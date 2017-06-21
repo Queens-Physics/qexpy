@@ -1,3 +1,12 @@
+
+# Check the python interpretter version
+import sys
+if sys.version_info[0] < 3: # No reason to assume a future Python 4 will break compatability.
+    raise ImportError("Error: QExPy is only supported on Python 3. Please upgrade your interpretter.\n"
+                     "If you're using Anaconda, you can download the correct version here:\n"
+                     "https://www.continuum.io/downloads")
+
+
 #Whether to use Bokeh or matplotlib:
 plot_engine="bokeh"
 plot_engine_synonyms = {"bokeh":["bokeh", "Bokeh", "Bk", "bk", "Bo", "bo", "B", "b"],  
