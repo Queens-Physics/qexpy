@@ -1,4 +1,4 @@
-The XYDataset Object
+The XYDataSet Object
 ====================
 
 An XYDataset is used to store x and y data and is used in plotting.

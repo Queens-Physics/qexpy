@@ -12,7 +12,7 @@ than the plotting software itself.
 The Plot Object
 ---------------
 
-Plots created with QExPy are stored in a variable like any other value.
+:py:class:`Plots` created with QExPy are stored in a variable like any other value.
 This variable can then be operated on to add or change different aspects
 of the plot, such as lines of fit, user-defined functions or simply the
 colour of data point. To choose which plot engine is used by the
@@ -36,7 +36,7 @@ For more detailed examples of plotting, please see the
 .. _GitHub example notebooks: https://github.com/Queens-Physics/qexpy/tree/master/examples/jupyter
 	
 Using methods such as *.fit* will create a best fit of the data. 
-The *.fit* attribute also has arguments of what type of fit is 
+The *.fit* method also has arguments of what type of fit is 
 required and, if the model is not built-in to the module, an 
 initial guess of the fitting parameters.
 
@@ -119,10 +119,10 @@ as the linear fit function.
    figure.show_residuals = True
    figure.show()
 
-User-Defined Functions
-----------------------
+User-Defined Fits
+-----------------
 
-A user defined function can be plotted using the *.function* method as
+A user defined function can be plotted using the *.fit* method as
 we have previously done for curve fits and residual outputs.
 To add a theoretical curve, or any other curve:
 
@@ -135,7 +135,6 @@ To add a theoretical curve, or any other curve:
    y = q.MeasurementArray([5, 7, 11, 14, 17], [1], name='Mass', units='g')
 
    figure = q.MakePlot(x, y)
-   figure.fit('linear')
 
    def theoretical(x, *pars):
        return pars[0] + pars[1]*x
@@ -143,7 +142,7 @@ To add a theoretical curve, or any other curve:
    figure.fit(model=theoretical, parguess=[2, 2])
    figure.show()
     
-The final method relevant to Plot objects is the show method.
+The final method relevant to :py:class:`Plot` objects is the show method.
 This, by default will output the Bokeh plot in a terminal, or output of a
 Jupyter notebook, if that is where the code is executed.
 This method does have an optional argument that determines where the plot
@@ -173,13 +172,13 @@ Plotting Multiple Datasets
 --------------------------
 
 In many cases, multiple sets of data must be shown on a single plot,
-possibly with multiple residuals. In this case, another XYDataSet object
-must be created and 
+possibly with multiple residuals. In this case, another :py:class:`XYDataSet` object
+must be created and added with the following method:
 
 .. automethod:: qexpy.plotting.Plot.add_dataset
    :noindex:
 
-This method is used by creating a separate XYDataSet object and adding it 
+This method is used by creating a separate :py:class:`XYDataSet` object and adding it 
 to the other plot.
 
 .. bokeh-plot::
@@ -199,5 +198,26 @@ to the other plot.
    
    data2 = q.XYDataSet(x2, y2)
    figure.add_dataset(data2)
+
+   figure.show()
+
+Plotting Functions
+------------------
+
+Sometimes you want to draw functions that aren’t a fit of a dataset, and QExPy can do that too. The process is similar to that for drawing fits, but using the *.add_function* function instead of the *.fit* function, as shown below:
+
+.. bokeh-plot::
+   :source-position: above
+
+   import qexpy as q
+
+   def func(x, *pars):
+       return pars[0] + pars[1]*x
+
+   figure = q.MakePlot()
+   
+   # This function is not related to any data.
+   figure.add_function(func, name="Function", pars = [1, 5],
+                  color = 'saddlebrown', x_range =[-10,10])
 
    figure.show()

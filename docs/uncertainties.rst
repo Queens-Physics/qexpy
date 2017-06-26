@@ -2,7 +2,7 @@ Error Propagation
 =================
 
 The propagation of measurements, including the propagation of errors is at
-the heart of this package.  This section will describe how Measurement
+the heart of this package.  This section will describe how :py:class:`.Measurement`
 objects are created and used in calculations.  Furthermore, features such
 as the calculation of the exact numerical derivative of expressions will be
 outlined.  While some aspects of this documentation will not necessarily be
