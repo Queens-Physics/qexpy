@@ -193,10 +193,10 @@ class XYFitter:
             #now, check again
             nz = np.count_nonzero(yerr)    
             if nz < ydata.size and nz != 0:
-                print("Error: Some MC errors are zero as well, I give up")
-                return None
+                yerr[yerr == 0] = ydata[yerr == 0]/1000000
             #We're ok, modify the errors in the dataset to be the MC ones
-            dataset.yerr = yerr
+            else:
+                dataset.yerr = yerr
         
         #If user specified a fit range, reduce the data:    
         if type(fit_range) in ARRAY and len(fit_range) is 2:
@@ -219,7 +219,7 @@ class XYFitter:
                                                     sigma=yerr, p0=self.parguess,
                                                     maxfev=maxfev)
                 warns = w
-            if len(warns) == 1 and (self.fit_function==Rlinear or self.fit_function==Rpolynomial):
+            if len(warns) > 0 and (self.fit_function==Rlinear or self.fit_function==Rpolynomial):
                 p, V = np.polyfit(x=xdata, y=ydata, deg=self.fit_npars-1, cov=True, w=1/yerr)
                 self.fit_pars = p[::-1]
                 self.fit_pcov = np.flipud(np.fliplr(V))
@@ -242,7 +242,7 @@ class XYFitter:
                                                         sigma=yerr_eff, p0=self.parguess,
                                                         maxfev=maxfev)
                     warns = w
-                if len(warns) == 1 and (self.fit_function==Rlinear or self.fit_function==Rpolynomial):
+                if len(warns) == 1 and (self.fit_function == Rlinear or self.fit_function == Rpolynomial):
                     p, V = np.polyfit(x=xdata, y=ydata, deg=self.fit_npars-1, cov=True, w=1/yerr)
                     self.fit_pars = p[::-1]
                     self.fit_pcov = np.flipud(np.fliplr(V))
@@ -317,7 +317,7 @@ class XYFitter:
 def DataSetFromFile(filename, xcol=0, ycol=1, xerrcol=2, yerrcol=3, delim= ' ',
                     data_name=None, xname=None, xunits=None, yname=None, yunits=None,
                     is_histogram=False):
-    '''Create a DataSet from a file, where the data is organized into 4 columns delimited
+    '''Create an XYDataSet from a file, where the data is organized into 4 columns delimited
     by delim. User can specify which columns contain what information, the default is
     x,y,xerr,yerr. User MUST specify if xerr or yerr are missing by setting those columns to
     'None', and the method will automatically assign error of zero.
@@ -373,7 +373,7 @@ def DataSetFromFile(filename, xcol=0, ycol=1, xerrcol=2, yerrcol=3, delim= ' ',
     
 class XYDataSet:
     '''An XYDataSet contains a paired set of Measurement_Array Objects,
-    typically, a set of x and y values to be used for a plot, as well
+    typically, a set of x and y values to be used for a Plot, as well
     as a method to fit that dataset. If the data set is fit multiple times
     the various fits are all recorded in a list of XYFitter objects.
     One can also construct an XYDataSet from histogram data, which then
