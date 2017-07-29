@@ -8,6 +8,7 @@ import qexpy.utils as qu
 #used to check plot_engine:
 import qexpy as q
 import re
+import pandas as pd
 
 
 class ExperimentalValue:
@@ -1589,6 +1590,39 @@ class Measurement_Array(np.ndarray):
         for index in range(len(result)):
             result[index].name = "{}_{}".format(self.name,index)
         return self.__array_wrap__(result)
+
+    def show_table(self, latex=False):
+        '''Prints the data of the Measurement_Array in a formatted table.
+
+        :param latex: Whether to print the data using Latex formatting.
+        :type show: bool
+        '''
+
+        x = self.means
+        stds = self.stds
+
+        if latex:
+            s = ('\\begin{table}[htp]\n'
+                 '\\begin{center}\n'
+                 '\\begin{tabular}{|c|} \hline\n')
+            err_const = np.all(stds == stds[0])
+            xtitle = '{\\bf '+self.name+'} ('+(self.get_units_str() if self.get_units_str() else 'units')+')'
+            xtitle += ' $\pm$ ' + str(stds[0]) if err_const else ''
+            s += xtitle + ' \\\\ \hline\hline \n'
+            for ind in range(len(x)):
+                s += str(x[ind]) + ('' if err_const else ' $\pm$ '+str(stds[ind])) + ' \\\\ \hline \n'
+            s += ('\end{tabular}\n'
+                  '\end{center}\n'
+                  '\caption{} \n'
+                  '\end{table}')
+            print(s)
+
+        else:
+            data = []
+            for ind in range(len(x)):
+                data.append([str(x[ind]) + ' +/- ' + str(stds[ind])])
+            df = pd.DataFrame(data, columns=[self.name], index=['']*len(x))
+            print(df)
 
     @property
     def means(self):

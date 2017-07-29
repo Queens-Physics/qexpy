@@ -513,6 +513,43 @@ class XYDataSet:
             return self.fit_pars[-1]
         else:
             return None
+
+    def show_table(self, latex=False):
+        '''Prints the data of the Plot in a formatted table.
+
+        :param latex: Whether to print the data using Latex formatting.
+        :type show: bool
+        '''
+        x = self.x
+        y = self.y
+
+        if latex:
+            s = ('\\begin{table}[htp]\n'
+                 '\\begin{center}\n'
+                 '\\begin{tabular}{|c|c|} \hline\n')
+            xerr_const = np.all(x.stds == x.stds[0])
+            yerr_const = np.all(y.stds == y.stds[0])
+            xtitle = '{\\bf '+x.name+'} ('+(x.get_units_str() if x.get_units_str() else 'units')+')'
+            xtitle += ' $\pm$ ' + str(x.stds[0]) if xerr_const else ''
+            ytitle = '{\\bf '+y.name+'} ('+(y.get_units_str() if y.get_units_str() else 'units')+')'
+            ytitle += ' $\pm$' + str(y.stds[0]) if yerr_const else ''
+            s += xtitle + ' & ' + ytitle + ' \\\\ \hline\hline \n'
+            for ind in range(len(x)):
+                s += str(self.xdata[ind]) + ('' if xerr_const else ' $\pm$ '+str(self.xerr[ind])) + ' & '
+                s += str(self.ydata[ind]) + ('' if yerr_const else ' $\pm$ '+str(self.yerr[ind])) + ' \\\\ \hline \n'
+            s += ('\end{tabular}\n'
+                  '\end{center}\n'
+                  '\caption{} \n'
+                  '\end{table}')
+            print(s)
+
+        else:
+            data = []
+            for ind in range(len(x)):
+                data.append([str(self.xdata[ind]) + ' +/- ' + str(self.xerr[ind]),
+                             str(self.ydata[ind]) + ' +/- ' + str(self.yerr[ind])])
+            df = pd.DataFrame(data, columns=[x.name, y.name], index=['']*len(x))
+            print(df)
     
     def print_fit_results(self, fitindex=-1):
         '''Prints the results of a fit. Includes the data name, fit name, fit

@@ -12,6 +12,8 @@ import bokeh.models as mo
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+import pandas as pd
+
 from ipywidgets import interact 
 
 CONSTANT = qu.number_types
@@ -189,6 +191,15 @@ class Plot:
         :type show: bool
         '''
         self.show_residuals = bool(state)
+
+    def show_table(self, latex=False):
+        '''Prints the data of the Plot in a formatted table.
+
+        :param latex: Whether to print the data using Latex formatting.
+        :type show: bool
+        '''
+        dataset = self.datasets[-1]
+        dataset.show_table(latex=latex)
 
     def initialize_from_dataset(self, dataset):
         '''Initialize axes labels and ranges from the dataset'''
