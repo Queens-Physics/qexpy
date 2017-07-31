@@ -200,6 +200,17 @@ class ExperimentalValue:
         :setter: Sets the mean of the Measurement.
         :getter: Returns the mean of the Measurement.
         :type: float
+
+        .. code-block:: python
+
+            x = q.Measurement(0, 1)
+
+            x.mean = 10
+            print(x)
+
+        .. nboutput:: ipython3
+
+           10 +/- 1
         '''
         return self._mean
 
@@ -223,6 +234,17 @@ class ExperimentalValue:
         :setter: Sets the error of the Measurement.
         :getter: Returns the error of the Measurement.
         :type: float
+
+        .. code-block:: python
+
+            x = q.Measurement(5, 0)
+
+            x.std = 0.5
+            print(x)
+
+        .. nboutput:: ipython3
+
+           5.0 +/- 0.5
         '''
         return self._std
 
@@ -247,6 +269,17 @@ class ExperimentalValue:
         :setter: Sets the error on the mean of the Measurement object. Also updates the error on the Measurement.
         :getter: Returns the error on the mean of the Measurement.
         :type: float
+
+        .. code-block:: python
+
+            x = q.Measurement(5, 0)
+
+            x.error_on_mean = 0.5
+            print('Error on mean:', x.error_on_mean)
+
+        .. nboutput:: ipython3
+
+            Error on mean: 0.5
         '''
         if self._error_on_mean:
             return self._error_on_mean
@@ -272,6 +305,17 @@ class ExperimentalValue:
         :setter: Sets the name of the Measurement object.
         :getter: Returns the name of the Measurement object.
         :type: str
+
+        .. code-block:: python
+
+            x = q.Measurement(5, 0.2, name='mass')
+
+            x.name = 'length'
+            print(x)
+
+        .. nboutput:: ipython3
+
+            length = 5.0 +/- 0.2
         '''
         return self._name
 
@@ -292,6 +336,17 @@ class ExperimentalValue:
         :setter: Sets the units of the Measurement object.
         :getter: Returns the name of the Measurement object.
         :type: str
+
+        .. code-block:: python
+
+            x = q.Measurement(5, 0.2, name='length')
+
+            x.units = 'm'
+            print(x)
+
+        .. nboutput:: ipython3
+
+           length = 5.0 +/- 0.2 [m]
         '''
         return self._units
 
@@ -316,6 +371,17 @@ class ExperimentalValue:
         :getter: Returns the error as a fraction of the mean 
                  (ie. 0.1 corresponds to a 10% error).
         :type: float
+
+        .. code-block:: python
+
+            x = q.Measurement(5, 0)
+
+            x.relative_error = 0.1
+            print(x)
+
+        .. nboutput:: ipython3
+
+           5.0 +/- 0.5
         '''
         return self.std/self.mean if self.mean !=0 else 0. 
 
@@ -324,7 +390,7 @@ class ExperimentalValue:
         '''Sets the relative error (error/mean) of a Measurement object.
         '''
         if(type(rel_error) in qu.number_types):
-            self._std = self.mean*rel_error
+            self.std = self.mean*rel_error
         else:
             print("Relative error must be a number")
 
@@ -1632,6 +1698,16 @@ class Measurement_Array(np.ndarray):
         :getter: Returns a numpy array of the means of the Measurements
                  in the MeasurementArray.
         :type: numpy.ndarray
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([11, 12, 13], error=0.5)
+
+            print(x.means)
+
+        .. nboutput:: ipython3
+
+           [ 11.  12.  13.]
         '''
         if self.size == 0:
             return np.ndarray(0)
@@ -1661,6 +1737,16 @@ class Measurement_Array(np.ndarray):
         :getter: Returns a numpy array of the standard deviations of 
                  the Measurements in the MeasurementArray.
         :type: numpy.ndarray
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([11, 12, 13], error=[0.1, 0.1, 0.8])
+
+            print(x.stds)
+
+        .. nboutput:: ipython3
+
+           [ 0.1  0.1  0.8]
         '''
         if self.size == 0:
             return np.ndarray(0)
@@ -1709,6 +1795,16 @@ class Measurement_Array(np.ndarray):
         :getter: Returns the mean of the means of all the Measurements in the
                  MeasurementArray.
         :type: numpy.ndarray
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([11, 12, 13], error=0.5)
+
+            print(x.mean)
+
+        .. nboutput:: ipython3
+
+           12.0
         '''
         nparr = self.means
         self._mean = nparr.mean()
@@ -1722,6 +1818,17 @@ class Measurement_Array(np.ndarray):
         :getter: Returns the weighted mean of all the Measurements in the
                  MeasurementArray.
         :type: tuple
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([11, 12, 13], error=[0.1, 0.1, 0.8])
+
+            # Will be less than 12, since 11 +/- 0.1 is more precise than 13 +/- 0.8
+            print(x.error_weighted_mean)
+
+        .. nboutput:: ipython3
+
+           11.51 +/- 0.07
         '''
         means = self.means
         stds = self.stds
@@ -1752,6 +1859,16 @@ class Measurement_Array(np.ndarray):
         :returns: The standard deviation of the means of all the 
                   Measurements in the MeasurementArray. 
         :rtype: numpy.ndarray
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([11, 12, 13], error=[0.1, 0.1, 0.8])
+
+            print(x.std(ddof=1))
+
+        .. nboutput:: ipython3
+
+           1.0
         '''
         nparr = self.means
         return nparr.std(ddof=ddof)
@@ -1763,6 +1880,19 @@ class Measurement_Array(np.ndarray):
         :setter: Sets the units of the Measurement object.
         :getter: Returns the name of the Measurement object.
         :type: str
+
+        .. code-block:: python
+
+            x = q.MeasurementArray(5, 0.2, name='length')
+
+            x.units = 'm'
+            print(x)
+
+        .. nboutput:: ipython3
+
+           11.0 +/- 0.1 [m],
+           12.0 +/- 0.1 [m],
+           13.0 +/- 0.1 [m]
         '''
         return self._units
 

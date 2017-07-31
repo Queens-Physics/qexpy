@@ -412,6 +412,21 @@ class XYDataSet:
         '''Use MeasurementArray() to initialize a dataset'''
         if(data_name is None):
             self.name = "dataset{}".format(XYDataSet.unnamed_data_counter)
+            '''A string of the name of the dataset.
+
+            .. code-block:: python
+
+                x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+                y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+                data = q.XYDataSet(x, y)
+                data.name = 'x vs. y'
+                print('Name:', data.name)
+
+            .. nboutput:: ipython3
+
+                Name = x vs. y
+            ''' 
             XYDataSet.unnamed_data_counter += 1
         else:
             self.name=data_name

@@ -15,6 +15,7 @@ Measurements have a few properties that you can get and set. Each property has a
 .. autoattribute:: qexpy.error.Measurement.error_on_mean
 .. autoattribute:: qexpy.error.Measurement.name
 .. autoattribute:: qexpy.error.Measurement.relative_error
+.. autoattribute:: qexpy.error.Measurement.mean
 .. autoattribute:: qexpy.error.Measurement.std
 .. autoattribute:: qexpy.error.Measurement.units
 
