@@ -2,7 +2,7 @@ Error Propagation
 =================
 
 The propagation of measurements, including the propagation of errors is at
-the heart of this package.  This section will describe how Measurement
+the heart of this package.  This section will describe how :py:class:`.Measurement`
 objects are created and used in calculations.  Furthermore, features such
 as the calculation of the exact numerical derivative of expressions will be
 outlined.  While some aspects of this documentation will not necessarily be
@@ -12,7 +12,7 @@ underlying code can be useful to understand.
 Creating Measurement Objects
 ----------------------------
 
-The method that will be used most commonly is the :py:class:`.Measurement` class.  This
+The object that will be used most commonly is the :py:class:`.Measurement` class.  This
 object can store the mean, standard deviation, original data, name, units,
 and other attributes which can be used by other elements of this package.
 
@@ -32,8 +32,7 @@ A mean and standard deviation can be entered directly.
 
 A list or numpy array of values can be provided, from which the mean and
 standard deviation of the values is calculated.  These values can be
-outputted by calling for the mean and std attributes of whatever object is
-created.
+outputted by calling for the mean and std attributes of the object.
 
 .. nbinput:: ipython3
    
@@ -48,21 +47,21 @@ created.
    10, 1
 
 If several measurements, each with an associated error needs to be entered,
-a MeasurementArray should be used. There are a few ways to create a MeasurementArray:
+a :py:func:`MeasurementArray` should be used. There are a few ways to create a :py:func:`MeasurementArray`:
 
 For example, given measurements 10 +/- 1, 9 +/- 0.5 and 11 +/- 0.25, the
-data can be entered as either
+data can be entered as either:
 
 .. nbinput:: ipython3
    
-   x = q.MeasurementArray([10, 1], [9, 0.5], [11, 0.25])
-   y = q.MeasurementArray([10, 9, 11], [1, 0.5, 0.25])
+   x = q.MeasurementArray(data=[(10, 1), (9, 0.5), (11, 0.25)])
+   y = q.MeasurementArray(data=[10, 9, 11], error=[1, 0.5, 0.25])
    # The mean and standard deviation of x and y are the same
    
 If the error associated with each measured value is the same, a single
 value can be entered into the second list in the *y* example shown above.
 This is done simply for efficiency and is treated as a list of repeated
-values by the module.
+values.
 
 .. nbinput:: ipython3
 
@@ -70,7 +69,10 @@ values by the module.
    # This is equivalent to:
    y = q.Measurement([9, 10, 11], [1, 1, 1])
 
-A MeasurementArray can also be created from an array of Measurements. If you have a group of Measurements and want to group them together, this can be done by creating a MeasurementArray containing them.
+A :py:func:`MeasurementArray` can also be created from an array of 
+:py:class:`.Measurement` objects. If you have a group of :py:class:`Measurement` 
+objects and want to group them together, this can be done by creating a 
+:py:func:`MeasurementArray` containing them.
 
 .. nbinput:: ipython3
 
@@ -95,7 +97,7 @@ include strings for both of these parameters as shown below:
 Working with Measurement Objects
 --------------------------------
 
-Once created, Measurement objects can be operated on just as any other value:
+Once created, :py:class:`Measurement` objects can be operated on just as any other value:
 
 .. nbinput:: ipython3
    
@@ -111,7 +113,7 @@ Once created, Measurement objects can be operated on just as any other value:
 
    7 +/- 1
 
-Measurement objects can also be compared based on the value of their means:
+:py:class:`Measurement` objects can also be compared based on the value of their means:
 
 .. nbinput:: ipython3
 
@@ -137,9 +139,9 @@ natural logarithm and exponential function can also be used:
 
    0.7 +/- 0.8
 
-Furthermore, the use of Measurement objects in equations also allows for the
+Furthermore, the use of :py:class:`.Measurement` objects in equations also allows for the
 calculation of the derivative of these expressions with respect to any of
-the Measurement objects used.
+the :py:class:`.Measurement` objects used.
 
 .. nbinput:: ipython3
 
@@ -163,7 +165,7 @@ propagation formula.
    + (\frac{\partial F}{\partial y} \sigma_y)^2
     
 This formula is the default method of error propagation and will be
-accurate in most cases.
+accurate in most cases when the error is small.
 
 Methods of Propagating Error
 ----------------------------
@@ -199,7 +201,7 @@ elegant as the derivative method, it does provide an easy avenue to check
 the error against another method to ensure accuracy.
 
 Furthermore, the output can be limited to a single method if desired.
-In this case, the output seen in the *print(x)* line would be from whatever
+In this case, the output seen in the *print(z)* line would be from whatever
 method is chosen.
 
 .. nbinput:: ipython3
@@ -207,7 +209,7 @@ method is chosen.
    x = q.Measurement(10,2)
    y = q.Measurement(5,1)
 
-   q.set_eror_method("Derivative")
+   q.set_error_method("Derivative")
    # This option will limit the error calculation to using the derivative
    # formula
 
@@ -233,19 +235,25 @@ Correlation
 
 For many experiments, parameters may be correlated or may be expected to be
 correlated.  Thus, there exists methods to define and, in the case that the
-arrays of data used to create two Measurements are equal in length, return
-the covariance or correlation of some parameters.  There are two methods
-which can be used to set the correlation of two variables, or return the
-covariance of two variables.
+arrays of data used to create two :py:class:`Measurement` objects are equal
+in length, return the covariance or correlation of some parameters. There are 
+methods which can be used to set or get the correlation or covariance of two 
+variables.
 
-.. automethod:: qexpy.error.Measurement.set_correlation
+.. automethod:: qexpy.error.Measurement.set_covariance
    :noindex:
 
 .. automethod:: qexpy.error.Measurement.get_covariance
    :noindex:
 
-Furthermore, the covariance and correlation of the fitted parameters found
-by the *.fit* method in QExPy.plotting 
+.. automethod:: qexpy.error.Measurement.set_correlation
+   :noindex:
+
+.. automethod:: qexpy.error.Measurement.get_correlation
+   :noindex:
+
+Furthermore, the covariance and correlation of the fitted parameters is found
+automatically by the :py:meth:`.Plot.fit()` method. 
 
 
 Derivatives

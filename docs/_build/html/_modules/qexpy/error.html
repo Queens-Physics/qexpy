@@ -98,7 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../measurement_arr.html">The MeasurementArray Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot.html">The Plot Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../xyfitter.html">The XYFitter Object</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../xydataset.html">The XYDataset Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xydataset.html">The XYDataSet Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../LICENSE.html">License</a></li>
 </ul>
 
@@ -174,6 +174,7 @@
 <span class="c1">#used to check plot_engine:</span>
 <span class="kn">import</span> <span class="nn">qexpy</span> <span class="k">as</span> <span class="nn">q</span>
 <span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 
 <span class="k">class</span> <span class="nc">ExperimentalValue</span><span class="p">:</span>
@@ -290,6 +291,19 @@
 
 <span class="sd">        The purpose of this method is to easily compare the results of a</span>
 <span class="sd">        Monte Carlo propagation with whatever method is chosen.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            q.set_sigfigs(4)</span>
+<span class="sd">            x = q.Measurement(4, 0.5)</span>
+<span class="sd">            y = q.Measurement(9.8, 0.1)</span>
+<span class="sd">            z = x**2*y</span>
+
+<span class="sd">            z.print_mc_error()</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           159.90 +/- 39.04</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_style</span> <span class="o">==</span> <span class="s2">&quot;Latex&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">=</span> <span class="n">_tex_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;Monte Carlo&quot;</span><span class="p">)</span>
@@ -305,6 +319,19 @@
 <span class="sd">        The purpose of this method is to easily compare the results of a</span>
 <span class="sd">        Min-Max propagation with whatever method is chosen to confirm that</span>
 <span class="sd">        the Min-Max is the upper bound of the error.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            q.set_sigfigs(4)</span>
+<span class="sd">            x = q.Measurement(4, 0.5)</span>
+<span class="sd">            y = q.Measurement(9.8, 0.1)</span>
+<span class="sd">            z = x**2*y</span>
+
+<span class="sd">            z.print_min_max_error()</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           159.65 +/- 40.82</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_style</span> <span class="o">==</span> <span class="s2">&quot;Latex&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">=</span> <span class="n">_tex_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;Min Max&quot;</span><span class="p">)</span>
@@ -315,11 +342,23 @@
         <span class="nb">print</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">print_deriv_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Prints the result of a Min-Max method error propagation.</span>
+        <span class="sd">&#39;&#39;&#39;Prints the result of a derivative method error propagation.</span>
 
 <span class="sd">        The purpose of this method is to easily compare the results of a</span>
-<span class="sd">        Min-Max propagation with whatever method is chosen to confirm that</span>
-<span class="sd">        the Min-Max is the upper bound of the error.</span>
+<span class="sd">        derivative propagation with whatever method is chosen.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            q.set_sigfigs(4)</span>
+<span class="sd">            x = q.Measurement(4, 0.5)</span>
+<span class="sd">            y = q.Measurement(9.8, 0.1)</span>
+<span class="sd">            z = x**2*y</span>
+
+<span class="sd">            z.print_deriv_error()</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           156.80 +/- 39.23</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_style</span> <span class="o">==</span> <span class="s2">&quot;Latex&quot;</span><span class="p">:</span>
             <span class="n">string</span> <span class="o">=</span> <span class="n">_tex_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;Derivative&quot;</span><span class="p">)</span>
@@ -341,6 +380,17 @@
 
 <span class="sd">        :returns: the numerical value of the derivative with respect to the variable</span>
 <span class="sd">        :rtype: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(4, 0.5)</span>
+<span class="sd">            y = 2*(x**2)</span>
+
+<span class="sd">            print(&#39;dy/dx =&#39;, y.get_derivative(x))</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           dy/dx = 16.0</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">variable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> \
                 <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Measurement</span><span class="p">:</span>
@@ -365,6 +415,17 @@
 <span class="sd">        :setter: Sets the mean of the Measurement.</span>
 <span class="sd">        :getter: Returns the mean of the Measurement.</span>
 <span class="sd">        :type: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(0, 1)</span>
+
+<span class="sd">            x.mean = 10</span>
+<span class="sd">            print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           10 +/- 1</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span>
 
@@ -388,6 +449,17 @@
 <span class="sd">        :setter: Sets the error of the Measurement.</span>
 <span class="sd">        :getter: Returns the error of the Measurement.</span>
 <span class="sd">        :type: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(5, 0)</span>
+
+<span class="sd">            x.std = 0.5</span>
+<span class="sd">            print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           5.0 +/- 0.5</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_std</span>
 
@@ -412,6 +484,17 @@
 <span class="sd">        :setter: Sets the error on the mean of the Measurement object. Also updates the error on the Measurement.</span>
 <span class="sd">        :getter: Returns the error on the mean of the Measurement.</span>
 <span class="sd">        :type: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(5, 0)</span>
+
+<span class="sd">            x.error_on_mean = 0.5</span>
+<span class="sd">            print(&#39;Error on mean:&#39;, x.error_on_mean)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">            Error on mean: 0.5</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_error_on_mean</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_error_on_mean</span>
@@ -437,6 +520,17 @@
 <span class="sd">        :setter: Sets the name of the Measurement object.</span>
 <span class="sd">        :getter: Returns the name of the Measurement object.</span>
 <span class="sd">        :type: str</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(5, 0.2, name=&#39;mass&#39;)</span>
+
+<span class="sd">            x.name = &#39;length&#39;</span>
+<span class="sd">            print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">            length = 5.0 +/- 0.2</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
 
@@ -457,6 +551,17 @@
 <span class="sd">        :setter: Sets the units of the Measurement object.</span>
 <span class="sd">        :getter: Returns the name of the Measurement object.</span>
 <span class="sd">        :type: str</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(5, 0.2, name=&#39;length&#39;)</span>
+
+<span class="sd">            x.units = &#39;m&#39;</span>
+<span class="sd">            print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           length = 5.0 +/- 0.2 [m]</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_units</span>
 
@@ -481,6 +586,17 @@
 <span class="sd">        :getter: Returns the error as a fraction of the mean </span>
 <span class="sd">                 (ie. 0.1 corresponds to a 10% error).</span>
 <span class="sd">        :type: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(5, 0)</span>
+
+<span class="sd">            x.relative_error = 0.1</span>
+<span class="sd">            print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           5.0 +/- 0.5</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">!=</span><span class="mi">0</span> <span class="k">else</span> <span class="mf">0.</span> 
 
@@ -489,7 +605,7 @@
         <span class="sd">&#39;&#39;&#39;Sets the relative error (error/mean) of a Measurement object.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">rel_error</span><span class="p">)</span> <span class="ow">in</span> <span class="n">qu</span><span class="o">.</span><span class="n">number_types</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="o">*</span><span class="n">rel_error</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="o">*</span><span class="n">rel_error</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Relative error must be a number&quot;</span><span class="p">)</span>
 
@@ -498,6 +614,16 @@
 
 <span class="sd">        :returns: A python list of the data used to create the Measurement object.</span>
 <span class="sd">        :rtype: list</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement([11, 12, 13])</span>
+<span class="sd">            </span>
+<span class="sd">            print(x.get_data_array())</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           [ 11.  12.  13.]</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Data&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No data array exists.&#39;</span><span class="p">)</span>
@@ -509,6 +635,18 @@
 
 <span class="sd">        :returns: The units of the Measurement.</span>
 <span class="sd">        :rtype: str</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            mass = q.Measurement(4, 0.5, units=&#39;kg&#39;)</span>
+<span class="sd">            accel = q.Measurement(9.8, 0.1, units=&#39;m/s^2&#39;)</span>
+<span class="sd">            force = mass*accel</span>
+
+<span class="sd">            print(force.get_units_str())</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           s^-2 kg^1 m^1</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">unit_string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="n">unit_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span>
@@ -538,6 +676,17 @@
 
 <span class="sd">        :returns: The Plot object used to create the histogram.</span>
 <span class="sd">        :rtype: Plot</span>
+
+<span class="sd">        .. bokeh-plot::</span>
+<span class="sd">           :source-position: above</span>
+
+<span class="sd">           import qexpy as q</span>
+<span class="sd">           import numpy as np</span>
+
+<span class="sd">           rand_norm = np.random.normal(10, 1, 1000)</span>
+<span class="sd">           x = q.Measurement(rand_norm)</span>
+
+<span class="sd">           x.show_histogram(title=&#39;Mean 10, std. 1 random normal&#39;)</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Data&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;no data to histogram&quot;</span><span class="p">)</span>
@@ -583,6 +732,17 @@
 
 <span class="sd">        :returns: The Plot object used to create the histogram.</span>
 <span class="sd">        :rtype: Plot</span>
+
+<span class="sd">        .. bokeh-plot::</span>
+<span class="sd">           :source-position: above</span>
+
+<span class="sd">           import qexpy as q</span>
+
+<span class="sd">           x = q.Measurement(10, 0.2)</span>
+<span class="sd">           y = q.Measurement(8, 0.4)</span>
+<span class="sd">           z = y**2*x</span>
+
+<span class="sd">           z.show_MC_histogram(title=&#39;Monte Carlo histogram&#39;)</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">MC_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MC_list</span>
         <span class="k">if</span> <span class="n">MC_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -625,6 +785,20 @@
 
 <span class="sd">        :returns: The Plot object used to create the histogram.</span>
 <span class="sd">        :rtype: Plot</span>
+
+<span class="sd">        .. bokeh-plot::</span>
+<span class="sd">           :source-position: above</span>
+
+<span class="sd">           import qexpy as q</span>
+<span class="sd">           </span>
+<span class="sd">           w = q.Measurement(0.0255, 0.0001, name=&#39;width&#39;)</span>
+<span class="sd">           t = q.Measurement(0.0050, 0.0001, name=&#39;thickness&#39;)</span>
+<span class="sd">           m = q.Measurement(0.156, 0.001, name=&#39;mass&#39;)</span>
+<span class="sd">           P = q.Measurement(6.867, 0, name=&#39;P&#39;)</span>
+
+<span class="sd">           E = 4*P/(m**2*w*t)</span>
+
+<span class="sd">           E.show_error_contribution(title=&#39;Error contribution&#39;)</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">terms</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">formula</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;Formula&#39;</span><span class="p">]</span>
@@ -768,6 +942,18 @@
 <span class="sd">        :param factor: The correlation term between the two variables.</span>
 <span class="sd">                       Must be between -1 and 1 inclusive.</span>
 <span class="sd">        :type factor: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(4, 0.1, units=&#39;m&#39;)</span>
+<span class="sd">            y = q.Measurement(12, 0.2, units=&#39;m&#39;)</span>
+<span class="sd">            x.set_correlation(y, 0.8)</span>
+
+<span class="sd">            print(x.get_correlation(y))</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           0.8</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">factor</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">factor</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Correlation factor must be between -1 and 1.&#39;</span><span class="p">)</span>
@@ -792,6 +978,18 @@
 <span class="sd">        :type y: Measurement</span>
 <span class="sd">        :param sigma_xy: The covariance term between the two variables.</span>
 <span class="sd">        :type sigma_xy: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement(4, 0.1, units=&#39;m&#39;)</span>
+<span class="sd">            y = q.Measurement(12, 0.2, units=&#39;m&#39;)</span>
+<span class="sd">            x.set_covariance(y, 1.2)</span>
+
+<span class="sd">            print(x.get_covariance(y))</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           1.2</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="n">factor</span> <span class="o">=</span> <span class="n">sigma_xy</span>
@@ -806,7 +1004,7 @@
         <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
         <span class="n">y</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sigma_xy</span>
 
-    <span class="k">def</span> <span class="nf">get_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns the covariance of the object and a specified variable.</span>
 
 <span class="sd">        This funciton checks for the existance of a data array in each</span>
@@ -815,44 +1013,55 @@
 <span class="sd">        the data arrays are of different lengths or do not exist, in that</span>
 <span class="sd">        case a covariance of zero is returned.</span>
 
-<span class="sd">        :param variable: The variable to get the covariance with respect to.</span>
-<span class="sd">        :type variable: Measurement</span>
+<span class="sd">        :param y: The variable to get the covariance with respect to.</span>
+<span class="sd">        :type y: Measurement</span>
 
 <span class="sd">        :returns: The covariance term between the two variables.</span>
 <span class="sd">        :rtype: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement([11, 12, 13])</span>
+<span class="sd">            y = q.Measurement([11, 12.1, 12.9])</span>
+
+<span class="sd">            print(&#39;xy covariance: &#39;, x.get_covariance(y))</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           xy covariance:  0.95</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Constant</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">Constant</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Constant</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Constant</span><span class="p">):</span>
             <span class="k">return</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">covariance</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">y</span><span class="o">.</span><span class="n">covariance</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> \
-                <span class="ow">and</span> <span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>\
-                <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">ExperimentalValue</span><span class="o">.</span><span class="n">_find_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">)</span>
-            <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
+                <span class="ow">and</span> <span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>\
+                <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">ExperimentalValue</span><span class="o">.</span><span class="n">_find_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
             <span class="k">return</span> <span class="n">var</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Function</span><span class="p">):</span>
             <span class="n">term</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
                 <span class="n">root_obj</span> <span class="o">=</span> <span class="n">ExperimentalValue</span><span class="o">.</span><span class="n">register</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
                 <span class="n">partial_der</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
-                <span class="n">term</span> <span class="o">+=</span> <span class="n">partial_der</span><span class="o">*</span><span class="n">variable</span><span class="o">.</span><span class="n">get_covariance</span><span class="p">(</span><span class="n">root_obj</span><span class="p">)</span>
+                <span class="n">term</span> <span class="o">+=</span> <span class="n">partial_der</span><span class="o">*</span><span class="n">y</span><span class="o">.</span><span class="n">get_covariance</span><span class="p">(</span><span class="n">root_obj</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">term</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">set_covariance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">term</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_covariance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">term</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">term</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">Function</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Function</span><span class="p">):</span>
             <span class="n">term</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">variable</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">y</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
                 <span class="n">root_obj</span> <span class="o">=</span> <span class="n">ExperimentalValue</span><span class="o">.</span><span class="n">register</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
-                <span class="n">partial_der</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">derivative</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
+                <span class="n">partial_der</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">derivative</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
                 <span class="n">term</span> <span class="o">+=</span> <span class="n">partial_der</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">get_covariance</span><span class="p">(</span><span class="n">root_obj</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">term</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">set_covariance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">term</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_covariance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">term</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">term</span>
         <span class="k">return</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">_get_correlation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_correlation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns the correlation factor of two measurements.</span>
 
 <span class="sd">        Using the covariance, or finding the covariance if not defined,</span>
@@ -863,12 +1072,23 @@
 
 <span class="sd">        :returns: The correlation term between the two variables.</span>
 <span class="sd">        :rtype: float</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.Measurement([11, 12, 13])</span>
+<span class="sd">            y = q.Measurement([11, 12.4, 12.6])</span>
+
+<span class="sd">            print(&#39;xy correlation: &#39;, x.get_correlation(y))</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           xy correlation:  0.917662935482</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Constant</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Constant</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">y</span><span class="o">.</span><span class="n">std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
 
-        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">covariance</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">get_covariance</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># ExperimentalValue._find_covariance(x, y)</span>
@@ -879,11 +1099,8 @@
         <span class="n">sigma_y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">std</span>
         
         <span class="n">factor</span> <span class="o">=</span> <span class="n">sigma_xy</span>
-        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">factor</span> <span class="o">/=</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span>
-        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">std</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">factor</span> <span class="o">/=</span> <span class="n">y</span><span class="o">.</span><span class="n">std</span>
-            
+        <span class="n">factor</span> <span class="o">/=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="o">*</span><span class="n">y</span><span class="o">.</span><span class="n">std</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">factor</span>
 
 <span class="c1">###############################################################################</span>
@@ -897,6 +1114,16 @@
 <span class="sd">        :type name: str</span>
 <span class="sd">        :param units: The new units of the Measurement.</span>
 <span class="sd">        :type units: str</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">           mass = q.Measurement(4, 0.5, units=&#39;kg&#39;)</span>
+<span class="sd">           mass.rename(units=&#39;g&#39;, name=&#39;mass&#39;)</span>
+
+<span class="sd">           print(mass)</span>
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           mass = 4.0 +/- 0.5 [g]</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
@@ -1662,13 +1889,7 @@
 
         <span class="n">obj</span><span class="o">.</span><span class="n">_units</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">units</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
-                <span class="n">obj</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">_parse_units</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">units</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
-                    <span class="n">obj</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span>
 
         <span class="n">Measurement_Array</span><span class="o">.</span><span class="n">id_number</span> <span class="o">+=</span> <span class="mi">1</span>
         
@@ -1696,12 +1917,29 @@
 
 <span class="sd">        :returns: A MeasurementArray with the new value added to the end.</span>
 <span class="sd">        :rtype: Measurement_Array</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">           import qexpy as q</span>
+
+<span class="sd">           x = q.MeasurementArray([12, 10], error=0.5)</span>
+<span class="sd">           y = q.Measurement(11, 0.2)</span>
+<span class="sd">           x = x.append(y)</span>
+
+<span class="sd">           print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           12.0 +/- 0.5,</span>
+<span class="sd">           10.0 +/- 0.5,</span>
+<span class="sd">           11.0 +/- 0.2</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">data_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">meas</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ExperimentalValue</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">:</span>
             <span class="n">meas</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">(</span><span class="n">meas</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meas</span><span class="p">,</span> <span class="n">ExperimentalValue</span><span class="p">):</span>
-            <span class="n">meas</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">data_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">user_name</span><span class="p">:</span>
+                <span class="n">meas</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">data_name</span><span class="p">)</span>
             <span class="n">meas</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__array_wrap__</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meas</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1721,6 +1959,22 @@
 <span class="sd">        :returns: A MeasurementArray with the new value inserted into the position</span>
 <span class="sd">                  specified by the pos parameter.</span>
 <span class="sd">        :rtype: Measurement_Array</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">           import qexpy as q</span>
+
+<span class="sd">           x = q.MeasurementArray([12, 11], error=0.5)</span>
+<span class="sd">           y = q.Measurement(10, 0.2)</span>
+<span class="sd">           x = x.insert(1, y)</span>
+
+<span class="sd">           print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           12.0 +/- 0.5,</span>
+<span class="sd">           10.0 +/- 0.2</span>
+<span class="sd">           11.0 +/- 0.5</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">pos</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)):</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Index for inserting out of bounds.&quot;</span><span class="p">)</span>
@@ -1729,7 +1983,8 @@
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">meas</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ExperimentalValue</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">:</span>
             <span class="n">meas</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">(</span><span class="n">meas</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meas</span><span class="p">,</span> <span class="n">ExperimentalValue</span><span class="p">):</span>
-            <span class="n">meas</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">data_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">user_name</span><span class="p">):</span>
+                <span class="n">meas</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">data_name</span><span class="p">)</span>
             <span class="n">meas</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">meas</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)):</span>
@@ -1750,6 +2005,20 @@
 <span class="sd">        :returns: A MeasurementArray with the Measurement at the specified position</span>
 <span class="sd">                  removed.</span>
 <span class="sd">        :rtype: Measurement_Array</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">           import qexpy as q</span>
+
+<span class="sd">           x = q.MeasurementArray([12, 10, 11], error=0.5)</span>
+<span class="sd">           x = x.delete(1)</span>
+
+<span class="sd">           print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           12.0 +/- 0.5,</span>
+<span class="sd">           11.0 +/- 0.5</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">pos</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)):</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Index for deleting out of bounds.&quot;</span><span class="p">)</span>
@@ -1759,6 +2028,54 @@
             <span class="n">result</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">index</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__array_wrap__</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="Measurement_Array.show_table"><a class="viewcode-back" href="../../measurement_arr.html#qexpy.error.Measurement_Array.show_table">[docs]</a>    <span class="k">def</span> <span class="nf">show_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">latex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Prints the data of the Measurement_Array in a formatted table.</span>
+
+<span class="sd">        :param latex: Whether to print the data using Latex formatting.</span>
+<span class="sd">        :type show: bool</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            import qexpy as q</span>
+
+<span class="sd">            mass = q.MeasurementArray([4.2, 4.1, 4.3], error=0.5, name=&#39;mass&#39;)</span>
+
+<span class="sd">            mass.show_table()</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">                    mass</span>
+<span class="sd">             4.2 +/- 0.5</span>
+<span class="sd">             4.1 +/- 0.5</span>
+<span class="sd">             4.3 +/- 0.5</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span>
+        <span class="n">stds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stds</span>
+
+        <span class="k">if</span> <span class="n">latex</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">begin</span><span class="si">{table}</span><span class="s1">[htp]</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">begin</span><span class="si">{center}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">begin</span><span class="si">{tabular}</span><span class="s1">{|c|} \hline</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">err_const</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">stds</span> <span class="o">==</span> <span class="n">stds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">xtitle</span> <span class="o">=</span> <span class="s1">&#39;{</span><span class="se">\\</span><span class="s1">bf &#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39;} (&#39;</span><span class="o">+</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;units&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;)&#39;</span>
+            <span class="n">xtitle</span> <span class="o">+=</span> <span class="s1">&#39; $\pm$ &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">stds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">err_const</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="n">xtitle</span> <span class="o">+</span> <span class="s1">&#39; </span><span class="se">\\\\</span><span class="s1"> \hline\hline </span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span><span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">err_const</span> <span class="k">else</span> <span class="s1">&#39; $\pm$ &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">stds</span><span class="p">[</span><span class="n">ind</span><span class="p">]))</span> <span class="o">+</span> <span class="s1">&#39; </span><span class="se">\\\\</span><span class="s1"> \hline </span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;\end</span><span class="si">{tabular}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;\end</span><span class="si">{center}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;\caption</span><span class="si">{}</span><span class="s1"> </span><span class="se">\n</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;\end</span><span class="si">{table}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39; +/- &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">stds</span><span class="p">[</span><span class="n">ind</span><span class="p">])])</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">means</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns a numpy array with the means of each value in the MeasurementArray,</span>
@@ -1767,6 +2084,16 @@
 <span class="sd">        :getter: Returns a numpy array of the means of the Measurements</span>
 <span class="sd">                 in the MeasurementArray.</span>
 <span class="sd">        :type: numpy.ndarray</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.MeasurementArray([11, 12, 13], error=0.5)</span>
+
+<span class="sd">            print(x.means)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           [ 11.  12.  13.]</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -1796,6 +2123,16 @@
 <span class="sd">        :getter: Returns a numpy array of the standard deviations of </span>
 <span class="sd">                 the Measurements in the MeasurementArray.</span>
 <span class="sd">        :type: numpy.ndarray</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.MeasurementArray([11, 12, 13], error=[0.1, 0.1, 0.8])</span>
+
+<span class="sd">            print(x.stds)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           [ 0.1  0.1  0.8]</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -1844,6 +2181,16 @@
 <span class="sd">        :getter: Returns the mean of the means of all the Measurements in the</span>
 <span class="sd">                 MeasurementArray.</span>
 <span class="sd">        :type: numpy.ndarray</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.MeasurementArray([11, 12, 13], error=0.5)</span>
+
+<span class="sd">            print(x.mean)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           12.0</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">nparr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="o">=</span> <span class="n">nparr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
@@ -1857,6 +2204,17 @@
 <span class="sd">        :getter: Returns the weighted mean of all the Measurements in the</span>
 <span class="sd">                 MeasurementArray.</span>
 <span class="sd">        :type: tuple</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.MeasurementArray([11, 12, 13], error=[0.1, 0.1, 0.8])</span>
+
+<span class="sd">            # Will be less than 12, since 11 +/- 0.1 is more precise than 13 +/- 0.8</span>
+<span class="sd">            print(x.error_weighted_mean)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           11.51 +/- 0.07</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">means</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span>
         <span class="n">stds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stds</span>
@@ -1887,6 +2245,16 @@
 <span class="sd">        :returns: The standard deviation of the means of all the </span>
 <span class="sd">                  Measurements in the MeasurementArray. </span>
 <span class="sd">        :rtype: numpy.ndarray</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.MeasurementArray([11, 12, 13], error=[0.1, 0.1, 0.8])</span>
+
+<span class="sd">            print(x.std(ddof=1))</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           1.0</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">nparr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span>
         <span class="k">return</span> <span class="n">nparr</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="n">ddof</span><span class="p">)</span></div>
@@ -1898,6 +2266,19 @@
 <span class="sd">        :setter: Sets the units of the Measurement object.</span>
 <span class="sd">        :getter: Returns the name of the Measurement object.</span>
 <span class="sd">        :type: str</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = q.MeasurementArray(5, 0.2, name=&#39;length&#39;)</span>
+
+<span class="sd">            x.units = &#39;m&#39;</span>
+<span class="sd">            print(x)</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           11.0 +/- 0.1 [m],</span>
+<span class="sd">           12.0 +/- 0.1 [m],</span>
+<span class="sd">           13.0 +/- 0.1 [m]</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_units</span>
 
@@ -1906,33 +2287,45 @@
         <span class="sd">&#39;&#39;&#39;Sets the units of a Measurement_Array.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">units</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_units</span> <span class="o">=</span> <span class="n">_parse_units</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_units</span> <span class="o">=</span> <span class="n">units</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">units</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_units</span><span class="p">[</span><span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">mes</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
-                    <span class="n">mes</span><span class="o">.</span><span class="n">_units</span> <span class="o">=</span> <span class="n">_parse_units</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_units</span> <span class="o">=</span> <span class="n">units</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">units</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
-                        <span class="n">mes</span><span class="o">.</span><span class="n">_units</span><span class="p">[</span><span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">mes</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+                        <span class="n">mes</span><span class="o">.</span><span class="n">_units</span> <span class="o">=</span> <span class="n">_parse_units</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">units</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                        <span class="n">mes</span><span class="o">.</span><span class="n">_units</span> <span class="o">=</span> <span class="n">units</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">units</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
+                            <span class="n">mes</span><span class="o">.</span><span class="n">_units</span><span class="p">[</span><span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">units</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
     
 <div class="viewcode-block" id="Measurement_Array.get_units_str"><a class="viewcode-back" href="../../measurement_arr.html#qexpy.error.Measurement_Array.get_units_str">[docs]</a>    <span class="k">def</span> <span class="nf">get_units_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Generates a string representation of the units.</span>
 
 <span class="sd">        :returns: A string representation of the units of the MeasurementArray.</span>
 <span class="sd">        :rtype: str</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">unit_string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">!=</span> <span class="p">{}:</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="ow">is</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">unit_string</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="n">unit_string</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">unit_string</span> <span class="o">+=</span> <span class="n">key</span><span class="o">+</span><span class="s1">&#39;^</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
-                    <span class="n">unit_string</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span>
 
-                <span class="k">if</span> <span class="n">unit_string</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-                    <span class="n">unit_string</span> <span class="o">=</span> <span class="s1">&#39;unitless&#39;</span>
-        <span class="k">return</span> <span class="n">unit_string</span>        </div>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            import qexpy as q</span>
+
+<span class="sd">            mass = q.MeasurementArray([4.2, 4.1, 4.3], error=0.5, units=&#39;kg&#39;)</span>
+<span class="sd">            accel = q.MeasurementArray([9.8, 9.9, 9.5], error=0.1, units=&#39;m/s^2&#39;)</span>
+<span class="sd">            force = mass*accel</span>
+
+<span class="sd">            print(force.get_units_str())</span>
+
+<span class="sd">        .. nboutput:: ipython3</span>
+
+<span class="sd">           kg^1 s^-2 m^1</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span></div>
     
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns a string representation of the MeasurementArray.</span>
@@ -2554,11 +2947,11 @@
         <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">MinMax</span>
 
     <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="s1">&#39;Derivative&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;Derivative&#39;</span><span class="p">:</span>
             <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">der</span>
-        <span class="k">elif</span> <span class="n">method</span> <span class="ow">is</span> <span class="s1">&#39;Monte Carlo&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;Monte Carlo&#39;</span><span class="p">:</span>
             <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">MC</span>
-        <span class="k">elif</span> <span class="n">method</span> <span class="ow">is</span> <span class="s1">&#39;Min Max&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;Min Max&#39;</span><span class="p">:</span>
             <span class="p">[</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">]</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">MinMax</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,)</span>
 

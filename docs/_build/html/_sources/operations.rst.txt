@@ -4,12 +4,12 @@ Formatting
 Naming
 ------
 
-In addition to containing a mean and standard deviation, Measurement
+In addition to containing a mean and standard deviation, :py:class:`.Measurement`
 objects can also have a string name and unit associated with it.
 These can then be used both in printing values and in labelling any plots
-created with these values.  By default, Measurement objects are named
+created with these values.  By default, :py:class:`.Measurement` objects are named
 unnamed_var0, with a unique number assigned to each object.
-The name and units of a Measurement object can be declared either when the
+The name and units of a :py:class:`.Measurement` object can be declared either when the
 object is created or altered after.
 
 .. nbinput:: ipython3
@@ -78,14 +78,14 @@ The default format of printing a value with an uncertainty is:
 
    10 +/- 1
 	
-However, there are two other ways of outputting a Measurement object.
+However, there are two other ways of outputting a :py:class:`.Measurement` object.
 Furthermore, each method also allows for a specific number of significant
 digits to be shown.
 
 One method is called scientific and will output the number in scientific
 notation with the error being shown as a value with only a single whole 
 digit.  In order to change between any printing method, the following
-function will change how the package prints a Measurement object:
+function will change how the package prints a :py:class:`.Measurement` object:
 
 .. nbinput:: ipython3
 
@@ -115,3 +115,23 @@ directly into a Latex document.
 .. nboutput:: ipython3
 
    (12 \pm 1)\e1
+
+Significant Figures
+-------------------
+
+By default, QExPy will use the least significant figure in the uncertainty as the least significant figure. This won’t affect any of the calculations, but becomes apparent when printing the value of a :py:class:`Measurement`. The number of significant figures displayed when a :py:class:`Measurement` is printed can be changed using a the following function.
+
+.. automethod:: qexpy.error.set_sigfigs
+   :noindex:
+   
+.. nbinput:: ipython3
+   
+   import qexpy as q
+   x = q.Measurement(10, 1)
+   y = x/3
+   q.set_sigfigs(3)
+   print(y)
+
+.. nboutput:: ipython3
+
+   3.333 +/- 0.333

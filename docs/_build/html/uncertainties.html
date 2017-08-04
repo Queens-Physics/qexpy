@@ -106,7 +106,7 @@
 <li class="toctree-l1"><a class="reference internal" href="measurement_arr.html">The MeasurementArray Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataset Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataSet Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
 </ul>
 
@@ -368,7 +368,7 @@ div.nboutput div.output_area.stderr {
 <div class="section" id="error-propagation">
 <h1>Error Propagation<a class="headerlink" href="#error-propagation" title="Permalink to this headline">¶</a></h1>
 <p>The propagation of measurements, including the propagation of errors is at
-the heart of this package.  This section will describe how Measurement
+the heart of this package.  This section will describe how <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a>
 objects are created and used in calculations.  Furthermore, features such
 as the calculation of the exact numerical derivative of expressions will be
 outlined.  While some aspects of this documentation will not necessarily be
@@ -376,7 +376,7 @@ required to work with the package itself, many of the methods used in the
 underlying code can be useful to understand.</p>
 <div class="section" id="creating-measurement-objects">
 <h2>Creating Measurement Objects<a class="headerlink" href="#creating-measurement-objects" title="Permalink to this headline">¶</a></h2>
-<p>The method that will be used most commonly is the <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> class.  This
+<p>The object that will be used most commonly is the <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> class.  This
 object can store the mean, standard deviation, original data, name, units,
 and other attributes which can be used by other elements of this package.</p>
 <dl class="class">
@@ -416,8 +416,7 @@ standard deviation of an experimentally measured value.</p>
 </div>
 <p>A list or numpy array of values can be provided, from which the mean and
 standard deviation of the values is calculated.  These values can be
-outputted by calling for the mean and std attributes of whatever object is
-created.</p>
+outputted by calling for the mean and std attributes of the object.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -441,17 +440,17 @@ created.</p>
 </div>
 </div>
 <p>If several measurements, each with an associated error needs to be entered,
-a MeasurementArray should be used. There are a few ways to create a MeasurementArray:</p>
+a <code class="xref py py-func docutils literal"><span class="pre">MeasurementArray</span></code> should be used. There are a few ways to create a <code class="xref py py-func docutils literal"><span class="pre">MeasurementArray</span></code>:</p>
 <p>For example, given measurements 10 +/- 1, 9 +/- 0.5 and 11 +/- 0.25, the
-data can be entered as either</p>
+data can be entered as either:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">[(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
 <span class="c1"># The mean and standard deviation of x and y are the same</span>
 </pre></div>
 </div>
@@ -459,7 +458,7 @@ data can be entered as either</p>
 <p>If the error associated with each measured value is the same, a single
 value can be entered into the second list in the <em>y</em> example shown above.
 This is done simply for efficiency and is treated as a list of repeated
-values by the module.</p>
+values.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -472,7 +471,10 @@ values by the module.</p>
 </pre></div>
 </div>
 </div>
-<p>A MeasurementArray can also be created from an array of Measurements. If you have a group of Measurements and want to group them together, this can be done by creating a MeasurementArray containing them.</p>
+<p>A <code class="xref py py-func docutils literal"><span class="pre">MeasurementArray</span></code> can also be created from an array of
+<a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> objects. If you have a group of <code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code>
+objects and want to group them together, this can be done by creating a
+<code class="xref py py-func docutils literal"><span class="pre">MeasurementArray</span></code> containing them.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -511,7 +513,7 @@ include strings for both of these parameters as shown below:</p>
 </div>
 <div class="section" id="working-with-measurement-objects">
 <h2>Working with Measurement Objects<a class="headerlink" href="#working-with-measurement-objects" title="Permalink to this headline">¶</a></h2>
-<p>Once created, Measurement objects can be operated on just as any other value:</p>
+<p>Once created, <code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code> objects can be operated on just as any other value:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -536,7 +538,7 @@ include strings for both of these parameters as shown below:</p>
 </pre></div>
 </div>
 </div>
-<p>Measurement objects can also be compared based on the value of their means:</p>
+<p><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code> objects can also be compared based on the value of their means:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -580,9 +582,9 @@ natural logarithm and exponential function can also be used:</p>
 </pre></div>
 </div>
 </div>
-<p>Furthermore, the use of Measurement objects in equations also allows for the
+<p>Furthermore, the use of <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> objects in equations also allows for the
 calculation of the derivative of these expressions with respect to any of
-the Measurement objects used.</p>
+the <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> objects used.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -612,7 +614,7 @@ propagation formula.</p>
 \sigma_F^2 = (\frac{\partial F}{\partial x} \sigma_x)^2 \
 + (\frac{\partial F}{\partial y} \sigma_y)^2\]</div>
 <p>This formula is the default method of error propagation and will be
-accurate in most cases.</p>
+accurate in most cases when the error is small.</p>
 </div>
 <div class="section" id="methods-of-propagating-error">
 <h2>Methods of Propagating Error<a class="headerlink" href="#methods-of-propagating-error" title="Permalink to this headline">¶</a></h2>
@@ -655,7 +657,7 @@ chosen as shown below.</p>
 elegant as the derivative method, it does provide an easy avenue to check
 the error against another method to ensure accuracy.</p>
 <p>Furthermore, the output can be limited to a single method if desired.
-In this case, the output seen in the <em>print(x)</em> line would be from whatever
+In this case, the output seen in the <em>print(z)</em> line would be from whatever
 method is chosen.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
@@ -666,7 +668,7 @@ method is chosen.</p>
 <span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="n">q</span><span class="o">.</span><span class="n">set_eror_method</span><span class="p">(</span><span class="s2">&quot;Derivative&quot;</span><span class="p">)</span>
+<span class="n">q</span><span class="o">.</span><span class="n">set_error_method</span><span class="p">(</span><span class="s2">&quot;Derivative&quot;</span><span class="p">)</span>
 <span class="c1"># This option will limit the error calculation to using the derivative</span>
 <span class="c1"># formula</span>
 
@@ -694,10 +696,82 @@ method is chosen.</p>
 <h2>Correlation<a class="headerlink" href="#correlation" title="Permalink to this headline">¶</a></h2>
 <p>For many experiments, parameters may be correlated or may be expected to be
 correlated.  Thus, there exists methods to define and, in the case that the
-arrays of data used to create two Measurements are equal in length, return
-the covariance or correlation of some parameters.  There are two methods
-which can be used to set the correlation of two variables, or return the
-covariance of two variables.</p>
+arrays of data used to create two <code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code> objects are equal
+in length, return the covariance or correlation of some parameters. There are
+methods which can be used to set or get the correlation or covariance of two
+variables.</p>
+<dl class="method">
+<dt>
+<code class="descclassname">Measurement.</code><code class="descname">set_covariance</code><span class="sig-paren">(</span><em>y</em>, <em>sigma_xy</em><span class="sig-paren">)</span></dt>
+<dd><p>Manually set the covariance between two quantities</p>
+<p>Given a covariance value, the covariance and correlation
+between two variables is added to both objects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>y</strong> (<a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a>) &#8211; The variable to set the covariance with respect to.</li>
+<li><strong>sigma_xy</strong> (<em>float</em>) &#8211; The covariance term between the two variables.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+<span class="n">x</span><span class="o">.</span><span class="n">set_covariance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_covariance</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>1.2
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">Measurement.</code><code class="descname">get_covariance</code><span class="sig-paren">(</span><em>y</em><span class="sig-paren">)</span></dt>
+<dd><p>Returns the covariance of the object and a specified variable.</p>
+<p>This funciton checks for the existance of a data array in each
+object and that the covariance of the two objects is not already
+specified. In each case, the covariance is returned, unless
+the data arrays are of different lengths or do not exist, in that
+case a covariance of zero is returned.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>y</strong> (<a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a>) &#8211; The variable to get the covariance with respect to.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The covariance term between the two variables.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mf">12.1</span><span class="p">,</span> <span class="mf">12.9</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;xy covariance: &#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">get_covariance</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>xy covariance:  0.95
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
 <dl class="method">
 <dt>
 <code class="descclassname">Measurement.</code><code class="descname">set_correlation</code><span class="sig-paren">(</span><em>y</em>, <em>factor</em><span class="sig-paren">)</span></dt>
@@ -717,33 +791,59 @@ Must be between -1 and 1 inclusive.</li>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+<span class="n">x</span><span class="o">.</span><span class="n">set_correlation</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_correlation</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>0.8
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="method">
 <dt>
-<code class="descclassname">Measurement.</code><code class="descname">get_covariance</code><span class="sig-paren">(</span><em>variable</em><span class="sig-paren">)</span></dt>
-<dd><p>Returns the covariance of the object and a specified variable.</p>
-<p>This funciton checks for the existance of a data array in each
-object and that the covariance of the two objects is not already
-specified. In each case, the covariance is returned, unless
-the data arrays are of different lengths or do not exist, in that
-case a covariance of zero is returned.</p>
+<code class="descclassname">Measurement.</code><code class="descname">get_correlation</code><span class="sig-paren">(</span><em>y</em><span class="sig-paren">)</span></dt>
+<dd><p>Returns the correlation factor of two measurements.</p>
+<p>Using the covariance, or finding the covariance if not defined,
+the correlation factor of two measurements is returned.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>variable</strong> (<a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a>) &#8211; The variable to get the covariance with respect to.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>y</strong> (<a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a>) &#8211; The variable to get the covariance with respect to.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The covariance term between the two variables.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The correlation term between the two variables.</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mf">12.4</span><span class="p">,</span> <span class="mf">12.6</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;xy correlation: &#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">get_correlation</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>xy correlation:  0.917662935482
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
-<p>Furthermore, the covariance and correlation of the fitted parameters found
-by the <em>.fit</em> method in QExPy.plotting</p>
+<p>Furthermore, the covariance and correlation of the fitted parameters is found
+automatically by the <a class="reference internal" href="plot.html#qexpy.plotting.Plot.fit" title="qexpy.plotting.Plot.fit"><code class="xref py py-meth docutils literal"><span class="pre">Plot.fit</span></code></a> method.</p>
 </div>
 <div class="section" id="derivatives">
 <h2>Derivatives<a class="headerlink" href="#derivatives" title="Permalink to this headline">¶</a></h2>

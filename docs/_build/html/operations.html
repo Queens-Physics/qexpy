@@ -97,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#naming">Naming</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#units">Units</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#print-styles">Print Styles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#significant-figures">Significant Figures</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
@@ -104,7 +105,7 @@
 <li class="toctree-l1"><a class="reference internal" href="measurement_arr.html">The MeasurementArray Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataset Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataSet Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
 </ul>
 
@@ -367,12 +368,12 @@ div.nboutput div.output_area.stderr {
 <h1>Formatting<a class="headerlink" href="#formatting" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="naming">
 <h2>Naming<a class="headerlink" href="#naming" title="Permalink to this headline">¶</a></h2>
-<p>In addition to containing a mean and standard deviation, Measurement
+<p>In addition to containing a mean and standard deviation, <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a>
 objects can also have a string name and unit associated with it.
 These can then be used both in printing values and in labelling any plots
-created with these values.  By default, Measurement objects are named
+created with these values.  By default, <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> objects are named
 unnamed_var0, with a unique number assigned to each object.
-The name and units of a Measurement object can be declared either when the
+The name and units of a <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> object can be declared either when the
 object is created or altered after.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
@@ -471,13 +472,13 @@ the velocity of some object that accelerates at a for t seconds:</p>
 </pre></div>
 </div>
 </div>
-<p>However, there are two other ways of outputting a Measurement object.
+<p>However, there are two other ways of outputting a <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> object.
 Furthermore, each method also allows for a specific number of significant
 digits to be shown.</p>
 <p>One method is called scientific and will output the number in scientific
 notation with the error being shown as a value with only a single whole
 digit.  In order to change between any printing method, the following
-function will change how the package prints a Measurement object:</p>
+function will change how the package prints a <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> object:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [ ]:
@@ -523,6 +524,47 @@ directly into a Latex document.</p>
 </div>
 <div class="output_area highlight-none"><div class="highlight"><pre>
 <span></span>(12 \pm 1)\e1
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="significant-figures">
+<h2>Significant Figures<a class="headerlink" href="#significant-figures" title="Permalink to this headline">¶</a></h2>
+<p>By default, QExPy will use the least significant figure in the uncertainty as the least significant figure. This won’t affect any of the calculations, but becomes apparent when printing the value of a <code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code>. The number of significant figures displayed when a <code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code> is printed can be changed using a the following function.</p>
+<dl class="method">
+<dt>
+<code class="descclassname">error.</code><code class="descname">set_sigfigs</code><span class="sig-paren">(</span><em>sigfigs=3</em><span class="sig-paren">)</span></dt>
+<dd><p>Change the number of significant figures shown in print()
+based on the number of sig figs in the error.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sigfigs</strong> (<em>int</em>) &#8211; The number of significant figures to use when printing.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="nbinput docutils container">
+<div class="prompt highlight-none"><div class="highlight"><pre>
+<span></span>In [ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">q</span><span class="o">.</span><span class="n">set_sigfigs</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>3.333 +/- 0.333
 </pre></div>
 </div>
 </div>

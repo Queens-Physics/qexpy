@@ -102,7 +102,7 @@
 <li class="toctree-l1"><a class="reference internal" href="measurement_arr.html">The MeasurementArray Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataset Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataSet Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
 </ul>
 
@@ -363,13 +363,13 @@ div.nboutput div.output_area.stderr {
 </style>
 <div class="section" id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
-<p>QExPy (Queen&#8217;s Experimental Physics) is a python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser.</p>
+<p>QExPy (Queen&#8217;s Experimental Physics) is a Python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser.</p>
 <dl class="docutils">
 <dt>Highlights:</dt>
 <dd><ul class="first last simple">
 <li>Easily propagate uncertainties in measured quantities</li>
 <li>Compare different uncertainty calculations (e.g. Min-Max, quadrature errors, Monte Carlo errors)</li>
-<li>Correctly include correlations between quantities when propagating uncertainties (e.g. the uncertainty on x-x should always be 0!)</li>
+<li>Correctly include correlations between quantities when propagating uncertainties (e.g. the uncertainty on x-x should always be 0)</li>
 <li>Calculate exact numerical values of derivatives</li>
 <li>Choose display format (standard, Latex, scientific notation)</li>
 <li>Control the number of significant figures</li>
@@ -379,26 +379,26 @@ div.nboutput div.output_area.stderr {
 <li>Examine residual plots after fits</li>
 <li>Track units in calculations</li>
 <li>Plot confidence bands from the errors in fitted parameters</li>
-<li>Integrates with Jupyter notebooks, numpy, bokeh</li>
+<li>Integrates with Jupyter notebooks, numpy, Bokeh</li>
 </ul>
 </dd>
 </dl>
 <div class="section" id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
-<p>Up to date Jupyter notebooks highlighting the features of QExPy can be found on <a class="reference external" href="https://github.com/Queens-Physics/qexpy/tree/master/examples/jupyter">Github</a>. Some of the examples in this documentation may be out of date.</p>
-<p>We can create &#8220;Measurement&#8221; objects to represent quantities with uncertainties, and propagate the error in those quantities.</p>
+<p>Up to date Jupyter notebooks highlighting the features of QExPy can be found on <a class="reference external" href="https://github.com/Queens-Physics/qexpy/tree/master/examples/jupyter">Github</a>.</p>
+<p>We can create <a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><code class="xref py py-class docutils literal"><span class="pre">Measurement</span></code></a> objects to represent quantities with uncertainties, and propagate the error in those quantities.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none"><div class="highlight"><pre>
 <span></span>In [1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1">#import the error propagation module</span>
+<span></span><span class="c1">#import the module</span>
 <span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
 <span class="c1">#declare 2 Measurements, x and y</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
-<span class="c1">#define a quantitiy that depends on x and y:</span>
+<span class="c1">#define a quantity that depends on x and y:</span>
 <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">y</span><span class="p">)</span>
 <span class="c1">#print z, with the correct error</span>
 <span class="k">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
@@ -414,25 +414,9 @@ div.nboutput div.output_area.stderr {
 </div>
 </div>
 <p>The example below shows a case of plotting data and fitting them to a straight line:</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [1]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+<div class="highlight-python" id="intro.bokeh-plot-intro-inline-0.js"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
 
-<span class="c1"># This cell loads the module</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [2]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1"># There are several ways to produce a Plot Object from a set of data.</span>
+<span class="c1"># There are several ways to produce a Plot object from a set of data.</span>
 <span class="c1"># Here, we pass the data directly to the plot object:</span>
 
 <span class="n">fig1</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MakePlot</span><span class="p">(</span><span class="n">xdata</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
@@ -441,24 +425,20 @@ div.nboutput div.output_area.stderr {
                   <span class="n">xname</span> <span class="o">=</span> <span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="n">xunits</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">,</span>
                   <span class="n">yname</span> <span class="o">=</span> <span class="s1">&#39;force&#39;</span><span class="p">,</span> <span class="n">yunits</span><span class="o">=</span><span class="s1">&#39;N&#39;</span><span class="p">,</span>
                   <span class="n">data_name</span> <span class="o">=</span> <span class="s1">&#39;mydata&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none"><div class="highlight"><pre>
-<span></span>In [3]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3"><div class="highlight"><pre>
-<span></span><span class="c1"># We can now fit the data, and display a plot (optionally) showing the residuals</span>
 
+<span class="c1"># We can now fit the data, and display a plot (optionally) showing the residuals</span>
 <span class="n">fig1</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
 <span class="n">fig1</span><span class="o">.</span><span class="n">add_residuals</span><span class="p">()</span>
 <span class="n">fig1</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
+
+<script
+    src="/Users/Garrow/Documents/qexpy/docs/_build/doctrees/bokeh_plot/bokeh-plot-intro-inline-0.js"
+    id="e6532d62-e23e-437a-a621-88093299c143"
+    data-bokeh-model-id="7e384596-859c-4a92-ae6b-eed945278812"
+    data-bokeh-doc-id="5dac167d-3c49-4d5a-9d2f-3244f51b141c"
+></script><div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area highlight-none"><div class="highlight"><pre>
@@ -477,13 +457,8 @@ chi2/ndof = 0.71/7
 </pre></div>
 </div>
 </div>
-
-<script
-    src="scripts/bokeh-plot-intro-inline-0.js"
-    id="1304c275-4fce-4dde-86cd-eae0514df437"
-    data-bokeh-model-id="5348215b-6a25-4a3e-8eff-a18bf6fcfab6"
-    data-bokeh-doc-id="f133931a-b78c-49b4-a7e9-51bfdd062d1d"
-></script></div>
+<p>When fitting data, QExPy will output the fit results including values of the parameters, correlation and the chi-squared of the fit.</p>
+</div>
 </div>
 
 

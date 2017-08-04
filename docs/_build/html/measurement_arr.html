@@ -103,7 +103,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataset Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataSet Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
 </ul>
 
@@ -170,6 +170,166 @@
             
   
 <style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput,
+div.nbinput div.prompt,
+div.nbinput div.input_area,
+div.nbinput div[class*=highlight],
+div.nbinput div[class*=highlight] pre,
+div.nboutput,
+div.nbinput div.prompt,
+div.nbinput div.output_area,
+div.nboutput div[class*=highlight],
+div.nboutput div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput,
+div.nboutput {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput,
+    div.nboutput {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput div.prompt pre {
+    color: #303F9F;
+}
+
+/* output prompt */
+div.nboutput div.prompt pre {
+    color: #D84315;
+}
+
+/* all prompts */
+div.nbinput div.prompt,
+div.nboutput div.prompt {
+    min-width: 8ex;
+    padding-top: 0.4em;
+    padding-right: 0.4em;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput div.prompt,
+    div.nboutput div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput div.prompt pre,
+div.nboutput div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput div.input_area,
+div.nboutput div.output_area {
+    padding: 0.4em;
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput div.input_area,
+    div.nboutput div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput div.input_area {
+    border: 1px solid #cfcfcf;
+    border-radius: 2px;
+    background: #f7f7f7;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.pngmath center alignment in output cells */
+div.nboutput div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-bold { font-weight: bold; }
+
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
@@ -263,6 +423,20 @@ MeasurementArray.</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span>
+
+<span class="c1"># Will be less than 12, since 11 +/- 0.1 is more precise than 13 +/- 0.8</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">error_weighted_mean</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>11.51 +/- 0.07
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -280,6 +454,19 @@ MeasurementArray.</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>12.0
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -298,6 +485,19 @@ in the MeasurementArray.</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">means</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>[ 11.  12.  13.]
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -318,6 +518,19 @@ Measurements in the MeasurementArray.</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>1.0
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -340,6 +553,19 @@ the Measurements in the MeasurementArray.</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">stds</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>[ 0.1  0.1  0.8]
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -358,6 +584,22 @@ the Measurements in the MeasurementArray.</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;length&#39;</span><span class="p">)</span>
+
+<span class="n">x</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="s1">&#39;m&#39;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>11.0 +/- 0.1 [m],
+12.0 +/- 0.1 [m],
+13.0 +/- 0.1 [m]
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 </div>
@@ -380,6 +622,25 @@ the Measurements in the MeasurementArray.</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>12.0 +/- 0.5,
+10.0 +/- 0.5,
+11.0 +/- 0.2
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -401,22 +662,23 @@ removed.</td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
 
-<dl class="method">
-<dt id="qexpy.error.Measurement_Array.get_units_str">
-<code class="descclassname">Measurement_Array.</code><code class="descname">get_units_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.get_units_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.get_units_str" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates a string representation of the units.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string representation of the units of the MeasurementArray.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
-</tr>
-</tbody>
-</table>
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>12.0 +/- 0.5,
+11.0 +/- 0.5
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -444,6 +706,90 @@ specified by the pos parameter.</p>
 </tr>
 </tbody>
 </table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>12.0 +/- 0.5,
+10.0 +/- 0.2
+11.0 +/- 0.5
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement_Array.get_units_str">
+<code class="descclassname">Measurement_Array.</code><code class="descname">get_units_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.get_units_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.get_units_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a string representation of the units.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string representation of the units of the MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">mass</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mf">4.2</span><span class="p">,</span> <span class="mf">4.1</span><span class="p">,</span> <span class="mf">4.3</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;kg&#39;</span><span class="p">)</span>
+<span class="n">accel</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mf">9.8</span><span class="p">,</span> <span class="mf">9.9</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m/s^2&#39;</span><span class="p">)</span>
+<span class="n">force</span> <span class="o">=</span> <span class="n">mass</span><span class="o">*</span><span class="n">accel</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">force</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>kg^1 s^-2 m^1
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement_Array.show_table">
+<code class="descclassname">Measurement_Array.</code><code class="descname">show_table</code><span class="sig-paren">(</span><em>latex=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.show_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.show_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the data of the Measurement_Array in a formatted table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>latex</strong> &#8211; Whether to print the data using Latex formatting.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">mass</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mf">4.2</span><span class="p">,</span> <span class="mf">4.1</span><span class="p">,</span> <span class="mf">4.3</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mass&#39;</span><span class="p">)</span>
+
+<span class="n">mass</span><span class="o">.</span><span class="n">show_table</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>       mass
+4.2 +/- 0.5
+4.1 +/- 0.5
+4.3 +/- 0.5
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 </div>

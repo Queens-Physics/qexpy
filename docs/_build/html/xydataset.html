@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>The XYDataset Object &mdash; QExPy 0.1.1 documentation</title>
+  <title>The XYDataSet Object &mdash; QExPy 0.1.1 documentation</title>
   
 
   
@@ -99,7 +99,8 @@
 <li class="toctree-l1"><a class="reference internal" href="measurement_arr.html">The MeasurementArray Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">The XYDataset Object</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The XYDataSet Object</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#properties">Properties</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
 </ul>
 </li>
@@ -148,7 +149,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>The XYDataset Object</li>
+      <li>The XYDataSet Object</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -169,6 +170,166 @@
             
   
 <style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput,
+div.nbinput div.prompt,
+div.nbinput div.input_area,
+div.nbinput div[class*=highlight],
+div.nbinput div[class*=highlight] pre,
+div.nboutput,
+div.nbinput div.prompt,
+div.nbinput div.output_area,
+div.nboutput div[class*=highlight],
+div.nboutput div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput,
+div.nboutput {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput,
+    div.nboutput {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput div.prompt pre {
+    color: #303F9F;
+}
+
+/* output prompt */
+div.nboutput div.prompt pre {
+    color: #D84315;
+}
+
+/* all prompts */
+div.nbinput div.prompt,
+div.nboutput div.prompt {
+    min-width: 8ex;
+    padding-top: 0.4em;
+    padding-right: 0.4em;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput div.prompt,
+    div.nboutput div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput div.prompt pre,
+div.nboutput div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput div.input_area,
+div.nboutput div.output_area {
+    padding: 0.4em;
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput div.input_area,
+    div.nboutput div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput div.input_area {
+    border: 1px solid #cfcfcf;
+    border-radius: 2px;
+    background: #f7f7f7;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.pngmath center alignment in output cells */
+div.nboutput div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-bold { font-weight: bold; }
+
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
@@ -202,13 +363,13 @@
 }
 </style>
 <div class="section" id="the-xydataset-object">
-<h1>The XYDataset Object<a class="headerlink" href="#the-xydataset-object" title="Permalink to this headline">¶</a></h1>
+<h1>The XYDataSet Object<a class="headerlink" href="#the-xydataset-object" title="Permalink to this headline">¶</a></h1>
 <p>An XYDataset is used to store x and y data and is used in plotting.</p>
 <dl class="class">
 <dt id="qexpy.fitting.XYDataSet">
 <em class="property">class </em><code class="descclassname">qexpy.fitting.</code><code class="descname">XYDataSet</code><span class="sig-paren">(</span><em>xdata</em>, <em>ydata=None</em>, <em>xerr=None</em>, <em>yerr=None</em>, <em>data_name=None</em>, <em>xname=None</em>, <em>xunits=None</em>, <em>yname=None</em>, <em>yunits=None</em>, <em>is_histogram=False</em>, <em>bins=50</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet" title="Permalink to this definition">¶</a></dt>
 <dd><p>An XYDataSet contains a paired set of Measurement_Array Objects,
-typically, a set of x and y values to be used for a plot, as well
+typically, a set of x and y values to be used for a Plot, as well
 as a method to fit that dataset. If the data set is fit multiple times
 the various fits are all recorded in a list of XYFitter objects.
 One can also construct an XYDataSet from histogram data, which then
@@ -236,6 +397,31 @@ gets converted to equivalent X and Y measurements.</p>
 </table>
 </dd></dl>
 
+<div class="section" id="properties">
+<h2>Properties<a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h2>
+<dl class="attribute">
+<dt id="qexpy.fitting.XYDataSet.name">
+<code class="descclassname">XYDataSet.</code><code class="descname">name</code><a class="headerlink" href="#qexpy.fitting.XYDataSet.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>A string of the name of the dataset.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span> <span class="mf">6.2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mf">7.8</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">XYDataSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;x vs. y&#39;</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Name:&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>Name = x vs. y
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+</div>
 <div class="section" id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
 <dl class="method">
@@ -270,6 +456,20 @@ is to allow multiple functions to be fit to the same data set.</p>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="measurement_arr.html#qexpy.error.Measurement_Array" title="qexpy.error.Measurement_Array">Measurement_Array</a></p>
 </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.fitting.XYDataSet.show_table">
+<code class="descclassname">XYDataSet.</code><code class="descname">show_table</code><span class="sig-paren">(</span><em>latex=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/fitting.html#XYDataSet.show_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.fitting.XYDataSet.show_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the data of the Plot in a formatted table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>latex</strong> &#8211; Whether to print the data using Latex formatting.</td>
 </tr>
 </tbody>
 </table>

@@ -125,6 +125,19 @@ class ExperimentalValue:
 
         The purpose of this method is to easily compare the results of a
         Monte Carlo propagation with whatever method is chosen.
+
+        .. code-block:: python
+
+            q.set_sigfigs(4)
+            x = q.Measurement(4, 0.5)
+            y = q.Measurement(9.8, 0.1)
+            z = x**2*y
+
+            z.print_mc_error()
+
+        .. nboutput:: ipython3
+
+           159.90 +/- 39.04
         '''
         if self.print_style == "Latex":
             string = _tex_print(self, method="Monte Carlo")
@@ -140,6 +153,19 @@ class ExperimentalValue:
         The purpose of this method is to easily compare the results of a
         Min-Max propagation with whatever method is chosen to confirm that
         the Min-Max is the upper bound of the error.
+
+        .. code-block:: python
+
+            q.set_sigfigs(4)
+            x = q.Measurement(4, 0.5)
+            y = q.Measurement(9.8, 0.1)
+            z = x**2*y
+
+            z.print_min_max_error()
+
+        .. nboutput:: ipython3
+
+           159.65 +/- 40.82
         '''
         if self.print_style == "Latex":
             string = _tex_print(self, method="Min Max")
@@ -150,11 +176,23 @@ class ExperimentalValue:
         print(string)
 
     def print_deriv_error(self):
-        '''Prints the result of a Min-Max method error propagation.
+        '''Prints the result of a derivative method error propagation.
 
         The purpose of this method is to easily compare the results of a
-        Min-Max propagation with whatever method is chosen to confirm that
-        the Min-Max is the upper bound of the error.
+        derivative propagation with whatever method is chosen.
+
+        .. code-block:: python
+
+            q.set_sigfigs(4)
+            x = q.Measurement(4, 0.5)
+            y = q.Measurement(9.8, 0.1)
+            z = x**2*y
+
+            z.print_deriv_error()
+
+        .. nboutput:: ipython3
+
+           156.80 +/- 39.23
         '''
         if self.print_style == "Latex":
             string = _tex_print(self, method="Derivative")
@@ -176,6 +214,17 @@ class ExperimentalValue:
 
         :returns: the numerical value of the derivative with respect to the variable
         :rtype: float
+
+        .. code-block:: python
+
+            x = q.Measurement(4, 0.5)
+            y = 2*(x**2)
+
+            print('dy/dx =', y.get_derivative(x))
+
+        .. nboutput:: ipython3
+
+           dy/dx = 16.0
         '''
         if variable is not None \
                 and type(variable) is not Measurement:
@@ -399,6 +448,16 @@ class ExperimentalValue:
 
         :returns: A python list of the data used to create the Measurement object.
         :rtype: list
+
+        .. code-block:: python
+
+            x = q.Measurement([11, 12, 13])
+            
+            print(x.get_data_array())
+
+        .. nboutput:: ipython3
+
+           [ 11.  12.  13.]
         '''
         if self.info['Data'] is None:
             print('No data array exists.')
@@ -410,6 +469,18 @@ class ExperimentalValue:
 
         :returns: The units of the Measurement.
         :rtype: str
+
+        .. code-block:: python
+
+            mass = q.Measurement(4, 0.5, units='kg')
+            accel = q.Measurement(9.8, 0.1, units='m/s^2')
+            force = mass*accel
+
+            print(force.get_units_str())
+
+        .. nboutput:: ipython3
+
+           s^-2 kg^1 m^1
         '''
         unit_string = ''
         unit_dict = self.units
@@ -439,6 +510,17 @@ class ExperimentalValue:
 
         :returns: The Plot object used to create the histogram.
         :rtype: Plot
+
+        .. bokeh-plot::
+           :source-position: above
+
+           import qexpy as q
+           import numpy as np
+
+           rand_norm = np.random.normal(10, 1, 1000)
+           x = q.Measurement(rand_norm)
+
+           x.show_histogram(title='Mean 10, std. 1 random normal')
         '''
         if self.info['Data'] is None:
             print("no data to histogram")
@@ -484,6 +566,17 @@ class ExperimentalValue:
 
         :returns: The Plot object used to create the histogram.
         :rtype: Plot
+
+        .. bokeh-plot::
+           :source-position: above
+
+           import qexpy as q
+
+           x = q.Measurement(10, 0.2)
+           y = q.Measurement(8, 0.4)
+           z = y**2*x
+
+           z.show_MC_histogram(title='Monte Carlo histogram')
         '''
         MC_data = self.MC_list
         if MC_data is None:
@@ -526,6 +619,20 @@ class ExperimentalValue:
 
         :returns: The Plot object used to create the histogram.
         :rtype: Plot
+
+        .. bokeh-plot::
+           :source-position: above
+
+           import qexpy as q
+           
+           w = q.Measurement(0.0255, 0.0001, name='width')
+           t = q.Measurement(0.0050, 0.0001, name='thickness')
+           m = q.Measurement(0.156, 0.001, name='mass')
+           P = q.Measurement(6.867, 0, name='P')
+
+           E = 4*P/(m**2*w*t)
+
+           E.show_error_contribution(title='Error contribution')
         '''
         terms = {}
         formula = self.info['Formula']
@@ -669,6 +776,18 @@ class ExperimentalValue:
         :param factor: The correlation term between the two variables.
                        Must be between -1 and 1 inclusive.
         :type factor: float
+
+        .. code-block:: python
+
+            x = q.Measurement(4, 0.1, units='m')
+            y = q.Measurement(12, 0.2, units='m')
+            x.set_correlation(y, 0.8)
+
+            print(x.get_correlation(y))
+
+        .. nboutput:: ipython3
+
+           0.8
         '''
         if factor > 1 or factor < -1:
             raise ValueError('Correlation factor must be between -1 and 1.')
@@ -693,6 +812,18 @@ class ExperimentalValue:
         :type y: Measurement
         :param sigma_xy: The covariance term between the two variables.
         :type sigma_xy: float
+
+        .. code-block:: python
+
+            x = q.Measurement(4, 0.1, units='m')
+            y = q.Measurement(12, 0.2, units='m')
+            x.set_covariance(y, 1.2)
+
+            print(x.get_covariance(y))
+
+        .. nboutput:: ipython3
+
+           1.2
         '''
         x = self
         factor = sigma_xy
@@ -721,6 +852,17 @@ class ExperimentalValue:
 
         :returns: The covariance term between the two variables.
         :rtype: float
+
+        .. code-block:: python
+
+            x = q.Measurement([11, 12, 13])
+            y = q.Measurement([11, 12.1, 12.9])
+
+            print('xy covariance: ', x.get_covariance(y))
+
+        .. nboutput:: ipython3
+
+           xy covariance:  0.95
         '''
         if isinstance(self, Constant) or isinstance(y, Constant):
             return 0
@@ -764,6 +906,17 @@ class ExperimentalValue:
 
         :returns: The correlation term between the two variables.
         :rtype: float
+
+        .. code-block:: python
+
+            x = q.Measurement([11, 12, 13])
+            y = q.Measurement([11, 12.4, 12.6])
+
+            print('xy correlation: ', x.get_correlation(y))
+
+        .. nboutput:: ipython3
+
+           xy correlation:  0.917662935482
         '''
         x = self
         if x.std == 0 or y.std == 0:
@@ -795,6 +948,16 @@ class ExperimentalValue:
         :type name: str
         :param units: The new units of the Measurement.
         :type units: str
+
+        .. code-block:: python
+
+           mass = q.Measurement(4, 0.5, units='kg')
+           mass.rename(units='g', name='mass')
+
+           print(mass)
+        .. nboutput:: ipython3
+
+           mass = 4.0 +/- 0.5 [g]
         '''
         if name is not None:
             self.name = name
@@ -1560,13 +1723,7 @@ class Measurement_Array(np.ndarray):
 
         obj._units = {}
         if units is not None:
-            if type(units) is str:
-                obj.units = _parse_units(units)
-            elif type(units) is dict:
-                self.units = units
-            else:
-                for i in range(len(units)//2):
-                    obj.units[units[2*i]] = units[2*i+1]
+            obj.units = units
 
         Measurement_Array.id_number += 1
         
@@ -1594,12 +1751,29 @@ class Measurement_Array(np.ndarray):
 
         :returns: A MeasurementArray with the new value added to the end.
         :rtype: Measurement_Array
+
+        .. code-block:: python
+
+           import qexpy as q
+
+           x = q.MeasurementArray([12, 10], error=0.5)
+           y = q.Measurement(11, 0.2)
+           x = x.append(y)
+
+           print(x)
+
+        .. nboutput:: ipython3
+
+           12.0 +/- 0.5,
+           10.0 +/- 0.5,
+           11.0 +/- 0.2
         '''
         data_name = "{}_{}".format(self.name,len(self))
         if type(meas) in ExperimentalValue.CONSTANT:
             meas = Constant(meas)
         if isinstance(meas, ExperimentalValue):
-            meas.rename(name=data_name)
+            if self[0].user_name:
+                meas.rename(name=data_name)
             meas.units = self.units
             return self.__array_wrap__(np.append(self, meas))
         else:
@@ -1619,6 +1793,22 @@ class Measurement_Array(np.ndarray):
         :returns: A MeasurementArray with the new value inserted into the position
                   specified by the pos parameter.
         :rtype: Measurement_Array
+
+        .. code-block:: python
+
+           import qexpy as q
+
+           x = q.MeasurementArray([12, 11], error=0.5)
+           y = q.Measurement(10, 0.2)
+           x = x.insert(1, y)
+
+           print(x)
+
+        .. nboutput:: ipython3
+
+           12.0 +/- 0.5,
+           10.0 +/- 0.2
+           11.0 +/- 0.5
         '''
         if pos not in range(len(self)):
             print("Index for inserting out of bounds.")
@@ -1627,7 +1817,8 @@ class Measurement_Array(np.ndarray):
         if type(meas) in ExperimentalValue.CONSTANT:
             meas = Constant(meas)
         if isinstance(meas, ExperimentalValue):
-            meas.rename(name=data_name)
+            if (self[0] and self[0].user_name):
+                meas.rename(name=data_name)
             meas.units = self.units
             result = np.insert(self, pos, meas)
             for index in range(len(result)):
@@ -1648,6 +1839,20 @@ class Measurement_Array(np.ndarray):
         :returns: A MeasurementArray with the Measurement at the specified position
                   removed.
         :rtype: Measurement_Array
+
+        .. code-block:: python
+
+           import qexpy as q
+
+           x = q.MeasurementArray([12, 10, 11], error=0.5)
+           x = x.delete(1)
+
+           print(x)
+
+        .. nboutput:: ipython3
+
+           12.0 +/- 0.5,
+           11.0 +/- 0.5
         '''
         if pos not in range(len(self)):
             print("Index for deleting out of bounds.")
@@ -1662,6 +1867,21 @@ class Measurement_Array(np.ndarray):
 
         :param latex: Whether to print the data using Latex formatting.
         :type show: bool
+
+        .. code-block:: python
+
+            import qexpy as q
+
+            mass = q.MeasurementArray([4.2, 4.1, 4.3], error=0.5, name='mass')
+
+            mass.show_table()
+
+        .. nboutput:: ipython3
+
+                    mass
+             4.2 +/- 0.5
+             4.1 +/- 0.5
+             4.3 +/- 0.5
         '''
 
         x = self.means
@@ -1901,33 +2121,45 @@ class Measurement_Array(np.ndarray):
         '''Sets the units of a Measurement_Array.
         '''
         if units is not None:
+            if type(units) is str:
+                self._units = _parse_units(units)
+            elif type(units) is dict:
+                self._units = units
+            else:
+                for i in range(len(units)//2):
+                    self._units[units[2*i]] = units[2*i+1]
             for mes in self:
-                if type(units) is str:
-                    mes._units = _parse_units(units)
-                elif type(units) is dict:
-                    self._units = units
-                else:
-                    for i in range(len(units)//2):
-                        mes._units[units[2*i]] = units[2*i+1]
+                if mes:
+                    if type(units) is str:
+                        mes._units = _parse_units(units)
+                    elif type(units) is dict:
+                        mes._units = units
+                    else:
+                        for i in range(len(units)//2):
+                            mes._units[units[2*i]] = units[2*i+1]
     
     def get_units_str(self):
         '''Generates a string representation of the units.
 
         :returns: A string representation of the units of the MeasurementArray.
         :rtype: str
-        '''
-        unit_string = ''
-        if self.units != {}:
-            for key in self.units:
-                if self.units[key] == 1 and len(self.units.keys()) is 1:
-                    unit_string = key + unit_string
-                else:
-                    unit_string += key+'^%d' % (self.units[key])
-                    unit_string += ' '
 
-                if unit_string == '':
-                    unit_string = 'unitless'
-        return unit_string        
+        .. code-block:: python
+
+            import qexpy as q
+
+            mass = q.MeasurementArray([4.2, 4.1, 4.3], error=0.5, units='kg')
+            accel = q.MeasurementArray([9.8, 9.9, 9.5], error=0.1, units='m/s^2')
+            force = mass*accel
+
+            print(force.get_units_str())
+
+        .. nboutput:: ipython3
+
+           kg^1 s^-2 m^1
+        '''
+        
+        return self[0].get_units_str()
     
     def __str__(self):
         '''Returns a string representation of the MeasurementArray.
@@ -2549,11 +2781,11 @@ def _return_print_values(variable, method):
         [mean, std] = variable.MinMax
 
     if method is not None:
-        if method is 'Derivative':
+        if method == 'Derivative':
             [mean, std] = variable.der
-        elif method is 'Monte Carlo':
+        elif method == 'Monte Carlo':
             [mean, std] = variable.MC
-        elif method is 'Min Max':
+        elif method == 'Min Max':
             [mean, std] = variable.MinMax
     return (mean, std,)
 

@@ -23,5 +23,6 @@ MeasurementArrays also have a number of functions that can be used to change the
 
 .. automethod:: qexpy.error.Measurement_Array.append(meas)
 .. automethod:: qexpy.error.Measurement_Array.delete
-.. automethod:: qexpy.error.Measurement_Array.get_units_str
 .. automethod:: qexpy.error.Measurement_Array.insert
+.. automethod:: qexpy.error.Measurement_Array.get_units_str
+.. automethod:: qexpy.error.Measurement_Array.show_table

@@ -25,6 +25,7 @@ Functions
 Measurements also have a number of functions that can be used to get, set or display information about the Measurement object.
 
 .. automethod:: qexpy.error.Measurement.get_covariance
+.. automethod:: qexpy.error.Measurement.get_correlation
 .. automethod:: qexpy.error.Measurement.get_data_array
 .. automethod:: qexpy.error.Measurement.get_derivative
 .. automethod:: qexpy.error.Measurement.get_units_str
