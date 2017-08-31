@@ -22,8 +22,6 @@ Plots have a few properties that you can get and set. Each property has an examp
    :annotation:
 .. autoinstanceattribute:: qexpy.plotting.Plot.y_range
    :annotation:
-.. autoinstanceattribute:: qexpy.plotting.Plot.save_filename
-   :annotation:
 .. autoinstanceattribute:: qexpy.plotting.Plot.yres_range
    :annotation:
 
@@ -40,4 +38,3 @@ Functions
 .. automethod:: qexpy.plotting.Plot.set_labels
 .. automethod:: qexpy.plotting.Plot.set_plot_range
 .. automethod:: qexpy.plotting.Plot.show
-.. automethod:: qexpy.plotting.Plot.show_residuals

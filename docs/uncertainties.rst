@@ -65,9 +65,9 @@ values.
 
 .. nbinput:: ipython3
 
-   x = q.Measurement([9, 10, 11], 1)
+   x = q.MeasurementArray([9, 10, 11], 1)
    # This is equivalent to:
-   y = q.Measurement([9, 10, 11], [1, 1, 1])
+   y = q.MeasurementArray([9, 10, 11], [1, 1, 1])
 
 A :py:func:`MeasurementArray` can also be created from an array of 
 :py:class:`.Measurement` objects. If you have a group of :py:class:`Measurement` 

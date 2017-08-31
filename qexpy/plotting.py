@@ -279,19 +279,19 @@ class Plot:
         else:
             self.initialized_from_dataset = False
 
-    def show_residuals(self, show):
-        '''Sets whether to show the residuals of the fit.
-
-        :param show: Whether to show the residuals.
-        :type show: bool
-        '''
-        self.show_residuals = bool(state)
-
     def show_table(self, latex=False):
         '''Prints the data of the Plot in a formatted table.
 
         :param latex: Whether to print the data using Latex formatting.
         :type show: bool
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            figure = q.MakePlot(x, y)
+            figure.show_table()
         '''
         dataset = self.datasets[-1]
         dataset.show_table(latex=latex)
@@ -396,6 +396,16 @@ class Plot:
 
         :returns: The parameters of the fit
         :rtype: Measurement_Array
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            figure = q.MakePlot(x, y)
+            figure.fit('linear')
+
+            figure.show()
         '''
         if sigmas == None:
             sigmas = self.errorband_sigma
@@ -429,6 +439,17 @@ class Plot:
 
     def add_residuals(self):
         '''Add a subfigure with residuals to the main figure when plotting.
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            figure = q.MakePlot(x, y)
+            figure.fit('linear')
+            figure.add_residuals()
+
+            figure.show()
         '''
         self.set_yres_range_from_fits()
         for ds in self.datasets:
@@ -455,6 +476,19 @@ class Plot:
         :type x_range: array
         :param sigmas: How many sigmas to include in the error band.
         :type sigmas: int
+
+        .. code-block:: python
+
+            def func(x, *pars):
+                return pars[0] + pars[1]*x
+
+            figure = q.MakePlot()
+
+            # This function is not related to any data.
+            figure.add_function(func, name="Function", pars = [1, 5],
+               color = 'saddlebrown', x_range =[-10,10])
+
+            figure.show()
         '''
 
         if sigmas == None:
@@ -519,6 +553,16 @@ class Plot:
         :type color: str
         :param name: The name of the dataset.
         :type name: str
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+            xy = q.XYDataSet(x, y)
+
+            fig = q.MakePlot()
+            fig.add_dataset(xy)
+            fig.show()
         '''
         self.datasets.append(dataset)
         
@@ -551,6 +595,15 @@ class Plot:
         :type color: str
         :param dashed: Whether to draw a dashed line.
         :type dashed: bool
+
+        .. code-block:: python
+
+            figure = q.MakePlot()
+
+            # Adds a vertical line at x = 10
+            figure.add_line(x=10)
+
+            figure.show()
         '''
         x_pos = x
         y_pos = y
@@ -577,6 +630,16 @@ class Plot:
         :type x_range: array
         :param y_range: The y range of the graph.
         :type y_range: array
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            figure = q.MakePlot(x, y)
+            figure.set_plot_range(x_range=[0, 5], y_range=[4, 9])
+
+            figure.show()
         '''
         if type(x_range) in ARRAY and len(x_range) is 2:
             self.x_range = x_range
@@ -603,6 +666,16 @@ class Plot:
         :type xtitle: str
         :param ytitle: The title of the y axis.
         :type ytitle: str
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            figure = q.MakePlot(x, y)
+            figure.set_labels("x vs y", "x_data", "y_data")
+
+            figure.show()
         '''
         if title is not None:
             self.labels['title'] = title
@@ -634,6 +707,15 @@ class Plot:
         :type populate_figure: bool
         :param refresh: Whether the mpl figure should be refreshed.
         :type refresh: bool
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            figure = q.MakePlot(x, y)
+
+            figure.show()
         '''
         if q.plot_engine in q.plot_engine_synonyms["bokeh"]:
             self.set_bokeh_output(output)      
@@ -897,8 +979,8 @@ class Plot:
         
         if isinstance(pars, qe.Measurement_Array):
             for i in range(1, int(sigmas)+1):
-                fmax = fvals + i*errorbandfactor*ferr
-                fmin = fvals - i*errorbandfactor*ferr
+                fmax = fvals + i*ferr
+                fmin = fvals - i*ferr
                 self.mplfigure_main_ax.fill_between(xvals, fmin, fmax, facecolor=color,
                                                     alpha=0.3/(sigmas-0.3*(i-1)), edgecolor = 'none',
                                                     interpolate=True, zorder=0)

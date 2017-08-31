@@ -99,6 +99,26 @@ as equal to the *.fit* method.
    figure.show_residuals = True
    figure.show()
 
+Speeding it Up
+--------------
+
+With large amounts of data, plotting can get slow. This is usually because the Monte Carlo error propagation is very calculation intensive. You can speed this up by setting q.quick_MC to true. This will no longer account for the correlation between variables, but will make plotting (and other calculations) faster.
+
+.. bokeh-plot::
+   :source-position: above
+
+   import qexpy as q
+
+   # Speeds up plotting
+   q.quick_MC = True
+
+   x = q.MeasurementArray([1, 2, 3, 4, 5, 6, 7, 8, 9], [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+   y = q.MeasurementArray([0.5, 0.9, 1.6, 2, 2.5, 2.9, 3.6, 4, 4.5], 0.1)
+
+   figure = q.MakePlot(x, y)
+
+   figure.show()
+
 Parameters of a Fit
 -------------------
 

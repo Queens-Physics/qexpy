@@ -3,6 +3,7 @@ import numpy as np
 import qexpy as q
 import qexpy.error as qe
 import qexpy.utils as qu
+import pandas as pd
 from math import pi
 import re
 import warnings
@@ -505,6 +506,17 @@ class XYDataSet:
 
         :returns: The parameters of the fit.
         :rtype: Measurement_Array
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            xy = q.XYDataSet(x, y)
+            xy.fit('linear')
+
+            fig = q.MakePlot(xy)
+            fig.show()
         '''
         fitter = XYFitter(model=model, parguess=parguess, name=name, sigmas=sigmas)
         fit_pars = fitter.fit(self, fit_range=fit_range, fit_count=self.nfits)
@@ -534,6 +546,14 @@ class XYDataSet:
 
         :param latex: Whether to print the data using Latex formatting.
         :type show: bool
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            xy = q.XYDataSet(x, y)
+            xy.show_table()
         '''
         x = self.x
         y = self.y
@@ -572,6 +592,15 @@ class XYDataSet:
 
         :param fitindex: The index of the fit to print.
         :type fitindex: int
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            xy = q.XYDataSet(x, y)
+            xy.fit("linear")
+            xy.print_fit_results()
         '''
         if self.nfits == 0:
             print("no fit results to print")
@@ -591,13 +620,22 @@ class XYDataSet:
             theString += str(self.x[i])+" , "+str(self.y[i])+"\n"
         return theString
             
-    def save_textfile(self, filename="dataset.dat", delim=' '):
+    def save_textfile(self, filename="dataset.txt", delim=','):
         '''Save the data set to a file.
 
         :param filename: The name of the text file.
         :type filename: str
         :param delim: The delimiter between entries in the text file.
         :type delim: str
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            xy = q.XYDataSet(x, y)
+            xy.fit("linear")
+            xy.save_textfile()
         '''
         data = np.ndarray(shape=(self.xdata.size,4))
         data[:,0]=self.xdata
@@ -607,7 +645,20 @@ class XYDataSet:
         np.savetxt(filename, data, fmt='%.4f', delimiter=delim)  
               
     def clear_fits(self):
-        '''Remove all fit records'''
+        '''Remove all fit records.
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            xy = q.XYDataSet(x, y)
+            xy.fit('linear')
+            xy.clear_fits()
+
+            fig = q.MakePlot(xy)
+            fig.show()
+        '''
         self.xyfitter = []
         self.fit_pars = []
         self.fit_function = [] 
@@ -624,6 +675,14 @@ class XYDataSet:
 
         :returns: The x range of the plot.
         :rtype: list
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            xy = q.XYDataSet(x, y)
+            xy.get_x_range()
         '''
         if self.is_histogram:
             return [self.xdata.min()-margin,\
@@ -640,6 +699,14 @@ class XYDataSet:
 
         :returns: The y range of the plot.
         :rtype: list
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            xy = q.XYDataSet(x, y)
+            xy.get_y_range()
         '''
         if self.is_histogram:
             return [self.ydata.min()-margin,\
@@ -658,6 +725,15 @@ class XYDataSet:
 
         :returns: The y range of the residuals.
         :rtype: list
+
+        .. code-block:: python
+
+            x = q.MeasurementArray([1, 2, 3, 4], error=0.5)
+            y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)
+
+            xy = q.XYDataSet(x, y)
+            xy.fit("linear")
+            xy.get_yres_range()
         '''
         return [self.fit_yres[fitindex].means.min()-self.yerr.max()-margin,\
                 self.fit_yres[fitindex].means.max()+self.yerr.max()+margin]
