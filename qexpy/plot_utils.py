@@ -6,7 +6,19 @@ CONSTANT = qu.number_types
 ARRAY = qu.array_types
 
 def bk_plot_dataset(figure, dataset, residual=False, color='black', fit_index=-1):
-    '''Given a bokeh figure, this will add data points with errors from a dataset'''
+    '''Given a bokeh figure, this will add data points with errors from a dataset.
+
+    :param figure: The Bokeh figure that the dataset is being added to.
+    :type figure: bokeh.plotting.figure
+    :param dataset: The dataset to be added to the figure.
+    :type dataset: XYDataSet
+    :param residual: Whether the dataset is residual data.
+    :type residual: bool
+    :param color: The color of the dataset.
+    :type color: str
+    :param fit_index: The index of the fit.
+    :type fit_index: int
+    '''
   
     xdata = dataset.xdata
     xerr = dataset.xerr
@@ -15,8 +27,8 @@ def bk_plot_dataset(figure, dataset, residual=False, color='black', fit_index=-1
     index = fit_index if fit_index < dataset.nfits else -1.
     
     if residual is True and dataset.nfits>0:
-        ydata = dataset.fit_yres[index].get_means()
-        yerr = dataset.fit_yres[index].get_stds()
+        ydata = dataset.fit_yres[index].means
+        yerr = dataset.fit_yres[index].stds
         data_name=None
     else:
         ydata = dataset.ydata
@@ -26,7 +38,23 @@ def bk_plot_dataset(figure, dataset, residual=False, color='black', fit_index=-1
     
 def bk_add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, color='black', data_name='dataset'):
     '''Add data points to a bokeh plot. If the errors are given as numbers, 
-    the same error bar is assume for all data points'''
+    the same error bar is assume for all data points.
+
+    :param figure: The Bokeh figure that the dataset is being added to.
+    :type figure: bokeh.plotting.figure
+    :param xdata: The data to be plotted on the x axis.
+    :type xdata: array, Measurement_Array
+    :param ydata: The data to be plotted on the y axis.
+    :type ydata: array, Measurement_Array
+    :param xerr: The error on the x data. 
+    :type xerr: array, Measurement_Array
+    :param yerr: The error on the y data. 
+    :type yerr: array, Measurement_Array
+    :param color: The color of the points to be plotted.
+    :type color: str
+    :param data_name: The name of the data set.
+    :type data_name: str
+    '''
     
     
     _xdata, _ydata, _xerr, _yerr = make_np_arrays(xdata,ydata,xerr,yerr)  
@@ -80,7 +108,7 @@ def bk_add_points_with_error_bars(figure, xdata, ydata, xerr=None, yerr=None, co
                 
 def make_np_arrays(*args):
     '''Return a tuple where all of the arguments have been converted into 
-    numpy arrays'''
+    numpy arrays.'''
     np_tuple=()
     for arg in args:
         if isinstance(arg,np.ndarray):
@@ -93,13 +121,35 @@ def make_np_arrays(*args):
             np_tuple = np_tuple +(None,)
     return np_tuple
     
-def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None, color='black', errorbandfactor=1.0):
+def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None, color='black', sigmas=1, errorbandfactor=1.0):
     '''Plot a function evaluated over the range of xdata - xdata only needs 2 values
     The function can be either f(x) or f(x, *pars). In the later case, if pars is
     a Measurement_Array (e.g. the parameters from a fit), then an error band is also
     added to the plot, corresponding to varying the parameters within their uncertainty.
     The errorbandfactor can be used to choose an error band that is larger than 1 standard
     deviation.
+
+    :param figure: The Bokeh figure that the dataset is being added to.
+    :type figure: bokeh.plotting.figure
+    :param function: The function to be plotted.
+    :type function: Function 
+    :param xdata: The range on which to plot the function.
+    :type xdata: list
+    :param pars: The parameters of the function being plotted.
+    :type pars: Measurement_Array, array
+    :param n: The number of points on the range to evaluate the function at.
+    :type n: int
+    :param legend_name: The name of the function.
+    :type legend_name: str
+    :param color: The color of the function.
+    :type color: str
+    :param sigmas: The number of sigmas to show in the error band.
+    :type sigmas: int
+    :param errorbandfactor: The stretch factor of the error band.
+    :type errorbandfactor: float
+
+    :returns: The fit function and error band if applicable.
+    :rtype: bokeh.models.renderers.GlyphRenderer
     '''
     
     xvals = np.linspace(min(xdata), max(xdata), n)
@@ -111,7 +161,7 @@ def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None
         recall = qe.Measurement.minmax_n
         qe.Measurement.minmax_n=1
         fmes = function(xvals, *(pars))
-        fvals = fmes.get_means()
+        fvals = fmes.means
         qe.Measurement.minmax_n=recall
     elif isinstance(pars,(list, np.ndarray)):
         fvals = function(xvals, *pars)
@@ -122,14 +172,15 @@ def bk_plot_function(figure, function, xdata, pars=None, n=100, legend_name=None
     
     #Add error band
     if isinstance(pars, qe.Measurement_Array):
-        ymax = fmes.get_means()+errorbandfactor*fmes.get_stds()
-        ymin = fmes.get_means()-errorbandfactor*fmes.get_stds()
+        for i in range(1, int(sigmas)+1):
+            ymax = fmes.means+i*errorbandfactor*fmes.stds
+            ymin = fmes.means-i*errorbandfactor*fmes.stds
 
-        patch = figure.patch(x=np.append(xvals,xvals[::-1]),y=np.append(ymax,ymin[::-1]),
-                     fill_alpha=0.3,
-                     fill_color=color,
-                     line_alpha=0.0,
-                     legend=legend_name)
+            patch = figure.patch(x=np.append(xvals,xvals[::-1]),y=np.append(ymax,ymin[::-1]),
+                         fill_alpha=0.3/(sigmas-0.3*(i-1)),
+                         fill_color=color,
+                         line_alpha=0.0,
+                         legend=legend_name)
        
         return line, patch
     else:

@@ -1,0 +1,871 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The MeasurementArray Object &mdash; QExPy 0.1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="QExPy 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="The Plot Object" href="plot.html"/>
+        <link rel="prev" title="The Measurement Object" href="measurement.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> QExPy
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uncertainties.html">Error Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operations.html">Formatting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="measurement.html">The Measurement Object</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The MeasurementArray Object</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#properties">Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">The Plot Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xyfitter.html">The XYFitter Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xydataset.html">The XYDataSet Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">QExPy</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>The MeasurementArray Object</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/measurement_arr.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput,
+div.nbinput div.prompt,
+div.nbinput div.input_area,
+div.nbinput div[class*=highlight],
+div.nbinput div[class*=highlight] pre,
+div.nboutput,
+div.nbinput div.prompt,
+div.nbinput div.output_area,
+div.nboutput div[class*=highlight],
+div.nboutput div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput,
+div.nboutput {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput,
+    div.nboutput {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput div.prompt pre {
+    color: #303F9F;
+}
+
+/* output prompt */
+div.nboutput div.prompt pre {
+    color: #D84315;
+}
+
+/* all prompts */
+div.nbinput div.prompt,
+div.nboutput div.prompt {
+    min-width: 8ex;
+    padding-top: 0.4em;
+    padding-right: 0.4em;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput div.prompt,
+    div.nboutput div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput div.prompt pre,
+div.nboutput div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput div.input_area,
+div.nboutput div.output_area {
+    padding: 0.4em;
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput div.input_area,
+    div.nboutput div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput div.input_area {
+    border: 1px solid #cfcfcf;
+    border-radius: 2px;
+    background: #f7f7f7;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.pngmath center alignment in output cells */
+div.nboutput div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-bold { font-weight: bold; }
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+/* nice headers on first paragraph of info/warning boxes */
+.admonition .first {
+    margin: -12px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    color: #fff;
+    line-height: 1;
+    display: block;
+}
+.admonition.warning .first {
+    background: #f0b37e;
+}
+.admonition.note .first {
+    background: #6ab0de;
+}
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+</style>
+<div class="section" id="the-measurementarray-object">
+<h1>The MeasurementArray Object<a class="headerlink" href="#the-measurementarray-object" title="Permalink to this headline">¶</a></h1>
+<p>When making a series of Measurements that need to be grouped together (i.e. for plotting or group calculations) a MeasurementArray should be used. This section describes the uses of MeasurementArray objects.</p>
+<dl class="function">
+<dt id="qexpy.error.MeasurementArray">
+<code class="descclassname">qexpy.error.</code><code class="descname">MeasurementArray</code><span class="sig-paren">(</span><em>data</em>, <em>error=None</em>, <em>name=None</em>, <em>units=None</em>, <em>error_method='Derivative'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#MeasurementArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.MeasurementArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to easily construct a Measurement_Array object. It is better to call this
+function and let it create the Measurement_Array object behind the scenes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>error</strong> (<em>constant</em><em>, </em><em>array</em>) &#8211; Either a single value representing the error on all
+the Measurements in the MeasurementArray, or a list of errors 
+corresponding to all the Measurements in the MeasurementArray.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; A string of the name of the MeasurementArray.</li>
+<li><strong>units</strong> (<em>str</em>) &#8211; A string of the units of the MeasurementArray.</li>
+<li><strong>error_method</strong> (<em>str</em>) &#8211; Which method to use when propagating errors through
+calculations on the MeasurementArray. 
+Can be &#8216;Monte Carlo&#8217;, &#8216;Min Max&#8217; or&#8217;Derivative&#8217;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Measurement_Array object.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#qexpy.error.Measurement_Array" title="qexpy.error.Measurement_Array">Measurement_Array</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="qexpy.error.Measurement_Array">
+<em class="property">class </em><code class="descclassname">qexpy.error.</code><code class="descname">Measurement_Array</code><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array" title="Permalink to this definition">¶</a></dt>
+<dd><p>A numpy-based array of Measurement objects. It is better to call
+MeasurementArray() and let it create a Measurement_Array object
+behind the scenes.</p>
+</dd></dl>
+
+<div class="section" id="properties">
+<h2>Properties<a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h2>
+<p>MeasurementArrays have a few properties that you can get and set. Each property has an example of how to get and set it.</p>
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.error_weighted_mean">
+<code class="descclassname">Measurement_Array.</code><code class="descname">error_weighted_mean</code><a class="headerlink" href="#qexpy.error.Measurement_Array.error_weighted_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the error weighted mean and error of a MeasurementArray.
+The error weighted mean gives more weight to more precise Measurements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Getter:</th><td class="field-body">Returns the weighted mean of all the Measurements in the
+MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body">tuple</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span>
+
+<span class="c1"># Will be less than 12, since 11 +/- 0.1 is more precise than 13 +/- 0.8</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">error_weighted_mean</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>11.51 +/- 0.07
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.mean">
+<code class="descclassname">Measurement_Array.</code><code class="descname">mean</code><a class="headerlink" href="#qexpy.error.Measurement_Array.mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the mean of the means of the Measurements in the MeasurementArray.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Getter:</th><td class="field-body">Returns the mean of the means of all the Measurements in the
+MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>12.0
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.means">
+<code class="descclassname">Measurement_Array.</code><code class="descname">means</code><a class="headerlink" href="#qexpy.error.Measurement_Array.means" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a numpy array with the means of each value in the MeasurementArray,
+as calculated by the method (der, MC, MinMax).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Getter:</th><td class="field-body">Returns a numpy array of the means of the Measurements
+in the MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">means</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>[ 11.  12.  13.]
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement_Array.std">
+<code class="descclassname">Measurement_Array.</code><code class="descname">std</code><span class="sig-paren">(</span><em>ddof=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.std" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the standard deviation of the means of 
+all the Measurements in the MeasurementArray.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ddof</strong> (<em>int</em>) &#8211; The degrees of freedom of the MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The standard deviation of the means of all the 
+Measurements in the MeasurementArray.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>1.0
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.stds">
+<code class="descclassname">Measurement_Array.</code><code class="descname">stds</code><a class="headerlink" href="#qexpy.error.Measurement_Array.stds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a numpy array with the standard deviations of each value
+in the MeasurementArray, as calculated by the method (der, MC, MinMax).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Setter:</th><td class="field-body">Sets the errors of the Measurement_Array to either a single
+value if a number is provided, or to  different errors if a
+list is provided.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Getter:</th><td class="field-body">Returns a numpy array of the standard deviations of 
+the Measurements in the MeasurementArray.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">stds</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>[ 0.1  0.1  0.8]
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qexpy.error.Measurement_Array.units">
+<code class="descclassname">Measurement_Array.</code><code class="descname">units</code><a class="headerlink" href="#qexpy.error.Measurement_Array.units" title="Permalink to this definition">¶</a></dt>
+<dd><p>The units of a Measurement_Array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Setter:</th><td class="field-body">Sets the units of the Measurement object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Getter:</th><td class="field-body">Returns the name of the Measurement object.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;length&#39;</span><span class="p">)</span>
+
+<span class="n">x</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="s1">&#39;m&#39;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>11.0 +/- 0.1 [m],
+12.0 +/- 0.1 [m],
+13.0 +/- 0.1 [m]
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<p>MeasurementArrays also have a number of functions that can be used to change the MeasurementArray or get information about it.</p>
+<dl class="method">
+<dt id="qexpy.error.Measurement_Array.append">
+<code class="descclassname">Measurement_Array.</code><code class="descname">append</code><span class="sig-paren">(</span><em>meas</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends a value to the end of a MeasurementArray.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>meas</strong> (<a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a><em>, </em><em>constant</em>) &#8211; A measurement to be appended to the MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A MeasurementArray with the new value added to the end.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#qexpy.error.Measurement_Array" title="qexpy.error.Measurement_Array">Measurement_Array</a></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>12.0 +/- 0.5,
+10.0 +/- 0.5,
+11.0 +/- 0.2
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement_Array.delete">
+<code class="descclassname">Measurement_Array.</code><code class="descname">delete</code><span class="sig-paren">(</span><em>pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes an element from a MeasurementArray.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pos</strong> (<em>int</em>) &#8211; The 0-indexed position in the MeasurementArray of the
+Measurement that will be deleted. Must be between 0 and the
+length of the MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A MeasurementArray with the Measurement at the specified position
+removed.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#qexpy.error.Measurement_Array" title="qexpy.error.Measurement_Array">Measurement_Array</a></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>12.0 +/- 0.5,
+11.0 +/- 0.5
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement_Array.insert">
+<code class="descclassname">Measurement_Array.</code><code class="descname">insert</code><span class="sig-paren">(</span><em>pos</em>, <em>meas</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts a value in a position in a MeasurementArray.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>pos</strong> (<em>int</em>) &#8211; The 0-indexed position in the MeasurementArray that the
+measurement will be inserted into. Must be between 0 and the
+length of the MeasurementArray.</li>
+<li><strong>meas</strong> (<a class="reference internal" href="measurement.html#qexpy.error.Measurement" title="qexpy.error.Measurement"><em>Measurement</em></a><em>, </em><em>constant</em>) &#8211; A measurement to be inserted into the MeasurementArray.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A MeasurementArray with the new value inserted into the position
+specified by the pos parameter.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#qexpy.error.Measurement_Array" title="qexpy.error.Measurement_Array">Measurement_Array</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>12.0 +/- 0.5,
+10.0 +/- 0.2
+11.0 +/- 0.5
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement_Array.get_units_str">
+<code class="descclassname">Measurement_Array.</code><code class="descname">get_units_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.get_units_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.get_units_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a string representation of the units.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string representation of the units of the MeasurementArray.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">mass</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mf">4.2</span><span class="p">,</span> <span class="mf">4.1</span><span class="p">,</span> <span class="mf">4.3</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;kg&#39;</span><span class="p">)</span>
+<span class="n">accel</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mf">9.8</span><span class="p">,</span> <span class="mf">9.9</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;m/s^2&#39;</span><span class="p">)</span>
+<span class="n">force</span> <span class="o">=</span> <span class="n">mass</span><span class="o">*</span><span class="n">accel</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">force</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>kg^1 s^-2 m^1
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="qexpy.error.Measurement_Array.show_table">
+<code class="descclassname">Measurement_Array.</code><code class="descname">show_table</code><span class="sig-paren">(</span><em>latex=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qexpy/error.html#Measurement_Array.show_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qexpy.error.Measurement_Array.show_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the data of the Measurement_Array in a formatted table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>latex</strong> &#8211; Whether to print the data using Latex formatting.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qexpy</span> <span class="kn">as</span> <span class="nn">q</span>
+
+<span class="n">mass</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">([</span><span class="mf">4.2</span><span class="p">,</span> <span class="mf">4.1</span><span class="p">,</span> <span class="mf">4.3</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mass&#39;</span><span class="p">)</span>
+
+<span class="n">mass</span><span class="o">.</span><span class="n">show_table</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area highlight-none"><div class="highlight"><pre>
+<span></span>       mass
+4.2 +/- 0.5
+4.1 +/- 0.5
+4.3 +/- 0.5
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="plot.html" class="btn btn-neutral float-right" title="The Plot Object" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="measurement.html" class="btn btn-neutral" title="The Measurement Object" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Connor Kapahi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

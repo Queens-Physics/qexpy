@@ -1,0 +1,936 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>qexpy.fitting &mdash; QExPy 0.1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="QExPy 0.1.1 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> QExPy
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../uncertainties.html">Error Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../operations.html">Formatting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../measurement.html">The Measurement Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../measurement_arr.html">The MeasurementArray Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot.html">The Plot Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xyfitter.html">The XYFitter Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xydataset.html">The XYDataSet Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../LICENSE.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">QExPy</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>qexpy.fitting</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for qexpy.fitting</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">scipy.optimize</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">qexpy</span> <span class="k">as</span> <span class="nn">q</span>
+<span class="kn">import</span> <span class="nn">qexpy.error</span> <span class="k">as</span> <span class="nn">qe</span>
+<span class="kn">import</span> <span class="nn">qexpy.utils</span> <span class="k">as</span> <span class="nn">qu</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">pi</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="n">ARRAY</span> <span class="o">=</span> <span class="n">qu</span><span class="o">.</span><span class="n">array_types</span>
+
+
+<span class="k">def</span> <span class="nf">Rlinear</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">pars</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Linear function p[0]+p[1]*x</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">pars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">pars</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span>
+
+<span class="k">def</span> <span class="nf">Rpolynomial</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">pars</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Function for a polynomial of nth order, requiring n pars,</span>
+<span class="sd">    p[0]+p[1]*x+p[2]x^2+...&#39;&#39;&#39;</span>
+    <span class="n">poly</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pars</span><span class="p">)):</span>
+        <span class="n">poly</span> <span class="o">+=</span> <span class="n">pars</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="n">i</span>
+        
+    <span class="k">return</span> <span class="n">poly</span>
+
+<span class="k">def</span> <span class="nf">Rexp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">pars</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Function for a decaying exponential p[0]*exp(-x*p[1])&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">pars</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span> <span class="k">else</span> <span class="n">pars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">*</span><span class="n">pars</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">Rgauss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">pars</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Function for a Gaussian p[2]*Gaus(p[0],p[1])&#39;&#39;&#39;</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">pars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">pars</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">pars</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">std</span><span class="o">==</span><span class="mi">0</span> <span class="k">else</span> <span class="n">norm</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">std</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">mean</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="n">std</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+<div class="viewcode-block" id="XYFitter"><a class="viewcode-back" href="../../xyfitter.html#qexpy.fitting.XYFitter">[docs]</a><span class="k">class</span> <span class="nc">XYFitter</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A class to fit an XYDataSet to a function/model using scipy.optimize</span>
+
+<span class="sd">    :param model: The model (linear, gaussian...) to be fit to the data.</span>
+<span class="sd">    :type model: Function</span>
+<span class="sd">    :param parguess: Guesses for the parameters of the fit.</span>
+<span class="sd">    :type parguess: list</span>
+<span class="sd">    :param name: The name of the fit.</span>
+<span class="sd">    :type name: str</span>
+<span class="sd">    :param sigmas: The number of sigmas to show in the error band.</span>
+<span class="sd">    :type sigmas: int</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">parguess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigmas</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xydataset</span><span class="o">=</span><span class="kc">None</span>   
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_fit_function</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">parguess</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigmas</span> <span class="o">=</span> <span class="n">sigmas</span>
+        
+    <span class="k">def</span> <span class="nf">set_fit_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">npars</span><span class="p">,</span> <span class="n">funcname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parguess</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Set the fit function and the number of parameter, given</span>
+<span class="sd">        the expected number of parameters, npars</span>
+
+<span class="sd">        :param func: The fit function.</span>
+<span class="sd">        :type func: Function</span>
+<span class="sd">        :param npars: The number of parameters of the fit function.</span>
+<span class="sd">        :type npars: int</span>
+<span class="sd">        :param funcname: The name of the fit function.</span>
+<span class="sd">        :type funcname: str</span>
+<span class="sd">        :param parguess: The best guesses for the values of the parameters of the fit.</span>
+<span class="sd">        :type parguess: list</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span><span class="o">=</span><span class="n">func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="o">=</span><span class="n">npars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span> <span class="k">if</span> <span class="n">funcname</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">funcname</span>
+        <span class="k">if</span> <span class="n">parguess</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">parguess</span><span class="p">)</span><span class="o">!=</span><span class="n">npars</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parguess</span> <span class="o">=</span> <span class="n">npars</span><span class="o">*</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parguess</span> <span class="o">=</span> <span class="n">parguess</span>
+                
+        <span class="c1">#self.fit_pars = MeasurementArray(self.fit_npars)</span>
+           
+    <span class="k">def</span> <span class="nf">initialize_fit_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parguess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Set the model and parameter guess.</span>
+
+<span class="sd">        :param model: The fit function.</span>
+<span class="sd">        :type model: Function</span>
+<span class="sd">        :param parguess: The best guesses for the values of the parameters of the fit.</span>
+<span class="sd">        :type parguess: list</span>
+<span class="sd">        :param name: The name of the fit function.</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="n">wlinear</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;Linear&#39;</span><span class="p">,</span> <span class="s1">&#39;line&#39;</span><span class="p">,</span> <span class="s1">&#39;Line&#39;</span><span class="p">,)</span>
+        <span class="n">wgaussian</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;Gauss&#39;</span><span class="p">,</span> <span class="s1">&#39;gauss&#39;</span><span class="p">,</span> <span class="s1">&#39;normal&#39;</span><span class="p">,)</span>
+        <span class="n">wexponential</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;exponential&#39;</span><span class="p">,</span> <span class="s1">&#39;Exponential&#39;</span><span class="p">,</span> <span class="s1">&#39;exp&#39;</span><span class="p">,</span> <span class="s1">&#39;Exp&#39;</span><span class="p">,)</span>
+        
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fit_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s1">&#39;linear&#39;</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_fit_func</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">Rlinear</span><span class="p">,</span><span class="n">npars</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">funcname</span><span class="o">=</span><span class="n">fit_name</span><span class="p">,</span><span class="n">parguess</span><span class="o">=</span><span class="n">parguess</span><span class="p">)</span>
+                
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">wlinear</span><span class="p">:</span>
+                <span class="n">fit_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s1">&#39;linear&#39;</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_fit_func</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">Rlinear</span><span class="p">,</span><span class="n">npars</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">funcname</span><span class="o">=</span><span class="n">fit_name</span><span class="p">,</span><span class="n">parguess</span><span class="o">=</span><span class="n">parguess</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">wgaussian</span><span class="p">:</span>
+                <span class="n">fit_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s1">&#39;gaussian&#39;</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_fit_func</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">Rgauss</span><span class="p">,</span><span class="n">npars</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">funcname</span><span class="o">=</span><span class="n">fit_name</span><span class="p">,</span><span class="n">parguess</span><span class="o">=</span><span class="n">parguess</span><span class="p">)</span> 
+            <span class="k">elif</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">wexponential</span><span class="p">:</span>
+                <span class="n">fit_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s1">&#39;exponential&#39;</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_fit_func</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">Rexp</span><span class="p">,</span><span class="n">npars</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">funcname</span><span class="o">=</span><span class="n">fit_name</span><span class="p">,</span><span class="n">parguess</span><span class="o">=</span><span class="n">parguess</span><span class="p">)</span> 
+            <span class="k">elif</span> <span class="s1">&#39;pol&#39;</span> <span class="ow">in</span> <span class="n">model</span> <span class="ow">or</span> <span class="s1">&#39;Pol&#39;</span> <span class="ow">in</span> <span class="n">model</span><span class="p">:</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;[0-9]+$&#39;</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">match</span><span class="p">):</span>
+                    <span class="n">degree</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;Please provide the degree of the polynomial at the end of the string,</span>
+<span class="s1">                             using linear by default.&#39;&#39;&#39;</span><span class="p">)</span>
+                    <span class="n">degree</span> <span class="o">=</span> <span class="mi">2</span>
+                <span class="n">fit_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s1">&#39;degree_</span><span class="si">{}</span><span class="s1">_polynomial&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">degree</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_fit_func</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">Rpolynomial</span><span class="p">,</span><span class="n">npars</span><span class="o">=</span><span class="n">degree</span><span class="p">,</span><span class="n">funcname</span><span class="o">=</span><span class="n">fit_name</span><span class="p">,</span><span class="n">parguess</span><span class="o">=</span><span class="n">parguess</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unrecognized model string: &quot;</span><span class="o">+</span><span class="n">model</span><span class="o">+</span><span class="s2">&quot;, defaulting to linear&quot;</span><span class="p">)</span>
+                <span class="n">fit_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s1">&#39;linear&#39;</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_fit_func</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">Rlinear</span><span class="p">,</span><span class="n">npars</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">funcname</span><span class="o">=</span><span class="n">fit_name</span><span class="p">,</span><span class="n">parguess</span><span class="o">=</span><span class="n">parguess</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">inspect</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: model function should be in form: def model(x, *pars)&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">argspec</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getargspec</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">argspec</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: model function should be in form: def model(x, *pars)&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">if</span> <span class="n">argspec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: model function should be in form: def model(x, *pars)&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">if</span> <span class="n">parguess</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: must specify a guess for a custom function&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_fit_func</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">npars</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">parguess</span><span class="p">),</span> <span class="n">funcname</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">parguess</span><span class="o">=</span><span class="n">parguess</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sigmas</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Returns the mean of a Measurement object.</span>
+
+<span class="sd">        :setter: Sets the number of sigmas to show in the error band.</span>
+<span class="sd">        :getter: Returns the number of sigmas shown in the error band.</span>
+<span class="sd">        :type: int</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sigmas</span>
+
+    <span class="nd">@sigmas</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">sigmas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Sets the mean of a Measurement object.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span> <span class="ow">in</span> <span class="n">qe</span><span class="o">.</span><span class="n">ExperimentalValue</span><span class="o">.</span><span class="n">CONSTANT</span> <span class="ow">and</span> <span class="nb">float</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span><span class="o">.</span><span class="n">is_integer</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sigmas</span> <span class="o">=</span> <span class="n">sigma</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simgas parameter must be a whole number, using sigmas=1&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sigmas</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<div class="viewcode-block" id="XYFitter.fit"><a class="viewcode-back" href="../../xyfitter.html#qexpy.fitting.XYFitter.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">fit_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit_count</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Perform a fit of the fit_function to a data set.</span>
+
+<span class="sd">        :param dataset: The dataset to be fit.</span>
+<span class="sd">        :type dataset: XYDataSet</span>
+<span class="sd">        :param fit_range: The range to plot the fit on.</span>
+<span class="sd">        :type fit_range: list</span>
+<span class="sd">        :param fit_count: The number of the fit.</span>
+<span class="sd">        :type fit_count: int</span>
+<span class="sd">        :param name: The name of the fit function.</span>
+<span class="sd">        :type name: str</span>
+
+<span class="sd">        :returns: The parameters of the fit.</span>
+<span class="sd">        :rtype: Measurement_Array</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: fit function not set!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        
+        <span class="c1">#Grab the data</span>
+        <span class="n">xdata</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">xdata</span>
+        <span class="n">ydata</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">ydata</span>
+        <span class="n">xerr</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">xerr</span>
+        <span class="n">yerr</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">yerr</span>
+        
+        <span class="n">nz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">yerr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nz</span> <span class="o">&lt;</span> <span class="n">ydata</span><span class="o">.</span><span class="n">size</span> <span class="ow">and</span> <span class="n">nz</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: some errors on data are zero, switching to MC errors&quot;</span><span class="p">)</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">error_method</span><span class="o">=</span><span class="s2">&quot;MC&quot;</span>
+            <span class="n">yerr</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">stds</span>
+            <span class="c1">#now, check again</span>
+            <span class="n">nz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">yerr</span><span class="p">)</span>    
+            <span class="k">if</span> <span class="n">nz</span> <span class="o">&lt;</span> <span class="n">ydata</span><span class="o">.</span><span class="n">size</span> <span class="ow">and</span> <span class="n">nz</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">yerr</span><span class="p">[</span><span class="n">yerr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ydata</span><span class="p">[</span><span class="n">yerr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">1000000</span>
+            <span class="c1">#We&#39;re ok, modify the errors in the dataset to be the MC ones</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dataset</span><span class="o">.</span><span class="n">yerr</span> <span class="o">=</span> <span class="n">yerr</span>
+        
+        <span class="c1">#If user specified a fit range, reduce the data:    </span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">fit_range</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ARRAY</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">fit_range</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">xdata</span><span class="o">&gt;=</span><span class="n">fit_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xdata</span><span class="o">&lt;=</span><span class="n">fit_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">xdata</span><span class="o">=</span><span class="n">xdata</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+            <span class="n">ydata</span><span class="o">=</span><span class="n">ydata</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+            <span class="n">xerr</span><span class="o">=</span><span class="n">xerr</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+            <span class="n">yerr</span><span class="o">=</span><span class="n">yerr</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+            
+        <span class="c1">#if the x errors are not zero, convert them to equivalent errors in y</span>
+        <span class="c1">#TODO: check the math on this...</span>
+        
+        <span class="c1">#The maximum number of function evaluations</span>
+        <span class="n">maxfev</span> <span class="o">=</span> <span class="mi">200</span> <span class="o">*</span><span class="p">(</span><span class="n">xdata</span><span class="o">.</span><span class="n">size</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;fit_max_fcn_calls&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="n">q</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;fit_max_fcn_calls&quot;</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">warns</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">w</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;always&quot;</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">OptimizeWarning</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">curve_fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span><span class="p">,</span> <span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span>
+                                                    <span class="n">sigma</span><span class="o">=</span><span class="n">yerr</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parguess</span><span class="p">,</span>
+                                                    <span class="n">maxfev</span><span class="o">=</span><span class="n">maxfev</span><span class="p">)</span>
+                <span class="n">warns</span> <span class="o">=</span> <span class="n">w</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">warns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span><span class="o">==</span><span class="n">Rlinear</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span><span class="o">==</span><span class="n">Rpolynomial</span><span class="p">):</span>
+                <span class="n">p</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">xdata</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ydata</span><span class="p">,</span> <span class="n">deg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">yerr</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span> <span class="o">=</span> <span class="n">p</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="n">V</span><span class="p">))</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Fit could not converge; are the y errors too small? Is the function defined?&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Is the parameter guess good?&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+                 
+        <span class="c1"># Use derivative method to factor x error into fit</span>
+        <span class="k">if</span> <span class="n">xerr</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="n">yerr_eff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">yerr</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">xerr</span><span class="p">,</span> <span class="n">num_der</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="p">),</span> <span class="n">xdata</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">warns</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">w</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;always&quot;</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">OptimizeWarning</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span>  <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">curve_fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span><span class="p">,</span> <span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span>
+                                                        <span class="n">sigma</span><span class="o">=</span><span class="n">yerr_eff</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parguess</span><span class="p">,</span>
+                                                        <span class="n">maxfev</span><span class="o">=</span><span class="n">maxfev</span><span class="p">)</span>
+                    <span class="n">warns</span> <span class="o">=</span> <span class="n">w</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">warns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span> <span class="o">==</span> <span class="n">Rlinear</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span> <span class="o">==</span> <span class="n">Rpolynomial</span><span class="p">):</span>
+                    <span class="n">p</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">xdata</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ydata</span><span class="p">,</span> <span class="n">deg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">yerr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span> <span class="o">=</span> <span class="n">p</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="n">V</span><span class="p">))</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Fit could not converge; are the y errors too small? Is the function defined?&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Is the parameter guess good?&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            
+        <span class="c1">#this should already be true, but let&#39;s be sure:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="o">.</span><span class="n">size</span>
+        
+        <span class="c1">#This is to catch the case of scipy.optimize failing to determin</span>
+        <span class="c1">#the covariance matrix</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars_err</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars_err</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">):</span>
+                <span class="c1">#print(&quot;Warning: Error for fit parameter&quot;,i,&quot;cannot be trusted&quot;)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars_err</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">):</span>
+                    <span class="c1">#print(&quot;Warning: Covariance between parameters&quot;,i,j,&quot;cannot be trusted&quot;)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="mf">0.</span>
+ 
+        
+        <span class="n">parnames</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span><span class="o">+</span><span class="s2">&quot;_fit</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fit_count</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;_fitpars&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_parameters</span> <span class="o">=</span> <span class="n">qe</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="n">parnames</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span> <span class="ow">is</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="ow">is</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span>
+                <span class="k">elif</span> <span class="n">i</span> <span class="ow">is</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;sigma&#39;</span>
+                <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;normalization&#39;</span>               
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span> <span class="ow">is</span> <span class="s1">&#39;linear&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="ow">is</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;intercept&#39;</span>
+                <span class="k">elif</span> <span class="n">i</span> <span class="ow">is</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;slope&#39;</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span> <span class="ow">is</span> <span class="s1">&#39;exponential&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="ow">is</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;amplitude&#39;</span>
+                <span class="k">elif</span> <span class="n">i</span> <span class="ow">is</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;decay-constant&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;par</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">parnames</span> <span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="n">name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_parameters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span> <span class="n">qe</span><span class="o">.</span><span class="n">Measurement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars_err</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+                 
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit_parameters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_covariance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_parameters</span><span class="p">[</span><span class="n">j</span><span class="p">],</span>
+                                                      <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>   
+                
+        <span class="c1">#Calculate the residuals:        </span>
+        <span class="n">yfit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span> <span class="o">=</span> <span class="n">qe</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">(</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">ydata</span><span class="o">-</span><span class="n">yfit</span><span class="p">),</span> <span class="n">dataset</span><span class="o">.</span><span class="n">yerr</span><span class="p">)</span>  
+        <span class="c1">#Calculate the chi-squared:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_chi2</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">xdata</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">std</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit_chi2</span> <span class="o">+=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_ndof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span><span class="o">.</span><span class="n">size</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="o">-</span><span class="mi">1</span>
+               
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_parameters</span></div></div>
+        
+        
+
+<span class="k">def</span> <span class="nf">DataSetFromFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">xcol</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ycol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">xerrcol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">yerrcol</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">delim</span><span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="p">,</span>
+                    <span class="n">data_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xunits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">yname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">yunits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">is_histogram</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create an XYDataSet from a file, where the data is organized into 4 columns delimited</span>
+<span class="sd">    by delim. User can specify which columns contain what information, the default is</span>
+<span class="sd">    x,y,xerr,yerr. User MUST specify if xerr or yerr are missing by setting those columns to</span>
+<span class="sd">    &#39;None&#39;, and the method will automatically assign error of zero.</span>
+
+<span class="sd">    :param filename: The name of the file to open.</span>
+<span class="sd">    :type filename: str</span>
+<span class="sd">    :param xcol: The index of the column containing the x data.</span>
+<span class="sd">    :type xcol: int</span>
+<span class="sd">    :param ycol: The index of the column containing the y data.</span>
+<span class="sd">    :type ycol: int</span>
+<span class="sd">    :param xerrcol: The index of the column containing the x error data.</span>
+<span class="sd">    :type xerrcol: int</span>
+<span class="sd">    :param yerrcol: The index of the column containing the y error data.</span>
+<span class="sd">    :type yerrcol: int</span>
+<span class="sd">    :param delim: The delimiter in the text file.</span>
+<span class="sd">    :type delim: str</span>
+<span class="sd">    :param data_name: The name of the data.</span>
+<span class="sd">    :type param: str</span>
+<span class="sd">    :param xname: The name of the x axis.</span>
+<span class="sd">    :type xname: str</span>
+<span class="sd">    :param xunits: The units of the x values.</span>
+<span class="sd">    :type xunits: str</span>
+<span class="sd">    :param yname: The name of the y axis.</span>
+<span class="sd">    :type yname: str</span>
+<span class="sd">    :param yunits: The units of the y values.</span>
+<span class="sd">    :type yunits: str</span>
+<span class="sd">    :param is_histogram: Whether the data is a histogram.</span>
+<span class="sd">    :type is_histogram: bool</span>
+
+<span class="sd">    :returns: An XYDataSet containing the x and y data.</span>
+<span class="sd">    :rtype: XYDataSet</span>
+<span class="sd">    &#39;&#39;&#39;</span> 
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="n">delim</span><span class="p">)</span>
+    <span class="n">xdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">xcol</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_histogram</span><span class="p">:</span>
+        <span class="n">_ydata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">ycol</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">xerrcol</span><span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">xerrdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">xerrcol</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">xerrdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">xdata</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">yerrcol</span><span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">yerrdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">yerrcol</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">yerrdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ydata</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_ydata</span><span class="o">=</span><span class="kc">None</span>
+         
+    <span class="k">return</span> <span class="n">XYDataSet</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="o">=</span><span class="n">_ydata</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">xerrdata</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">yerrdata</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="n">data_name</span><span class="p">,</span>
+                     <span class="n">xname</span><span class="o">=</span><span class="n">xname</span><span class="p">,</span> <span class="n">xunits</span><span class="o">=</span><span class="n">xunits</span><span class="p">,</span> <span class="n">yname</span><span class="o">=</span><span class="n">yname</span><span class="p">,</span> <span class="n">yunits</span><span class="o">=</span><span class="n">yunits</span><span class="p">,</span>
+                     <span class="n">is_histogram</span><span class="o">=</span><span class="n">is_histogram</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="XYDataSet"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet">[docs]</a><span class="k">class</span> <span class="nc">XYDataSet</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;An XYDataSet contains a paired set of Measurement_Array Objects,</span>
+<span class="sd">    typically, a set of x and y values to be used for a Plot, as well</span>
+<span class="sd">    as a method to fit that dataset. If the data set is fit multiple times</span>
+<span class="sd">    the various fits are all recorded in a list of XYFitter objects.</span>
+<span class="sd">    One can also construct an XYDataSet from histogram data, which then</span>
+<span class="sd">    gets converted to equivalent X and Y measurements.</span>
+
+<span class="sd">    :param xdata: The data to be plotted on the x axis.</span>
+<span class="sd">    :type xdata: array, Measurement_Array, XYDataSet</span>
+<span class="sd">    :param ydata: The data to be plotted on the y axis.</span>
+<span class="sd">    :type ydata: array, Measurement_Array</span>
+<span class="sd">    :param xerr: The error on the data on the x axis.</span>
+<span class="sd">    :type xerr: array</span>
+<span class="sd">    :param yerr: The error on the data on the y axis.</span>
+<span class="sd">    :type yerr: array</span>
+<span class="sd">    :param data_name: The name of the data to be plotted.</span>
+<span class="sd">    :type data_name: str</span>
+<span class="sd">    :param xname: The name x axis.</span>
+<span class="sd">    :type xname: str</span>
+<span class="sd">    :param xunits: The units of the x axis.</span>
+<span class="sd">    :type xname: str</span>
+<span class="sd">    :param yname: The name y axis.</span>
+<span class="sd">    :type xname: str</span>
+<span class="sd">    :param yunits: The units of the y axis.</span>
+<span class="sd">    :type yunits: str</span>
+<span class="sd">    :param is_histogram: Whether the data is a histogram.</span>
+<span class="sd">    :type is_histogram: bool</span>
+<span class="sd">    :param bins: The number of bins to plot the histogram data in.</span>
+<span class="sd">    :type bins: int</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="c1">#So that each dataset has a unique name (at least by default):</span>
+    <span class="n">unnamed_data_counter</span><span class="o">=</span><span class="mi">0</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">xname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xunits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">yname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">yunits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">is_histogram</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Use MeasurementArray() to initialize a dataset&#39;&#39;&#39;</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">data_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;dataset</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">XYDataSet</span><span class="o">.</span><span class="n">unnamed_data_counter</span><span class="p">)</span>
+            <span class="sd">&#39;&#39;&#39;A string of the name of the dataset.</span>
+
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                x = q.MeasurementArray([1, 2, 3, 4], error=0.5)</span>
+<span class="sd">                y = q.MeasurementArray([5, 6.2, 7, 7.8], error=0.1)</span>
+
+<span class="sd">                data = q.XYDataSet(x, y)</span>
+<span class="sd">                data.name = &#39;x vs. y&#39;</span>
+<span class="sd">                print(&#39;Name:&#39;, data.name)</span>
+
+<span class="sd">            .. nboutput:: ipython3</span>
+
+<span class="sd">                Name = x vs. y</span>
+<span class="sd">            &#39;&#39;&#39;</span> 
+            <span class="n">XYDataSet</span><span class="o">.</span><span class="n">unnamed_data_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">data_name</span>
+            
+        <span class="k">if</span> <span class="n">ydata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_histogram</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error, if ydata is not given, explicitly specify that this is a histogram&quot;</span><span class="p">)</span>
+            
+        <span class="k">elif</span> <span class="n">ydata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1">#this is a histogram</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hist_data</span><span class="o">=</span><span class="n">xdata</span>        
+            <span class="n">hist</span><span class="p">,</span> <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hist_bins</span><span class="o">=</span><span class="n">edges</span>
+            <span class="n">_xdata</span> <span class="o">=</span> <span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">_xerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">_xdata</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">_ydata</span> <span class="o">=</span> <span class="n">hist</span>
+            <span class="n">_yerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span>        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_xdata</span><span class="o">=</span><span class="n">xdata</span>
+            <span class="n">_xerr</span><span class="o">=</span><span class="n">xerr</span>
+            <span class="n">_ydata</span><span class="o">=</span><span class="n">ydata</span>
+            <span class="n">_yerr</span><span class="o">=</span><span class="n">yerr</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">qe</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">(</span><span class="n">_xdata</span><span class="p">,</span><span class="n">error</span><span class="o">=</span><span class="n">_xerr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">xname</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">xunits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">means</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xerr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">stds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xunits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">name</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">qe</span><span class="o">.</span><span class="n">MeasurementArray</span><span class="p">(</span><span class="n">_ydata</span><span class="p">,</span><span class="n">error</span><span class="o">=</span><span class="n">_yerr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">yname</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">yunits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ydata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">means</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yerr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">stds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yunits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">name</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_histogram</span><span class="o">=</span><span class="n">is_histogram</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="o">=</span> <span class="n">bins</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: x and y data should have the same number of points&quot;</span><span class="p">)</span>
+            <span class="c1">#TODO raise an error!</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">npoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">size</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">xyfitter</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#stored as Measurement_Array</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcorr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span> <span class="o">=</span> <span class="p">[]</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span> <span class="o">=</span><span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_chi2</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_ndof</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_color</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nfits</span><span class="o">=</span><span class="mi">0</span>
+        
+<div class="viewcode-block" id="XYDataSet.fit"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parguess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fitcolor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigmas</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Fit a data set to a model using XYFitter. Everytime this function</span>
+<span class="sd">        is called on a data set, it adds a new XYFitter to the dataset. This</span>
+<span class="sd">        is to allow multiple functions to be fit to the same data set.</span>
+
+<span class="sd">        :param model: The model (linear, gaussian...) to be fit to the data.</span>
+<span class="sd">        :type model: Function</span>
+<span class="sd">        :param parguess: A guess for the values of the parameter of the fit.</span>
+<span class="sd">        :type parguess: list</span>
+<span class="sd">        :param fit_range: The range to plot the fit on.</span>
+<span class="sd">        :type fit_range: list</span>
+<span class="sd">        :param print_results: Whether to print the results of the fit.</span>
+<span class="sd">        :type print_results: bool</span>
+<span class="sd">        :param fitcolor: The color of the fit.</span>
+<span class="sd">        :type fitcolor: str</span>
+<span class="sd">        :param name: The name of the fit.</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param sigmas: The number of sigmas to show in the error band.</span>
+<span class="sd">        :type sigmas: int</span>
+
+<span class="sd">        :returns: The parameters of the fit.</span>
+<span class="sd">        :rtype: Measurement_Array</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">fitter</span> <span class="o">=</span> <span class="n">XYFitter</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">parguess</span><span class="o">=</span><span class="n">parguess</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">sigmas</span><span class="o">=</span><span class="n">sigmas</span><span class="p">)</span>
+        <span class="n">fit_pars</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit_range</span><span class="o">=</span><span class="n">fit_range</span><span class="p">,</span> <span class="n">fit_count</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nfits</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">fit_pars</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xyfitter</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitter</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fit_pars</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcov</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_pcov</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_pcorr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cov2corr</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_pcov</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fit_pars</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_yres</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_function</span><span class="p">)</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_function_name</span><span class="p">)</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_chi2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_chi2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_ndof</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitter</span><span class="o">.</span><span class="n">fit_ndof</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_color</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitcolor</span><span class="p">)</span> <span class="c1"># colour of the fit function</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nfits</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+            <span class="k">if</span> <span class="n">print_results</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">print_fit_results</span><span class="p">()</span>
+        
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="XYDataSet.show_table"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet.show_table">[docs]</a>    <span class="k">def</span> <span class="nf">show_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">latex</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Prints the data of the Plot in a formatted table.</span>
+
+<span class="sd">        :param latex: Whether to print the data using Latex formatting.</span>
+<span class="sd">        :type show: bool</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span>
+
+        <span class="k">if</span> <span class="n">latex</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">begin</span><span class="si">{table}</span><span class="s1">[htp]</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">begin</span><span class="si">{center}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">begin</span><span class="si">{tabular}</span><span class="s1">{|c|c|} \hline</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">xerr_const</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">stds</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">stds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">yerr_const</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">stds</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">stds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">xtitle</span> <span class="o">=</span> <span class="s1">&#39;{</span><span class="se">\\</span><span class="s1">bf &#39;</span><span class="o">+</span><span class="n">x</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39;} (&#39;</span><span class="o">+</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;units&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;)&#39;</span>
+            <span class="n">xtitle</span> <span class="o">+=</span> <span class="s1">&#39; $\pm$ &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">stds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">xerr_const</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">ytitle</span> <span class="o">=</span> <span class="s1">&#39;{</span><span class="se">\\</span><span class="s1">bf &#39;</span><span class="o">+</span><span class="n">y</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39;} (&#39;</span><span class="o">+</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span> <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">get_units_str</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;units&#39;</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;)&#39;</span>
+            <span class="n">ytitle</span> <span class="o">+=</span> <span class="s1">&#39; $\pm$&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">stds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">yerr_const</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="n">xtitle</span> <span class="o">+</span> <span class="s1">&#39; &amp; &#39;</span> <span class="o">+</span> <span class="n">ytitle</span> <span class="o">+</span> <span class="s1">&#39; </span><span class="se">\\\\</span><span class="s1"> \hline\hline </span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span><span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">xerr_const</span> <span class="k">else</span> <span class="s1">&#39; $\pm$ &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xerr</span><span class="p">[</span><span class="n">ind</span><span class="p">]))</span> <span class="o">+</span> <span class="s1">&#39; &amp; &#39;</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span><span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">yerr_const</span> <span class="k">else</span> <span class="s1">&#39; $\pm$ &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yerr</span><span class="p">[</span><span class="n">ind</span><span class="p">]))</span> <span class="o">+</span> <span class="s1">&#39; </span><span class="se">\\\\</span><span class="s1"> \hline </span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;\end</span><span class="si">{tabular}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;\end</span><span class="si">{center}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;\caption</span><span class="si">{}</span><span class="s1"> </span><span class="se">\n</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;\end</span><span class="si">{table}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39; +/- &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xerr</span><span class="p">[</span><span class="n">ind</span><span class="p">]),</span>
+                             <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39; +/- &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yerr</span><span class="p">[</span><span class="n">ind</span><span class="p">])])</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="XYDataSet.print_fit_results"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet.print_fit_results">[docs]</a>    <span class="k">def</span> <span class="nf">print_fit_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fitindex</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Prints the results of a fit. Includes the data name, fit name, fit</span>
+<span class="sd">        parameter values, correlation matrix and chi-squared.</span>
+
+<span class="sd">        :param fitindex: The index of the fit to print.</span>
+<span class="sd">        :type fitindex: int</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nfits</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;no fit results to print&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-----------------Fit results-------------------&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fit of &quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s2">&quot; to &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span><span class="p">[</span><span class="n">fitindex</span><span class="p">])</span> 
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fit parameters:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span><span class="p">[</span><span class="n">fitindex</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Correlation matrix: &quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array_str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_pcorr</span><span class="p">[</span><span class="n">fitindex</span><span class="p">],</span> <span class="n">precision</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">chi2/ndof = </span><span class="si">{:.2f}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_chi2</span><span class="p">[</span><span class="n">fitindex</span><span class="p">],</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_ndof</span><span class="p">[</span><span class="n">fitindex</span><span class="p">]))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------End fit results----------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">theString</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+            <span class="n">theString</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">+</span><span class="s2">&quot; , &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">theString</span>
+            
+<div class="viewcode-block" id="XYDataSet.save_textfile"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet.save_textfile">[docs]</a>    <span class="k">def</span> <span class="nf">save_textfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;dataset.dat&quot;</span><span class="p">,</span> <span class="n">delim</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Save the data set to a file.</span>
+
+<span class="sd">        :param filename: The name of the text file.</span>
+<span class="sd">        :type filename: str</span>
+<span class="sd">        :param delim: The delimiter between entries in the text file.</span>
+<span class="sd">        :type delim: str</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="o">.</span><span class="n">size</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+        <span class="n">data</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span>
+        <span class="n">data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ydata</span>
+        <span class="n">data</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xerr</span>
+        <span class="n">data</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xerr</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.4f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="n">delim</span><span class="p">)</span>  </div>
+              
+<div class="viewcode-block" id="XYDataSet.clear_fits"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet.clear_fits">[docs]</a>    <span class="k">def</span> <span class="nf">clear_fits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Remove all fit records&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xyfitter</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_pars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_function</span> <span class="o">=</span> <span class="p">[]</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_function_name</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_npars</span> <span class="o">=</span><span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yres</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nfits</span><span class="o">=</span><span class="mi">0</span></div>
+    
+<div class="viewcode-block" id="XYDataSet.get_x_range"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet.get_x_range">[docs]</a>    <span class="k">def</span> <span class="nf">get_x_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">margin</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get range of the x data, including errors and a specified margin.</span>
+
+<span class="sd">        :param margin: The margin at either side of the graph.</span>
+<span class="sd">        :type margin: float</span>
+
+<span class="sd">        :returns: The x range of the plot.</span>
+<span class="sd">        :rtype: list</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_histogram</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">-</span><span class="n">margin</span><span class="p">,</span>\
+                    <span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">margin</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>    
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">xerr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">-</span><span class="n">margin</span><span class="p">,</span>\
+                    <span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">xerr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">margin</span><span class="p">]</span></div>
+    
+<div class="viewcode-block" id="XYDataSet.get_y_range"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet.get_y_range">[docs]</a>    <span class="k">def</span> <span class="nf">get_y_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">margin</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get range of the y data, including errors and a specified margin.</span>
+
+<span class="sd">        :param margin: The margin at the top and bottom of the graph.</span>
+<span class="sd">        :type margin: float</span>
+
+<span class="sd">        :returns: The y range of the plot.</span>
+<span class="sd">        :rtype: list</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_histogram</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">-</span><span class="n">margin</span><span class="p">,</span>\
+                    <span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">margin</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">yerr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">-</span><span class="n">margin</span><span class="p">,</span>\
+                    <span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">yerr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">margin</span><span class="p">]</span> </div>
+    
+<div class="viewcode-block" id="XYDataSet.get_yres_range"><a class="viewcode-back" href="../../xydataset.html#qexpy.fitting.XYDataSet.get_yres_range">[docs]</a>    <span class="k">def</span> <span class="nf">get_yres_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">margin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fitindex</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get range of the y residuals, including errors and a specified margin.</span>
+
+<span class="sd">        :param margin: The margin at the top and bottom of the graph.</span>
+<span class="sd">        :type margin: float</span>
+<span class="sd">        :param fitindex: The index of the fit get the residual range for.</span>
+<span class="sd">        :type fitindex: int</span>
+
+<span class="sd">        :returns: The y range of the residuals.</span>
+<span class="sd">        :rtype: list</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span><span class="p">[</span><span class="n">fitindex</span><span class="p">]</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">yerr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">-</span><span class="n">margin</span><span class="p">,</span>\
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit_yres</span><span class="p">[</span><span class="n">fitindex</span><span class="p">]</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">yerr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">margin</span><span class="p">]</span></div></div>
+    
+<span class="k">def</span> <span class="nf">cov2corr</span><span class="p">(</span><span class="n">pcov</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Return a correlation matrix given a covariance matrix.</span>
+
+<span class="sd">    :param pcov: A covariance matrix.</span>
+<span class="sd">    :type pcov: np.ndarray</span>
+
+<span class="sd">    :returns: A correlation matrix corresponding to the covariance matrix.</span>
+<span class="sd">    :rtype: np.ndarray</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">sigmas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">pcov</span><span class="p">))</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">sigmas</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">pcorr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span><span class="n">dim</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+            <span class="n">pcorr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">pcov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">sigmas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">sigmas</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">pcorr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pcorr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">/=</span> <span class="p">(</span><span class="n">sigmas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">sigmas</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">pcorr</span>
+           
+    
+    
+<span class="k">def</span> <span class="nf">num_der</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns the first order derivative of a function.</span>
+<span class="sd">    Used in combining xerr and yerr. Used to include</span>
+<span class="sd">    x errors in XYFitter.</span>
+
+<span class="sd">    :param function: The function to take the derivative of.</span>
+<span class="sd">    :type function: Function</span>
+<span class="sd">    :param point: The point at which to take the derivative.</span>
+<span class="sd">    :type point: float</span>
+<span class="sd">    :param dx: The width of the interval that the numerical derivative is evaluated on.</span>
+<span class="sd">    :type dx: float</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="n">point</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">function</span><span class="p">(</span><span class="n">point</span><span class="o">+</span><span class="n">dx</span><span class="p">)</span><span class="o">-</span><span class="n">function</span><span class="p">(</span><span class="n">point</span><span class="p">),</span> <span class="n">dx</span><span class="p">)</span>   
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Connor Kapahi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,5 +1,10 @@
 nbsphinx
 ipykernel
-bokeh
+bokeh>=0.12.6
 qexpy
 sphinx>=1.4
+pandas
+matplotlib
+numpy
+ipywidgets
+scipy>=0.17
