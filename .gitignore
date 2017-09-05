@@ -7,3 +7,4 @@ ToDo*
 *.ipynb_checkpoints
 *Plot*
 *.pypirc
+*.DS_Store*
