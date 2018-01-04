@@ -559,7 +559,7 @@ def _generate_excluded_normal( mean, sigma, n, exclude):
     '''
     x = np.random.normal(mean, sigma, n) # mean=mean, std=std random normal distribution           
     if np.any(exclude(x)):
-        x[exclude(x)] = _generate_excluded_normal(mean, sigma, len(x[exclude(x)]), excluded)
+        x[exclude(x)] = _generate_excluded_normal(mean, sigma, len(x[exclude(x)]), exclude)
     return x
 
 ###############################################################################
