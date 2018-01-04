@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name='qexpy',
     packages=['qexpy'],
-    version='1.0.0',
+    version='1.0.1',
     description='''Package to handle error analysis and data plotting aimed
     at undergraduate physics.''',
     author='Connor Kapahi and Prof. Ryan Martin',
