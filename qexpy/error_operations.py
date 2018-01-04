@@ -540,7 +540,7 @@ def _truncate_normal(distrib, mean, sigma, exclude):
         x[exclude(x)] = _generate_excluded_normal(mean, sigma, len(x[exclude(x)]), exclude)
     return x
 
-def _generate_excluded_normal(distrib, mean, sigma, n, exclude):
+def _generate_excluded_normal( mean, sigma, n, exclude):
     '''Recursively generates random normal variables that are undefined
     on some part of their codomain. Returns the normal distribution and
     the underlying standard normal distribution that was used to create it.
