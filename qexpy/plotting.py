@@ -7,6 +7,7 @@ import qexpy.plot_utils as qpu
 
 import bokeh.plotting as bp
 import bokeh.io as bi
+import bokeh.layouts as bl
 import bokeh.models as mo
 
 import matplotlib.pyplot as plt
@@ -1305,7 +1306,11 @@ class Plot:
         self.bkfigure.legend.orientation = self.bk_legend_orientation
         
         if self.show_residuals:
-            self.bkfigure = bi.gridplot([[self.bkfigure], [self.bkres]])
+            # Gridplot moved modules, as far as we can tell
+            if (hasattr(bi, 'gridplot')):
+              self.bkfigure = bi.gridplot([[self.bkfigure], [self.bkres]])
+            else:
+              self.bkfigure = bl.gridplot([[self.bkfigure], [self.bkres]])
           
         return self.bkfigure
     
