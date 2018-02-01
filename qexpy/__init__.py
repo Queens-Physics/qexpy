@@ -28,7 +28,7 @@ from qexpy.plot_utils import bk_plot_dataset, bk_add_points_with_error_bars,\
                              bk_plot_function
     
 
-__version__ = '1.0.1'
+__version__ = '1.0.3'
 
 # The following will initialize bokeh if running in a notebook,
 # and hacks the _nb_loaded variable which is required for all plots

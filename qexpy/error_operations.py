@@ -702,7 +702,14 @@ def dev(*args, der=None):
             cov = e.ExperimentalValue.register[roots[i]].get_covariance(
                 e.ExperimentalValue.register[roots[j + 1 + i]])
             std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
-    std = std**(1/2)
+
+    if std > 0:
+      std = std**(0.5)
+    else:
+      print("Warning: variance from derivative method (error_operations:dev) is negative.")
+      print("Setting error to zero, this is likely incorrect!!!")
+      print("Maybe you have an unphysical covariance?")
+      std = 0
 
     return std
 
