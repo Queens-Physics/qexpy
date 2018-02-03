@@ -703,7 +703,7 @@ def dev(*args, der=None):
                 e.ExperimentalValue.register[roots[j + 1 + i]])
             std += 2*der[roots[i]]*der[roots[j + 1 + i]]*cov
 
-    if std > 0:
+    if std >= 0:
       std = std**(0.5)
     else:
       print("Warning: variance from derivative method (error_operations:dev) is negative.")
