@@ -20,18 +20,16 @@ def Rpolynomial(x, *pars):
     '''Function for a polynomial of nth order, requiring n pars,
     p[0]+p[1]*x+p[2]x^2+...'''
     #Using Horner's method https://en.wikipedia.org/wiki/Horner%27s_method
-    #result = 0
-    #for coefficient in reversed(pars):
-    #    result = result * x + coefficient
-    #return result
-
-    #Straight up polynomal
-    poly = 0
-    n = 0
-    for i in range(len(pars)):
-        poly += pars[i]*x**i
-
-    return poly
+    #should be faster
+    result = 0
+    for par in reversed(pars):
+        result = par + result * x
+    return result
+    #Straight up polynomal:
+    # poly = 0
+    # for i in range(len(pars)):
+    #     poly += pars[i]*x**i
+    # return poly
 
 def Rexp(x, *pars):
     '''Function for a decaying exponential p[0]*exp(-x*p[1])'''
