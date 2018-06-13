@@ -19,13 +19,17 @@ def Rlinear(x, *pars):
 def Rpolynomial(x, *pars):
     '''Function for a polynomial of nth order, requiring n pars,
     p[0]+p[1]*x+p[2]x^2+...'''
-    poly = 0
-    n = 0
-    
-    for i in range(len(pars)):
-        poly += pars[i]*x**i
-        
-    return poly
+    #Using Horner's method https://en.wikipedia.org/wiki/Horner%27s_method
+    #should be faster
+    result = 0
+    for par in reversed(pars):
+        result = par + result * x
+    return result
+    #Straight up polynomal:
+    # poly = 0
+    # for i in range(len(pars)):
+    #     poly += pars[i]*x**i
+    # return poly
 
 def Rexp(x, *pars):
     '''Function for a decaying exponential p[0]*exp(-x*p[1])'''
@@ -50,12 +54,12 @@ class XYFitter:
     :param sigmas: The number of sigmas to show in the error band.
     :type sigmas: int
     '''
-    
+
     def __init__(self, model = None, parguess=None, name=None, sigmas=1.0):
-        self.xydataset=None   
+        self.xydataset=None
         self.initialize_fit_function(model, parguess, name)
         self.sigmas = sigmas
-        
+
     def set_fit_func(self, func, npars, funcname=None, parguess=None):
         '''Set the fit function and the number of parameter, given
         the expected number of parameters, npars
@@ -69,7 +73,7 @@ class XYFitter:
         :param parguess: The best guesses for the values of the parameters of the fit.
         :type parguess: list
         '''
-        
+
         self.fit_function=func
         self.fit_npars=npars
         self.fit_function_name="custom" if funcname is None else funcname
@@ -77,9 +81,9 @@ class XYFitter:
             self.parguess = npars*[1]
         else:
             self.parguess = parguess
-                
+
         #self.fit_pars = MeasurementArray(self.fit_npars)
-           
+
     def initialize_fit_function(self, model=None, parguess=None, name=None):
         '''Set the model and parameter guess.
 
@@ -90,25 +94,25 @@ class XYFitter:
         :param name: The name of the fit function.
         :type name: str
         '''
-        
+
         wlinear = ('linear', 'Linear', 'line', 'Line',)
         wgaussian = ('gaussian', 'Gaussian', 'Gauss', 'gauss', 'normal',)
         wexponential = ('exponential', 'Exponential', 'exp', 'Exp',)
-        
+
         if model is None:
-            fit_name = name if name else 'linear' 
+            fit_name = name if name else 'linear'
             self.set_fit_func(func=Rlinear,npars=2,funcname=fit_name,parguess=parguess)
-                
+
         elif isinstance(model, str):
             if model in wlinear:
-                fit_name = name if name else 'linear' 
+                fit_name = name if name else 'linear'
                 self.set_fit_func(func=Rlinear,npars=2,funcname=fit_name,parguess=parguess)
             elif model in wgaussian:
-                fit_name = name if name else 'gaussian' 
-                self.set_fit_func(func=Rgauss,npars=3,funcname=fit_name,parguess=parguess) 
+                fit_name = name if name else 'gaussian'
+                self.set_fit_func(func=Rgauss,npars=3,funcname=fit_name,parguess=parguess)
             elif model in wexponential:
-                fit_name = name if name else 'exponential' 
-                self.set_fit_func(func=Rexp,npars=2,funcname=fit_name,parguess=parguess) 
+                fit_name = name if name else 'exponential'
+                self.set_fit_func(func=Rexp,npars=2,funcname=fit_name,parguess=parguess)
             elif 'pol' in model or 'Pol' in model:
                 match = re.findall('[0-9]+$', model)
                 if len(match):
@@ -121,7 +125,7 @@ class XYFitter:
                 self.set_fit_func(func=Rpolynomial,npars=degree,funcname=fit_name,parguess=parguess)
             else:
                 print("Unrecognized model string: "+model+", defaulting to linear")
-                fit_name = name if name else 'linear' 
+                fit_name = name if name else 'linear'
                 self.set_fit_func(func=Rlinear,npars=2,funcname=fit_name,parguess=parguess)
         else:
             import inspect
@@ -138,7 +142,7 @@ class XYFitter:
             if parguess is None:
                 print("Error: must specify a guess for a custom function")
                 return
-            
+
             self.set_fit_func(func=model, npars=len(parguess), funcname="custom", parguess=parguess)
 
     @property
@@ -179,37 +183,37 @@ class XYFitter:
         if self.fit_function is None:
             print("Error: fit function not set!")
             return
-        
+
         #Grab the data
         xdata = dataset.xdata
         ydata = dataset.ydata
         xerr = dataset.xerr
         yerr = dataset.yerr
-        
+
         nz = np.count_nonzero(yerr)
         if nz < ydata.size and nz != 0:
             print("Warning: some errors on data are zero, switching to MC errors")
             dataset.y.error_method="MC"
             yerr = dataset.y.stds
             #now, check again
-            nz = np.count_nonzero(yerr)    
+            nz = np.count_nonzero(yerr)
             if nz < ydata.size and nz != 0:
                 yerr[yerr == 0] = ydata[yerr == 0]/1000000
             #We're ok, modify the errors in the dataset to be the MC ones
             else:
                 dataset.yerr = yerr
-        
-        #If user specified a fit range, reduce the data:    
+
+        #If user specified a fit range, reduce the data:
         if type(fit_range) in ARRAY and len(fit_range) is 2:
             indices = np.where(np.logical_and(xdata>=fit_range[0], xdata<=fit_range[1]))
             xdata=xdata[indices]
             ydata=ydata[indices]
             xerr=xerr[indices]
             yerr=yerr[indices]
-            
+
         #if the x errors are not zero, convert them to equivalent errors in y
         #TODO: check the math on this...
-        
+
         #The maximum number of function evaluations
         maxfev = 200 *(xdata.size+1) if q.settings["fit_max_fcn_calls"] == -1 else q.settings["fit_max_fcn_calls"]
         try:
@@ -230,7 +234,7 @@ class XYFitter:
             print("Error: Fit could not converge; are the y errors too small? Is the function defined?")
             print("Is the parameter guess good?")
             return None
-                 
+
         # Use derivative method to factor x error into fit
         if xerr.nonzero()[0].size:
             yerr_eff = np.sqrt((yerr**2 + np.multiply(xerr, num_der(lambda x: self.fit_function(x, *self.fit_pars), xdata))**2))
@@ -253,10 +257,10 @@ class XYFitter:
                 print("Error: Fit could not converge; are the y errors too small? Is the function defined?")
                 print("Is the parameter guess good?")
                 return None
-            
+
         #this should already be true, but let's be sure:
         self.fit_npars=self.fit_pars.size
-        
+
         #This is to catch the case of scipy.optimize failing to determin
         #the covariance matrix
 
@@ -268,8 +272,8 @@ class XYFitter:
                 if self.fit_pcov[i][j] == float('inf') or self.fit_pcov[i][j] == float('nan'):
                     #print("Warning: Covariance between parameters",i,j,"cannot be trusted")
                     self.fit_pcov[i][j]=0.
- 
-        
+
+
         parnames = dataset.name+"_"+self.fit_function_name+"_fit{}".format(fit_count)+"_fitpars"
         self.fit_parameters = qe.MeasurementArray(self.fit_npars,name=parnames)
 
@@ -280,7 +284,7 @@ class XYFitter:
                 elif i is 1:
                     name = 'sigma'
                 elif i ==2:
-                    name = 'normalization'               
+                    name = 'normalization'
             elif self.fit_function_name is 'linear':
                 if i is 0:
                     name = 'intercept'
@@ -295,25 +299,25 @@ class XYFitter:
                 name = 'par%d' % (i)
             name = parnames +"_"+name
             self.fit_parameters[i]= qe.Measurement(self.fit_pars[i], self.fit_pars_err[i], name=name)
-                 
+
         for i in range(self.fit_npars):
             for j in range(i+1, self.fit_npars):
                 self.fit_parameters[i].set_covariance(self.fit_parameters[j],
-                                                      self.fit_pcov[i][j])   
-                
-        #Calculate the residuals:        
+                                                      self.fit_pcov[i][j])
+
+        #Calculate the residuals:
         yfit = self.fit_function(dataset.xdata, *self.fit_pars)
-        self.fit_yres = qe.MeasurementArray( (dataset.ydata-yfit), dataset.yerr)  
+        self.fit_yres = qe.MeasurementArray( (dataset.ydata-yfit), dataset.yerr)
         #Calculate the chi-squared:
         self.fit_chi2 = 0
         for i in range(xdata.size):
             if self.fit_yres[i].std !=0:
                 self.fit_chi2 += (self.fit_yres[i].mean/self.fit_yres[i].std)**2
         self.fit_ndof = self.fit_yres.size-self.fit_npars-1
-               
+
         return self.fit_parameters
-        
-        
+
+
 
 def DataSetFromFile(filename, xcol=0, ycol=1, xerrcol=2, yerrcol=3, delim= ' ',
                     data_name=None, xname=None, xunits=None, yname=None, yunits=None,
@@ -350,28 +354,28 @@ def DataSetFromFile(filename, xcol=0, ycol=1, xerrcol=2, yerrcol=3, delim= ' ',
 
     :returns: An XYDataSet containing the x and y data.
     :rtype: XYDataSet
-    ''' 
+    '''
     data = np.loadtxt(filename, delimiter=delim)
     xdata = data[:,xcol]
-    
+
     if not is_histogram:
         _ydata = data[:,ycol]
         if xerrcol!= None:
             xerrdata = data[:,xerrcol]
         else:
             xerrdata = np.zeros(xdata.size)
-        
+
         if yerrcol!= None:
             yerrdata = data[:,yerrcol]
         else:
             yerrdata = np.zeros(ydata.size)
     else:
         _ydata=None
-         
+
     return XYDataSet(xdata, ydata=_ydata, xerr=xerrdata, yerr=yerrdata, data_name=data_name,
                      xname=xname, xunits=xunits, yname=yname, yunits=yunits,
                      is_histogram=is_histogram)
-    
+
 class XYDataSet:
     '''An XYDataSet contains a paired set of Measurement_Array Objects,
     typically, a set of x and y values to be used for a Plot, as well
@@ -403,10 +407,10 @@ class XYDataSet:
     :param bins: The number of bins to plot the histogram data in.
     :type bins: int
     '''
-    
+
     #So that each dataset has a unique name (at least by default):
     unnamed_data_counter=0
-    
+
     def __init__(self, xdata, ydata=None, xerr=None, yerr=None, data_name=None,
                  xname=None, xunits=None, yname=None, yunits=None,
                  is_histogram=False, bins=50):
@@ -427,55 +431,55 @@ class XYDataSet:
             .. nboutput:: ipython3
 
                 Name = x vs. y
-            ''' 
+            '''
             XYDataSet.unnamed_data_counter += 1
         else:
             self.name=data_name
-            
+
         if ydata is None and not is_histogram:
             print("Error, if ydata is not given, explicitly specify that this is a histogram")
-            
+
         elif ydata is None:
             #this is a histogram
-            self.hist_data=xdata        
+            self.hist_data=xdata
             hist, edges = np.histogram(xdata, bins=bins)
             self.hist_bins=edges
             _xdata = edges[:-1]
             _xerr = np.zeros(_xdata.size)
             _ydata = hist
-            _yerr = np.sqrt(hist)        
+            _yerr = np.sqrt(hist)
         else:
             _xdata=xdata
             _xerr=xerr
             _ydata=ydata
             _yerr=yerr
-        
+
         self.x = qe.MeasurementArray(_xdata,error=_xerr, name=xname, units=xunits)
         self.xdata = self.x.means
         self.xerr = self.x.stds
         self.xunits = self.x.get_units_str()
         self.xname = self.x.name
-        
+
         self.y = qe.MeasurementArray(_ydata,error=_yerr, name=yname, units=yunits)
         self.ydata = self.y.means
         self.yerr = self.y.stds
         self.yunits = self.y.get_units_str()
         self.yname = self.y.name
-        
+
         self.is_histogram=is_histogram
         self.bins = bins
-        
+
         if self.x.size != self.y.size:
             print("Error: x and y data should have the same number of points")
             #TODO raise an error!
         else:
             self.npoints = self.x.size
-        
+
         self.xyfitter = []
         self.fit_pars = [] #stored as Measurement_Array
         self.fit_pcov = []
         self.fit_pcorr = []
-        self.fit_function = [] 
+        self.fit_function = []
         self.fit_function_name = []
         self.fit_npars =[]
         self.fit_yres = []
@@ -483,7 +487,7 @@ class XYDataSet:
         self.fit_ndof = []
         self.fit_color = []
         self.nfits=0
-        
+
     def fit(self, model=None, parguess=None, fit_range=None, print_results=True, fitcolor=None, name=None, sigmas=1):
         '''Fit a data set to a model using XYFitter. Everytime this function
         is called on a data set, it adds a new XYFitter to the dataset. This
@@ -527,16 +531,16 @@ class XYDataSet:
             self.fit_pcorr.append(cov2corr(fitter.fit_pcov))
             self.fit_npars.append(fit_pars.size)
             self.fit_yres.append(fitter.fit_yres)
-            self.fit_function.append(fitter.fit_function) 
-            self.fit_function_name.append(fitter.fit_function_name) 
+            self.fit_function.append(fitter.fit_function)
+            self.fit_function_name.append(fitter.fit_function_name)
             self.fit_chi2.append(fitter.fit_chi2)
             self.fit_ndof.append(fitter.fit_ndof)
             self.fit_color.append(fitcolor) # colour of the fit function
             self.nfits += 1
-        
+
             if print_results:
                 self.print_fit_results()
-        
+
             return self.fit_pars[-1]
         else:
             return None
@@ -585,7 +589,7 @@ class XYDataSet:
                              str(self.ydata[ind]) + ' +/- ' + str(self.yerr[ind])])
             df = pd.DataFrame(data, columns=[x.name, y.name], index=['']*len(x))
             print(df)
-    
+
     def print_fit_results(self, fitindex=-1):
         '''Prints the results of a fit. Includes the data name, fit name, fit
         parameter values, correlation matrix and chi-squared.
@@ -606,20 +610,20 @@ class XYDataSet:
             print("no fit results to print")
             return
         print("-----------------Fit results-------------------")
-        print("Fit of ",self.name," to ", self.fit_function_name[fitindex]) 
+        print("Fit of ",self.name," to ", self.fit_function_name[fitindex])
         print("Fit parameters:")
         print(self.fit_pars[fitindex])
         print("\nCorrelation matrix: ")
         print(np.array_str(self.fit_pcorr[fitindex], precision=3))
         print("\nchi2/ndof = {:.2f}/{}".format(self.fit_chi2[fitindex],self.fit_ndof[fitindex]))
         print("---------------End fit results----------------\n")
-    
+
     def __str__(self):
         theString=""
         for i in range(self.xdata.size):
             theString += str(self.x[i])+" , "+str(self.y[i])+"\n"
         return theString
-            
+
     def save_textfile(self, filename="dataset.txt", delim=','):
         '''Save the data set to a file.
 
@@ -642,8 +646,8 @@ class XYDataSet:
         data[:,1]=self.ydata
         data[:,2]=self.xerr
         data[:,3]=self.xerr
-        np.savetxt(filename, data, fmt='%.4f', delimiter=delim)  
-              
+        np.savetxt(filename, data, fmt='%.4f', delimiter=delim)
+
     def clear_fits(self):
         '''Remove all fit records.
 
@@ -661,12 +665,12 @@ class XYDataSet:
         '''
         self.xyfitter = []
         self.fit_pars = []
-        self.fit_function = [] 
+        self.fit_function = []
         self.fit_function_name = []
         self.fit_npars =[]
         self.yres = []
         self.nfits=0
-    
+
     def get_x_range(self, margin=0):
         '''Get range of the x data, including errors and a specified margin.
 
@@ -687,10 +691,10 @@ class XYDataSet:
         if self.is_histogram:
             return [self.xdata.min()-margin,\
                     self.xdata.max()+margin]
-        else:    
+        else:
             return [self.xdata.min()-self.xerr.max()-margin,\
                     self.xdata.max()+self.xerr.max()+margin]
-    
+
     def get_y_range(self, margin=0):
         '''Get range of the y data, including errors and a specified margin.
 
@@ -713,8 +717,8 @@ class XYDataSet:
                     self.ydata.max()+margin]
         else:
             return [self.ydata.min()-self.yerr.max()-margin,\
-                    self.ydata.max()+self.yerr.max()+margin] 
-    
+                    self.ydata.max()+self.yerr.max()+margin]
+
     def get_yres_range(self, margin=0, fitindex=-1):
         '''Get range of the y residuals, including errors and a specified margin.
 
@@ -737,7 +741,7 @@ class XYDataSet:
         '''
         return [self.fit_yres[fitindex].means.min()-self.yerr.max()-margin,\
                 self.fit_yres[fitindex].means.max()+self.yerr.max()+margin]
-    
+
 def cov2corr(pcov):
     '''Return a correlation matrix given a covariance matrix.
 
@@ -750,7 +754,7 @@ def cov2corr(pcov):
     sigmas = np.sqrt(np.diag(pcov))
     dim = sigmas.size
     pcorr = np.ndarray(shape=(dim,dim))
-    
+
     for i in range(dim):
         for j in range(dim):
             pcorr[i][j]=pcov[i][j]
@@ -759,9 +763,9 @@ def cov2corr(pcov):
             else:
                 pcorr[i][j] /= (sigmas[i]*sigmas[j])
     return pcorr
-           
-    
-    
+
+
+
 def num_der(function, point, dx=1e-10):
     '''
     Returns the first order derivative of a function.
@@ -777,4 +781,4 @@ def num_der(function, point, dx=1e-10):
     '''
     import numpy as np
     point = np.array(point)
-    return np.divide(function(point+dx)-function(point), dx)   
+    return np.divide(function(point+dx)-function(point), dx)
