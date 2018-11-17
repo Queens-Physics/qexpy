@@ -38,14 +38,14 @@ __version__ = '1.0.4'
 import qexpy.utils as qu
 import bokeh.io as bi
 
-from qexpy.utils import get_data_from_file
+from qexpy.utils import load_data_from_file
 
 if qu.in_notebook():
     
     qu.mpl_output_notebook() # calls matplotlib inline
     
     bi.output_notebook()
-    qu.bokeh_ouput_notebook_called = True
+    qu.bokeh_output_notebook_called = True
     '''This hack is required as there is a bug in bokeh preventing it
     from knowing that it was in fact loaded.
     '''

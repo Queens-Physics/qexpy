@@ -749,11 +749,11 @@ class Plot:
             self.user_save_filename = input('Enter a filename: ')
             #TODO Decide what to do about this
             #plt.savefig(self.save_filename, bbox_inches='tight')
-        elif not qu.mpl_ouput_notebook_called:
+        elif not qu.mpl_output_notebook_called:
             qu.mpl_output_notebook()
             # This must be the first time calling output_notebook,
             # keep track that it's been called:
-            qu.mpl_ouput_notebook_called = True
+            qu.mpl_output_notebook_called = True
         else:
             pass
         
@@ -1234,11 +1234,11 @@ class Plot:
         if output == 'file' or not qu.in_notebook():
             bi.output_file(self.save_filename,
                            title=self.labels['title'])
-        elif not qu.bokeh_ouput_notebook_called:
+        elif not qu.bokeh_output_notebook_called:
             bi.output_notebook()
             # This must be the first time calling output_notebook,
             # keep track that it's been called:
-            qu.bokeh_ouput_notebook_called = True
+            qu.bokeh_output_notebook_called = True
         else:
             pass        
         
@@ -1355,7 +1355,7 @@ class Plot:
 
         for y_data in lines['y']:
             dashed = 'dashed' if y_data['dashed'] else 'solid'
-            self.bkfigure.line(self.x_range, [y_data['pos']]*2, line_color=y_data[color], line_dash=dashed)
+            self.bkfigure.line(self.x_range, [y_data['pos']]*2, line_color=y_data['color'], line_dash=dashed)
 
     def bk_plot_fit_results_text_box(self, dataset, yoffset=0):
         '''Add a text box with the fit parameters from the last fit to

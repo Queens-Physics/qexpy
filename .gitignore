@@ -3,8 +3,11 @@
 Run Test*
 WorkList.txt
 ToDo*
+.idea
+venv
 *.png
 *.ipynb_checkpoints
 *Plot*
 *.pypirc
 *.DS_Store*
+build
