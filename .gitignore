@@ -11,3 +11,5 @@ venv
 *.pypirc
 *.DS_Store*
 build
+*.egg-info
+dist
