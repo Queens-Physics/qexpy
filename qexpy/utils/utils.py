@@ -2,24 +2,31 @@ import numpy as np
 import re
 
 # Global variable to keep track of whether the output_notebook command was run
-bokeh_output_notebook_called = False
-mpl_output_notebook_called = False
+_mpl_output_notebook_called = False
 
 
-def in_notebook():
-    """Simple function to check if module is loaded in a notebook"""
-    return hasattr(__builtins__, '__IPYTHON__')
+def count_significant_figures(value) -> int:
+    """Counts the number of significant figures for a number
+
+    The input can be either a number or the string representation of a number
+
+    Args:
+        value: the number to be counted
+
+    """
+    try:
+        float(value)
+        # first remove the decimal point
+        str_repr_of_value = str(value).replace(".", "")
+        # then strip the leading 0s
+        str_repr_of_value = re.sub(r"^0*", "", str_repr_of_value)
+        return len(str_repr_of_value)
+    except (ValueError, TypeError):
+        print("Error: invalid input! You can only count the significant figures of a number "
+              "or the string representation of a number.")
 
 
-def mpl_output_notebook():
-    from IPython import get_ipython
-    ipython = get_ipython()
-    # ipython.magic('matplotlib inline')
-    global mpl_output_notebook_called
-    mpl_output_notebook_called = True
-
-
-def load_data_from_file(path, delimiter=','):
+def load_data_from_file(path, delimiter=',') -> np.ndarray:
     """Reads data from a file
 
     Retrieves data from a file, separated with the given delimiter.
@@ -46,9 +53,14 @@ def load_data_from_file(path, delimiter=','):
     return ret
 
 
-# These are used for checking whether something is an instance of an array or a number.
-number_types = (
-    int, float, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
-    np.float32, np.float64)
-int_types = (int, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
-array_types = (tuple, list, np.ndarray)
+def _in_notebook() -> bool:
+    """Simple function to check if module is loaded in a notebook"""
+    return hasattr(__builtins__, '__IPYTHON__')
+
+
+def _mpl_output_notebook():
+    from IPython import get_ipython
+    ipython = get_ipython()
+    # ipython.magic('matplotlib inline')
+    global _mpl_output_notebook_called
+    _mpl_output_notebook_called = True
