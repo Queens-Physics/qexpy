@@ -14,6 +14,7 @@ during operations, error propagation will be automatically completed in the back
 
 import numpy as np
 
+from qexpy.utils.printing import get_printer
 from qexpy.settings.literals import RECORDED
 import qexpy.settings.settings as settings
 
@@ -54,6 +55,18 @@ class ExperimentalValue:
         # TODO: implement smart unit parsing
         self._unit = unit
         self._name = name
+
+    def __str__(self):
+        if isinstance(self, Constant):
+            return ""  # There's no point printing a constant value
+        string = ""
+        # print name of the quantity
+        if self.name:
+            string += self.name + " = "
+        # print the value and error
+        string += self._print_value()
+        # TODO: implement unit printing
+        return string
 
     @property
     def name(self):
@@ -111,6 +124,12 @@ class Measurement(ExperimentalValue):
             print("Error: the relative error has to be a number")
         self._values[RECORDED] = value
 
+    def _print_value(self) -> str:
+        value = self._values[RECORDED]
+        if value[0] == float('inf'):
+            return "inf"
+        return get_printer()(value)
+
 
 class RepeatedMeasurement(Measurement):
     """The result of repeated measurements of the same quantity
@@ -164,6 +183,15 @@ class Function(ExperimentalValue):
             # use global default if not specified
             self._is_error_method_specified = False
             self._error_method = settings.get_error_method()
+
+    def _print_value(self) -> str:
+        if self._is_error_method_specified:
+            value = self._values[self._error_method.value]
+        else:
+            value = self._values[settings.get_error_method().value]
+        if value[0] == float('inf'):
+            return "inf"
+        return get_printer()(value)
 
 
 class Constant(ExperimentalValue):

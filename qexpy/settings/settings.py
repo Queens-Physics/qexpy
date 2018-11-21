@@ -6,13 +6,19 @@ plot settings and error propagation settings
 """
 
 from enum import Enum
-from .literals import ERROR_METHOD, SIG_FIGS, SIG_FIG_MODE, SIG_FIG_VALUE
+from .literals import ERROR_METHOD, PRINT_STYLE, SIG_FIGS, SIG_FIG_MODE, SIG_FIG_VALUE
 
 
 class ErrorMethod(Enum):
     DERIVATIVE = "derivative"
     MIN_MAX = "min_max"
     MONTE_CARLO = "monte_carlo"
+
+
+class PrintStyle(Enum):
+    DEFAULT = "default"
+    LATEX = "latex"
+    SCIENTIFIC = "scientific"
 
 
 class SigFigMode(Enum):
@@ -23,6 +29,7 @@ class SigFigMode(Enum):
 
 config = {
     "error_method": ErrorMethod.DERIVATIVE,
+    "print_style": PrintStyle.DEFAULT,
     "significant_figures": {
         "mode": SigFigMode.AUTOMATIC,
         "value": 1
@@ -50,6 +57,27 @@ def set_error_method(new_method):
 
 def get_error_method() -> ErrorMethod:
     return config[ERROR_METHOD]
+
+
+def set_print_style(new_style):
+    """Sets the format of value strings
+
+    The three available formats are default, latex, and scientific, which can all
+    be found in the enum settings.PrintStyle
+
+    Args:
+        new_style (PrintStyle): the choice of format
+
+    """
+    if not isinstance(new_style, PrintStyle):
+        print("Error: the print styles supported are default, latex, and scientific.\n"
+              "These values are found under the enum settings.PrintStyle")
+    else:
+        config[ERROR_METHOD] = new_style
+
+
+def get_print_style() -> PrintStyle:
+    return config[PRINT_STYLE]
 
 
 def get_sig_fig_mode() -> SigFigMode:
