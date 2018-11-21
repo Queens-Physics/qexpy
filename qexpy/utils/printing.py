@@ -71,7 +71,7 @@ def _scientific_print(value, latex=False) -> str:
     # construct the string to return
     plus_minus_sign = "\pm" if latex else "+/-"
     if number_of_decimals == 0:
-        return "({} {} {}) * 10^{}".format(rounded_value, plus_minus_sign, rounded_error, order_of_value)
+        return "({} {} {}) * 10^{}".format(converted_value, plus_minus_sign, converted_error, order_of_value)
     else:
         return "({:.{num}f} {} {:.{num}f}) * 10^{}".format(converted_value, plus_minus_sign, converted_error,
                                                            order_of_value, num=number_of_decimals)
