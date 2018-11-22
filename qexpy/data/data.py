@@ -3,7 +3,7 @@
 This module contains the base class ExperimentalValue and all its sub-classes. The
 base class represents any object with a value and an uncertainty. An ExperimentalValue
 can be the result of an directly recorded measurement, or the result of an operation
-done with other instances of ExperimentalValue, which are represented by Measurement
+done with other instances of ExperimentalValue, which are represented by MeasuredValue
 and Function.
 
 This module also provides method overloads for different numeric calculations, so that
@@ -14,8 +14,9 @@ during operations, error propagation will be automatically completed in the back
 
 import numpy as np
 
-from qexpy.utils.printing import get_printer
+from qexpy.utils.utils import ARRAY_TYPES, NUMBER_TYPES
 from qexpy.settings.literals import RECORDED
+import qexpy.utils.printing as printing
 import qexpy.settings.settings as settings
 
 
@@ -23,11 +24,11 @@ class ExperimentalValue:
     """Root class for objects with a value and an uncertainty
 
     This class should not be instantiated directly. Use the record_measurement method
-    to create new instances of a Measurement object. The result of operations done with
+    to create new instances of a MeasuredValue object. The result of operations done with
     other ExperimentalValue objects will be recorded as a Function, which is also a
     child of this class.
 
-    An ExperimentalValue instance can hold multiple value-error pairs. For a Measurement
+    An ExperimentalValue instance can hold multiple value-error pairs. For a MeasuredValue
     object, there can only be one value-error pair. However, for Function objects which
     are the results of operations, have three value-error pairs, each the result of a
     different error method
@@ -35,7 +36,7 @@ class ExperimentalValue:
     The values attribute contains either 1 or 3 value-error pairs. A value-error pair is
     represented as a tuple, with the first entry being the value, and the second being the
     uncertainty on the value. The keys indicate the source of the value-error pair.
-    "recorded" suggests that it's a Measurement object with a user recorded value. For
+    "recorded" suggests that it's a MeasuredValue object with a user recorded value. For
     Function objects, there should be 3 value-error pairs, which is the result of three
     different methods for error propagation. Values for the keys can be found in literals
 
@@ -95,11 +96,11 @@ class ExperimentalValue:
         """
 
 
-class Measurement(ExperimentalValue):
+class MeasuredValue(ExperimentalValue):
     """Root class for values with an uncertainty recorded by the user
 
     This class is used to hold raw measurement data recorded by a user. It is not to
-    be instantiated directly. User the record_measurement method instead.
+    be instantiated directly. Use the Measurement method instead.
 
     """
 
@@ -128,16 +129,72 @@ class Measurement(ExperimentalValue):
         value = self._values[RECORDED]
         if value[0] == float('inf'):
             return "inf"
-        return get_printer()(value)
+        return printing.get_printer()(value)
 
 
-class RepeatedMeasurement(Measurement):
-    """The result of repeated measurements of the same quantity
+class RepeatedlyMeasuredValue(MeasuredValue):
+    """The result of repeated measurements of a single quantity
 
     An instance of this class will be created when the user takes multiple measurements
-    of the same quantity.
+    of the same quantity. The mean and standard deviation is used as the value and
+    uncertainty of this measurement. The raw array of measurement data is preserved
 
     """
+
+    __slots__ = "_raw_data"
+
+    def __init__(self, measurement_array, unit, name):
+        super().__init__(unit, name)
+        measurements = np.array(measurement_array)
+        self._values[RECORDED] = (measurements.mean(), measurements.std())
+        self._raw_data = measurements
+
+    def show_histogram(self):
+        """Plots the raw measurement data in a histogram
+
+        For the result of repeated measurements of a single quantity, the raw measurement
+        data is preserved. With this method, you can visualize these values in a histogram.
+        with lines corresponding to the mean and the range covered by one standard deviation
+
+        """
+
+
+# noinspection PyPep8Naming
+def Measurement(*args, **kwargs) -> MeasuredValue:
+    """Records a measurement with uncertainties
+
+    This method is used to create a Measurement object from a single measurement or
+    an array of repeated measurements of a single quantity (if you want them averaged).
+    This method is named upper case because it is a wrapper for constructors, and should
+    look like a constructor from the outside
+
+    When two values are passed to this method, the first argument will be recognized as
+    the value, the second as the uncertainty. If the second value is not provided, the
+    uncertainty is by default set to 0. If a list of values is passed to this method,
+    the mean and standard deviation of the value will be calculated and returned as
+    the value and error of the Measurement object.
+
+    Usage:
+        Measurement(12, 1) -> 12 +/- 1
+        Measurement(12) -> 12 +/- 0
+        Measurement([5.6, 4.8, 6.1, 4.9, 5.1]) -> 5.3000 +/- 0.5431
+
+    You can also specify the name and unit of the value as keyword arguments.
+
+    For example:
+        Measurement(12, 1, name="length", unit="m") -> length = 12 +/- 1 [m]
+
+    """
+
+    if len(args) == 1 and isinstance(args[0], ARRAY_TYPES):
+        return RepeatedlyMeasuredValue(args[0], kwargs["unit"], kwargs["name"])
+    elif len(args) == 1 and isinstance(args[0], NUMBER_TYPES):
+        return MeasuredValue(float(args[0]), 0, kwargs["unit"], kwargs["name"])
+    elif len(args) == 2 and isinstance(args[0], NUMBER_TYPES) and isinstance(args[1], NUMBER_TYPES):
+        return MeasuredValue(float(args[0]), float(args[1]), kwargs["unit"], kwargs["name"])
+    else:
+        print("Error: invalid input! Input must be either a single array of values, or the central value "
+              "and its uncertainty in one measurement")
 
 
 class Function(ExperimentalValue):
@@ -191,7 +248,7 @@ class Function(ExperimentalValue):
             value = self._values[settings.get_error_method().value]
         if value[0] == float('inf'):
             return "inf"
-        return get_printer()(value)
+        return printing.get_printer()(value)
 
 
 class Constant(ExperimentalValue):

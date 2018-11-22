@@ -1,7 +1,6 @@
 import math as m
-from qexpy.settings.settings import PrintStyle, get_print_style
-from qexpy.settings.settings import get_sig_fig_mode, get_sig_fig_value, SigFigMode
-from .utils import count_significant_figures
+import qexpy.settings.settings as settings
+from . import utils
 
 
 def _default_print(value, latex=False) -> str:
@@ -18,7 +17,7 @@ def _default_print(value, latex=False) -> str:
     if value[1] == 0:
         # if the uncertainty is 0, there's no need for further parsing unless there is
         # a requirement on the significant figures of the value
-        if get_sig_fig_mode() == SigFigMode.VALUE:
+        if settings.get_sig_fig_mode() == settings.SigFigMode.VALUE:
             rounded_value, rounded_error = __round_values_to_sig_figs(value)
             return "{} +/- {}".format(rounded_value, rounded_error)
         return "{} +/- {}".format(value[0], value[1])
@@ -99,11 +98,11 @@ def __round_values_to_sig_figs(value) -> tuple:
 
     """
 
-    sig_fig_mode = get_sig_fig_mode()
-    sig_fig_value = get_sig_fig_value()
+    sig_fig_mode = settings.get_sig_fig_mode()
+    sig_fig_value = settings.get_sig_fig_value()
 
     # first find the back-off value for rounding
-    if sig_fig_mode == SigFigMode.AUTOMATIC or sig_fig_mode == SigFigMode.ERROR:
+    if sig_fig_mode == settings.SigFigMode.AUTOMATIC or sig_fig_mode == settings.SigFigMode.ERROR:
         order_of_error = m.floor(m.log10(value[1]))
         back_off = 10 ** (order_of_error - sig_fig_value + 1)
     else:
@@ -134,20 +133,20 @@ def __round_values_to_sig_figs(value) -> tuple:
 def __find_number_of_decimals(value, error) -> int:
     """Finds the correct number of decimal places to show for a value-error pair"""
 
-    sig_fig_mode = get_sig_fig_mode()
-    sig_fig_value = get_sig_fig_value()
+    sig_fig_mode = settings.get_sig_fig_mode()
+    sig_fig_value = settings.get_sig_fig_value()
 
     error_number_of_decimals = __count_number_of_decimals(error)
     value_number_of_decimals = __count_number_of_decimals(value)
     raw_number_of_decimals = max(error_number_of_decimals, value_number_of_decimals)
 
     # check if the current number of significant figures satisfy the settings
-    if sig_fig_mode == SigFigMode.AUTOMATIC or sig_fig_mode == SigFigMode.ERROR:
-        current_sig_figs_of_error = count_significant_figures(error)
+    if sig_fig_mode == settings.SigFigMode.AUTOMATIC or sig_fig_mode == settings.SigFigMode.ERROR:
+        current_sig_figs_of_error = utils.count_significant_figures(error)
         if current_sig_figs_of_error < sig_fig_value:
             return raw_number_of_decimals + (sig_fig_value - current_sig_figs_of_error)
     else:
-        current_sig_figs_of_value = count_significant_figures(value)
+        current_sig_figs_of_value = utils.count_significant_figures(value)
         if current_sig_figs_of_value < sig_fig_value:
             return raw_number_of_decimals + (sig_fig_value - current_sig_figs_of_value)
 
@@ -162,7 +161,7 @@ def __count_number_of_decimals(number) -> int:
     return len(decimal_part)
 
 
-def get_printer(print_style=get_print_style()):
+def get_printer(print_style=settings.get_print_style()):
     """Gets the printer function for the given print style
 
     This method will use the global setting for print style if none is specified
@@ -174,12 +173,12 @@ def get_printer(print_style=get_print_style()):
         the printer function
 
     """
-    if not isinstance(print_style, PrintStyle):
+    if not isinstance(print_style, settings.PrintStyle):
         raise ValueError("Error: the print styles supported are default, latex, and scientific.\n"
                          "These values are found under the enum settings.PrintStyle")
-    if print_style == PrintStyle.DEFAULT:
+    if print_style == settings.PrintStyle.DEFAULT:
         return _default_print
-    elif print_style == PrintStyle.LATEX:
+    elif print_style == settings.PrintStyle.LATEX:
         return _latex_print
     else:
         return _scientific_print

@@ -1,9 +1,11 @@
 import sys
 
-__version__ = '1.0.4'
+__version__ = '2.0.1'
 
 from .utils import load_data_from_file
 from .settings import set_print_style, set_error_method
+
+from .data import Measurement
 
 # Check the python interpreter version
 if sys.version_info[0] < 3:  # No reason to assume a future Python 4 will break comparability.

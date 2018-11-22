@@ -4,6 +4,11 @@ import re
 # Global variable to keep track of whether the output_notebook command was run
 _mpl_output_notebook_called = False
 
+# helper constant for type checking
+ARRAY_TYPES = tuple, list, np.ndarray
+INT_TYPES = int, float, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64
+NUMBER_TYPES = INT_TYPES, np.float16, np.float32, np.float64
+
 
 def count_significant_figures(value) -> int:
     """Counts the number of significant figures for a number
