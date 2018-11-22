@@ -109,21 +109,61 @@ class MeasuredValue(ExperimentalValue):
         self._values[RECORDED] = (value, error)
 
     @property
+    def value(self):
+        """Gets the value for this measurement"""
+        return self._values[RECORDED][0]
+
+    @value.setter
+    def value(self, new_value):
+        """"Modifies the value of a measurement"""
+        if isinstance(new_value, NUMBER_TYPES):
+            self._values[RECORDED] = (new_value, self._values[RECORDED][1])
+        else:
+            print("Error: invalid input! You can only set the value of a measurement to a number")
+            return
+        if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
+            print("Warning: You are trying to modify the value of a repeated measurement. Doing so has "
+                  "caused you to lose the original list of raw measurement data")
+            self.__class__ = MeasuredValue  # casting it to base class
+
+    @property
+    def error(self):
+        """Gets the uncertainty on the measurement"""
+        return self._values[RECORDED][1]
+
+    @error.setter
+    def error(self, new_error):
+        """"Modifies the value of a measurement"""
+        if isinstance(new_error, NUMBER_TYPES) and new_error > 0:
+            self._values[RECORDED] = (self._values[RECORDED][0], new_error)
+        else:
+            print("Error: invalid input! You can only set the error of a measurement to a positive number")
+            return
+        if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
+            print("Warning: You are trying to modify the uncertainty of a repeated measurement. Doing so has "
+                  "caused you to lose the original list of raw measurement data")
+            self.__class__ = MeasuredValue  # casting it to base class
+
+    @property
     def relative_error(self):
-        """Gets the relative error (error/mean) of a Measurement object."""
+        """Gets the relative error (error/mean) of a MeasuredValue object."""
         value = self._values[RECORDED]
         return value[1] / value[0] if value[0] != 0 else 0.
 
     @relative_error.setter
     def relative_error(self, relative_error):
-        """Sets the relative error (error/mean) of a Measurement object."""
+        """Sets the relative error (error/mean) of a MeasuredValue object."""
         value = self._values[RECORDED]
-        try:
+        if isinstance(relative_error, NUMBER_TYPES) and relative_error > 0:
             new_error = value[0] * float(relative_error)
-            value = (value[0], new_error)
-        except (TypeError, ValueError):
-            print("Error: the relative error has to be a number")
-        self._values[RECORDED] = value
+            self._values[RECORDED] = (value[0], new_error)
+        else:
+            print("Error: invalid input! The relative uncertainty of a measurement has to be a positive number")
+            return
+        if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
+            print("Warning: You are trying to modify the uncertainty of a repeated measurement. Doing so has "
+                  "caused you to lose the original list of raw measurement data")
+            self.__class__ = MeasuredValue  # casting it to base class
 
     def _print_value(self) -> str:
         value = self._values[RECORDED]
@@ -149,6 +189,13 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         self._values[RECORDED] = (measurements.mean(), measurements.std())
         self._raw_data = measurements
 
+    @property
+    def raw_data(self):
+        """Gets the raw data that was used to generate this measurement"""
+        from copy import deepcopy
+        # returns a copy of the list so that the original data is not tempered
+        return deepcopy(self._raw_data)
+
     def show_histogram(self):
         """Plots the raw measurement data in a histogram
 
@@ -163,7 +210,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 def Measurement(*args, **kwargs) -> MeasuredValue:
     """Records a measurement with uncertainties
 
-    This method is used to create a Measurement object from a single measurement or
+    This method is used to create a MeasuredValue object from a single measurement or
     an array of repeated measurements of a single quantity (if you want them averaged).
     This method is named upper case because it is a wrapper for constructors, and should
     look like a constructor from the outside
@@ -172,7 +219,7 @@ def Measurement(*args, **kwargs) -> MeasuredValue:
     the value, the second as the uncertainty. If the second value is not provided, the
     uncertainty is by default set to 0. If a list of values is passed to this method,
     the mean and standard deviation of the value will be calculated and returned as
-    the value and error of the Measurement object.
+    the value and error of the MeasuredValue object.
 
     Usage:
         Measurement(12, 1) -> 12 +/- 1
