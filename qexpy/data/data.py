@@ -13,6 +13,7 @@ during operations, error propagation will be automatically completed in the back
 """
 
 import numpy as np
+import warnings
 
 from qexpy.utils.utils import ARRAY_TYPES, NUMBER_TYPES
 from qexpy.settings.literals import RECORDED
@@ -67,6 +68,7 @@ class ExperimentalValue:
         # print the value and error
         string += self._print_value()
         # TODO: implement unit printing
+        string += " [" + self.unit + "]"
         return string
 
     @property
@@ -119,11 +121,10 @@ class MeasuredValue(ExperimentalValue):
         if isinstance(new_value, NUMBER_TYPES):
             self._values[RECORDED] = (new_value, self._values[RECORDED][1])
         else:
-            print("Error: invalid input! You can only set the value of a measurement to a number")
-            return
+            raise ValueError("You can only set the value of a measurement to a number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
-            print("Warning: You are trying to modify the value of a repeated measurement. Doing so has "
-                  "caused you to lose the original list of raw measurement data")
+            warnings.warn("You are trying to modify the value of a repeated measurement. Doing so has "
+                          "caused you to lose the original list of raw measurement data")
             self.__class__ = MeasuredValue  # casting it to base class
 
     @property
@@ -137,10 +138,9 @@ class MeasuredValue(ExperimentalValue):
         if isinstance(new_error, NUMBER_TYPES) and new_error > 0:
             self._values[RECORDED] = (self._values[RECORDED][0], new_error)
         else:
-            print("Error: invalid input! You can only set the error of a measurement to a positive number")
-            return
+            raise ValueError("You can only set the error of a measurement to a positive number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
-            print("Warning: You are trying to modify the uncertainty of a repeated measurement.")
+            warnings.warn("You are trying to modify the uncertainty of a repeated measurement.")
 
     @property
     def relative_error(self):
@@ -156,10 +156,9 @@ class MeasuredValue(ExperimentalValue):
             new_error = value[0] * float(relative_error)
             self._values[RECORDED] = (value[0], new_error)
         else:
-            print("Error: invalid input! The relative uncertainty of a measurement has to be a positive number")
-            return
+            raise ValueError("The relative uncertainty of a measurement has to be a positive number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
-            print("Warning: You are trying to modify the uncertainty of a repeated measurement.")
+            warnings.warn("You are trying to modify the uncertainty of a repeated measurement.")
 
     def _print_value(self) -> str:
         value = self._values[RECORDED]
@@ -262,8 +261,8 @@ def Measurement(*args, **kwargs) -> MeasuredValue:
     elif len(args) == 2 and isinstance(args[0], NUMBER_TYPES) and isinstance(args[1], NUMBER_TYPES):
         return MeasuredValue(float(args[0]), float(args[1]), kwargs["unit"], kwargs["name"])
     else:
-        print("Error: invalid input! Input must be either a single array of values, or the central value "
-              "and its uncertainty in one measurement")
+        raise ValueError("Input must be either a single array of values, or the central value "
+                         "and its uncertainty in one measurement")
 
 
 class Function(ExperimentalValue):
