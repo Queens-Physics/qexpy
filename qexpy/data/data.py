@@ -23,10 +23,10 @@ import qexpy.settings.settings as settings
 class ExperimentalValue:
     """Root class for objects with a value and an uncertainty
 
-    This class should not be instantiated directly. Use the record_measurement method
-    to create new instances of a MeasuredValue object. The result of operations done with
-    other ExperimentalValue objects will be recorded as a Function, which is also a
-    child of this class.
+    This class should not be instantiated directly. Use the Measurement method to create
+    new instances of a MeasuredValue object. The result of operations done with other
+    ExperimentalValue objects will be recorded as a Function, which is also a child of
+    this class.
 
     An ExperimentalValue instance can hold multiple value-error pairs. For a MeasuredValue
     object, there can only be one value-error pair. However, for Function objects which
@@ -140,9 +140,7 @@ class MeasuredValue(ExperimentalValue):
             print("Error: invalid input! You can only set the error of a measurement to a positive number")
             return
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
-            print("Warning: You are trying to modify the uncertainty of a repeated measurement. Doing so has "
-                  "caused you to lose the original list of raw measurement data")
-            self.__class__ = MeasuredValue  # casting it to base class
+            print("Warning: You are trying to modify the uncertainty of a repeated measurement.")
 
     @property
     def relative_error(self):
@@ -161,9 +159,7 @@ class MeasuredValue(ExperimentalValue):
             print("Error: invalid input! The relative uncertainty of a measurement has to be a positive number")
             return
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
-            print("Warning: You are trying to modify the uncertainty of a repeated measurement. Doing so has "
-                  "caused you to lose the original list of raw measurement data")
-            self.__class__ = MeasuredValue  # casting it to base class
+            print("Warning: You are trying to modify the uncertainty of a repeated measurement.")
 
     def _print_value(self) -> str:
         value = self._values[RECORDED]
@@ -176,17 +172,27 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     """The result of repeated measurements of a single quantity
 
     An instance of this class will be created when the user takes multiple measurements
-    of the same quantity. The mean and standard deviation is used as the value and
+    of the same quantity. The mean and error on the mean is used as the value and
     uncertainty of this measurement. The raw array of measurement data is preserved
+
+    The user also has an option of using the standard deviation as the error on this
+    measurement, by using the "use_std_for_uncertainty()" method. To set it back to
+    error on the mean, use "use_error_on_mean_for_uncertainty()"
+
+    The user can also manually set the uncertainty of this object. However, if the user
+    choose to manually override the value of this measurement. The original raw data
+    will be lost, and the instance will be casted to its parent class MeasuredValue
 
     """
 
-    __slots__ = "_raw_data"
+    __slots__ = "_raw_data", "_std", "_error_on_mean"
 
     def __init__(self, measurement_array, unit, name):
         super().__init__(unit, name)
         measurements = np.array(measurement_array)
-        self._values[RECORDED] = (measurements.mean(), measurements.std())
+        self._std = measurements.std()
+        self._error_on_mean = self._std / np.sqrt(measurements.size)
+        self._values[RECORDED] = (measurements.mean(), self._error_on_mean)
         self._raw_data = measurements
 
     @property
@@ -195,6 +201,22 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         from copy import deepcopy
         # returns a copy of the list so that the original data is not tempered
         return deepcopy(self._raw_data)
+
+    @property
+    def std(self):
+        return self._std
+
+    @property
+    def error_on_mean(self):
+        return self._error_on_mean
+
+    def use_std_for_uncertainty(self):
+        value = self._values[RECORDED]
+        self._values[RECORDED] = (value[0], self._std)
+
+    def use_error_on_mean_for_uncertainty(self):
+        value = self._values[RECORDED]
+        self._values[RECORDED] = (value[0], self._error_on_mean)
 
     def show_histogram(self):
         """Plots the raw measurement data in a histogram

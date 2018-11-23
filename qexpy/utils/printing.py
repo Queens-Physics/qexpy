@@ -29,7 +29,7 @@ def _default_print(value, latex=False) -> str:
     number_of_decimals = __find_number_of_decimals(rounded_value, rounded_error)
 
     # construct the string to return
-    plus_minus_sign = "\pm" if latex else "+/-"
+    plus_minus_sign = r"\pm" if latex else "+/-"
     if number_of_decimals == 0:
         return "{} {} {}".format(rounded_value, plus_minus_sign, rounded_error)
     else:
@@ -68,7 +68,7 @@ def _scientific_print(value, latex=False) -> str:
     number_of_decimals = __find_number_of_decimals(converted_value, converted_error)
 
     # construct the string to return
-    plus_minus_sign = "\pm" if latex else "+/-"
+    plus_minus_sign = r"\pm" if latex else "+/-"
     if number_of_decimals == 0:
         return "({} {} {}) * 10^{}".format(converted_value, plus_minus_sign, converted_error, order_of_value)
     else:
