@@ -37,6 +37,14 @@ config = {
 }
 
 
+def reset_default_configuration():
+    """Resets all configurations to their default values"""
+    config[ERROR_METHOD] = ErrorMethod.DERIVATIVE
+    config[PRINT_STYLE] = PrintStyle.DEFAULT
+    config[SIG_FIGS][SIG_FIG_MODE] = SigFigMode.AUTOMATIC
+    config[SIG_FIGS][SIG_FIG_VALUE] = 1
+
+
 def set_error_method(new_method):
     """Sets the preferred error method for values
 
