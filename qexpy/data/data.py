@@ -48,8 +48,6 @@ class ExperimentalValue:
 
     """
 
-    __slots__ = "_values", "_unit", "_name"
-
     def __init__(self, unit="", name=""):
         """Default constructor, not to be called directly"""
 
@@ -106,7 +104,7 @@ class MeasuredValue(ExperimentalValue):
 
     """
 
-    def __init__(self, value, error, unit="", name=""):
+    def __init__(self, value=0.0, error=0.0, unit="", name=""):
         super().__init__(unit, name)
         self._values[RECORDED] = (value, error)
 
@@ -182,12 +180,15 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     choose to manually override the value of this measurement. The original raw data
     will be lost, and the instance will be casted to its parent class MeasuredValue
 
+    Attributes:
+        _std (float): the standard derivative of set of measurements
+        _error_on_mean (float): the error on the mean of the set of measurements
+        _raw_data (np.ndarray): the original list of raw measurements
+
     """
 
-    __slots__ = "_raw_data", "_std", "_error_on_mean"
-
     def __init__(self, measurement_array, unit, name):
-        super().__init__(unit, name)
+        super().__init__(unit=unit, name=name)
         measurements = np.array(measurement_array)
         self._std = measurements.std()
         self._error_on_mean = self._std / np.sqrt(measurements.size)
@@ -228,7 +229,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
 
 # noinspection PyPep8Naming
-def Measurement(*args, **kwargs) -> MeasuredValue:
+def Measurement(*args, **kwargs):
     """Records a measurement with uncertainties
 
     This method is used to create a MeasuredValue object from a single measurement or
@@ -257,7 +258,7 @@ def Measurement(*args, **kwargs) -> MeasuredValue:
     if len(args) == 1 and isinstance(args[0], ARRAY_TYPES):
         return RepeatedlyMeasuredValue(args[0], kwargs["unit"], kwargs["name"])
     elif len(args) == 1 and isinstance(args[0], NUMBER_TYPES):
-        return MeasuredValue(float(args[0]), 0, kwargs["unit"], kwargs["name"])
+        return MeasuredValue(float(args[0]), 0.0, kwargs["unit"], kwargs["name"])
     elif len(args) == 2 and isinstance(args[0], NUMBER_TYPES) and isinstance(args[1], NUMBER_TYPES):
         return MeasuredValue(float(args[0]), float(args[1]), kwargs["unit"], kwargs["name"])
     else:
@@ -277,8 +278,6 @@ class Function(ExperimentalValue):
             this value, false if default was used
 
     """
-
-    __slots__ = "_error_method", "_is_error_method_specified"
 
     def __init__(self, propagated_results, unit="", name="", error_method=None):
         """The default constructor for the result of an operation

@@ -19,8 +19,8 @@ def _default_print(value, latex=False) -> str:
         # a requirement on the significant figures of the value
         if settings.get_sig_fig_mode() == settings.SigFigMode.VALUE:
             rounded_value, rounded_error = __round_values_to_sig_figs(value)
-            return "{} +/- {}".format(rounded_value, rounded_error)
-        return "{} +/- {}".format(value[0], value[1])
+            return "{} +/- {}".format(rounded_value, 0)
+        return "{} +/- {}".format(value[0], 0)
 
     # round the values based on significant digits
     rounded_value, rounded_error = __round_values_to_sig_figs(value)
