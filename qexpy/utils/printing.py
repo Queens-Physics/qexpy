@@ -11,27 +11,28 @@ import qexpy.settings.settings as settings
 from . import utils
 
 
-def _default_print(value, latex=False) -> str:
+def _default_print(value, error, latex=False) -> str:
     """Prints out the value and uncertainty in its default format
 
     Args:
-        value (tuple): the value-error pair to be printed
+        value (float): the value of this quantity
+        error (float): the uncertainty of this quantity
         latex (bool): if the value is to be printed in latex format
 
     Returns:
         The string representation of the value
 
     """
-    if value[1] == 0:
+    if error == 0:
         # if the uncertainty is 0, there's no need for further parsing unless there is
         # a requirement on the significant figures of the value
         if settings.get_sig_fig_mode() == settings.SigFigMode.VALUE:
-            rounded_value, rounded_error = __round_values_to_sig_figs(value)
+            rounded_value, rounded_error = __round_values_to_sig_figs(value, error)
             return "{} +/- {}".format(rounded_value, 0)
-        return "{} +/- {}".format(value[0], 0)
+        return "{} +/- {}".format(value, 0)
 
     # round the values based on significant digits
-    rounded_value, rounded_error = __round_values_to_sig_figs(value)
+    rounded_value, rounded_error = __round_values_to_sig_figs(value, error)
 
     # check if the number of decimals matches the requirement of significant figures
     number_of_decimals = __find_number_of_decimals(rounded_value, rounded_error)
@@ -44,16 +45,17 @@ def _default_print(value, latex=False) -> str:
         return "{:.{num}f} {} {:.{num}f}".format(rounded_value, plus_minus_sign, rounded_error, num=number_of_decimals)
 
 
-def _latex_print(value) -> str:
+def _latex_print(value, error) -> str:
     """Prints out the value and uncertainty in latex format"""
-    return _scientific_print(value, latex=True)
+    return _scientific_print(value, error, latex=True)
 
 
-def _scientific_print(value, latex=False) -> str:
+def _scientific_print(value, error, latex=False) -> str:
     """Prints out the value and uncertainty in scientific notation
 
     Args:
-        value (tuple): the value-error pair to be printed
+        value (float): the value of this quantity
+        error (float): the uncertainty on this quantity
         latex (bool): if the value is to be printed in latex format
 
     Returns:
@@ -61,12 +63,12 @@ def _scientific_print(value, latex=False) -> str:
 
     """
     # find order of magnitude
-    order_of_value = m.floor(m.log10(value[0]))
+    order_of_value = m.floor(m.log10(value))
     if order_of_value == 0:
-        return _default_print(value, latex)
+        return _default_print(value, error, latex)
 
     # round the values based on significant digits
-    rounded_value, rounded_error = __round_values_to_sig_figs(value)
+    rounded_value, rounded_error = __round_values_to_sig_figs(value, error)
 
     # convert to scientific notation
     converted_value = rounded_value / (10 ** order_of_value)
@@ -84,7 +86,7 @@ def _scientific_print(value, latex=False) -> str:
                                                            order_of_value, num=number_of_decimals)
 
 
-def __round_values_to_sig_figs(value) -> tuple:
+def __round_values_to_sig_figs(value, error) -> tuple:
     """Rounds the value and uncertainty based on sig-fig settings
 
     This method works by first finding the order of magnitude for the error, or
@@ -99,7 +101,8 @@ def __round_values_to_sig_figs(value) -> tuple:
     which would result in 12300
 
     Args:
-        value (tuple): the value-error pair to be rounded
+        value (float): the value of the quantity to be rounded
+        error (float): the uncertainty to be rounded
 
     Returns:
         the rounded results for this pair
@@ -111,10 +114,10 @@ def __round_values_to_sig_figs(value) -> tuple:
 
     # first find the back-off value for rounding
     if sig_fig_mode == settings.SigFigMode.AUTOMATIC or sig_fig_mode == settings.SigFigMode.ERROR:
-        order_of_error = m.floor(m.log10(value[1]))
+        order_of_error = m.floor(m.log10(error))
         back_off = 10 ** (order_of_error - sig_fig_value + 1)
     else:
-        order_of_value = m.floor(m.log10(value[0]))
+        order_of_value = m.floor(m.log10(value))
         back_off = 10 ** (order_of_value - sig_fig_value + 1)
 
     # then round the value and error to the same digit
@@ -128,11 +131,11 @@ def __round_values_to_sig_figs(value) -> tuple:
         # in Python, see https://docs.python.org/3.4/tutorial/floatingpoint.html for a more
         # elaborate explanation. The following hack avoids multiplication with a small
         # floating point number by replacing with with regular division
-        rounded_error = round(value[1] / back_off) / (1 / back_off)
-        rounded_value = round(value[0] / back_off) / (1 / back_off)
+        rounded_error = round(error / back_off) / (1 / back_off)
+        rounded_value = round(value / back_off) / (1 / back_off)
     else:
-        rounded_error = round(value[1] / back_off) * back_off
-        rounded_value = round(value[0] / back_off) * back_off
+        rounded_error = round(error / back_off) * back_off
+        rounded_value = round(value / back_off) * back_off
 
     # return the two rounded values as a tuple
     return rounded_value, rounded_error

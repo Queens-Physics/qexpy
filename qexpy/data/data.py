@@ -13,9 +13,11 @@ during operations, error propagation will be automatically completed in the back
 """
 
 import numpy as np
+import numbers
 import warnings
+import uuid
 
-from qexpy.utils.utils import ARRAY_TYPES, NUMBER_TYPES
+from qexpy.utils.utils import ARRAY_TYPES
 from qexpy.settings.literals import RECORDED
 import qexpy.utils.units as units
 import qexpy.utils.printing as printing
@@ -46,15 +48,23 @@ class ExperimentalValue:
         _values (dict): the value-error pairs for this object
         _units (dict): the unit of this value
         _name (str): a name can be given to this value
+        _id (str): the unique id of this instance
 
     """
+
+    register = {}  # module level database for all instantiated ExperimentalValue objects
 
     def __init__(self, unit="", name=""):
         """Default constructor, not to be called directly"""
 
+        # initialize values
         self._values = {}
         self._units = units.parse_units(unit)
         self._name = name
+
+        # register instance in the module level database
+        self._id = uuid.uuid4()
+        ExperimentalValue.register[self._id] = self
 
     def __str__(self):
         if isinstance(self, Constant):
@@ -68,6 +78,24 @@ class ExperimentalValue:
         if len(self._units) > 0:
             string += " [" + self.unit + "]"
         return string
+
+    @property
+    def value(self) -> float:
+        """Default getter for value of the quantity
+
+        This is practically an abstract method, to be overridden by its child classes
+
+        """
+        return 0
+
+    @property
+    def error(self) -> float:
+        """Default getter for uncertainty of the quantity
+
+        This is practically an abstract method, to be overridden by its child classes
+
+        """
+        return 0
 
     @property
     def name(self) -> str:
@@ -90,12 +118,10 @@ class ExperimentalValue:
             self._units = units.parse_units(new_unit)
 
     def _print_value(self) -> str:
-        """Helper method that prints the value-error pair in proper format
-
-        This method is an abstract method. It needs to be overloaded in the children
-        of this base class
-
-        """
+        """Helper method that prints the value-error pair in proper format"""
+        if self.value == float('inf'):
+            return "inf"
+        return printing.get_printer()(self.value, self.error)
 
 
 class MeasuredValue(ExperimentalValue):
@@ -117,8 +143,8 @@ class MeasuredValue(ExperimentalValue):
 
     @value.setter
     def value(self, new_value):
-        """"Modifies the value of a measurement"""
-        if isinstance(new_value, NUMBER_TYPES):
+        """Modifies the value of a measurement"""
+        if isinstance(new_value, numbers.Real):
             self._values[RECORDED] = (new_value, self._values[RECORDED][1])
         else:
             raise ValueError("You can only set the value of a measurement to a number")
@@ -134,8 +160,13 @@ class MeasuredValue(ExperimentalValue):
 
     @error.setter
     def error(self, new_error):
-        """"Modifies the value of a measurement"""
-        if isinstance(new_error, NUMBER_TYPES) and new_error > 0:
+        """Modifies the value of a measurement
+
+        Args:
+            new_error (float): The new uncertainty
+
+        """
+        if isinstance(new_error, numbers.Real) and new_error > 0:
             self._values[RECORDED] = (self._values[RECORDED][0], new_error)
         else:
             raise ValueError("You can only set the error of a measurement to a positive number")
@@ -145,26 +176,23 @@ class MeasuredValue(ExperimentalValue):
     @property
     def relative_error(self) -> float:
         """Gets the relative error (error/mean) of a MeasuredValue object."""
-        value = self._values[RECORDED]
-        return value[1] / value[0] if value[0] != 0 else 0.
+        return self.error / self.value if self.value != 0 else 0.
 
     @relative_error.setter
     def relative_error(self, relative_error):
-        """Sets the relative error (error/mean) of a MeasuredValue object."""
-        value = self._values[RECORDED]
-        if isinstance(relative_error, NUMBER_TYPES) and relative_error > 0:
-            new_error = value[0] * float(relative_error)
-            self._values[RECORDED] = (value[0], new_error)
+        """Sets the relative error (error/mean) of a MeasuredValue object.
+
+        Args:
+            relative_error (float): The new uncertainty
+
+        """
+        if isinstance(relative_error, numbers.Real) and relative_error > 0:
+            new_error = self.value * float(relative_error)
+            self._values[RECORDED] = (self.value, new_error)
         else:
             raise ValueError("The relative uncertainty of a measurement has to be a positive number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
             warnings.warn("You are trying to modify the uncertainty of a repeated measurement.")
-
-    def _print_value(self) -> str:
-        value = self._values[RECORDED]
-        if value[0] == float('inf'):
-            return "inf"
-        return printing.get_printer()(value)
 
 
 class RepeatedlyMeasuredValue(MeasuredValue):
@@ -259,9 +287,9 @@ def Measurement(*args, **kwargs):
 
     if len(args) == 1 and isinstance(args[0], ARRAY_TYPES):
         return RepeatedlyMeasuredValue(args[0], kwargs["unit"], kwargs["name"])
-    elif len(args) == 1 and isinstance(args[0], NUMBER_TYPES):
+    elif len(args) == 1 and isinstance(args[0], numbers.Real):
         return MeasuredValue(float(args[0]), 0.0, kwargs["unit"], kwargs["name"])
-    elif len(args) == 2 and isinstance(args[0], NUMBER_TYPES) and isinstance(args[1], NUMBER_TYPES):
+    elif len(args) == 2 and isinstance(args[0], numbers.Real) and isinstance(args[1], numbers.Real):
         return MeasuredValue(float(args[0]), float(args[1]), kwargs["unit"], kwargs["name"])
     else:
         raise ValueError("Input must be either a single array of values, or the central value "
@@ -310,14 +338,73 @@ class Function(ExperimentalValue):
             self._is_error_method_specified = False
             self._error_method = settings.get_error_method()
 
-    def _print_value(self) -> str:
+    @property
+    def value(self) -> float:
+        """Gets the value for this calculated quantity"""
         if self._is_error_method_specified:
-            value = self._values[self._error_method.value]
+            return self._values[self._error_method.value][0]
         else:
-            value = self._values[settings.get_error_method().value]
-        if value[0] == float('inf'):
-            return "inf"
-        return printing.get_printer()(value)
+            return self._values[settings.get_error_method().value][0]
+
+    @value.setter
+    def value(self, new_value):
+        """Modifies the value of this quantity"""
+        if isinstance(new_value, numbers.Real):
+            self._values = {RECORDED: (new_value, self.error)}  # reset the values of this object
+            # TODO: don't remember to reset the relations between this instance and other values
+            warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
+                          "this value to be regarded as a Measurement and all other information lost")
+            self.__class__ = MeasuredValue  # casting it to MeasuredValue
+        else:
+            raise ValueError("You can only set the value of a ExperimentalValue to a number")
+
+    @property
+    def error(self) -> float:
+        """Gets the uncertainty on the calculated quantity"""
+        if self._is_error_method_specified:
+            return self._values[self._error_method.value][1]
+        else:
+            return self._values[settings.get_error_method().value][1]
+
+    @error.setter
+    def error(self, new_error):
+        """Modifies the uncertainty of this quantity
+
+        Args:
+            new_error (float): The new uncertainty
+
+        """
+        if isinstance(new_error, numbers.Real) and new_error > 0:
+            self._values = {RECORDED: (self.value, new_error)}  # reset the values of this object
+            # TODO: don't remember to reset the relations between this instance and other values
+            warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
+                          "this value to be regarded as a Measurement and all other information lost")
+            self.__class__ = MeasuredValue  # casting it to MeasuredValue
+        else:
+            raise ValueError("You can only set the error of a ExperimentalValue to a positive number")
+
+    @property
+    def relative_error(self) -> float:
+        """Gets the relative error (error/mean) of a Function object."""
+        return self.error / self.value if self.value != 0 else 0.
+
+    @relative_error.setter
+    def relative_error(self, relative_error):
+        """Sets the relative error (error/mean) of a MeasuredValue object.
+
+        Args:
+            relative_error (float): The new uncertainty
+
+        """
+        if isinstance(relative_error, numbers.Real) and relative_error > 0:
+            new_error = self.value * float(relative_error)
+            self._values = {RECORDED: (self.value, new_error)}  # reset the values of this object
+            # TODO: don't remember to reset the relations between this instance and other values
+            warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
+                          "this value to be regarded as a Measurement and all other information lost")
+            self.__class__ = MeasuredValue  # casting it to MeasuredValue
+        else:
+            raise ValueError("The relative uncertainty of a ExperimentalValue has to be a positive number")
 
 
 class Constant(ExperimentalValue):

@@ -95,62 +95,62 @@ class TestPrinter:
 
     def test_default_print(self):
         # printing in default format
-        assert printing._default_print((2, 1)) == "2 +/- 1"
-        assert printing._default_print((2123, 13)) == "2120 +/- 10"
-        assert printing._default_print((2.1, 0.5)) == "2.1 +/- 0.5"
-        assert printing._default_print((2.12, 0.18)) == "2.1 +/- 0.2"
+        assert printing._default_print(2, 1) == "2 +/- 1"
+        assert printing._default_print(2123, 13) == "2120 +/- 10"
+        assert printing._default_print(2.1, 0.5) == "2.1 +/- 0.5"
+        assert printing._default_print(2.12, 0.18) == "2.1 +/- 0.2"
         # printing with significant figure specified for error
         settings.set_sig_figs_for_error(2)
-        assert printing._default_print((2, 1)) == "2.0 +/- 1.0"
-        assert printing._default_print((2.1, 0.5)) == "2.10 +/- 0.50"
-        assert printing._default_print((2.12, 0.22)) == "2.12 +/- 0.22"
-        assert printing._default_print((2.123, 0.123)) == "2.12 +/- 0.12"
+        assert printing._default_print(2, 1) == "2.0 +/- 1.0"
+        assert printing._default_print(2.1, 0.5) == "2.10 +/- 0.50"
+        assert printing._default_print(2.12, 0.22) == "2.12 +/- 0.22"
+        assert printing._default_print(2.123, 0.123) == "2.12 +/- 0.12"
         # printing with significant figure specified for value
         settings.set_sig_figs_for_value(2)
-        assert printing._default_print((2, 1)) == "2.0 +/- 1.0"
-        assert printing._default_print((1231, 0.5)) == "1200 +/- 0"
-        assert printing._default_print((123, 12)) == "120 +/- 10"
+        assert printing._default_print(2, 1) == "2.0 +/- 1.0"
+        assert printing._default_print(1231, 0.5) == "1200 +/- 0"
+        assert printing._default_print(123, 12) == "120 +/- 10"
 
     def test_scientific_print(self):
         # printing in default format
-        assert printing._scientific_print((2.1, 0.5)) == "2.1 +/- 0.5"
-        assert printing._scientific_print((2.12, 0.18)) == "2.1 +/- 0.2"
-        assert printing._scientific_print((2123, 13)) == "(2.12 +/- 0.01) * 10^3"
-        assert printing._scientific_print((0.012312, 0.00334)) == "(1.2 +/- 0.3) * 10^-2"
-        assert printing._scientific_print((120000, 370)) == "(1.200 +/- 0.004) * 10^5"
+        assert printing._scientific_print(2.1, 0.5) == "2.1 +/- 0.5"
+        assert printing._scientific_print(2.12, 0.18) == "2.1 +/- 0.2"
+        assert printing._scientific_print(2123, 13) == "(2.12 +/- 0.01) * 10^3"
+        assert printing._scientific_print(0.012312, 0.00334) == "(1.2 +/- 0.3) * 10^-2"
+        assert printing._scientific_print(120000, 370) == "(1.200 +/- 0.004) * 10^5"
         # printing with significant figure specified for error
         settings.set_sig_figs_for_error(2)
-        assert printing._scientific_print((2.1, 0.5)) == "2.10 +/- 0.50"
-        assert printing._scientific_print((2.12, 0.18)) == "2.12 +/- 0.18"
-        assert printing._scientific_print((2123, 13)) == "(2.123 +/- 0.013) * 10^3"
-        assert printing._scientific_print((0.012312, 0.00334)) == "(1.23 +/- 0.33) * 10^-2"
-        assert printing._scientific_print((120000, 370)) == "(1.2000 +/- 0.0037) * 10^5"
+        assert printing._scientific_print(2.1, 0.5) == "2.10 +/- 0.50"
+        assert printing._scientific_print(2.12, 0.18) == "2.12 +/- 0.18"
+        assert printing._scientific_print(2123, 13) == "(2.123 +/- 0.013) * 10^3"
+        assert printing._scientific_print(0.012312, 0.00334) == "(1.23 +/- 0.33) * 10^-2"
+        assert printing._scientific_print(120000, 370) == "(1.2000 +/- 0.0037) * 10^5"
         # printing with significant figure specified for value
         settings.set_sig_figs_for_value(2)
-        assert printing._scientific_print((2.1, 0.5)) == "2.1 +/- 0.5"
-        assert printing._scientific_print((2.12, 0.18)) == "2.1 +/- 0.2"
-        assert printing._scientific_print((2123, 13)) == "(2.1 +/- 0.0) * 10^3"
-        assert printing._scientific_print((0.012312, 0.00334)) == "(1.2 +/- 0.3) * 10^-2"
-        assert printing._scientific_print((120000, 370)) == "(1.2 +/- 0.0) * 10^5"
+        assert printing._scientific_print(2.1, 0.5) == "2.1 +/- 0.5"
+        assert printing._scientific_print(2.12, 0.18) == "2.1 +/- 0.2"
+        assert printing._scientific_print(2123, 13) == "(2.1 +/- 0.0) * 10^3"
+        assert printing._scientific_print(0.012312, 0.00334) == "(1.2 +/- 0.3) * 10^-2"
+        assert printing._scientific_print(120000, 370) == "(1.2 +/- 0.0) * 10^5"
 
     def test_latex_print(self):
         # printing in default format
-        assert printing._latex_print((2.1, 0.5)) == r"2.1 \pm 0.5"
-        assert printing._latex_print((2.12, 0.18)) == r"2.1 \pm 0.2"
-        assert printing._latex_print((2123, 13)) == r"(2.12 \pm 0.01) * 10^3"
-        assert printing._latex_print((0.012312, 0.00334)) == r"(1.2 \pm 0.3) * 10^-2"
-        assert printing._latex_print((120000, 370)) == r"(1.200 \pm 0.004) * 10^5"
+        assert printing._latex_print(2.1, 0.5) == r"2.1 \pm 0.5"
+        assert printing._latex_print(2.12, 0.18) == r"2.1 \pm 0.2"
+        assert printing._latex_print(2123, 13) == r"(2.12 \pm 0.01) * 10^3"
+        assert printing._latex_print(0.012312, 0.00334) == r"(1.2 \pm 0.3) * 10^-2"
+        assert printing._latex_print(120000, 370) == r"(1.200 \pm 0.004) * 10^5"
         # printing with significant figure specified for error
         settings.set_sig_figs_for_error(2)
-        assert printing._latex_print((2.1, 0.5)) == r"2.10 \pm 0.50"
-        assert printing._latex_print((2.12, 0.18)) == r"2.12 \pm 0.18"
-        assert printing._latex_print((2123, 13)) == r"(2.123 \pm 0.013) * 10^3"
-        assert printing._latex_print((0.012312, 0.00334)) == r"(1.23 \pm 0.33) * 10^-2"
-        assert printing._latex_print((120000, 370)) == r"(1.2000 \pm 0.0037) * 10^5"
+        assert printing._latex_print(2.1, 0.5) == r"2.10 \pm 0.50"
+        assert printing._latex_print(2.12, 0.18) == r"2.12 \pm 0.18"
+        assert printing._latex_print(2123, 13) == r"(2.123 \pm 0.013) * 10^3"
+        assert printing._latex_print(0.012312, 0.00334) == r"(1.23 \pm 0.33) * 10^-2"
+        assert printing._latex_print(120000, 370) == r"(1.2000 \pm 0.0037) * 10^5"
         # printing with significant figure specified for value
         settings.set_sig_figs_for_value(2)
-        assert printing._latex_print((2.1, 0.5)) == r"2.1 \pm 0.5"
-        assert printing._latex_print((2.12, 0.18)) == r"2.1 \pm 0.2"
-        assert printing._latex_print((2123, 13)) == r"(2.1 \pm 0.0) * 10^3"
-        assert printing._latex_print((0.012312, 0.00334)) == r"(1.2 \pm 0.3) * 10^-2"
-        assert printing._latex_print((120000, 370)) == r"(1.2 \pm 0.0) * 10^5"
+        assert printing._latex_print(2.1, 0.5) == r"2.1 \pm 0.5"
+        assert printing._latex_print(2.12, 0.18) == r"2.1 \pm 0.2"
+        assert printing._latex_print(2123, 13) == r"(2.1 \pm 0.0) * 10^3"
+        assert printing._latex_print(0.012312, 0.00334) == r"(1.2 \pm 0.3) * 10^-2"
+        assert printing._latex_print(120000, 370) == r"(1.2 \pm 0.0) * 10^5"
