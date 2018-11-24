@@ -1,3 +1,5 @@
+"""Miscellaneous utility methods"""
+
 import numpy as np
 import re
 

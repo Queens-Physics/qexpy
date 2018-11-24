@@ -17,6 +17,7 @@ import warnings
 
 from qexpy.utils.utils import ARRAY_TYPES, NUMBER_TYPES
 from qexpy.settings.literals import RECORDED
+import qexpy.utils.units as units
 import qexpy.utils.printing as printing
 import qexpy.settings.settings as settings
 
@@ -43,7 +44,7 @@ class ExperimentalValue:
 
     Attributes:
         _values (dict): the value-error pairs for this object
-        _unit (str): the unit of this value
+        _units (dict): the unit of this value
         _name (str): a name can be given to this value
 
     """
@@ -52,8 +53,7 @@ class ExperimentalValue:
         """Default constructor, not to be called directly"""
 
         self._values = {}
-        # TODO: implement smart unit parsing
-        self._unit = unit
+        self._units = units.parse_units(unit)
         self._name = name
 
     def __str__(self):
@@ -65,12 +65,12 @@ class ExperimentalValue:
             string += self.name + " = "
         # print the value and error
         string += self._print_value()
-        # TODO: implement unit printing
-        string += " [" + self.unit + "]"
+        if len(self._units) > 0:
+            string += " [" + self.unit + "]"
         return string
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @name.setter
@@ -79,13 +79,15 @@ class ExperimentalValue:
             self._name = new_name
 
     @property
-    def unit(self):
-        return self._unit
+    def unit(self) -> str:
+        if len(self._units) == 0:
+            return ""
+        return units.construct_unit_string(self._units)
 
     @unit.setter
     def unit(self, new_unit):
         if isinstance(new_unit, str):
-            pass  # TODO: implement unit parsing
+            self._units = units.parse_units(new_unit)
 
     def _print_value(self) -> str:
         """Helper method that prints the value-error pair in proper format
@@ -109,7 +111,7 @@ class MeasuredValue(ExperimentalValue):
         self._values[RECORDED] = (value, error)
 
     @property
-    def value(self):
+    def value(self) -> float:
         """Gets the value for this measurement"""
         return self._values[RECORDED][0]
 
@@ -126,7 +128,7 @@ class MeasuredValue(ExperimentalValue):
             self.__class__ = MeasuredValue  # casting it to base class
 
     @property
-    def error(self):
+    def error(self) -> float:
         """Gets the uncertainty on the measurement"""
         return self._values[RECORDED][1]
 
@@ -141,7 +143,7 @@ class MeasuredValue(ExperimentalValue):
             warnings.warn("You are trying to modify the uncertainty of a repeated measurement.")
 
     @property
-    def relative_error(self):
+    def relative_error(self) -> float:
         """Gets the relative error (error/mean) of a MeasuredValue object."""
         value = self._values[RECORDED]
         return value[1] / value[0] if value[0] != 0 else 0.
@@ -196,18 +198,18 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         self._raw_data = measurements
 
     @property
-    def raw_data(self):
+    def raw_data(self) -> np.ndarray:
         """Gets the raw data that was used to generate this measurement"""
         from copy import deepcopy
         # returns a copy of the list so that the original data is not tempered
         return deepcopy(self._raw_data)
 
     @property
-    def std(self):
+    def std(self) -> float:
         return self._std
 
     @property
-    def error_on_mean(self):
+    def error_on_mean(self) -> float:
         return self._error_on_mean
 
     def use_std_for_uncertainty(self):

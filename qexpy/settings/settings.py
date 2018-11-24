@@ -6,7 +6,7 @@ plot settings and error propagation settings
 """
 
 from enum import Enum
-from .literals import ERROR_METHOD, PRINT_STYLE, SIG_FIGS, SIG_FIG_MODE, SIG_FIG_VALUE
+from .literals import ERROR_METHOD, PRINT_STYLE, SIG_FIGS, SIG_FIG_MODE, SIG_FIG_VALUE, UNIT_STYLE
 
 
 class ErrorMethod(Enum):
@@ -21,6 +21,11 @@ class PrintStyle(Enum):
     SCIENTIFIC = "scientific"
 
 
+class UnitStyle(Enum):
+    FRACTION = "fraction"
+    EXPONENTS = "exponents"
+
+
 class SigFigMode(Enum):
     AUTOMATIC = "automatic"
     VALUE = "value"
@@ -30,6 +35,7 @@ class SigFigMode(Enum):
 config = {
     "error_method": ErrorMethod.DERIVATIVE,
     "print_style": PrintStyle.DEFAULT,
+    "unit_style": UnitStyle.EXPONENTS,
     "significant_figures": {
         "mode": SigFigMode.AUTOMATIC,
         "value": 1
@@ -43,6 +49,7 @@ def reset_default_configuration():
     config[PRINT_STYLE] = PrintStyle.DEFAULT
     config[SIG_FIGS][SIG_FIG_MODE] = SigFigMode.AUTOMATIC
     config[SIG_FIGS][SIG_FIG_VALUE] = 1
+    config[UNIT_STYLE] = UnitStyle.EXPONENTS
 
 
 def set_error_method(new_method):
@@ -78,14 +85,26 @@ def set_print_style(new_style):
 
     """
     if not isinstance(new_style, PrintStyle):
-        print("Error: the print styles supported are default, latex, and scientific.\n"
-              "These values are found under the enum settings.PrintStyle")
+        raise ValueError("The print styles supported are default, latex, and scientific.\n"
+                         "These values are found under the enum settings.PrintStyle")
     else:
         config[ERROR_METHOD] = new_style
 
 
 def get_print_style() -> PrintStyle:
     return config[PRINT_STYLE]
+
+
+def set_unit_style(new_style):
+    if not isinstance(new_style, UnitStyle):
+        raise ValueError("The unit style can be either exponents or fractions. \n"
+                         "The values can be found under the enum settings. UnitStyle")
+    else:
+        config[UNIT_STYLE] = new_style
+
+
+def get_unit_style() -> UnitStyle:
+    return config[UNIT_STYLE]
 
 
 def get_sig_fig_mode() -> SigFigMode:
@@ -104,7 +123,7 @@ def set_sig_figs_for_value(new_sig_figs):
         config[SIG_FIGS][SIG_FIG_VALUE] = sig_figs
         config[SIG_FIGS][SIG_FIG_MODE] = SigFigMode.VALUE
     except (ValueError, TypeError):
-        print("Error: the number of significant figures has to be an integer greater than 0")
+        raise ValueError("The number of significant figures has to be an integer greater than 0")
 
 
 def set_sig_figs_for_error(new_sig_figs):
@@ -115,4 +134,4 @@ def set_sig_figs_for_error(new_sig_figs):
         config[SIG_FIGS][SIG_FIG_VALUE] = sig_figs
         config[SIG_FIGS][SIG_FIG_MODE] = SigFigMode.ERROR
     except (ValueError, TypeError):
-        print("Error: the number of significant figures has to be an integer")
+        raise ValueError("The number of significant figures has to be an integer")

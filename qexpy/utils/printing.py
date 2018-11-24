@@ -1,3 +1,11 @@
+"""Utility methods for printing experimental values
+
+This file contains methods used to find the string representation of a value-error pair.
+It supports printing by default format or in scientific notation. It considers significant
+figures, and common conventions for writing values and uncertainties
+
+"""
+
 import math as m
 import qexpy.settings.settings as settings
 from . import utils
