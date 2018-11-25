@@ -4,7 +4,7 @@ This module contains the base class ExperimentalValue and all its sub-classes. T
 base class represents any object with a value and an uncertainty. An ExperimentalValue
 can be the result of an directly recorded measurement, or the result of an operation
 done with other instances of ExperimentalValue, which are represented by MeasuredValue
-and Function.
+and DerivedValue.
 
 This module also provides method overloads for different numeric calculations, so that
 any instance of ExperimentalValue can be treated as a regular variable in Python, and
@@ -19,6 +19,8 @@ import uuid
 
 from qexpy.utils.utils import ARRAY_TYPES
 from qexpy.settings.literals import RECORDED
+from . import operations as op
+import qexpy.settings.literals as lit
 import qexpy.utils.units as units
 import qexpy.utils.printing as printing
 import qexpy.settings.settings as settings
@@ -29,11 +31,11 @@ class ExperimentalValue:
 
     This class should not be instantiated directly. Use the Measurement method to create
     new instances of a MeasuredValue object. The result of operations done with other
-    ExperimentalValue objects will be recorded as a Function, which is also a child of
+    ExperimentalValue objects will be recorded as a DerivedValue, which is also a child of
     this class.
 
     An ExperimentalValue instance can hold multiple value-error pairs. For a MeasuredValue
-    object, there can only be one value-error pair. However, for Function objects which
+    object, there can only be one value-error pair. However, for DerivedValue objects which
     are the results of operations, have three value-error pairs, each the result of a
     different error method
 
@@ -41,7 +43,7 @@ class ExperimentalValue:
     represented as a tuple, with the first entry being the value, and the second being the
     uncertainty on the value. The keys indicate the source of the value-error pair.
     "recorded" suggests that it's a MeasuredValue object with a user recorded value. For
-    Function objects, there should be 3 value-error pairs, which is the result of three
+    DerivedValue objects, there should be 3 value-error pairs, which is the result of three
     different methods for error propagation. Values for the keys can be found in literals
 
     Attributes:
@@ -52,19 +54,16 @@ class ExperimentalValue:
 
     """
 
-    register = {}  # module level database for all instantiated ExperimentalValue objects
+    _register = {}  # module level database for all instantiated ExperimentalValue objects
 
     def __init__(self, unit="", name=""):
         """Default constructor, not to be called directly"""
 
         # initialize values
         self._values = {}
-        self._units = units.parse_units(unit)
+        self._units = units.parse_units(unit) if unit else {}
         self._name = name
-
-        # register instance in the module level database
         self._id = uuid.uuid4()
-        ExperimentalValue.register[self._id] = self
 
     def __str__(self):
         if isinstance(self, Constant):
@@ -117,11 +116,94 @@ class ExperimentalValue:
         if isinstance(new_unit, str):
             self._units = units.parse_units(new_unit)
 
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __gt__(self, other):
+        return self.value > other.value
+
+    def __ge__(self, other):
+        return self.value >= other.value
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+    def __le__(self, other):
+        return self.value <= other.value
+
+    def __neg__(self):
+        return DerivedValue({
+            lit.OPERATOR: lit.NEG,
+            lit.OPERANDS: [self._id]
+        })
+
+    def __add__(self, other):
+        return DerivedValue({
+            lit.OPERATOR: lit.ADD,
+            lit.OPERANDS: [self._id, ExperimentalValue._wrap_operand(other)._id]
+        })
+
+    def __sub__(self, other):
+        return DerivedValue({
+            lit.OPERATOR: lit.SUB,
+            lit.OPERANDS: [self._id, ExperimentalValue._wrap_operand(other)._id]
+        })
+
+    def __mul__(self, other):
+        return DerivedValue({
+            lit.OPERATOR: lit.MUL,
+            lit.OPERANDS: [self._id, ExperimentalValue._wrap_operand(other)._id]
+        })
+
+    def __truediv__(self, other):
+        return DerivedValue({
+            lit.OPERATOR: lit.DIV,
+            lit.OPERANDS: [self._id, ExperimentalValue._wrap_operand(other)._id]
+        })
+
+    def derivative(self, other):
+        """Finds the derivative with respect to another ExperimentalValue
+
+        This method is usually called from a DerivedValue object. When you take the derivative
+        of a measured value with respect to anything other than itself, the return value should
+        be 0. The derivative of any quantity with respect to itself is always 1
+
+        Args:
+            other (ExperimentalValue): the other ExperimentalValue
+
+        """
+        return 1 if self._id == other._id else 0
+
+    def get_units(self):
+        from copy import deepcopy
+        return deepcopy(self._units)
+
     def _print_value(self) -> str:
         """Helper method that prints the value-error pair in proper format"""
         if self.value == float('inf'):
             return "inf"
         return printing.get_printer()(self.value, self.error)
+
+    @classmethod
+    def _wrap_operand(cls, operand):
+        """Make sure that the operand is an ExperimentalValue
+
+        This method is used in derivative calculations. When traversing through the syntax
+        tree. If the children of a node is a string, assume the string is the unique ID of
+        another ExperimentalValue, and find the reference to that value in the register.
+        If the children is a number, wrap the number with a Constant object
+
+        """
+        if isinstance(operand, list):
+            return list(map(cls._wrap_operand, operand))
+        elif isinstance(operand, uuid.UUID) or isinstance(operand, str):
+            return cls._register[operand]
+        elif isinstance(operand, numbers.Real):
+            return Constant(operand)
+        elif isinstance(operand, ExperimentalValue):
+            return operand
+        else:
+            raise Exception("The operand: {} of this operation is invalid!".format(operand))
 
 
 class MeasuredValue(ExperimentalValue):
@@ -135,6 +217,9 @@ class MeasuredValue(ExperimentalValue):
     def __init__(self, value=0.0, error=0.0, unit="", name=""):
         super().__init__(unit, name)
         self._values[RECORDED] = (value, error)
+
+        # register value in module level register
+        ExperimentalValue._register[self._id] = self
 
     @property
     def value(self) -> float:
@@ -285,50 +370,56 @@ def Measurement(*args, **kwargs):
 
     """
 
+    unit = kwargs["unit"] if "unit" in kwargs else ""
+    name = kwargs["name"] if "name" in kwargs else ""
+
     if len(args) == 1 and isinstance(args[0], ARRAY_TYPES):
-        return RepeatedlyMeasuredValue(args[0], kwargs["unit"], kwargs["name"])
+        return RepeatedlyMeasuredValue(args[0], unit, name)
     elif len(args) == 1 and isinstance(args[0], numbers.Real):
-        return MeasuredValue(float(args[0]), 0.0, kwargs["unit"], kwargs["name"])
+        return MeasuredValue(float(args[0]), 0.0, unit, name)
     elif len(args) == 2 and isinstance(args[0], numbers.Real) and isinstance(args[1], numbers.Real):
-        return MeasuredValue(float(args[0]), float(args[1]), kwargs["unit"], kwargs["name"])
+        return MeasuredValue(float(args[0]), float(args[1]), unit, name)
     else:
         raise ValueError("Input must be either a single array of values, or the central value "
                          "and its uncertainty in one measurement")
 
 
-class Function(ExperimentalValue):
+class DerivedValue(ExperimentalValue):
     """The result of operations done with other ExperimentalValue objects
 
     This class is not to be instantiated directly. It will be created when operations
-    are done on other ExperimentalValue objects
+    are done on other ExperimentalValue objects. The error of the DerivedValue object will
+    be propagated from the original ExperimentalValue objects.
+
+    The DerivedValue object stores information about how it is obtained in the "_formula"
+    attribute as an expression tree. The nodes of the expression tree are the operators,
+    and the leaves are the operands, which are the unique IDs of instances of the
+    ExperimentalValue class
 
     Attributes:
         _error_method (ErrorMethod): the error method used for this value
         _is_error_method_specified (bool): true if the user specified an error method for
             this value, false if default was used
+        _formula (dict): the formula of this object
 
     """
 
-    def __init__(self, propagated_results, unit="", name="", error_method=None):
+    def __init__(self, formula, unit="", name="", error_method=None):
         """The default constructor for the result of an operation
 
-        The argument for this constructor, "propagated_results" is an dictionary object
-        with three entries. The keys should be DERIVATIVE_PROPAGATED, MIN_MAX_PROPAGATED,
-        MONTE_CARLO_PROPAGATED, and the entries are tuples representing the value-error
-        pairs resulting from each error method.
-
-        There is no check for the validity of the input argument, since this method will
-        not be called by a user. A developer is expected to pass legal arguments to this
-        constructor.
+        The operation is stored as a syntax tree in the "_formula" attribute.
 
         Args:
-            propagated_results (dict): Three value-error pairs for three error methods
+            formula (dict): the formula organized as a tree
             unit (str): The unit of the value
             name (str): The name of this value
 
         """
         super().__init__(unit, name)
-        self._values = propagated_results
+
+        # register value in module level register
+        ExperimentalValue._register[self._id] = self
+
         # set default error method for this value
         if error_method:
             self._is_error_method_specified = True
@@ -337,6 +428,11 @@ class Function(ExperimentalValue):
             # use global default if not specified
             self._is_error_method_specified = False
             self._error_method = settings.get_error_method()
+        self._formula = formula
+
+        # propagate results
+        self._values = op.execute(formula[lit.OPERATOR], ExperimentalValue._wrap_operand(formula[lit.OPERANDS]))
+        self._units = op.propagate_units(formula[lit.OPERATOR], ExperimentalValue._wrap_operand(formula[lit.OPERANDS]))
 
     @property
     def value(self) -> float:
@@ -370,6 +466,8 @@ class Function(ExperimentalValue):
     def error(self, new_error):
         """Modifies the uncertainty of this quantity
 
+        This is not recommended. Doing so will cause this object to be casted to MeasuredValue
+
         Args:
             new_error (float): The new uncertainty
 
@@ -385,15 +483,17 @@ class Function(ExperimentalValue):
 
     @property
     def relative_error(self) -> float:
-        """Gets the relative error (error/mean) of a Function object."""
+        """Gets the relative error (error/mean) of a DerivedValue object."""
         return self.error / self.value if self.value != 0 else 0.
 
     @relative_error.setter
     def relative_error(self, relative_error):
-        """Sets the relative error (error/mean) of a MeasuredValue object.
+        """Sets the relative error (error/mean) of a DerivedValue object.
+
+        This is not recommended. Doing so will cause this object to be casted to MeasuredValue
 
         Args:
-            relative_error (float): The new uncertainty
+            relative_error (float): The new relative uncertainty
 
         """
         if isinstance(relative_error, numbers.Real) and relative_error > 0:
@@ -406,6 +506,21 @@ class Function(ExperimentalValue):
         else:
             raise ValueError("The relative uncertainty of a ExperimentalValue has to be a positive number")
 
+    def derivative(self, other):
+        """Finds the derivative with respect to another ExperimentalValue
+
+        Args:
+            other (ExperimentalValue): the other value
+
+        """
+
+        if self._id == other._id:
+            return 1  # the derivative of anything with respect to itself is 1
+        root_operator = self._formula[lit.OPERATOR]
+        raw_operands = self._formula[lit.OPERANDS]
+        operands = list(map(ExperimentalValue._wrap_operand, raw_operands))
+        return op.differentiator(root_operator)(other._id, *operands)
+
 
 class Constant(ExperimentalValue):
     """A value with no uncertainty
@@ -415,6 +530,16 @@ class Constant(ExperimentalValue):
     objects can be combined.
 
     """
+
+    def __init__(self, value, unit="", name=""):
+        super().__init__(unit=unit, name=name)
+        if isinstance(value, numbers.Real):
+            self._values[RECORDED] = (value, 0)
+        else:
+            raise ValueError("The value must be a number")
+
+    def derivative(self, other):
+        return 0  # the derivative of a constant with respect to anything is 0
 
 
 class MeasurementArray(np.ndarray):

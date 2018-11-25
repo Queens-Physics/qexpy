@@ -32,7 +32,7 @@ class TestMeasuredValue:
         assert str(measurement) == "test = 12.3 +/- 0.2 [m]"
 
     def test_modify_values_of_measurement(self):
-        measurement = q.Measurement(12.34, 0.23, unit="m", name="test")
+        measurement = q.Measurement(12.34, 0.23)
         measurement.value = 15.234
         assert measurement.value == 15.234
         measurement.error = 0.05
@@ -40,6 +40,8 @@ class TestMeasuredValue:
         measurement.relative_error = 0.05
         assert measurement.relative_error == 0.05
         assert measurement.error == 0.7617
+        measurement.name = "test"
+        measurement.unit = "m"
         assert str(measurement) == "test = 15.2 +/- 0.8 [m]"
 
 

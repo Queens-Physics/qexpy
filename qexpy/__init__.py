@@ -3,7 +3,10 @@ import sys
 __version__ = '2.0.1'
 
 from .utils import load_data_from_file
-from .settings import set_print_style, set_error_method, reset_default_configuration
+from .settings import reset_default_configuration
+from .settings import set_print_style, set_unit_style
+from .settings import set_error_method, set_sig_figs_for_value, set_sig_figs_for_error
+from .settings import UnitStyle, PrintStyle, ErrorMethod
 
 from .data import Measurement
 

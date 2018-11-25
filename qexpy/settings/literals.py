@@ -6,13 +6,38 @@ and prevents typos
 
 """
 
+# value types
 RECORDED = "recorded"
 DERIVATIVE_PROPAGATED = "derivative"
-MIN_MAX_PROPAGATED = "min_max"
 MONTE_CARLO_PROPAGATED = "monte_carlo"
+CONSTANT = "constant"
+
+# global settings
 ERROR_METHOD = "error_method"
 PRINT_STYLE = "print_style"
 UNIT_STYLE = "unit_style"
 SIG_FIGS = "significant_figures"
 SIG_FIG_MODE = "mode"
 SIG_FIG_VALUE = "value"
+
+# operators
+OPERATOR = "operator"
+OPERANDS = "operands"
+NEG = "neg"
+ADD = "add"
+SUB = "sub"
+MUL = "mul"
+DIV = "div"
+SQRT = "sqrt"
+SIN = "sin"
+COS = "cos"
+TAN = "tan"
+SEC = "sec"
+CSC = "csc"
+COT = "cot"
+POW = "pow"
+EXP = "exp"
+LOG = "log"
+ASIN = "asin"
+ACOS = "acos"
+ATAN = "atan"

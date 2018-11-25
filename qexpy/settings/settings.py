@@ -11,7 +11,6 @@ from .literals import ERROR_METHOD, PRINT_STYLE, SIG_FIGS, SIG_FIG_MODE, SIG_FIG
 
 class ErrorMethod(Enum):
     DERIVATIVE = "derivative"
-    MIN_MAX = "min_max"
     MONTE_CARLO = "monte_carlo"
 
 

@@ -172,7 +172,7 @@ def __parse_unit_list_into_tree(tokens) -> dict:
 
     if len(operands) > 1:
         raise RuntimeError("Fail to construct AST. Please report the bug to the package github page")
-    return operands[0]
+    return operands[0] if operands else {}
 
 
 def __evaluate_unit_tree(tree) -> dict:
