@@ -82,10 +82,12 @@ def __parse_unit_string_to_list(unit_string) -> list:
     This list is later on used to construct the abstract syntax tree
 
     """
-    tokens = []
+    tokens_list = []
     temp_string = ""
     bracket_on = False
-    for char in unit_string:
+
+    def __process_char_for_list(char, tokens):
+        nonlocal bracket_on, temp_string
         top = tokens[len(tokens) - 1] if len(tokens) > 0 else ""
         if char == "(":
             bracket_on = True
@@ -100,9 +102,10 @@ def __parse_unit_string_to_list(unit_string) -> list:
             tokens.append(char)
         elif len(tokens) == 0 and not re.match(r"[a-zA-Z]", char):
             raise ValueError("The unit string must start with a unit")
-        elif isinstance(top, list):
-            # do not try to combine a bracket expression with anything
+        elif re.match(r"[*/]", char):
             tokens.append(char)
+        elif isinstance(top, list):
+            __process_char_for_list(char, top)
         elif re.fullmatch(r"[a-zA-Z]+", top) and re.match(r"[a-zA-Z]", char):
             tokens.pop()
             tokens.append(top + char)  # combining letters of the same unit
@@ -110,11 +113,16 @@ def __parse_unit_string_to_list(unit_string) -> list:
             tokens.pop()
             tokens.append(top + char)  # combining the negative sign and the exponent number
         elif re.fullmatch(r"-?[1-9]*", top) and re.match(r"[a-zA-Z]", char):
-            tokens.append("*")
-            tokens.append(char)  # append implicit multiplication signs
+            exponent = tokens.pop()
+            exp_sign = tokens.pop()
+            unit = tokens.pop()
+            tokens.append([unit, exp_sign, exponent, "*", char])
         else:
             tokens.append(char)
-    return tokens
+
+    for character in unit_string:
+        __process_char_for_list(character, tokens_list)
+    return tokens_list
 
 
 def __parse_unit_list_into_tree(tokens) -> dict:

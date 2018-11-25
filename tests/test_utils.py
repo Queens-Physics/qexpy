@@ -85,6 +85,17 @@ class TestUtils:
         assert units.parse_units("kg*m^2/(s^2A^2)") == units_for_henry
         assert units.parse_units("kg^1m^2s^-2A^-2") == units_for_henry
         assert units.parse_units("(kg*m^2)/s^2A^2") == units_for_henry
+        assert units.parse_units("kg/s^2A^2*m^2") == units_for_henry
+        units_for_idk_what = {
+            "kg": 4,
+            "m": 2,
+            "L": -3,
+            "Pa": 1,
+            "s": -2,
+            "A": -2
+        }
+        assert units.parse_units("m^2kg^4/s^2A^2L^3*Pa") == units_for_idk_what
+        assert units.parse_units("kg^2m^2*Pa/(s^2A^2*L^3)")
 
 
 class TestPrinter:
