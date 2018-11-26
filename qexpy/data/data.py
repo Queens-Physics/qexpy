@@ -1,14 +1,8 @@
-"""Module containing the data structure for experimental values
+"""Module containing data structures for experimental values
 
-This module contains the base class ExperimentalValue and all its sub-classes. The
-base class represents any object with a value and an uncertainty. An ExperimentalValue
-can be the result of an directly recorded measurement, or the result of an operation
-done with other instances of ExperimentalValue, which are represented by MeasuredValue
-and DerivedValue.
-
-This module also provides method overloads for different numeric calculations, so that
-any instance of ExperimentalValue can be treated as a regular variable in Python, and
-during operations, error propagation will be automatically completed in the background.
+This module defines ExperimentalValue and all its sub-classes. Experimental measurements
+and their corresponding uncertainties can be recorded as an instance of this class. Any
+operations done with these instances will have the properly propagated errors and units.
 
 """
 
@@ -18,7 +12,6 @@ import warnings
 import uuid
 
 from qexpy.utils.utils import ARRAY_TYPES
-from qexpy.settings.literals import RECORDED
 from . import operations as op
 import qexpy.settings.literals as lit
 import qexpy.utils.units as units
@@ -29,32 +22,26 @@ import qexpy.settings.settings as settings
 class ExperimentalValue:
     """Root class for objects with a value and an uncertainty
 
-    This class should not be instantiated directly. Use the Measurement method to create
-    new instances of a MeasuredValue object. The result of operations done with other
-    ExperimentalValue objects will be recorded as a DerivedValue, which is also a child of
-    this class.
+    This class is practically an abstract class, not to be instantiated directly. An instance
+    of this class can store multiple value-error pairs. These pairs are stored in the _values
+    attribute, a dictionary object where the key of the entries indicate the source of this
+    value-error pair. "recorded" indicates that this value and its uncertainty are directly
+    recorded by the user. Another two possible keys are "derivative" and "monte-carlo", which
+    represents the two error methods by which the uncertainties can be propagated.
 
-    An ExperimentalValue instance can hold multiple value-error pairs. For a MeasuredValue
-    object, there can only be one value-error pair. However, for DerivedValue objects which
-    are the results of operations, have three value-error pairs, each the result of a
-    different error method
-
-    The values attribute contains either 1 or 3 value-error pairs. A value-error pair is
-    represented as a tuple, with the first entry being the value, and the second being the
-    uncertainty on the value. The keys indicate the source of the value-error pair.
-    "recorded" suggests that it's a MeasuredValue object with a user recorded value. For
-    DerivedValue objects, there should be 3 value-error pairs, which is the result of three
-    different methods for error propagation. Values for the keys can be found in literals
+    This class also contains functionality for automatic unit tracking. Each instance of this
+    class has a _units attribute, a dictionary object which stores each separate independent
+    unit this value has, and their exponents. For example, the unit for Newton (kg*m^2/s^2) is
+    stored as {"kg": 1, "m": 2, "s": -2}. These units will be tracked and propagated during
+    any operation done with objects of this class.
 
     Attributes:
-        _values (dict): the value-error pairs for this object
-        _units (dict): the unit of this value
-        _name (str): a name can be given to this value
-        _id (str): the unique id of this instance
+        _values (dict): the values and uncertainties on the values
+        _units (dict): the units and their exponents
+        _name (str): the name of this instance
+        _id (UUID): the unique ID of an instance
 
     """
-
-    _register = {}  # module level database for all instantiated ExperimentalValue objects
 
     def __init__(self, unit="", name=""):
         """Default constructor, not to be called directly"""
@@ -66,15 +53,13 @@ class ExperimentalValue:
         self._id = uuid.uuid4()
 
     def __str__(self):
-        if isinstance(self, Constant):
-            return ""  # There's no point printing a constant value
         string = ""
         # print name of the quantity
         if self.name:
             string += self.name + " = "
         # print the value and error
         string += self._print_value()
-        if len(self._units) > 0:
+        if self._units:
             string += " [" + self.unit + "]"
         return string
 
@@ -107,7 +92,7 @@ class ExperimentalValue:
 
     @property
     def unit(self) -> str:
-        if len(self._units) == 0:
+        if not self._units:
             return ""
         return units.construct_unit_string(self._units)
 
@@ -117,48 +102,48 @@ class ExperimentalValue:
             self._units = units.parse_units(new_unit)
 
     def __eq__(self, other):
-        return self.value == other.value
+        return self.value == ExperimentalValue._wrap_operand(other).value
 
     def __gt__(self, other):
-        return self.value > other.value
+        return self.value > ExperimentalValue._wrap_operand(other).value
 
     def __ge__(self, other):
-        return self.value >= other.value
+        return self.value >= ExperimentalValue._wrap_operand(other).value
 
     def __lt__(self, other):
-        return self.value < other.value
+        return self.value < ExperimentalValue._wrap_operand(other).value
 
     def __le__(self, other):
-        return self.value <= other.value
+        return self.value <= ExperimentalValue._wrap_operand(other).value
 
     def __neg__(self):
         return DerivedValue({
             lit.OPERATOR: lit.NEG,
-            lit.OPERANDS: [self._id]
+            lit.OPERANDS: [self]
         })
 
     def __add__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.ADD,
-            lit.OPERANDS: [self._id, ExperimentalValue._wrap_operand(other)._id]
+            lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
         })
 
     def __sub__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.SUB,
-            lit.OPERANDS: [self._id, ExperimentalValue._wrap_operand(other)._id]
+            lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
         })
 
     def __mul__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.MUL,
-            lit.OPERANDS: [self._id, ExperimentalValue._wrap_operand(other)._id]
+            lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
         })
 
     def __truediv__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.DIV,
-            lit.OPERANDS: [self._id, ExperimentalValue._wrap_operand(other)._id]
+            lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
         })
 
     def derivative(self, other):
@@ -175,6 +160,7 @@ class ExperimentalValue:
         return 1 if self._id == other._id else 0
 
     def get_units(self):
+        """Gets the raw dictionary object for units"""
         from copy import deepcopy
         return deepcopy(self._units)
 
@@ -186,51 +172,40 @@ class ExperimentalValue:
 
     @classmethod
     def _wrap_operand(cls, operand):
-        """Make sure that the operand is an ExperimentalValue
+        """Wraps the operand of an operation in an ExperimentalValue instance
 
-        This method is used in derivative calculations. When traversing through the syntax
-        tree. If the children of a node is a string, assume the string is the unique ID of
-        another ExperimentalValue, and find the reference to that value in the register.
-        If the children is a number, wrap the number with a Constant object
+        If the operand is a number, construct a Constant object with this value.
 
         """
-        if isinstance(operand, list):
-            return list(map(cls._wrap_operand, operand))
-        elif isinstance(operand, uuid.UUID) or isinstance(operand, str):
-            return cls._register[operand]
-        elif isinstance(operand, numbers.Real):
+        if isinstance(operand, numbers.Real):
             return Constant(operand)
-        elif isinstance(operand, ExperimentalValue):
+        elif isinstance(operand, cls):
             return operand
         else:
-            raise Exception("The operand: {} of this operation is invalid!".format(operand))
+            raise ValueError("The operand {} for this operation is invalid!".format(operand))
 
 
 class MeasuredValue(ExperimentalValue):
-    """Root class for values with an uncertainty recorded by the user
+    """Class for user recorded experimental values with an uncertainty
 
-    This class is used to hold raw measurement data recorded by a user. It is not to
-    be instantiated directly. Use the Measurement method instead.
+    This class is not to be instantiated directly, use the Measurement method instead.
 
     """
 
     def __init__(self, value=0.0, error=0.0, unit="", name=""):
         super().__init__(unit, name)
-        self._values[RECORDED] = (value, error)
-
-        # register value in module level register
-        ExperimentalValue._register[self._id] = self
+        self._values[lit.RECORDED] = (value, error)
 
     @property
     def value(self) -> float:
         """Gets the value for this measurement"""
-        return self._values[RECORDED][0]
+        return self._values[lit.RECORDED][0]
 
     @value.setter
     def value(self, new_value):
         """Modifies the value of a measurement"""
         if isinstance(new_value, numbers.Real):
-            self._values[RECORDED] = (new_value, self._values[RECORDED][1])
+            self._values[lit.RECORDED] = (new_value, self._values[lit.RECORDED][1])
         else:
             raise ValueError("You can only set the value of a measurement to a number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
@@ -241,7 +216,7 @@ class MeasuredValue(ExperimentalValue):
     @property
     def error(self) -> float:
         """Gets the uncertainty on the measurement"""
-        return self._values[RECORDED][1]
+        return self._values[lit.RECORDED][1]
 
     @error.setter
     def error(self, new_error):
@@ -252,7 +227,7 @@ class MeasuredValue(ExperimentalValue):
 
         """
         if isinstance(new_error, numbers.Real) and new_error > 0:
-            self._values[RECORDED] = (self._values[RECORDED][0], new_error)
+            self._values[lit.RECORDED] = (self._values[lit.RECORDED][0], new_error)
         else:
             raise ValueError("You can only set the error of a measurement to a positive number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
@@ -273,7 +248,7 @@ class MeasuredValue(ExperimentalValue):
         """
         if isinstance(relative_error, numbers.Real) and relative_error > 0:
             new_error = self.value * float(relative_error)
-            self._values[RECORDED] = (self.value, new_error)
+            self._values[lit.RECORDED] = (self.value, new_error)
         else:
             raise ValueError("The relative uncertainty of a measurement has to be a positive number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
@@ -281,15 +256,16 @@ class MeasuredValue(ExperimentalValue):
 
 
 class RepeatedlyMeasuredValue(MeasuredValue):
-    """The result of repeated measurements of a single quantity
+    """Class to store the result of repeated measurements on a single quantity
 
-    An instance of this class will be created when the user takes multiple measurements
-    of the same quantity. The mean and error on the mean is used as the value and
-    uncertainty of this measurement. The raw array of measurement data is preserved
+    An instance of this class is created when the user takes multiple measurements of a
+    single quantity. The mean and error on the mean is used as the default value and
+    error of this measurement. This class is a sub-class of MeasuredValue, and it is
+    treated as one. However, it preserves the array of raw measurements for analysis
 
-    The user also has an option of using the standard deviation as the error on this
+    he user also has an option of using the standard deviation as the error on this
     measurement, by using the "use_std_for_uncertainty()" method. To set it back to
-    error on the mean, use "use_error_on_mean_for_uncertainty()"
+    error on the mean, use "use_error_on_mean_for_uncertainty()".
 
     The user can also manually set the uncertainty of this object. However, if the user
     choose to manually override the value of this measurement. The original raw data
@@ -307,7 +283,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         measurements = np.array(measurement_array)
         self._std = measurements.std()
         self._error_on_mean = self._std / np.sqrt(measurements.size)
-        self._values[RECORDED] = (measurements.mean(), self._error_on_mean)
+        self._values[lit.RECORDED] = (measurements.mean(), self._error_on_mean)
         self._raw_data = measurements
 
     @property
@@ -326,12 +302,12 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         return self._error_on_mean
 
     def use_std_for_uncertainty(self):
-        value = self._values[RECORDED]
-        self._values[RECORDED] = (value[0], self._std)
+        value = self._values[lit.RECORDED]
+        self._values[lit.RECORDED] = (value[0], self._std)
 
     def use_error_on_mean_for_uncertainty(self):
-        value = self._values[RECORDED]
-        self._values[RECORDED] = (value[0], self._error_on_mean)
+        value = self._values[lit.RECORDED]
+        self._values[lit.RECORDED] = (value[0], self._error_on_mean)
 
     def show_histogram(self):
         """Plots the raw measurement data in a histogram
@@ -355,8 +331,7 @@ def Measurement(*args, **kwargs):
     When two values are passed to this method, the first argument will be recognized as
     the value, the second as the uncertainty. If the second value is not provided, the
     uncertainty is by default set to 0. If a list of values is passed to this method,
-    the mean and standard deviation of the value will be calculated and returned as
-    the value and error of the MeasuredValue object.
+    the mean and standard deviation of the value will be calculated and preserved.
 
     Usage:
         Measurement(12, 1) -> 12 +/- 1
@@ -417,9 +392,6 @@ class DerivedValue(ExperimentalValue):
         """
         super().__init__(unit, name)
 
-        # register value in module level register
-        ExperimentalValue._register[self._id] = self
-
         # set default error method for this value
         if error_method:
             self._is_error_method_specified = True
@@ -431,8 +403,8 @@ class DerivedValue(ExperimentalValue):
         self._formula = formula
 
         # propagate results
-        self._values = op.execute(formula[lit.OPERATOR], ExperimentalValue._wrap_operand(formula[lit.OPERANDS]))
-        self._units = op.propagate_units(formula[lit.OPERATOR], ExperimentalValue._wrap_operand(formula[lit.OPERANDS]))
+        self._values = op.execute(formula[lit.OPERATOR], formula[lit.OPERANDS])
+        self._units = op.propagate_units(formula[lit.OPERATOR], formula[lit.OPERANDS])
 
     @property
     def value(self) -> float:
@@ -446,7 +418,7 @@ class DerivedValue(ExperimentalValue):
     def value(self, new_value):
         """Modifies the value of this quantity"""
         if isinstance(new_value, numbers.Real):
-            self._values = {RECORDED: (new_value, self.error)}  # reset the values of this object
+            self._values = {lit.RECORDED: (new_value, self.error)}  # reset the values of this object
             # TODO: don't remember to reset the relations between this instance and other values
             warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
                           "this value to be regarded as a Measurement and all other information lost")
@@ -473,7 +445,7 @@ class DerivedValue(ExperimentalValue):
 
         """
         if isinstance(new_error, numbers.Real) and new_error > 0:
-            self._values = {RECORDED: (self.value, new_error)}  # reset the values of this object
+            self._values = {lit.RECORDED: (self.value, new_error)}  # reset the values of this object
             # TODO: don't remember to reset the relations between this instance and other values
             warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
                           "this value to be regarded as a Measurement and all other information lost")
@@ -498,7 +470,7 @@ class DerivedValue(ExperimentalValue):
         """
         if isinstance(relative_error, numbers.Real) and relative_error > 0:
             new_error = self.value * float(relative_error)
-            self._values = {RECORDED: (self.value, new_error)}  # reset the values of this object
+            self._values = {lit.RECORDED: (self.value, new_error)}  # reset the values of this object
             # TODO: don't remember to reset the relations between this instance and other values
             warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
                           "this value to be regarded as a Measurement and all other information lost")
@@ -534,9 +506,18 @@ class Constant(ExperimentalValue):
     def __init__(self, value, unit="", name=""):
         super().__init__(unit=unit, name=name)
         if isinstance(value, numbers.Real):
-            self._values[RECORDED] = (value, 0)
+            self._values[lit.RECORDED] = (value, 0)
+            print(self.value)
         else:
             raise ValueError("The value must be a number")
+
+    @property
+    def value(self):
+        return self._values[lit.RECORDED][0]
+
+    @property
+    def error(self):
+        return 0
 
     def derivative(self, other):
         return 0  # the derivative of a constant with respect to anything is 0

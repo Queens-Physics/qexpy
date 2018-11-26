@@ -17,6 +17,15 @@ class TestOperands:
     def reset_environment(self):
         q.reset_default_configuration()
 
+    def test_value_comparison(self):
+        a = q.Measurement(4, 0.5, unit="m")
+        b = q.Measurement(10, 2, unit="m")
+        assert a < b
+        assert a > 2
+        assert 3 < b
+        assert a == 4
+        assert 10 == b
+
     def test_elementary_operations(self):
         q.set_unit_style(q.UnitStyle.FRACTION)
         q.set_sig_figs_for_error(2)
