@@ -36,11 +36,23 @@ class TestOperands:
         assert c.value == 14
         assert c.error == pytest.approx(2.0615528128088303)
         assert str(c) == "14.0 +/- 2.1 [m]"
+        c2 = a + 2
+        assert c2.value == 6
+        assert c2.error == 0.5
+        c3 = 5 + a
+        assert c3.value == 9
+        assert c3.error == 0.5
 
         h = b - a
         assert h.value == 6
         assert h.error == pytest.approx(2.0615528128088303)
         assert str(h) == "6.0 +/- 2.1 [m]"
+        h1 = a - 2
+        assert h1.value == 2
+        assert h1.error == 0.5
+        h2 = 5 - a
+        assert h2.value == 1
+        assert h2.error == 0.5
 
         f = q.Measurement(4, 0.5, unit="kg*m/s^2")
         d = q.Measurement(10, 2, unit="m")
@@ -48,6 +60,10 @@ class TestOperands:
         assert e.value == 40
         assert e.error == pytest.approx(9.433981132056603)
         assert str(e) == "40.0 +/- 9.4 [kg⋅m^2/s^2]"
+        e1 = f * 2
+        assert e1.value == 8
+        e2 = 2 * f
+        assert e2.value == 8
 
         s = q.Measurement(10, 2, unit="m")
         t = q.Measurement(4, 0.5, unit="s")
@@ -55,3 +71,7 @@ class TestOperands:
         assert v.value == 2.5
         assert v.error == pytest.approx(0.5896238207535377)
         assert str(v) == "2.50 +/- 0.59 [m/s]"
+        v1 = 20 / s
+        assert v1.value == 2
+        v2 = s / 2
+        assert v2.value == 5

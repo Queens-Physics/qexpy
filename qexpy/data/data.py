@@ -128,10 +128,22 @@ class ExperimentalValue:
             lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
         })
 
+    def __radd__(self, other):
+        return DerivedValue({
+            lit.OPERATOR: lit.ADD,
+            lit.OPERANDS: [ExperimentalValue._wrap_operand(other), self]
+        })
+
     def __sub__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.SUB,
             lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
+        })
+
+    def __rsub__(self, other):
+        return DerivedValue({
+            lit.OPERATOR: lit.SUB,
+            lit.OPERANDS: [ExperimentalValue._wrap_operand(other), self]
         })
 
     def __mul__(self, other):
@@ -140,10 +152,22 @@ class ExperimentalValue:
             lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
         })
 
+    def __rmul__(self, other):
+        return DerivedValue({
+            lit.OPERATOR: lit.MUL,
+            lit.OPERANDS: [ExperimentalValue._wrap_operand(other), self]
+        })
+
     def __truediv__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.DIV,
             lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
+        })
+
+    def __rtruediv__(self, other):
+        return DerivedValue({
+            lit.OPERATOR: lit.DIV,
+            lit.OPERANDS: [ExperimentalValue._wrap_operand(other), self]
         })
 
     def derivative(self, other):
@@ -507,7 +531,6 @@ class Constant(ExperimentalValue):
         super().__init__(unit=unit, name=name)
         if isinstance(value, numbers.Real):
             self._values[lit.RECORDED] = (value, 0)
-            print(self.value)
         else:
             raise ValueError("The value must be a number")
 
