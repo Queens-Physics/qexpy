@@ -7,11 +7,12 @@ operations done with these instances will have the properly propagated errors an
 """
 
 import numpy as np
+import math as m
 import numbers
 import warnings
 import uuid
 
-from qexpy.utils.utils import ARRAY_TYPES
+import qexpy.utils.utils as utils
 from . import operations as op
 import qexpy.settings.literals as lit
 import qexpy.utils.units as units
@@ -102,19 +103,19 @@ class ExperimentalValue:
             self._units = units.parse_units(new_unit)
 
     def __eq__(self, other):
-        return self.value == ExperimentalValue._wrap_operand(other).value
+        return self.value == _wrap_operand(other).value
 
     def __gt__(self, other):
-        return self.value > ExperimentalValue._wrap_operand(other).value
+        return self.value > _wrap_operand(other).value
 
     def __ge__(self, other):
-        return self.value >= ExperimentalValue._wrap_operand(other).value
+        return self.value >= _wrap_operand(other).value
 
     def __lt__(self, other):
-        return self.value < ExperimentalValue._wrap_operand(other).value
+        return self.value < _wrap_operand(other).value
 
     def __le__(self, other):
-        return self.value <= ExperimentalValue._wrap_operand(other).value
+        return self.value <= _wrap_operand(other).value
 
     def __neg__(self):
         return DerivedValue({
@@ -125,50 +126,61 @@ class ExperimentalValue:
     def __add__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.ADD,
-            lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
+            lit.OPERANDS: [self, _wrap_operand(other)]
         })
 
     def __radd__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.ADD,
-            lit.OPERANDS: [ExperimentalValue._wrap_operand(other), self]
+            lit.OPERANDS: [_wrap_operand(other), self]
         })
 
     def __sub__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.SUB,
-            lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
+            lit.OPERANDS: [self, _wrap_operand(other)]
         })
 
     def __rsub__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.SUB,
-            lit.OPERANDS: [ExperimentalValue._wrap_operand(other), self]
+            lit.OPERANDS: [_wrap_operand(other), self]
         })
 
     def __mul__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.MUL,
-            lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
+            lit.OPERANDS: [self, _wrap_operand(other)]
         })
 
     def __rmul__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.MUL,
-            lit.OPERANDS: [ExperimentalValue._wrap_operand(other), self]
+            lit.OPERANDS: [_wrap_operand(other), self]
         })
 
     def __truediv__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.DIV,
-            lit.OPERANDS: [self, ExperimentalValue._wrap_operand(other)]
+            lit.OPERANDS: [self, _wrap_operand(other)]
         })
 
     def __rtruediv__(self, other):
         return DerivedValue({
             lit.OPERATOR: lit.DIV,
-            lit.OPERANDS: [ExperimentalValue._wrap_operand(other), self]
+            lit.OPERANDS: [_wrap_operand(other), self]
         })
+
+    def scale(self, factor, update_units=True):
+        """Scale the value and error of this instance by a factor
+
+        This method can be used to scale up or down a value, usually due to the change of
+        unit (for example, change from using [m] to using [mm]. The uncertainty of the value
+        will be updated accordingly. By default, the units will be updated if applicable.
+        This feature can be disabled by passing update_units=False
+
+        """
+        # TODO: this is cool , implement this
 
     def derivative(self, other):
         """Finds the derivative with respect to another ExperimentalValue
@@ -193,20 +205,6 @@ class ExperimentalValue:
         if self.value == float('inf'):
             return "inf"
         return printing.get_printer()(self.value, self.error)
-
-    @classmethod
-    def _wrap_operand(cls, operand):
-        """Wraps the operand of an operation in an ExperimentalValue instance
-
-        If the operand is a number, construct a Constant object with this value.
-
-        """
-        if isinstance(operand, numbers.Real):
-            return Constant(operand)
-        elif isinstance(operand, cls):
-            return operand
-        else:
-            raise ValueError("The operand {} for this operation is invalid!".format(operand))
 
 
 class MeasuredValue(ExperimentalValue):
@@ -306,7 +304,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         super().__init__(unit=unit, name=name)
         measurements = np.array(measurement_array)
         self._std = measurements.std()
-        self._error_on_mean = self._std / np.sqrt(measurements.size)
+        self._error_on_mean = self._std / m.sqrt(measurements.size)
         self._values[lit.RECORDED] = (measurements.mean(), self._error_on_mean)
         self._raw_data = measurements
 
@@ -372,7 +370,7 @@ def Measurement(*args, **kwargs):
     unit = kwargs["unit"] if "unit" in kwargs else ""
     name = kwargs["name"] if "name" in kwargs else ""
 
-    if len(args) == 1 and isinstance(args[0], ARRAY_TYPES):
+    if len(args) == 1 and isinstance(args[0], utils.ARRAY_TYPES):
         return RepeatedlyMeasuredValue(args[0], unit, name)
     elif len(args) == 1 and isinstance(args[0], numbers.Real):
         return MeasuredValue(float(args[0]), 0.0, unit, name)
@@ -514,7 +512,7 @@ class DerivedValue(ExperimentalValue):
             return 1  # the derivative of anything with respect to itself is 1
         root_operator = self._formula[lit.OPERATOR]
         raw_operands = self._formula[lit.OPERANDS]
-        operands = list(map(ExperimentalValue._wrap_operand, raw_operands))
+        operands = list(map(_wrap_operand, raw_operands))
         return op.differentiator(root_operator)(other._id, *operands)
 
 
@@ -553,3 +551,16 @@ class MeasurementArray(np.ndarray):
     fitting, and plotting.
 
     """
+
+def _wrap_operand(operand):
+    """Wraps the operand of an operation in an ExperimentalValue instance
+
+    If the operand is a number, construct a Constant object with this value.
+
+    """
+    if isinstance(operand, numbers.Real):
+        return Constant(operand)
+    elif isinstance(operand, ExperimentalValue):
+        return operand
+    else:
+        raise ValueError("The operand {} for this operation is invalid!".format(operand))

@@ -95,7 +95,7 @@ class TestUtils:
             "A": -2
         }
         assert units.parse_units("m^2kg^4/s^2A^2L^3*Pa") == units_for_idk_what
-        assert units.parse_units("kg^2m^2*Pa/(s^2A^2*L^3)")
+        assert units.parse_units("kg^4m^2*Pa/(s^2A^2*L^3)") == units_for_idk_what
 
 
 class TestPrinter:
