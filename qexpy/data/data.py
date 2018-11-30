@@ -42,6 +42,10 @@ class ExperimentalValue:
         _name (str): the name of this instance
         _id (UUID): the unique ID of an instance
 
+    TODO:
+        Implement smart unit tracking.
+        Find better way of tracking relationships between values
+
     """
 
     def __init__(self, unit="", name=""):
@@ -198,6 +202,7 @@ class ExperimentalValue:
     def get_units(self):
         """Gets the raw dictionary object for units"""
         from copy import deepcopy
+        # use deep copy because a dictionary object is mutable
         return deepcopy(self._units)
 
     def _print_value(self) -> str:
@@ -217,6 +222,7 @@ class MeasuredValue(ExperimentalValue):
     def __init__(self, value=0.0, error=0.0, unit="", name=""):
         super().__init__(unit, name)
         self._values[lit.RECORDED] = (value, error)
+        ExperimentalValue._register[self._id] = self
 
     @property
     def value(self) -> float:
@@ -280,18 +286,16 @@ class MeasuredValue(ExperimentalValue):
 class RepeatedlyMeasuredValue(MeasuredValue):
     """Class to store the result of repeated measurements on a single quantity
 
-    An instance of this class is created when the user takes multiple measurements of a
-    single quantity. The mean and error on the mean is used as the default value and
-    error of this measurement. This class is a sub-class of MeasuredValue, and it is
-    treated as one. However, it preserves the array of raw measurements for analysis
+    This class is instantiated when the user takes multiple measurements on a single quantity.
+    It is just like any regular MeasuredValue object, with the original array of measurements
+    preserved as "raw_data".
 
-    he user also has an option of using the standard deviation as the error on this
-    measurement, by using the "use_std_for_uncertainty()" method. To set it back to
-    error on the mean, use "use_error_on_mean_for_uncertainty()".
+    The mean and error on the mean is used as the default value and error of this measurement.
+    The user also has an option of using the standard deviation as the error on this measurement.
 
-    The user can also manually set the uncertainty of this object. However, if the user
-    choose to manually override the value of this measurement. The original raw data
-    will be lost, and the instance will be casted to its parent class MeasuredValue
+    The user can also manually set the uncertainty of this object. However, if the user choose
+    to manually override the value of this measurement. The original raw data will be lost, and
+    the instance will be casted to its parent class MeasuredValue
 
     Attributes:
         _std (float): the standard derivative of set of measurements
@@ -345,15 +349,18 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 def Measurement(*args, **kwargs):
     """Records a measurement with uncertainties
 
-    This method is used to create a MeasuredValue object from a single measurement or
-    an array of repeated measurements of a single quantity (if you want them averaged).
-    This method is named upper case because it is a wrapper for constructors, and should
-    look like a constructor from the outside
+    This method is used to create a MeasuredValue object from a single measurement or an array
+    of repeated measurements on a single quantity (if you want them averaged). This method is
+    named upper case because it is a wrapper for constructors, and should look like a constructor
+    from the outside
 
-    When two values are passed to this method, the first argument will be recognized as
-    the value, the second as the uncertainty. If the second value is not provided, the
-    uncertainty is by default set to 0. If a list of values is passed to this method,
-    the mean and standard deviation of the value will be calculated and preserved.
+    When two values are passed to this method, the first argument will be recognized as the value,
+    the second as the uncertainty. If the second value is not provided, the uncertainty is by
+    default set to 0. If a list of values is passed to this method, the mean and standard deviation
+    of the value will be calculated and preserved.
+
+    TODO:
+        Enable users to add uncertainties to an array of measurements for a single quantity
 
     Usage:
         Measurement(12, 1) -> 12 +/- 1
@@ -382,16 +389,16 @@ def Measurement(*args, **kwargs):
 
 
 class DerivedValue(ExperimentalValue):
-    """The result of operations done with other ExperimentalValue objects
+    """Values derived from operations with other experimental values
 
-    This class is not to be instantiated directly. It will be created when operations
-    are done on other ExperimentalValue objects. The error of the DerivedValue object will
-    be propagated from the original ExperimentalValue objects.
+    This class is not to be instantiated directly. It will be created when operations are done
+    on other ExperimentalValue objects. The error of the DerivedValue object will be propagated
+    from the original ExperimentalValue objects.
 
-    The DerivedValue object stores information about how it is obtained in the "_formula"
-    attribute as an expression tree. The nodes of the expression tree are the operators,
-    and the leaves are the operands, which are the unique IDs of instances of the
-    ExperimentalValue class
+    The DerivedValue object is preserves information on how it was derived. This is stored in the
+    "_formula" attribute, which is a dictionary object with the operator and the operands specified.
+    If the operands are also DerivedValues, their formula can also be accessed, which in some way
+    works like a syntax tree
 
     Attributes:
         _error_method (ErrorMethod): the error method used for this value
@@ -413,6 +420,7 @@ class DerivedValue(ExperimentalValue):
 
         """
         super().__init__(unit, name)
+        ExperimentalValue._register[self._id] = self
 
         # set default error method for this value
         if error_method:
@@ -555,7 +563,8 @@ class MeasurementArray(np.ndarray):
 def _wrap_operand(operand):
     """Wraps the operand of an operation in an ExperimentalValue instance
 
-    If the operand is a number, construct a Constant object with this value.
+    If the operand is a number, construct a Constant object with this value. If the operand
+    is an ExperimentalValue object, return the object directly.
 
     """
     if isinstance(operand, numbers.Real):

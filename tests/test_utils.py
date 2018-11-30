@@ -38,7 +38,7 @@ class TestUtils:
         units_for_newton = {
             "kg": 1,
             "m": 2,
-            "s": -3
+            "s": -2
         }
         units_for_henry = {
             "kg": 1,
@@ -55,13 +55,13 @@ class TestUtils:
             "s": -2
         }
         # for exponent style printing
-        assert units.construct_unit_string(units_for_newton) == "kg⋅m^2⋅s^-3"
+        assert units.construct_unit_string(units_for_newton) == "kg⋅m^2⋅s^-2"
         assert units.construct_unit_string(units_for_henry) == "kg⋅m^2⋅s^-2⋅A^-2"
         assert units.construct_unit_string(units_for_idk_what) == "kg⋅m^2"
         assert units.construct_unit_string(units_for_another_idk_what) == "kg^-1⋅s^-2"
         # for fraction style printing
         settings.set_unit_style(settings.UnitStyle.FRACTION)
-        assert units.construct_unit_string(units_for_newton) == "kg⋅m^2/s^3"
+        assert units.construct_unit_string(units_for_newton) == "kg⋅m^2/s^2"
         assert units.construct_unit_string(units_for_henry) == "kg⋅m^2/(s^2⋅A^2)"
         assert units.construct_unit_string(units_for_idk_what) == "kg⋅m^2"
         assert units.construct_unit_string(units_for_another_idk_what) == "1/(kg⋅s^2)"
