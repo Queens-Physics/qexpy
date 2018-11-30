@@ -12,6 +12,11 @@ DERIVATIVE_PROPAGATED = "derivative"
 MONTE_CARLO_PROPAGATED = "monte_carlo"
 CONSTANT = "constant"
 
+# data fields
+COVARIANCE = "covariance"
+CORRELATION = "correlation"
+VALUES = "values"
+
 # global settings
 ERROR_METHOD = "error_method"
 PRINT_STYLE = "print_style"

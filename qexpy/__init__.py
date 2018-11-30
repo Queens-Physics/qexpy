@@ -9,6 +9,7 @@ from .settings import set_error_method, set_sig_figs_for_value, set_sig_figs_for
 from .settings import UnitStyle, PrintStyle, ErrorMethod
 
 from .data import Measurement
+from .data import get_covariance, set_covariance
 
 # Check the python interpreter version
 if sys.version_info[0] < 3:  # No reason to assume a future Python 4 will break comparability.

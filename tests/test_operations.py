@@ -11,7 +11,7 @@ import pytest
 import qexpy as q
 
 
-class TestOperands:
+class TestArithmetic:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):

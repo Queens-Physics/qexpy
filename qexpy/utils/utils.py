@@ -58,6 +58,11 @@ def load_data_from_file(path, delimiter=',') -> np.ndarray:
     return ret
 
 
+def calculate_covariance(arr_x, arr_y):
+    """Calculates the covariance of two arrays"""
+    return 1 / (len(arr_x) - 1) * sum(((x - arr_x.mean()) * (y - arr_y.mean()) for x, y in zip(arr_x, arr_y)))
+
+
 def _in_notebook() -> bool:
     """Simple function to check if module is loaded in a notebook"""
     return hasattr(__builtins__, '__IPYTHON__')

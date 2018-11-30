@@ -81,3 +81,12 @@ class TestRepeatedlyMeasuredValue:
         with pytest.raises(AttributeError):
             # the object is no longer a RepeatedlyMeasuredValue
             print(measurement.raw_data)
+
+    def test_covariance(self):
+        # create values to test
+        a = q.Measurement([1, 1.2, 1.3, 1.4])
+        b = q.Measurement([2, 2.1, 3, 2.3])
+        # declare covariance relationship
+        q.set_covariance(a, b)
+        # verify covariance calculations
+        assert q.get_covariance(b, a) == pytest.approx(0.0416667)

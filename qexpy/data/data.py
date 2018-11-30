@@ -48,6 +48,9 @@ class ExperimentalValue:
 
     """
 
+    _register = {}  # module level database for instantiated MeasuredValues and DerivedValues
+    _correlations = {}  # database for correlation between values
+
     def __init__(self, unit="", name=""):
         """Default constructor, not to be called directly"""
 
@@ -210,6 +213,74 @@ class ExperimentalValue:
         if self.value == float('inf'):
             return "inf"
         return printing.get_printer()(self.value, self.error)
+
+    @classmethod
+    def set_covariance(cls, a, b, cov):
+        """sets a covariance between two ExperimentalValue objects
+
+        Args:
+            a (ExperimentalValue): the first ExperimentalValue object
+            b (ExperimentalValue): the second ExperimentalValue object
+            cov (float): the covariance factor
+
+        """
+        id_string = "_".join(sorted(map(str, [a._id, b._id])))
+        if id_string in ExperimentalValue._correlations:
+            ExperimentalValue._correlations[id_string][lit.COVARIANCE] = cov
+        else:
+            ExperimentalValue._correlations[id_string] = {
+                lit.VALUES: (a, b),
+                lit.COVARIANCE: cov
+            }
+
+    @classmethod
+    def set_correlation(cls, a, b, cor):
+        """sets a correlation factor between two ExperimentalValue objects
+
+        Args:
+            a (ExperimentalValue): the first ExperimentalValue object
+            b (ExperimentalValue): the second ExperimentalValue object
+            cor (float): the correlation factor
+
+        """
+        id_string = "_".join(sorted(map(str, [a._id, b._id])))
+        if id_string in ExperimentalValue._correlations:
+            ExperimentalValue._correlations[id_string][lit.CORRELATION] = cor
+        else:
+            ExperimentalValue._correlations[id_string] = {
+                lit.VALUES: (a, b),
+                lit.CORRELATION: cor
+            }
+
+    @classmethod
+    def get_covariance(cls, a, b) -> float:
+        """Gets the covariance factor between two values
+
+        Args:
+            a (ExperimentalValue): the first ExperimentalValue object
+            b (ExperimentalValue): the second ExperimentalValue object
+
+        """
+        id_string = "_".join(sorted(map(str, [a._id, b._id])))
+        if id_string in cls._correlations:
+            return cls._correlations[id_string][lit.COVARIANCE]
+        else:
+            return 0
+
+    @classmethod
+    def get_correlation(cls, a, b) -> float:
+        """Gets the correlation factor between two values
+
+        Args:
+            a (ExperimentalValue): the first ExperimentalValue object
+            b (ExperimentalValue): the second ExperimentalValue object
+
+        """
+        id_string = "_".join(sorted(map(str, [a._id, b._id])))
+        if id_string in cls._correlations:
+            return cls._correlations[id_string][lit.CORRELATION]
+        else:
+            return 0
 
 
 class MeasuredValue(ExperimentalValue):
@@ -559,6 +630,59 @@ class MeasurementArray(np.ndarray):
     fitting, and plotting.
 
     """
+
+
+def set_covariance(a, b, cov=None):
+    """Sets the covariance of two ExperimentalValues
+
+    Users can manually set the covariance of two ExperimentalValue objects. If the two objects
+    are both RepeatedMeasurement with raw_data of the same length, the user can omit the input
+    value, and the covariance will be calculated automatically. If a value is specified, the
+    calculated value will be overridden with the user specified value
+
+    Once the covariance is set or calculated, it will be stored in a module level register for
+    easy reference during error propagation. By default the error propagation process assumes
+    that the covariance between any two values is 0, unless specified or calculated
+
+    Args:
+        a (ExperimentalValue): an instances of ExperimentalValue
+        b (ExperimentalValue: an instances of ExperimentalValue
+        cov (float): the new covariance value
+
+    """
+    if not isinstance(a, ExperimentalValue) or not isinstance(b, ExperimentalValue):
+        raise ValueError("You can only set the covariance between two ExperimentalValue objects")
+    if a.error == 0 or b.error == 0:
+        raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
+    if isinstance(a, RepeatedlyMeasuredValue) and isinstance(b, RepeatedlyMeasuredValue):
+        covariance = cov
+        if len(a.raw_data) == len(b.raw_data) and cov is None:
+            covariance = utils.calculate_covariance(a.raw_data, b.raw_data)
+        elif len(a.raw_data) != len(b.raw_data) and cov is None:
+            raise ValueError("The two arrays of repeated measurements are not of the same length")
+        ExperimentalValue.set_covariance(a, b, covariance)
+        ExperimentalValue.set_correlation(a, b, covariance / (a.std * b.std))
+    elif cov is None:
+        raise ValueError("The covariance value is not provided")
+    elif isinstance(a, DerivedValue) or isinstance(b, DerivedValue):
+        raise ValueError("It doesn't make sense to set covariance between calculated quantities")
+    else:
+        ExperimentalValue.set_covariance(a, b, cov)
+        ExperimentalValue.set_correlation(a, b, cov / (a.error * b.error))
+
+
+def get_covariance(a, b) -> float:
+    """Finds the covariance of two ExperimentalValues"""
+    if isinstance(a, uuid.UUID) and isinstance(b, uuid.UUID):
+        a = ExperimentalValue._register[a]
+        b = ExperimentalValue._register[b]
+    if a.error == 0 or b.error == 0:
+        return 0  # constants don't correlate with anyone
+    if isinstance(a, MeasuredValue) and isinstance(b, MeasuredValue):
+        return ExperimentalValue.get_covariance(a, b)
+    else:
+        return 0  # TODO: implement covariance propagation for DerivedValues
+
 
 def _wrap_operand(operand):
     """Wraps the operand of an operation in an ExperimentalValue instance
