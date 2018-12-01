@@ -12,6 +12,7 @@ DerivedValue class
 
 import math as m
 import warnings
+import numbers
 
 from . import data
 import qexpy.settings.literals as lit
@@ -38,10 +39,27 @@ def differentiator(operator):
 def execute(operator, operands):
     """Executes an operation with propagated results"""
     operation = operations[operator]
+    values = map(lambda x: x.value, operands)
     return {
-        lit.DERIVATIVE_PROPAGATED: (operation(*operands), propagate_error_derivative(operator, operands))
+        lit.DERIVATIVE_PROPAGATED: (operation(*values), propagate_error_derivative(operator, operands))
         # TODO: implement monte carlo error propagation
     }
+
+
+def _execute_without_wrapping(operator, *operands):
+    """Execute an operation without wrapping real values into Constant objects
+
+    For functions such as sqrt, sin, cos, ..., if a regular number is passed in, a regular
+    number should be returned instead of a Constant object.
+
+    """
+    if all(isinstance(x, numbers.Real) for x in operands):
+        return operations[operator](*operands)
+    values = map(data._wrap_operand, operands)
+    return data.DerivedValue({
+        lit.OPERATOR: operator,
+        lit.OPERANDS: list(values)
+    })
 
 
 def propagate_error_derivative(operator, operands):
@@ -85,6 +103,76 @@ def propagate_units(operator, operands):
             return operands[0].get_units()
     elif operator == lit.NEG:
         return operands[0].get_units()
+    # TODO: implement unit propagation for non-linear operations
+    return units
+
+
+def sqrt(x):
+    return _execute_without_wrapping(lit.SQRT, x)
+
+
+def exp(x):
+    return _execute_without_wrapping(lit.EXP, x)
+
+
+def sin(x):
+    return _execute_without_wrapping(lit.SIN, x)
+
+
+def sind(x):
+    return sin(x / 180 * m.pi)
+
+
+def cos(x):
+    return _execute_without_wrapping(lit.COS, x)
+
+
+def cosd(x):
+    return cos(x / 180 * m.pi)
+
+
+def tan(x):
+    return _execute_without_wrapping(lit.TAN, x)
+
+
+def tand(x):
+    return tan(x / 180 * m.pi)
+
+
+def sec(x):
+    return _execute_without_wrapping(lit.SEC, x)
+
+
+def secd(x):
+    return sec(x / 180 * m.pi)
+
+
+def csc(x):
+    return _execute_without_wrapping(lit.CSC, x)
+
+
+def cscd(x):
+    return csc(x / 180 * m.pi)
+
+
+def cot(x):
+    return _execute_without_wrapping(lit.COT, x)
+
+
+def cotd(x):
+    return cotd(x / 180 * m.pi)
+
+
+def asin(x):
+    return _execute_without_wrapping(lit.ASIN, x)
+
+
+def acos(x):
+    return _execute_without_wrapping(lit.ACOS, x)
+
+
+def atan(x):
+    return _execute_without_wrapping(lit.ATAN, x)
 
 
 def _find_source_measurements(value) -> set:
@@ -104,11 +192,22 @@ def _find_source_measurements(value) -> set:
 
 
 operations = {
-    lit.NEG: lambda x: -x.value,
-    lit.ADD: lambda a, b: a.value + b.value,
-    lit.SUB: lambda a, b: a.value - b.value,
-    lit.MUL: lambda a, b: a.value * b.value,
-    lit.DIV: lambda a, b: a.value / b.value
+    lit.NEG: lambda x: -x,
+    lit.ADD: lambda a, b: a + b,
+    lit.SUB: lambda a, b: a - b,
+    lit.MUL: lambda a, b: a * b,
+    lit.DIV: lambda a, b: a / b,
+    lit.SQRT: lambda x: m.sqrt(x),
+    lit.EXP: lambda x: m.exp(x),
+    lit.SIN: lambda x: m.sin(x),
+    lit.COS: lambda x: m.cos(x),
+    lit.TAN: lambda x: m.tan(x),
+    lit.ASIN: lambda x: m.asin(x),
+    lit.ACOS: lambda x: m.acos(x),
+    lit.ATAN: lambda x: m.atan(x),
+    lit.SEC: lambda x: 1 / m.cos(x),
+    lit.CSC: lambda x: 1 / m.sin(x),
+    lit.COT: lambda x: 1 / m.tan(x)
 }
 
 # the usage of the differentiators are documented under the method differentiator
@@ -117,5 +216,16 @@ differentiators = {
     lit.ADD: lambda other, a, b: a.derivative(other) + b.derivative(other),
     lit.SUB: lambda other, a, b: a.derivative(other) - b.derivative(other),
     lit.MUL: lambda other, a, b: a.derivative(other) * b.value + b.derivative(other) * a.value,
-    lit.DIV: lambda other, a, b: (b.value * a.derivative(other) - a.value * b.derivative(other)) / (b.value ** 2)
+    lit.DIV: lambda other, a, b: (b.value * a.derivative(other) - a.value * b.derivative(other)) / (b.value ** 2),
+    lit.SQRT: lambda other, x: 1 / 2 / m.sqrt(x.value) * x.derivative(other),
+    lit.EXP: lambda other, x: m.exp(x.value) * x.derivative(other),
+    lit.SIN: lambda other, x: m.cos(x.value) * x.derivative(other),
+    lit.COS: lambda other, x: -m.sin(x.value) * x.derivative(other),
+    lit.TAN: lambda other, x: 1 / (m.cos(x.value)) ** 2 * x.derivative(other),
+    lit.ASIN: lambda other, x: 1 / m.sqrt(1 - x.value ** 2) * x.derivative(other),
+    lit.ACOS: lambda other, x: -1 / m.sqrt(1 - x.value ** 2) * x.derivative(other),
+    lit.ATAN: lambda other, x: 1 / (1 + x.value ** 2) * x.derivative(other),
+    lit.SEC: lambda other, x: m.tan(x.value) / m.cos(x.value) * x.derivative(other),
+    lit.CSC: lambda other, x: -1 / (m.tan(x.value) * m.sin(x.value)) * x.derivative(other),
+    lit.COT: lambda other, x: -1 / (m.sin(x.value) ** 2) * x.derivative(other)
 }

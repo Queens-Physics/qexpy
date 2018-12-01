@@ -66,7 +66,7 @@ class ExperimentalValue:
         if self.name:
             string += self.name + " = "
         # print the value and error
-        string += self._print_value()
+        string += self.__print_value()
         if self._units:
             string += " [" + self.unit + "]"
         return string
@@ -94,9 +94,11 @@ class ExperimentalValue:
         return self._name
 
     @name.setter
-    def name(self, new_name):
+    def name(self, new_name: str):
         if isinstance(new_name, str):
             self._name = new_name
+        else:
+            raise ValueError("The name of a value must be a string")
 
     @property
     def unit(self) -> str:
@@ -105,9 +107,11 @@ class ExperimentalValue:
         return units.construct_unit_string(self._units)
 
     @unit.setter
-    def unit(self, new_unit):
+    def unit(self, new_unit: str):
         if isinstance(new_unit, str):
             self._units = units.parse_units(new_unit)
+        else:
+            raise ValueError("You can only set the unit of a value using its string representation")
 
     def __eq__(self, other):
         return self.value == _wrap_operand(other).value
@@ -189,7 +193,7 @@ class ExperimentalValue:
         """
         # TODO: this is cool , implement this
 
-    def derivative(self, other):
+    def derivative(self, other: "ExperimentalValue"):
         """Finds the derivative with respect to another ExperimentalValue
 
         This method is usually called from a DerivedValue object. When you take the derivative
@@ -200,7 +204,11 @@ class ExperimentalValue:
             other (ExperimentalValue): the other ExperimentalValue
 
         """
-        return 1 if self._id == other._id else 0
+        if isinstance(other, ExperimentalValue):
+            return 1 if self._id == other._id else 0
+        else:
+            raise ValueError("You can only find the derivative of a value with respect to another "
+                             "qexpy defined value.")
 
     def get_units(self):
         """Gets the raw dictionary object for units"""
@@ -208,79 +216,11 @@ class ExperimentalValue:
         # use deep copy because a dictionary object is mutable
         return deepcopy(self._units)
 
-    def _print_value(self) -> str:
+    def __print_value(self) -> str:
         """Helper method that prints the value-error pair in proper format"""
         if self.value == float('inf'):
             return "inf"
         return printing.get_printer()(self.value, self.error)
-
-    @classmethod
-    def set_covariance(cls, a, b, cov):
-        """sets a covariance between two MeasuredValue objects
-
-        Args:
-            a (MeasuredValue): the first MeasuredValue object
-            b (MeasuredValue): the second MeasuredValue object
-            cov (float): the covariance factor
-
-        """
-        id_string = "_".join(sorted(map(str, [a._id, b._id])))
-        if id_string in ExperimentalValue._correlations:
-            ExperimentalValue._correlations[id_string][lit.COVARIANCE] = cov
-        else:
-            ExperimentalValue._correlations[id_string] = {
-                lit.VALUES: (a, b),
-                lit.COVARIANCE: cov
-            }
-
-    @classmethod
-    def set_correlation(cls, a, b, cor):
-        """sets a correlation factor between two MeasuredValue objects
-
-        Args:
-            a (MeasuredValue): the first MeasuredValue object
-            b (MeasuredValue): the second MeasuredValue object
-            cor (float): the correlation factor
-
-        """
-        id_string = "_".join(sorted(map(str, [a._id, b._id])))
-        if id_string in ExperimentalValue._correlations:
-            ExperimentalValue._correlations[id_string][lit.CORRELATION] = cor
-        else:
-            ExperimentalValue._correlations[id_string] = {
-                lit.VALUES: (a, b),
-                lit.CORRELATION: cor
-            }
-
-    @classmethod
-    def get_covariance(cls, a, b) -> float:
-        """Gets the covariance factor between two values
-
-        Args:
-            a (ExperimentalValue): the first ExperimentalValue object
-            b (ExperimentalValue): the second ExperimentalValue object
-
-        """
-        id_string = "_".join(sorted(map(str, [a._id, b._id])))
-        if id_string in cls._correlations:
-            return cls._correlations[id_string][lit.COVARIANCE]
-        else:
-            return 0
-
-    @classmethod
-    def get_correlation(cls, a, b) -> float:
-        """Gets the correlation factor between two values
-
-        Args:
-            a (ExperimentalValue): the first ExperimentalValue object
-            b (ExperimentalValue): the second ExperimentalValue object
-
-        """
-        id_string = "_".join(sorted(map(str, [a._id, b._id])))
-        if id_string in cls._correlations:
-            return cls._correlations[id_string][lit.CORRELATION]
-        else:
-            return 0
 
 
 class MeasuredValue(ExperimentalValue):
@@ -479,7 +419,7 @@ class DerivedValue(ExperimentalValue):
 
     """
 
-    def __init__(self, formula, unit="", name="", error_method=None):
+    def __init__(self, formula, error_method=None):
         """The default constructor for the result of an operation
 
         The operation is stored as a syntax tree in the "_formula" attribute.
@@ -490,7 +430,7 @@ class DerivedValue(ExperimentalValue):
             name (str): The name of this value
 
         """
-        super().__init__(unit, name)
+        super().__init__()
         ExperimentalValue._register[self._id] = self
 
         # set default error method for this value
@@ -660,13 +600,13 @@ def set_covariance(a, b, cov=None):
             covariance = utils.calculate_covariance(a.raw_data, b.raw_data)
         elif len(a.raw_data) != len(b.raw_data) and cov is None:
             raise ValueError("The two arrays of repeated measurements are not of the same length")
-        ExperimentalValue.set_covariance(a, b, covariance)
-        ExperimentalValue.set_correlation(a, b, covariance / (a.std * b.std))
+        __set_covariance(a, b, covariance)
+        __set_correlation(a, b, covariance / (a.std * b.std))
     elif cov is None:
         raise ValueError("The covariance value is not provided")
     else:
-        ExperimentalValue.set_covariance(a, b, cov)
-        ExperimentalValue.set_correlation(a, b, cov / (a.error * b.error))
+        __set_covariance(a, b, cov)
+        __set_correlation(a, b, cov / (a.error * b.error))
 
 
 def get_covariance(a, b) -> float:
@@ -677,7 +617,7 @@ def get_covariance(a, b) -> float:
     if a.error == 0 or b.error == 0:
         return 0  # constants don't correlate with anyone
     if isinstance(a, MeasuredValue) and isinstance(b, MeasuredValue):
-        return ExperimentalValue.get_covariance(a, b)
+        return __get_covariance(a, b)
     else:
         return 0  # TODO: implement covariance propagation for DerivedValues
 
@@ -694,4 +634,72 @@ def _wrap_operand(operand):
     elif isinstance(operand, ExperimentalValue):
         return operand
     else:
-        raise ValueError("The operand {} for this operation is invalid!".format(operand))
+        raise ValueError("Operand of type {} for this operation is invalid!".format(type(operand)))
+
+
+def __set_covariance(a, b, cov):
+    """sets a covariance between two MeasuredValue objects
+
+    Args:
+        a (MeasuredValue): the first MeasuredValue object
+        b (MeasuredValue): the second MeasuredValue object
+        cov (float): the covariance factor
+
+    """
+    id_string = "_".join(sorted(map(str, [a._id, b._id])))
+    if id_string in ExperimentalValue._correlations:
+        ExperimentalValue._correlations[id_string][lit.COVARIANCE] = cov
+    else:
+        ExperimentalValue._correlations[id_string] = {
+            lit.VALUES: (a, b),
+            lit.COVARIANCE: cov
+        }
+
+
+def __set_correlation(a, b, cor):
+    """sets a correlation factor between two MeasuredValue objects
+
+    Args:
+        a (MeasuredValue): the first MeasuredValue object
+        b (MeasuredValue): the second MeasuredValue object
+        cor (float): the correlation factor
+
+    """
+    id_string = "_".join(sorted(map(str, [a._id, b._id])))
+    if id_string in ExperimentalValue._correlations:
+        ExperimentalValue._correlations[id_string][lit.CORRELATION] = cor
+    else:
+        ExperimentalValue._correlations[id_string] = {
+            lit.VALUES: (a, b),
+            lit.CORRELATION: cor
+        }
+
+
+def __get_covariance(a, b) -> float:
+    """Gets the covariance factor between two values
+
+    Args:
+        a (ExperimentalValue): the first ExperimentalValue object
+        b (ExperimentalValue): the second ExperimentalValue object
+
+    """
+    id_string = "_".join(sorted(map(str, [a._id, b._id])))
+    if id_string in ExperimentalValue._correlations:
+        return ExperimentalValue._correlations[id_string][lit.COVARIANCE]
+    else:
+        return 0
+
+
+def __get_correlation(a, b) -> float:
+    """Gets the correlation factor between two values
+
+    Args:
+        a (ExperimentalValue): the first ExperimentalValue object
+        b (ExperimentalValue): the second ExperimentalValue object
+
+    """
+    id_string = "_".join(sorted(map(str, [a._id, b._id])))
+    if id_string in ExperimentalValue._correlations:
+        return ExperimentalValue._correlations[id_string][lit.CORRELATION]
+    else:
+        return 0

@@ -10,6 +10,7 @@ from .settings import UnitStyle, PrintStyle, ErrorMethod
 
 from .data import Measurement
 from .data import get_covariance, set_covariance
+from .data import sqrt, exp, sin, cos, tan, csc, sec, cot, asin, acos, atan, sind, cosd, tand
 
 # Check the python interpreter version
 if sys.version_info[0] < 3:  # No reason to assume a future Python 4 will break comparability.

@@ -8,6 +8,7 @@ values are propagated properly
 
 import pytest
 import qexpy as q
+import numbers
 
 
 class TestArithmetic:
@@ -74,3 +75,49 @@ class TestArithmetic:
         assert v1.value == 2
         v2 = s / 2
         assert v2.value == 5
+
+
+class TestFunctions:
+
+    @pytest.fixture(autouse=True)
+    def reset_environment(self):
+        q.reset_default_configuration()
+
+    def test_simple_functions(self):
+        a = q.Measurement(5, 0.5)
+        res_sqrt = q.sqrt(a)
+        assert res_sqrt.value == pytest.approx(2.2360679775)
+        assert res_sqrt.error == pytest.approx(0.11180339887498948)
+        res_sqrt_const = q.sqrt(5)
+        assert res_sqrt_const == pytest.approx(2.2360679775)
+        assert isinstance(res_sqrt_const, numbers.Real)
+
+        res_exp = q.exp(a)
+        assert res_exp.value == pytest.approx(148.4131591025766)
+        assert res_exp.error == pytest.approx(74.2065795512883)
+        res_exp_const = q.exp(5)
+        assert res_exp_const == pytest.approx(148.4131591025766)
+        assert isinstance(res_exp_const, numbers.Real)
+
+    def test_trig_functions(self):
+        a = q.Measurement(1, 0.5)
+        res_sin = q.sin(a)
+        assert res_sin.value == pytest.approx(0.8414709848078965)
+        assert res_sin.error == pytest.approx(0.2701511529340699)
+
+        ad = q.Measurement(30, 0.5)
+        res_sind = q.sind(ad)
+        assert res_sind.value == pytest.approx(0.5)
+        assert res_sind.error == pytest.approx(0.007557497350975909)
+
+        b = q.Measurement(0.5, 0.02)
+        res_asin = q.asin(b)
+        assert res_asin.value == pytest.approx(0.5235987755982988)
+        assert res_asin.error == pytest.approx(0.023094010767585035)
+
+        res_sec = q.sec(b)
+        assert res_sec.value == pytest.approx(1.139493927324549)
+        assert res_sec.error == pytest.approx(0.012450167393185607)
+
+    def test_multi_argument_functions(self):
+        pass
