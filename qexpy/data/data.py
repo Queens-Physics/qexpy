@@ -216,11 +216,11 @@ class ExperimentalValue:
 
     @classmethod
     def set_covariance(cls, a, b, cov):
-        """sets a covariance between two ExperimentalValue objects
+        """sets a covariance between two MeasuredValue objects
 
         Args:
-            a (ExperimentalValue): the first ExperimentalValue object
-            b (ExperimentalValue): the second ExperimentalValue object
+            a (MeasuredValue): the first MeasuredValue object
+            b (MeasuredValue): the second MeasuredValue object
             cov (float): the covariance factor
 
         """
@@ -235,11 +235,11 @@ class ExperimentalValue:
 
     @classmethod
     def set_correlation(cls, a, b, cor):
-        """sets a correlation factor between two ExperimentalValue objects
+        """sets a correlation factor between two MeasuredValue objects
 
         Args:
-            a (ExperimentalValue): the first ExperimentalValue object
-            b (ExperimentalValue): the second ExperimentalValue object
+            a (MeasuredValue): the first MeasuredValue object
+            b (MeasuredValue): the second MeasuredValue object
             cor (float): the correlation factor
 
         """
@@ -633,10 +633,10 @@ class MeasurementArray(np.ndarray):
 
 
 def set_covariance(a, b, cov=None):
-    """Sets the covariance of two ExperimentalValues
+    """Sets the covariance of two MeasuredValue objects
 
-    Users can manually set the covariance of two ExperimentalValue objects. If the two objects
-    are both RepeatedMeasurement with raw_data of the same length, the user can omit the input
+    Users can manually set the covariance of two MeasuredValue objects. If the two objects are
+    both RepeatedMeasurement with raw_data of the same length, the user can omit the input
     value, and the covariance will be calculated automatically. If a value is specified, the
     calculated value will be overridden with the user specified value
 
@@ -645,13 +645,13 @@ def set_covariance(a, b, cov=None):
     that the covariance between any two values is 0, unless specified or calculated
 
     Args:
-        a (ExperimentalValue): an instances of ExperimentalValue
-        b (ExperimentalValue: an instances of ExperimentalValue
+        a (MeasuredValue): an instances of MeasuredValue
+        b (MeasuredValue: an instances of MeasuredValue
         cov (float): the new covariance value
 
     """
-    if not isinstance(a, ExperimentalValue) or not isinstance(b, ExperimentalValue):
-        raise ValueError("You can only set the covariance between two ExperimentalValue objects")
+    if not isinstance(a, MeasuredValue) or not isinstance(b, MeasuredValue):
+        raise ValueError("You can only set the covariance between two Measurements")
     if a.error == 0 or b.error == 0:
         raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
     if isinstance(a, RepeatedlyMeasuredValue) and isinstance(b, RepeatedlyMeasuredValue):
@@ -664,8 +664,6 @@ def set_covariance(a, b, cov=None):
         ExperimentalValue.set_correlation(a, b, covariance / (a.std * b.std))
     elif cov is None:
         raise ValueError("The covariance value is not provided")
-    elif isinstance(a, DerivedValue) or isinstance(b, DerivedValue):
-        raise ValueError("It doesn't make sense to set covariance between calculated quantities")
     else:
         ExperimentalValue.set_covariance(a, b, cov)
         ExperimentalValue.set_correlation(a, b, cov / (a.error * b.error))
