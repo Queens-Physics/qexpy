@@ -45,8 +45,19 @@ def execute(operator, operands):
 
 
 def propagate_error_derivative(operator, operands):
-    quadratures = map(lambda operand: (operand.error * differentiator(operator)(operand, *operands)) ** 2, operands)
-    return m.sqrt(sum(quadratures))
+    import itertools
+    diff = differentiator(operator)
+    quadratures = map(lambda operand: (operand.error * diff(operand, *operands)) ** 2, operands)
+    source_measurements = set.union(*(_find_source_measurements(value) for value in operands))
+    covariance_term_sum = 0
+    for combination in itertools.combinations(source_measurements, 2):
+        # add covariance term for every combination of measurement values
+        var1 = data.ExperimentalValue._register[combination[0]]
+        var2 = data.ExperimentalValue._register[combination[1]]
+        covariance = data.get_covariance(var1, var2)
+        if covariance != 0:
+            covariance_term_sum += covariance * diff(var1, *operands) * diff(var2, *operands)
+    return m.sqrt(sum(quadratures) + covariance_term_sum)
 
 
 def propagate_units(operator, operands):
@@ -74,6 +85,22 @@ def propagate_units(operator, operands):
             return operands[0].get_units()
     elif operator == lit.NEG:
         return operands[0].get_units()
+
+
+def _find_source_measurements(value) -> set:
+    """Returns a set of MeasuredValue objects that the given value was derived from"""
+    if isinstance(value, data.MeasuredValue):
+        return {value._id}
+    elif isinstance(value, data.DerivedValue):
+        source_measurements = set()
+        for operand in value._formula[lit.OPERANDS]:
+            if isinstance(operand, data.MeasuredValue):
+                source_measurements.add(operand._id)
+            elif isinstance(operand, data.DerivedValue):
+                source_measurements.update(_find_source_measurements(operand))
+        return source_measurements
+    else:
+        return set()
 
 
 operations = {

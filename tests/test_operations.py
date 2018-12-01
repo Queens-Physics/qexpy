@@ -1,12 +1,11 @@
 """Unit tests for operations on ExperimentalValue objects
 
-This file contains tests for operations with ExperimentalValue objects. It
-checks if the result of the operations are of the proper type. It also checks
-if errors are propagated properly
+This file contains tests for operations with ExperimentalValue objects. It checks if the
+result of the operations are of the proper type. It also checks if errors and units of the
+values are propagated properly
 
 """
 
-# noinspection PyPackageRequirements
 import pytest
 import qexpy as q
 

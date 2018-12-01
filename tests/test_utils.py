@@ -5,7 +5,6 @@ utility methods as well as value printing methods
 
 """
 
-# noinspection PyPackageRequirements
 import pytest
 
 import qexpy.utils.printing as printing

@@ -592,7 +592,7 @@ class DerivedValue(ExperimentalValue):
         root_operator = self._formula[lit.OPERATOR]
         raw_operands = self._formula[lit.OPERANDS]
         operands = list(map(_wrap_operand, raw_operands))
-        return op.differentiator(root_operator)(other._id, *operands)
+        return op.differentiator(root_operator)(other, *operands)
 
 
 class Constant(ExperimentalValue):

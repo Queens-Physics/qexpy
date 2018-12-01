@@ -6,7 +6,6 @@ correct, and that they can be printed in the correct format
 
 """
 
-# noinspection PyPackageRequirements
 import pytest
 import qexpy as q
 
@@ -90,3 +89,10 @@ class TestRepeatedlyMeasuredValue:
         q.set_covariance(a, b)
         # verify covariance calculations
         assert q.get_covariance(b, a) == pytest.approx(0.0416667)
+
+        # test correlation set by user
+        c = q.Measurement(2, 0.5)
+        d = q.Measurement(5, 1)
+        # set the covariance
+        q.set_covariance(c, d, 2)
+        assert q.get_covariance(c, d) == 2
