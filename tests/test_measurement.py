@@ -57,12 +57,12 @@ class TestRepeatedlyMeasuredValue:
         for entry, expected in zip(measurement.raw_data, [9, 10, 11]):
             assert entry == expected
         # check the uncertainty
-        assert measurement.std == pytest.approx(0.8164966, 1e-6)
-        assert measurement.error_on_mean == pytest.approx(0.4714045, 1e-6)
-        assert measurement.error == pytest.approx(0.4714045, 1e-6)
+        assert measurement.std == 1
+        assert measurement.error_on_mean == pytest.approx(0.5773502691896258)
+        assert measurement.error == pytest.approx(0.5773502691896258)
         measurement.use_std_for_uncertainty()
-        assert measurement.error == pytest.approx(0.8164966, 1e-6)
-        assert str(measurement) == "test = 10.0 +/- 0.8 [m]"
+        assert measurement.error == 1
+        assert str(measurement) == "test = 10.0 +/- 1.0 [m]"
 
     def test_modify_repeated_measurements(self):
         # create value from repeated measurements

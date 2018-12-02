@@ -11,11 +11,16 @@ DerivedValue class
 """
 
 import math as m
+import numpy as np
 import warnings
 import numbers
+from typing import Set
+from uuid import UUID
+import itertools
 
 from . import data
 import qexpy.settings.literals as lit
+import qexpy.settings.settings as settings
 
 
 def differentiator(operator):
@@ -38,15 +43,25 @@ def differentiator(operator):
 
 def execute(operator, operands):
     """Executes an operation with propagated results"""
+    # finds the lambda function for this operation
     operation = operations[operator]
+
+    # extract the values of the operands
     values = map(lambda x: x.value, operands)
+
+    # execute the operation and propagate values
+    result_value = operation(*values)
+    result_error = propagate_error_derivative(operator, operands)
+
+    # By default only the value-error pair propagated with the derivative method is calculated.
+    # The Monte Carlo method will be called when the user specifically sets the error method
+    # to Monte Carlo, and only when the user requests it from a value
     return {
-        lit.DERIVATIVE_PROPAGATED: (operation(*values), propagate_error_derivative(operator, operands))
-        # TODO: implement monte carlo error propagation
+        lit.DERIVATIVE_PROPAGATED: data.ValueWithError(result_value, result_error)
     }
 
 
-def _execute_without_wrapping(operator, *operands):
+def execute_without_wrapping(operator, *operands):
     """Execute an operation without wrapping real values into Constant objects
 
     For functions such as sqrt, sin, cos, ..., if a regular number is passed in, a regular
@@ -54,8 +69,15 @@ def _execute_without_wrapping(operator, *operands):
 
     """
     if all(isinstance(x, numbers.Real) for x in operands):
+        # if all operands involved are just numbers, return the value as a number
         return operations[operator](*operands)
+
+    # technically at this point, since the operand passed in is definitely not a number,
+    # there is no need for this "_wrap_operand" call. However, this call is added as an
+    # type check
     values = map(data._wrap_operand, operands)
+
+    # else construct a DerivedValue object
     return data.DerivedValue({
         lit.OPERATOR: operator,
         lit.OPERANDS: list(values)
@@ -63,19 +85,36 @@ def _execute_without_wrapping(operator, *operands):
 
 
 def propagate_error_derivative(operator, operands):
-    import itertools
+    # the function for calculating derivatives, see docstring under the method differentiator
     diff = differentiator(operator)
+
+    # calculate the derivative of this expression with respect to each operand, multiplied
+    # by the error of that operand, raised to the power of two, and summed
     quadratures = map(lambda operand: (operand.error * diff(operand, *operands)) ** 2, operands)
-    source_measurements = set.union(*(_find_source_measurements(value) for value in operands))
+
+    # traverse the formula tree of this expression and find all MeasuredValue objects at the leaves
+    # of this formula tree.
+    source_measurements = set.union(*(_find_source_measurements(value) for value in operands))  # type: Set[UUID]
     covariance_term_sum = 0
+
+    # For each pair of MeasuredValue objects, the covariance times partial derivative of the
+    # formula with respect to each MeasuredValue is calculated and will be added to the final
+    # sum. This implementation avoids propagating covariance for DerivedValue objects since
+    # everything is calculated with the raw measurements associated with this formula
     for combination in itertools.combinations(source_measurements, 2):
-        # add covariance term for every combination of measurement values
-        var1 = data.ExperimentalValue._register[combination[0]]
-        var2 = data.ExperimentalValue._register[combination[1]]
+        var1 = data.ExperimentalValue._register[combination[0]]  # type: data.ExperimentalValue
+        var2 = data.ExperimentalValue._register[combination[1]]  # type: data.ExperimentalValue
         covariance = data.get_covariance(var1, var2)
         if covariance != 0:
+            # the covariance term is the covariance multiplied by partial derivatives of both operands
             covariance_term_sum += covariance * diff(var1, *operands) * diff(var2, *operands)
-    return m.sqrt(sum(quadratures) + covariance_term_sum)
+
+    error = m.sqrt(sum(quadratures) + covariance_term_sum)
+    if error >= 0:
+        return error  # make sure that the uncertainty is positive
+    else:
+        warnings.warn("The error propagated for the given operation is negative. This is likely to "
+                      "be incorrect! Check your values, maybe you have an unphysical covariance.")
 
 
 def propagate_units(operator, operands):
@@ -108,15 +147,15 @@ def propagate_units(operator, operands):
 
 
 def sqrt(x):
-    return _execute_without_wrapping(lit.SQRT, x)
+    return execute_without_wrapping(lit.SQRT, x)
 
 
 def exp(x):
-    return _execute_without_wrapping(lit.EXP, x)
+    return execute_without_wrapping(lit.EXP, x)
 
 
 def sin(x):
-    return _execute_without_wrapping(lit.SIN, x)
+    return execute_without_wrapping(lit.SIN, x)
 
 
 def sind(x):
@@ -124,7 +163,7 @@ def sind(x):
 
 
 def cos(x):
-    return _execute_without_wrapping(lit.COS, x)
+    return execute_without_wrapping(lit.COS, x)
 
 
 def cosd(x):
@@ -132,7 +171,7 @@ def cosd(x):
 
 
 def tan(x):
-    return _execute_without_wrapping(lit.TAN, x)
+    return execute_without_wrapping(lit.TAN, x)
 
 
 def tand(x):
@@ -140,7 +179,7 @@ def tand(x):
 
 
 def sec(x):
-    return _execute_without_wrapping(lit.SEC, x)
+    return execute_without_wrapping(lit.SEC, x)
 
 
 def secd(x):
@@ -148,7 +187,7 @@ def secd(x):
 
 
 def csc(x):
-    return _execute_without_wrapping(lit.CSC, x)
+    return execute_without_wrapping(lit.CSC, x)
 
 
 def cscd(x):
@@ -156,7 +195,7 @@ def cscd(x):
 
 
 def cot(x):
-    return _execute_without_wrapping(lit.COT, x)
+    return execute_without_wrapping(lit.COT, x)
 
 
 def cotd(x):
@@ -164,19 +203,22 @@ def cotd(x):
 
 
 def asin(x):
-    return _execute_without_wrapping(lit.ASIN, x)
+    return execute_without_wrapping(lit.ASIN, x)
 
 
 def acos(x):
-    return _execute_without_wrapping(lit.ACOS, x)
+    return execute_without_wrapping(lit.ACOS, x)
 
 
 def atan(x):
-    return _execute_without_wrapping(lit.ATAN, x)
+    return execute_without_wrapping(lit.ATAN, x)
+def _find_source_measurements(value) -> Set[UUID]:
+    """Returns a set of IDs for MeasuredValue objects that the given value was derived from
 
+    Args:
+        value (data.ExperimentalValue)
 
-def _find_source_measurements(value) -> set:
-    """Returns a set of MeasuredValue objects that the given value was derived from"""
+    """
     if isinstance(value, data.MeasuredValue):
         return {value._id}
     elif isinstance(value, data.DerivedValue):

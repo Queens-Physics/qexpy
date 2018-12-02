@@ -11,6 +11,8 @@ import math as m
 import numbers
 import warnings
 import uuid
+import collections
+from typing import Dict
 
 import qexpy.utils.utils as utils
 from . import operations as op
@@ -18,6 +20,9 @@ import qexpy.settings.literals as lit
 import qexpy.utils.units as units
 import qexpy.utils.printing as printing
 import qexpy.settings.settings as settings
+
+# a simple structure for a value-error pair
+ValueWithError = collections.namedtuple("ValueWithError", "value, error")
 
 
 class ExperimentalValue:
@@ -55,7 +60,7 @@ class ExperimentalValue:
         """Default constructor, not to be called directly"""
 
         # initialize values
-        self._values = {}
+        self._values = {}  # type: Dict[str, ValueWithError]
         self._units = units.parse_units(unit) if unit else {}
         self._name = name
         self._id = uuid.uuid4()
@@ -232,19 +237,19 @@ class MeasuredValue(ExperimentalValue):
 
     def __init__(self, value=0.0, error=0.0, unit="", name=""):
         super().__init__(unit, name)
-        self._values[lit.RECORDED] = (value, error)
+        self._values[lit.RECORDED] = ValueWithError(value, error)
         ExperimentalValue._register[self._id] = self
 
     @property
     def value(self) -> float:
         """Gets the value for this measurement"""
-        return self._values[lit.RECORDED][0]
+        return self._values[lit.RECORDED].value
 
     @value.setter
     def value(self, new_value):
         """Modifies the value of a measurement"""
         if isinstance(new_value, numbers.Real):
-            self._values[lit.RECORDED] = (new_value, self._values[lit.RECORDED][1])
+            self._values[lit.RECORDED] = ValueWithError(new_value, self._values[lit.RECORDED].error)
         else:
             raise ValueError("You can only set the value of a measurement to a number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
@@ -255,7 +260,7 @@ class MeasuredValue(ExperimentalValue):
     @property
     def error(self) -> float:
         """Gets the uncertainty on the measurement"""
-        return self._values[lit.RECORDED][1]
+        return self._values[lit.RECORDED].error
 
     @error.setter
     def error(self, new_error):
@@ -266,7 +271,7 @@ class MeasuredValue(ExperimentalValue):
 
         """
         if isinstance(new_error, numbers.Real) and new_error > 0:
-            self._values[lit.RECORDED] = (self._values[lit.RECORDED][0], new_error)
+            self._values[lit.RECORDED] = ValueWithError(self._values[lit.RECORDED].value, new_error)
         else:
             raise ValueError("You can only set the error of a measurement to a positive number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
@@ -287,7 +292,7 @@ class MeasuredValue(ExperimentalValue):
         """
         if isinstance(relative_error, numbers.Real) and relative_error > 0:
             new_error = self.value * float(relative_error)
-            self._values[lit.RECORDED] = (self.value, new_error)
+            self._values[lit.RECORDED] = ValueWithError(self.value, new_error)
         else:
             raise ValueError("The relative uncertainty of a measurement has to be a positive number")
         if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
@@ -318,9 +323,9 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     def __init__(self, measurement_array, unit, name):
         super().__init__(unit=unit, name=name)
         measurements = np.array(measurement_array)
-        self._std = measurements.std()
+        self._std = measurements.std(ddof=1)
         self._error_on_mean = self._std / m.sqrt(measurements.size)
-        self._values[lit.RECORDED] = (measurements.mean(), self._error_on_mean)
+        self._values[lit.RECORDED] = ValueWithError(measurements.mean(), self._error_on_mean)
         self._raw_data = measurements
 
     @property
@@ -340,11 +345,11 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
     def use_std_for_uncertainty(self):
         value = self._values[lit.RECORDED]
-        self._values[lit.RECORDED] = (value[0], self._std)
+        self._values[lit.RECORDED] = ValueWithError(value.value, self._std)
 
     def use_error_on_mean_for_uncertainty(self):
         value = self._values[lit.RECORDED]
-        self._values[lit.RECORDED] = (value[0], self._error_on_mean)
+        self._values[lit.RECORDED] = ValueWithError(value.value, self._error_on_mean)
 
     def show_histogram(self):
         """Plots the raw measurement data in a histogram
@@ -426,8 +431,6 @@ class DerivedValue(ExperimentalValue):
 
         Args:
             formula (dict): the formula organized as a tree
-            unit (str): The unit of the value
-            name (str): The name of this value
 
         """
         super().__init__()
@@ -450,17 +453,14 @@ class DerivedValue(ExperimentalValue):
     @property
     def value(self) -> float:
         """Gets the value for this calculated quantity"""
-        if self._is_error_method_specified:
-            return self._values[self._error_method.value][0]
-        else:
-            return self._values[settings.get_error_method().value][0]
+        return self.__get_value_error_pair().value
 
     @value.setter
     def value(self, new_value):
         """Modifies the value of this quantity"""
         if isinstance(new_value, numbers.Real):
-            self._values = {lit.RECORDED: (new_value, self.error)}  # reset the values of this object
-            # TODO: don't remember to reset the relations between this instance and other values
+            self._values = {lit.RECORDED: ValueWithError(new_value, self.error)}  # reset the values of this object
+            # TODO: don't forget to reset the relations between this instance and other values
             warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
                           "this value to be regarded as a Measurement and all other information lost")
             self.__class__ = MeasuredValue  # casting it to MeasuredValue
@@ -470,10 +470,7 @@ class DerivedValue(ExperimentalValue):
     @property
     def error(self) -> float:
         """Gets the uncertainty on the calculated quantity"""
-        if self._is_error_method_specified:
-            return self._values[self._error_method.value][1]
-        else:
-            return self._values[settings.get_error_method().value][1]
+        return self.__get_value_error_pair().error
 
     @error.setter
     def error(self, new_error):
@@ -486,7 +483,7 @@ class DerivedValue(ExperimentalValue):
 
         """
         if isinstance(new_error, numbers.Real) and new_error > 0:
-            self._values = {lit.RECORDED: (self.value, new_error)}  # reset the values of this object
+            self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
             # TODO: don't remember to reset the relations between this instance and other values
             warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
                           "this value to be regarded as a Measurement and all other information lost")
@@ -511,7 +508,7 @@ class DerivedValue(ExperimentalValue):
         """
         if isinstance(relative_error, numbers.Real) and relative_error > 0:
             new_error = self.value * float(relative_error)
-            self._values = {lit.RECORDED: (self.value, new_error)}  # reset the values of this object
+            self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
             # TODO: don't remember to reset the relations between this instance and other values
             warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
                           "this value to be regarded as a Measurement and all other information lost")
@@ -534,6 +531,14 @@ class DerivedValue(ExperimentalValue):
         operands = list(map(_wrap_operand, raw_operands))
         return op.differentiator(root_operator)(other, *operands)
 
+    def __get_value_error_pair(self) -> ValueWithError:
+        """Gets the value-error pair for the current specified method"""
+        if self._is_error_method_specified:
+            error_method = self._error_method
+        else:
+            error_method = settings.get_error_method()
+        return self._values[error_method.value]
+
 
 class Constant(ExperimentalValue):
     """A value with no uncertainty
@@ -547,13 +552,13 @@ class Constant(ExperimentalValue):
     def __init__(self, value, unit="", name=""):
         super().__init__(unit=unit, name=name)
         if isinstance(value, numbers.Real):
-            self._values[lit.RECORDED] = (value, 0)
+            self._values[lit.RECORDED] = ValueWithError(value, 0)
         else:
             raise ValueError("The value must be a number")
 
     @property
     def value(self):
-        return self._values[lit.RECORDED][0]
+        return self._values[lit.RECORDED].value
 
     @property
     def error(self):
