@@ -537,6 +537,10 @@ class DerivedValue(ExperimentalValue):
             error_method = self._error_method
         else:
             error_method = settings.get_error_method()
+        if error_method == settings.ErrorMethod.MONTE_CARLO and lit.MONTE_CARLO_PROPAGATED not in self._values:
+            # The Monte Carlo method is slower than the derivative method, so it's not calculated by default
+            # unless specifically requested by the user.
+            self._values[lit.MONTE_CARLO_PROPAGATED] = op.get_monte_carlo_propagated_value(self)
         return self._values[error_method.value]
 
 

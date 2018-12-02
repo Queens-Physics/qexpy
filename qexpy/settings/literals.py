@@ -24,6 +24,7 @@ UNIT_STYLE = "unit_style"
 SIG_FIGS = "significant_figures"
 SIG_FIG_MODE = "mode"
 SIG_FIG_VALUE = "value"
+MONTE_CARLO_SAMPLE_SIZE = "monte_carlo_sample_size"
 
 # operators
 OPERATOR = "operator"

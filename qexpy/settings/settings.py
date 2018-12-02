@@ -39,7 +39,8 @@ config = {
     "significant_figures": {
         "mode": SigFigMode.AUTOMATIC,
         "value": 1
-    }
+    },
+    "monte_carlo_sample_size": 10000
 }
 
 
@@ -50,6 +51,7 @@ def reset_default_configuration():
     config[lit.SIG_FIGS][lit.SIG_FIG_MODE] = SigFigMode.AUTOMATIC
     config[lit.SIG_FIGS][lit.SIG_FIG_VALUE] = 1
     config[lit.UNIT_STYLE] = UnitStyle.EXPONENTS
+    config[lit.MONTE_CARLO_SAMPLE_SIZE] = 10000
 
 
 def set_error_method(new_method):
@@ -135,3 +137,14 @@ def set_sig_figs_for_error(new_sig_figs):
         config[lit.SIG_FIGS][lit.SIG_FIG_MODE] = SigFigMode.ERROR
     except (ValueError, TypeError):
         raise ValueError("The number of significant figures has to be an integer")
+
+
+def set_monte_carlo_sample_size(size):
+    if isinstance(size, numbers.Integral) and int(size) > 0:
+        config[lit.MONTE_CARLO_SAMPLE_SIZE] = int(size)
+    else:
+        raise ValueError("The sample size of the Monte Carlo simulation has to be a positive integer")
+
+
+def get_monte_carlo_sample_size():
+    return config[lit.MONTE_CARLO_SAMPLE_SIZE]

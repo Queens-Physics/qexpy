@@ -117,6 +117,68 @@ def propagate_error_derivative(operator, operands):
                       "be incorrect! Check your values, maybe you have an unphysical covariance.")
 
 
+def get_monte_carlo_propagated_value(value):
+    """Calculates the value and error using the Monte Carlo method
+
+    The Monte Carlo method generates a data set that falls around the given value and uncertainty
+    of the measurements, following a normal distribution. For each data set, the final result is
+    calculated. And the set of final results is averaged, and the standard deviation calculated
+    as the uncertainty on the final result
+
+    Args:
+        value (DerivedValue): the derived value to find Monte Carlo propagated values for
+
+    """
+
+    def __generate_random_data_set(measurement):
+        """generator for a random data set given a MeasuredValue object"""
+        std = measurement.std if isinstance(measurement, data.RepeatedlyMeasuredValue) else measurement.error
+        center_value = measurement.value
+        data_set = np.random.normal(center_value, std, settings.get_monte_carlo_sample_size())
+        # this internal method is implemented as a generator for performance optimization. For generating
+        # a big set of values, using "yield" is highly recommended. It's worth noting that a generator
+        # can only be used once before it's empty. To re-use a generator, convert it to a list
+        yield data_set
+
+    source_measurements = _find_source_measurements(value)  # type: Set[UUID]
+
+    # a dictionary object where the key is the unique ID of a MeasuredValue, and the values are the lists
+    # of randomly generated numbers with a normal distribution around the value of this MeasuredValue, with
+    # the standard deviation being the error of this value
+    data_sets = {}
+
+    for operand_id in source_measurements:  # type: UUID
+        data_sets[operand_id] = __generate_random_data_set(data.ExperimentalValue._register[operand_id])
+
+    # the following procedure converts the original dictionary of lists to a list of dictionary objects
+    # see: https://stackoverflow.com/questions/21930705/zip-dictionary-of-lists-in-python
+    keys = data_sets.keys()
+    raw_list_of_samples = map(lambda vals: zip(keys, vals), zip(*(data_sets.values())))
+    # noinspection PyTypeChecker
+    # PyCharm is unable to infer the type of the above generator, surpress warning here
+    samples = map(dict, raw_list_of_samples)
+
+    def __evaluate_sample(sample):
+        nonlocal value
+        try:
+            return _evaluate_formula_tree_for_value(value, sample)
+        except ValueError as err:
+            # skip the data sets that happen to be undefined for one of the functions while still
+            # throwing out the error if something else goes wrong
+            if str(err) != "math domain error":
+                raise err
+
+    def __calculate_results_with_data_set(sample_set):
+        nonlocal value
+        for sample in sample_set:
+            yield __evaluate_sample(sample)
+
+    result_data_set = list(__calculate_results_with_data_set(samples))
+
+    # use the standard deviation as the uncertainty and mean as the center value
+    return data.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
+
+
 def propagate_units(operator, operands):
     units = {}
     if operator == lit.MUL:
@@ -212,6 +274,34 @@ def acos(x):
 
 def atan(x):
     return execute_without_wrapping(lit.ATAN, x)
+
+
+def _evaluate_formula_tree_for_value(root, samples: dict = None) -> float:
+    """Evaluate the value of a formula tree
+
+    This method has an option of passing in a "samples" parameter where the value for each
+    MeasuredValue can be specified. The keys of this dictionary object are the unique IDs of
+    the values. This feature is ued for Monte Carlo simulations where a formula needs to be
+    evaluated for a large set of values
+
+    Args:
+        root : the value or ExperimentalValue to evaluate
+        samples (dict): set of user specified values for measurements
+
+    """
+    if isinstance(root, data.MeasuredValue) and samples and root._id in samples:
+        # use the value in the sample instead of its original value if specified
+        return samples[root._id]
+    elif isinstance(root, data.MeasuredValue) or isinstance(root, data.Constant):
+        return root.value
+    elif isinstance(root, numbers.Real):
+        return float(root)
+    elif isinstance(root, data.DerivedValue):
+        operator = root._formula[lit.OPERATOR]
+        operands = (_evaluate_formula_tree_for_value(operand, samples) for operand in root._formula[lit.OPERANDS])
+        return operations[operator](*operands)
+
+
 def _find_source_measurements(value) -> Set[UUID]:
     """Returns a set of IDs for MeasuredValue objects that the given value was derived from
 
