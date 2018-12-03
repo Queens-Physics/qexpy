@@ -94,5 +94,8 @@ class TestRepeatedlyMeasuredValue:
         c = q.Measurement(2, 0.5)
         d = q.Measurement(5, 1)
         # set the covariance
-        q.set_covariance(c, d, 2)
-        assert q.get_covariance(c, d) == 2
+        q.set_covariance(c, d, 0.2)
+        assert q.get_covariance(c, d) == 0.2
+        # try unphysical covariance
+        with pytest.raises(ValueError):
+            q.set_covariance(c, d, 1)
