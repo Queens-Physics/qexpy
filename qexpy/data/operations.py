@@ -10,11 +10,10 @@ DerivedValue class
 
 """
 
-import math as m
 import numpy as np
 import warnings
 import numbers
-from typing import Set
+from typing import Set, Dict, Union
 from uuid import UUID
 import itertools
 
@@ -109,7 +108,7 @@ def propagate_error_derivative(operator, operands):
             # the covariance term is the covariance multiplied by partial derivatives of both operands
             covariance_term_sum += covariance * diff(var1, *operands) * diff(var2, *operands)
 
-    error = m.sqrt(sum(quadratures) + covariance_term_sum)
+    error = np.sqrt(sum(quadratures) + covariance_term_sum)
     if error >= 0:
         return error  # make sure that the uncertainty is positive
     else:
@@ -130,51 +129,25 @@ def get_monte_carlo_propagated_value(value):
 
     """
 
-    def __generate_random_data_set(measurement):
+    def __generator_for_random_data_set(measurement):
         """generator for a random data set given a MeasuredValue object"""
         std = measurement.std if isinstance(measurement, data.RepeatedlyMeasuredValue) else measurement.error
         center_value = measurement.value
-        data_set = np.random.normal(center_value, std, settings.get_monte_carlo_sample_size())
-        # this internal method is implemented as a generator for performance optimization. For generating
-        # a big set of values, using "yield" is highly recommended. It's worth noting that a generator
-        # can only be used once before it's empty. To re-use a generator, convert it to a list
-        yield data_set
+        random_offsets_from_mean_with_unit_variance = np.random.normal(0, 1, settings.get_monte_carlo_sample_size())
+        data_set = random_offsets_from_mean_with_unit_variance * std + center_value
+        return data_set
 
     source_measurements = _find_source_measurements(value)  # type: Set[UUID]
 
     # a dictionary object where the key is the unique ID of a MeasuredValue, and the values are the lists
     # of randomly generated numbers with a normal distribution around the value of this MeasuredValue, with
     # the standard deviation being the error of this value
-    data_sets = {}
+    data_sets = {}  # type: Dict[UUID, np.ndarray]
 
     for operand_id in source_measurements:  # type: UUID
-        data_sets[operand_id] = __generate_random_data_set(data.ExperimentalValue._register[operand_id])
+        data_sets[operand_id] = __generator_for_random_data_set(data.ExperimentalValue._register[operand_id])
 
-    # the following procedure converts the original dictionary of lists to a list of dictionary objects
-    # see: https://stackoverflow.com/questions/21930705/zip-dictionary-of-lists-in-python
-    keys = data_sets.keys()
-    raw_list_of_samples = map(lambda vals: zip(keys, vals), zip(*(data_sets.values())))
-    # noinspection PyTypeChecker
-    # PyCharm is unable to infer the type of the above generator, surpress warning here
-    samples = map(dict, raw_list_of_samples)
-
-    def __evaluate_sample(sample):
-        nonlocal value
-        try:
-            return _evaluate_formula_tree_for_value(value, sample)
-        except ValueError as err:
-            # skip the data sets that happen to be undefined for one of the functions while still
-            # throwing out the error if something else goes wrong
-            if str(err) != "math domain error":
-                raise err
-
-    def __calculate_results_with_data_set(sample_set):
-        nonlocal value
-        for sample in sample_set:
-            yield __evaluate_sample(sample)
-
-    result_data_set = list(__calculate_results_with_data_set(samples))
-
+    result_data_set = _evaluate_formula_tree_for_value(value, data_sets)
     # use the standard deviation as the uncertainty and mean as the center value
     return data.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
 
@@ -221,7 +194,7 @@ def sin(x):
 
 
 def sind(x):
-    return sin(x / 180 * m.pi)
+    return sin(x / 180 * np.pi)
 
 
 def cos(x):
@@ -229,7 +202,7 @@ def cos(x):
 
 
 def cosd(x):
-    return cos(x / 180 * m.pi)
+    return cos(x / 180 * np.pi)
 
 
 def tan(x):
@@ -237,7 +210,7 @@ def tan(x):
 
 
 def tand(x):
-    return tan(x / 180 * m.pi)
+    return tan(x / 180 * np.pi)
 
 
 def sec(x):
@@ -245,7 +218,7 @@ def sec(x):
 
 
 def secd(x):
-    return sec(x / 180 * m.pi)
+    return sec(x / 180 * np.pi)
 
 
 def csc(x):
@@ -253,7 +226,7 @@ def csc(x):
 
 
 def cscd(x):
-    return csc(x / 180 * m.pi)
+    return csc(x / 180 * np.pi)
 
 
 def cot(x):
@@ -261,7 +234,7 @@ def cot(x):
 
 
 def cotd(x):
-    return cotd(x / 180 * m.pi)
+    return cotd(x / 180 * np.pi)
 
 
 def asin(x):
@@ -276,7 +249,7 @@ def atan(x):
     return execute_without_wrapping(lit.ATAN, x)
 
 
-def _evaluate_formula_tree_for_value(root, samples: dict = None) -> float:
+def _evaluate_formula_tree_for_value(root, samples=None) -> Union[np.ndarray, float]:
     """Evaluate the value of a formula tree
 
     This method has an option of passing in a "samples" parameter where the value for each
@@ -284,9 +257,13 @@ def _evaluate_formula_tree_for_value(root, samples: dict = None) -> float:
     the values. This feature is ued for Monte Carlo simulations where a formula needs to be
     evaluated for a large set of values
 
+    The "sample" of a measurement can either be a single number or an np.ndarray. In the latter
+    case, the return value will also be an np.ndarray. This improves the computing speed
+    significantly because it takes advantage of numpy's vectorization of the arrays
+
     Args:
-        root : the value or ExperimentalValue to evaluate
-        samples (dict): set of user specified values for measurements
+        root (Union[data.ExperimentalValue, float])
+        samples (Dict[UUID, Union[np.ndarray, numbers.Real]])
 
     """
     if isinstance(root, data.MeasuredValue) and samples and root._id in samples:
@@ -299,7 +276,10 @@ def _evaluate_formula_tree_for_value(root, samples: dict = None) -> float:
     elif isinstance(root, data.DerivedValue):
         operator = root._formula[lit.OPERATOR]
         operands = (_evaluate_formula_tree_for_value(operand, samples) for operand in root._formula[lit.OPERANDS])
-        return operations[operator](*operands)
+        result = operations[operator](*operands)
+        if isinstance(result, np.ndarray):
+            result = result[~np.isnan(result)]  # remove undefined values
+        return result
 
 
 def _find_source_measurements(value) -> Set[UUID]:
@@ -329,17 +309,17 @@ operations = {
     lit.SUB: lambda a, b: a - b,
     lit.MUL: lambda a, b: a * b,
     lit.DIV: lambda a, b: a / b,
-    lit.SQRT: lambda x: m.sqrt(x),
-    lit.EXP: lambda x: m.exp(x),
-    lit.SIN: lambda x: m.sin(x),
-    lit.COS: lambda x: m.cos(x),
-    lit.TAN: lambda x: m.tan(x),
-    lit.ASIN: lambda x: m.asin(x),
-    lit.ACOS: lambda x: m.acos(x),
-    lit.ATAN: lambda x: m.atan(x),
-    lit.SEC: lambda x: 1 / m.cos(x),
-    lit.CSC: lambda x: 1 / m.sin(x),
-    lit.COT: lambda x: 1 / m.tan(x)
+    lit.SQRT: lambda x: np.sqrt(x),
+    lit.EXP: lambda x: np.exp(x),
+    lit.SIN: lambda x: np.sin(x),
+    lit.COS: lambda x: np.cos(x),
+    lit.TAN: lambda x: np.tan(x),
+    lit.ASIN: lambda x: np.arcsin(x),
+    lit.ACOS: lambda x: np.arccos(x),
+    lit.ATAN: lambda x: np.arctan(x),
+    lit.SEC: lambda x: 1 / np.cos(x),
+    lit.CSC: lambda x: 1 / np.sin(x),
+    lit.COT: lambda x: 1 / np.tan(x)
 }
 
 # the usage of the differentiators are documented under the method differentiator
@@ -349,15 +329,15 @@ differentiators = {
     lit.SUB: lambda other, a, b: a.derivative(other) - b.derivative(other),
     lit.MUL: lambda other, a, b: a.derivative(other) * b.value + b.derivative(other) * a.value,
     lit.DIV: lambda other, a, b: (b.value * a.derivative(other) - a.value * b.derivative(other)) / (b.value ** 2),
-    lit.SQRT: lambda other, x: 1 / 2 / m.sqrt(x.value) * x.derivative(other),
-    lit.EXP: lambda other, x: m.exp(x.value) * x.derivative(other),
-    lit.SIN: lambda other, x: m.cos(x.value) * x.derivative(other),
-    lit.COS: lambda other, x: -m.sin(x.value) * x.derivative(other),
-    lit.TAN: lambda other, x: 1 / (m.cos(x.value)) ** 2 * x.derivative(other),
-    lit.ASIN: lambda other, x: 1 / m.sqrt(1 - x.value ** 2) * x.derivative(other),
-    lit.ACOS: lambda other, x: -1 / m.sqrt(1 - x.value ** 2) * x.derivative(other),
+    lit.SQRT: lambda other, x: 1 / 2 / np.sqrt(x.value) * x.derivative(other),
+    lit.EXP: lambda other, x: np.exp(x.value) * x.derivative(other),
+    lit.SIN: lambda other, x: np.cos(x.value) * x.derivative(other),
+    lit.COS: lambda other, x: -np.sin(x.value) * x.derivative(other),
+    lit.TAN: lambda other, x: 1 / (np.cos(x.value)) ** 2 * x.derivative(other),
+    lit.ASIN: lambda other, x: 1 / np.sqrt(1 - x.value ** 2) * x.derivative(other),
+    lit.ACOS: lambda other, x: -1 / np.sqrt(1 - x.value ** 2) * x.derivative(other),
     lit.ATAN: lambda other, x: 1 / (1 + x.value ** 2) * x.derivative(other),
-    lit.SEC: lambda other, x: m.tan(x.value) / m.cos(x.value) * x.derivative(other),
-    lit.CSC: lambda other, x: -1 / (m.tan(x.value) * m.sin(x.value)) * x.derivative(other),
-    lit.COT: lambda other, x: -1 / (m.sin(x.value) ** 2) * x.derivative(other)
+    lit.SEC: lambda other, x: np.tan(x.value) / np.cos(x.value) * x.derivative(other),
+    lit.CSC: lambda other, x: -1 / (np.tan(x.value) * np.sin(x.value)) * x.derivative(other),
+    lit.COT: lambda other, x: -1 / (np.sin(x.value) ** 2) * x.derivative(other)
 }

@@ -24,6 +24,9 @@ class TestErrorPropagation:
         result = c * d - b / a
         assert result.value == 44.56
         assert result.error == pytest.approx(4.783714456361291)
+        result = q.sqrt(c) * d - b / q.exp(a)
+        assert result.value == pytest.approx(18.04490478513969)
+        assert result.error == pytest.approx(1.4454463754287323)
 
     def test_derivative_error_propagation_for_correlated_values(self):
         a = q.Measurement(5, 0.2)
@@ -45,6 +48,9 @@ class TestErrorPropagation:
         result = c * d - b / a
         assert result.value == pytest.approx(44.56, 1e-1)
         assert result.error == pytest.approx(4.7383461249680785, 1e-1)
+        result = q.sqrt(c) * d - b / q.exp(a)
+        assert result.value == pytest.approx(18.04490478513969, 1e-2)
+        assert result.error == pytest.approx(1.4454463754287323, 1e-2)
 
     def test_monte_carlo_error_propagation_for_correlated_values(self):
         q.set_error_method(q.ErrorMethod.MONTE_CARLO)
