@@ -609,13 +609,20 @@ def set_covariance(a, b, cov=None):
             covariance = utils.calculate_covariance(a.raw_data, b.raw_data)
         elif len(a.raw_data) != len(b.raw_data) and cov is None:
             raise ValueError("The two arrays of repeated measurements are not of the same length")
-        __set_covariance(a, b, covariance)
-        __set_correlation(a, b, covariance / (a.std * b.std))
+        correlation = covariance / (a.std * b.std)
     elif cov is None:
         raise ValueError("The covariance value is not provided")
     else:
-        __set_covariance(a, b, cov)
-        __set_correlation(a, b, cov / (a.error * b.error))
+        covariance = cov
+        correlation = cov / (a.error * b.error)
+
+    # check that the result makes sense
+    if correlation > 1 or correlation < -1:
+        raise ValueError("The covariance provided: {} is non-physical".format(cov))
+
+    # set relations in the module level register
+    __set_covariance(a, b, covariance)
+    __set_correlation(a, b, correlation)
 
 
 def get_covariance(a, b) -> float:
