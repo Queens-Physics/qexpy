@@ -10,7 +10,7 @@ from .settings import set_monte_carlo_sample_size
 from .settings import UnitStyle, PrintStyle, ErrorMethod
 
 from .data import Measurement
-from .data import get_covariance, set_covariance
+from .data import get_covariance, set_covariance, get_correlation, set_correlation
 from .data import sqrt, exp, sin, cos, tan, csc, sec, cot, asin, acos, atan, sind, cosd, tand
 
 # Check the python interpreter version

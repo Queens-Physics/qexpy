@@ -10,16 +10,17 @@ DerivedValue class
 
 """
 
-import numpy as np
-import warnings
+import itertools
 import numbers
+import warnings
 from typing import Set, Dict, Union
 from uuid import UUID
-import itertools
 
-from . import data
+import numpy as np
+
 import qexpy.settings.literals as lit
 import qexpy.settings.settings as settings
+from . import data
 
 
 def differentiator(operator):
@@ -129,7 +130,7 @@ def get_monte_carlo_propagated_value(value):
 
     """
 
-    def __generator_for_random_data_set(measurement):
+    def __generate_random_data_set(measurement):
         """generator for a random data set given a MeasuredValue object"""
         std = measurement.std if isinstance(measurement, data.RepeatedlyMeasuredValue) else measurement.error
         center_value = measurement.value
@@ -145,9 +146,19 @@ def get_monte_carlo_propagated_value(value):
     data_sets = {}  # type: Dict[UUID, np.ndarray]
 
     for operand_id in source_measurements:  # type: UUID
-        data_sets[operand_id] = __generator_for_random_data_set(data.ExperimentalValue._register[operand_id])
+        data_sets[operand_id] = __generate_random_data_set(data.ExperimentalValue._register[operand_id])
 
     result_data_set = _evaluate_formula_tree_for_value(value, data_sets)
+
+    # check the quality of the result data
+    if len(result_data_set) / settings.get_monte_carlo_sample_size() < 0.9:
+        # if over 10% of the results calculated is invalid
+        warnings.warn("More than 10 percent of the random data generated for the Monte Carlo simulation falls "
+                      "outside of the domain on which the function is defined. Check the uncertainty or the "
+                      "standard deviation of the measurements passed in, it is possible that the domain of this "
+                      "function is too narrow compared to the standard deviation of the measurements. Consider "
+                      "choosing a different error method for this value.")
+
     # use the standard deviation as the uncertainty and mean as the center value
     return data.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
 

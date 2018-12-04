@@ -49,8 +49,8 @@ class TestErrorPropagation:
         assert result.value == pytest.approx(44.56, 1e-1)
         assert result.error == pytest.approx(4.7383461249680785, 1e-1)
         result = q.sqrt(c) * d - b / q.exp(a)
-        assert result.value == pytest.approx(18.04490478513969, 1e-2)
-        assert result.error == pytest.approx(1.4454463754287323, 1e-2)
+        assert result.value == pytest.approx(18.04490478513969, 1e-1)
+        assert result.error == pytest.approx(1.4454463754287323, 1e-1)
 
     def test_monte_carlo_error_propagation_for_correlated_values(self):
         q.set_error_method(q.ErrorMethod.MONTE_CARLO)

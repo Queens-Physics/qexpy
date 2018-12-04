@@ -638,6 +638,54 @@ def get_covariance(a, b) -> float:
         return 0  # TODO: implement covariance propagation for DerivedValues
 
 
+def set_correlation(a, b, cor=None):
+    """Sets the correlation factor between two MeasuredValue objects
+
+    See Also:
+        set_covariance
+
+    """
+    # check that the input makes sense
+    if cor and (cor > 1 or cor < -1):
+        raise ValueError("The correlation factor provided: {} is non-physical.".format(cor))
+
+    if not isinstance(a, MeasuredValue) or not isinstance(b, MeasuredValue):
+        raise ValueError("You can only set the correlation factor between two Measurements")
+    if a.error == 0 or b.error == 0:
+        raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
+    if isinstance(a, RepeatedlyMeasuredValue) and isinstance(b, RepeatedlyMeasuredValue):
+        if len(a.raw_data) == len(b.raw_data) and cor is None:
+            covariance = utils.calculate_covariance(a.raw_data, b.raw_data)
+            correlation = covariance / (a.std * b.std)
+        elif len(a.raw_data) != len(b.raw_data) and cor is None:
+            raise ValueError("The two arrays of repeated measurements are not of the same length")
+        else:
+            correlation = cor
+            covariance = cor * (a.std * b.std)
+    elif cor is None:
+        raise ValueError("The covariance value is not provided")
+    else:
+        covariance = cor * (a.error * b.error)
+        correlation = cor
+
+    # set relations in the module level register
+    __set_covariance(a, b, covariance)
+    __set_correlation(a, b, correlation)
+
+
+def get_correlation(a, b) -> float:
+    """Finds the correlation factor of two ExperimentalValues"""
+    if isinstance(a, uuid.UUID) and isinstance(b, uuid.UUID):
+        a = ExperimentalValue._register[a]
+        b = ExperimentalValue._register[b]
+    if a.error == 0 or b.error == 0:
+        return 0  # constants don't correlate with anyone
+    if isinstance(a, MeasuredValue) and isinstance(b, MeasuredValue):
+        return __get_correlation(a, b)
+    else:
+        return 0  # TODO: implement covariance propagation for DerivedValues
+
+
 def _wrap_operand(operand):
     """Wraps the operand of an operation in an ExperimentalValue instance
 
