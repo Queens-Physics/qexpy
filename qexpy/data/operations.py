@@ -120,37 +120,71 @@ def propagate_error_derivative(operator, operands):
 def get_monte_carlo_propagated_value(value):
     """Calculates the value and error using the Monte Carlo method
 
-    The Monte Carlo method generates a data set that falls around the given value and uncertainty
-    of the measurements, following a normal distribution. For each data set, the final result is
-    calculated. And the set of final results is averaged, and the standard deviation calculated
-    as the uncertainty on the final result
+    For each original measurement that the value is derived from, a random data set is generated with
+    the mean and standard deviation of that measurement. For each sample, the formula of this value
+    is evaluated with that set of simulated measurements. This generates an array of calculated values
+    with the mean and standard deviation representing the value and propagated uncertainty of the
+    final result.
 
     Args:
         value (DerivedValue): the derived value to find Monte Carlo propagated values for
 
     """
 
-    def __generate_random_data_set(measurement):
-        """generator for a random data set given a MeasuredValue object"""
+    sample_size = settings.get_monte_carlo_sample_size()
+
+    def __generate_offset_matrix(measurement_ids: Set[UUID]):
+        """Generates random offsets from mean for each measurement
+
+        Each random data set generated has 0 mean and unit variance. They will be multiplied by the
+        desired standard deviation plus the mean of each measurement to produce the final random data
+        set. The reason for this procedure is to apply covariance if applicable.
+
+        The covariance is applied to the set of samples using the Chelosky algorithm. The covariance
+        matrix is constructed, and the Chelosky decomposition of the covariance matrix is calculated.
+        The Chelosky decomposition can then be used to correlate the vector of random samples with 0
+        mean and unit variance.
+
+        Args:
+            measurement_ids (set): a set of the source measurements to simulate (their IDs)
+
+        Returns:
+            A N row times M columns matrix where N is the number of measurements to simulate
+            and M is the requested sample size for Monte Carlo simulations. Each row of this
+            matrix is an array of random values with mean of 0 and unit variance
+
+        """
+        raw_offset_matrix = np.vstack([np.random.normal(0, 1, sample_size) for _ in measurement_ids])
+        offset_matrix = _correlate_random_sample_set_with_chelosky_decomposition(measurement_ids, raw_offset_matrix)
+        return offset_matrix
+
+    def __generate_random_data_set(measurement, offsets):
+        """Generate random simulated measurements for each MeasuredValue
+
+        This method simply applies the desired mean and standard deviation to the random sample set with
+        0 mean and unit variance
+
+        """
         std = measurement.std if isinstance(measurement, data.RepeatedlyMeasuredValue) else measurement.error
         center_value = measurement.value
-        random_offsets_from_mean_with_unit_variance = np.random.normal(0, 1, settings.get_monte_carlo_sample_size())
-        data_set = random_offsets_from_mean_with_unit_variance * std + center_value
-        return data_set
+        return offsets * std + center_value
 
     source_measurements = _find_source_measurements(value)  # type: Set[UUID]
 
     # a dictionary object where the key is the unique ID of a MeasuredValue, and the values are the lists
     # of randomly generated numbers with a normal distribution around the value of this MeasuredValue, with
     # the standard deviation being the error of this value
-    data_sets = {}  # type: Dict[UUID, np.ndarray]
+    data_sets = {}
 
-    for operand_id in source_measurements:  # type: UUID
-        data_sets[operand_id] = __generate_random_data_set(data.ExperimentalValue._register[operand_id])
+    sample_set = __generate_offset_matrix(source_measurements)
+    for operand_id, sample in zip(source_measurements, sample_set):
+        data_sets[operand_id] = __generate_random_data_set(data.ExperimentalValue._register[operand_id], sample)
 
     result_data_set = _evaluate_formula_tree_for_value(value, data_sets)
 
     # check the quality of the result data
+    if isinstance(result_data_set, np.ndarray):
+        result_data_set = result_data_set[~np.isnan(result_data_set)]  # remove undefined values
     if len(result_data_set) / settings.get_monte_carlo_sample_size() < 0.9:
         # if over 10% of the results calculated is invalid
         warnings.warn("More than 10 percent of the random data generated for the Monte Carlo simulation falls "
@@ -260,7 +294,7 @@ def atan(x):
     return execute_without_wrapping(lit.ATAN, x)
 
 
-def _evaluate_formula_tree_for_value(root, samples=None) -> Union[np.ndarray, float]:
+def _evaluate_formula_tree_for_value(root, samples) -> Union[np.ndarray, float]:
     """Evaluate the value of a formula tree
 
     This method has an option of passing in a "samples" parameter where the value for each
@@ -277,7 +311,7 @@ def _evaluate_formula_tree_for_value(root, samples=None) -> Union[np.ndarray, fl
         samples (Dict[UUID, Union[np.ndarray, numbers.Real]])
 
     """
-    if isinstance(root, data.MeasuredValue) and samples and root._id in samples:
+    if isinstance(root, data.MeasuredValue) and root._id in samples:
         # use the value in the sample instead of its original value if specified
         return samples[root._id]
     elif isinstance(root, data.MeasuredValue) or isinstance(root, data.Constant):
@@ -286,11 +320,24 @@ def _evaluate_formula_tree_for_value(root, samples=None) -> Union[np.ndarray, fl
         return float(root)
     elif isinstance(root, data.DerivedValue):
         operator = root._formula[lit.OPERATOR]
-        operands = (_evaluate_formula_tree_for_value(operand, samples) for operand in root._formula[lit.OPERANDS])
+        operands = (_evaluate_formula_tree_for_value(value, samples) for value in root._formula[lit.OPERANDS])
         result = operations[operator](*operands)
-        if isinstance(result, np.ndarray):
-            result = result[~np.isnan(result)]  # remove undefined values
         return result
+
+
+def _correlate_random_sample_set_with_chelosky_decomposition(variables, sample_vector):
+    """Uses the Chelosky Decomposition algorithm to correlate samples for the Monte Carlo method"""
+    variables = list(map(lambda key: data.ExperimentalValue._register[key], variables))
+    correlation_matrix = np.array([[data.get_correlation(row, col) for col in variables] for row in variables])
+    try:
+        chelosky_decomposition = np.linalg.cholesky(correlation_matrix)
+        result_vector = np.dot(chelosky_decomposition, sample_vector)
+        return result_vector
+    except np.linalg.linalg.LinAlgError:
+        warnings.warn("Fail to generate a physical correlation matrix for the values provided, using uncorrelated "
+                      "samples for this simulation. Please check that the correlation or covariance factors you "
+                      "have given to the measurements are physical. ")
+        return sample_vector
 
 
 def _find_source_measurements(value) -> Set[UUID]:

@@ -33,11 +33,14 @@ class TestErrorPropagation:
         b = q.Measurement(4, 0.1)
         c = q.Measurement(6.3, 0.5)
         d = q.Measurement(7.2, 0.5)
-        q.set_covariance(a, c, 0.04)
-        q.set_covariance(b, d, -0.03)
+        q.set_covariance(a, c, 0.09)
+        q.set_covariance(b, d, -0.04)
         result = c * d - b / a
         assert result.value == 44.56
-        assert result.error == pytest.approx(4.792473682765509)
+        assert result.error == pytest.approx(4.799792078830082)
+        result = q.sqrt(c) * d - b / q.exp(a)
+        assert result.value == pytest.approx(18.04490478513969)
+        assert result.error == pytest.approx(1.4468831231108983)
 
     def test_monte_carlo_error_propagation(self):
         q.set_error_method(q.ErrorMethod.MONTE_CARLO)
@@ -47,11 +50,22 @@ class TestErrorPropagation:
         d = q.Measurement(7.2, 0.5)
         result = c * d - b / a
         assert result.value == pytest.approx(44.56, 1e-1)
-        assert result.error == pytest.approx(4.7383461249680785, 1e-1)
+        assert result.error == pytest.approx(4.783714456361291, 1e-1)
         result = q.sqrt(c) * d - b / q.exp(a)
         assert result.value == pytest.approx(18.04490478513969, 1e-1)
         assert result.error == pytest.approx(1.4454463754287323, 1e-1)
 
     def test_monte_carlo_error_propagation_for_correlated_values(self):
         q.set_error_method(q.ErrorMethod.MONTE_CARLO)
-        pass
+        a = q.Measurement(5, 0.2)
+        b = q.Measurement(4, 0.1)
+        c = q.Measurement(6.3, 0.5)
+        d = q.Measurement(7.2, 0.5)
+        q.set_covariance(a, c, 0.09)
+        q.set_covariance(b, d, -0.04)
+        result = c * d - b / a
+        assert result.value == pytest.approx(44.56, 5e-2)
+        assert result.error == pytest.approx(4.799792078830082, 5e-2)
+        result = q.sqrt(c) * d - b / q.exp(a)
+        assert result.value == pytest.approx(18.04490478513969, 5e-2)
+        assert result.error == pytest.approx(1.4468831231108983, 5e-2)

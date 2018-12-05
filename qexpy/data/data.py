@@ -747,6 +747,9 @@ def __get_covariance(a, b) -> float:
         b (ExperimentalValue): the second ExperimentalValue object
 
     """
+    if a._id == b._id:
+        # the covariance between a value and itself is the variance
+        return a.std ** 2 if isinstance(a, RepeatedlyMeasuredValue) else a.error ** 2
     id_string = "_".join(sorted(map(str, [a._id, b._id])))
     if id_string in ExperimentalValue._correlations:
         return ExperimentalValue._correlations[id_string][lit.COVARIANCE]
@@ -762,6 +765,8 @@ def __get_correlation(a, b) -> float:
         b (ExperimentalValue): the second ExperimentalValue object
 
     """
+    if a._id == b._id:
+        return 1  # values have unit correlation with themselves
     id_string = "_".join(sorted(map(str, [a._id, b._id])))
     if id_string in ExperimentalValue._correlations:
         return ExperimentalValue._correlations[id_string][lit.CORRELATION]
