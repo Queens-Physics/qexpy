@@ -184,7 +184,7 @@ def get_monte_carlo_propagated_value(value):
 
     # check the quality of the result data
     if isinstance(result_data_set, np.ndarray):
-        result_data_set = result_data_set[~np.isnan(result_data_set)]  # remove undefined values
+        result_data_set = result_data_set[np.isfinite(result_data_set)]  # remove undefined values
     if len(result_data_set) / settings.get_monte_carlo_sample_size() < 0.9:
         # if over 10% of the results calculated is invalid
         warnings.warn("More than 10 percent of the random data generated for the Monte Carlo simulation falls "
@@ -311,6 +311,7 @@ def _evaluate_formula_tree_for_value(root, samples) -> Union[np.ndarray, float]:
         samples (Dict[UUID, Union[np.ndarray, numbers.Real]])
 
     """
+    np.seterr(all="ignore")  # ignore runtime warnings
     if isinstance(root, data.MeasuredValue) and root._id in samples:
         # use the value in the sample instead of its original value if specified
         return samples[root._id]
