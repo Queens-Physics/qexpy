@@ -107,7 +107,7 @@ def propagate_error_derivative(operator, operands):
         covariance = data.get_covariance(var1, var2)
         if covariance != 0:
             # the covariance term is the covariance multiplied by partial derivatives of both operands
-            covariance_term_sum += covariance * diff(var1, *operands) * diff(var2, *operands)
+            covariance_term_sum += 2 * covariance * diff(var1, *operands) * diff(var2, *operands)
 
     error = np.sqrt(sum(quadratures) + covariance_term_sum)
     if error >= 0:
@@ -400,3 +400,29 @@ differentiators = {
     lit.CSC: lambda other, x: -1 / (np.tan(x.value) * np.sin(x.value)) * x.derivative(other),
     lit.COT: lambda other, x: -1 / (np.sin(x.value) ** 2) * x.derivative(other)
 }
+
+
+def construct_formula_string(formula):
+    """Takes a formula and generate a unique string representation
+
+    An expression will be represented as operator(operands), for example, mul(a,add(c,d)) would
+    represent a * (c + d) where a, c, and d are the unique ID for ExperimentalValue or the string
+    representation of regular numbers
+
+    """
+
+    if isinstance(formula, numbers.Real):
+        return str(formula)
+    elif isinstance(formula, data.Constant):
+        return str(formula.value)
+    elif isinstance(formula, data.MeasuredValue):
+        return str(formula._id)
+    elif isinstance(formula, data.DerivedValue):
+        return construct_formula_string(formula._formula)
+    else:
+        operator = formula[lit.OPERATOR]
+        operands = formula[lit.OPERANDS]
+        operands_string_list = list(map(construct_formula_string, operands))
+        if operator in [lit.ADD, lit.MUL]:  # symmetric operations
+            operands_string_list.sort()
+        return "{}({})".format(operator, ",".join(operands_string_list))

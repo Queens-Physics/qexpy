@@ -55,6 +55,7 @@ class ExperimentalValue:
 
     _register = {}  # module level database for instantiated MeasuredValues and DerivedValues
     _correlations = {}  # database for correlation between values
+    _formula_register = {}  # module level database for calculated values
 
     def __init__(self, unit="", name=""):
         """Default constructor, not to be called directly"""
@@ -152,6 +153,9 @@ class ExperimentalValue:
         })
 
     def __sub__(self, other):
+        if op.construct_formula_string(self) == op.construct_formula_string(other):
+            # For values subtracting themselves, the result should be exactly 0
+            return Constant(0)
         return DerivedValue({
             lit.OPERATOR: lit.SUB,
             lit.OPERANDS: [self, _wrap_operand(other)]
@@ -445,6 +449,17 @@ class DerivedValue(ExperimentalValue):
             self._is_error_method_specified = False
             self._error_method = settings.get_error_method()
         self._formula = formula
+
+        # record formula in register
+        formula_string = op.construct_formula_string(formula)
+        if formula_string in ExperimentalValue._formula_register:
+            from copy import deepcopy
+            existing_result = ExperimentalValue._formula_register[formula_string]  # type: ExperimentalValue
+            self._values = deepcopy(existing_result._values)
+            self._units = deepcopy(existing_result._units)
+            return  # for values that is already calculated, return the result
+        else:
+            ExperimentalValue._formula_register[formula_string] = self
 
         # propagate results
         self._values = op.execute(formula[lit.OPERATOR], formula[lit.OPERANDS])
