@@ -1,3 +1,5 @@
+"""Python package for scientific data analysis"""
+
 import sys
 
 __version__ = '2.0.1'

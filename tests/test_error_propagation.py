@@ -27,7 +27,15 @@ class TestErrorPropagation:
         result = q.sqrt(c) * d - b / q.exp(a)
         assert result.value == pytest.approx(18.04490478513969)
         assert result.error == pytest.approx(1.4454463754287323)
+
+        # test proper error propagation for self involved operations
         result = a * b - b * a
+        assert result.value == 0
+        assert result.error == 0
+        result = 2 * (a + b) - 2 * a - b - b
+        assert result.value == 0
+        assert result.error == 0
+        result = 2 * a / b * b - a - a
         assert result.value == 0
         assert result.error == 0
 

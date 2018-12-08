@@ -7,22 +7,14 @@ figures, and common conventions for writing values and uncertainties
 """
 
 import math as m
+from typing import Callable
 import qexpy.settings.settings as settings
-from . import utils
+import qexpy.utils.utils as utils
 
 
-def _default_print(value, error, latex=False) -> str:
-    """Prints out the value and uncertainty in its default format
+def _default_print(value: float, error: float, latex=False) -> str:
+    """Prints out the value and uncertainty in its default format"""
 
-    Args:
-        value (float): the value of this quantity
-        error (float): the uncertainty of this quantity
-        latex (bool): if the value is to be printed in latex format
-
-    Returns:
-        The string representation of the value
-
-    """
     if error == 0:
         # if the uncertainty is 0, there's no need for further parsing unless there is
         # a requirement on the significant figures of the value
@@ -41,27 +33,17 @@ def _default_print(value, error, latex=False) -> str:
     plus_minus_sign = r"\pm" if latex else "+/-"
     if number_of_decimals == 0:
         return "{} {} {}".format(rounded_value, plus_minus_sign, rounded_error)
-    else:
-        return "{:.{num}f} {} {:.{num}f}".format(rounded_value, plus_minus_sign, rounded_error, num=number_of_decimals)
+    return "{:.{num}f} {} {:.{num}f}".format(rounded_value, plus_minus_sign, rounded_error, num=number_of_decimals)
 
 
-def _latex_print(value, error) -> str:
+def _latex_print(value: float, error: float) -> str:
     """Prints out the value and uncertainty in latex format"""
     return _scientific_print(value, error, latex=True)
 
 
-def _scientific_print(value, error, latex=False) -> str:
-    """Prints out the value and uncertainty in scientific notation
+def _scientific_print(value: float, error: float, latex=False) -> str:
+    """Prints out the value and uncertainty in scientific notation"""
 
-    Args:
-        value (float): the value of this quantity
-        error (float): the uncertainty on this quantity
-        latex (bool): if the value is to be printed in latex format
-
-    Returns:
-        The string representation of the value
-
-    """
     # find order of magnitude
     order_of_value = m.floor(m.log10(value))
     if order_of_value == 0:
@@ -81,24 +63,25 @@ def _scientific_print(value, error, latex=False) -> str:
     plus_minus_sign = r"\pm" if latex else "+/-"
     if number_of_decimals == 0:
         return "({} {} {}) * 10^{}".format(converted_value, plus_minus_sign, converted_error, order_of_value)
-    else:
-        return "({:.{num}f} {} {:.{num}f}) * 10^{}".format(converted_value, plus_minus_sign, converted_error,
-                                                           order_of_value, num=number_of_decimals)
+    return "({:.{num}f} {} {:.{num}f}) * 10^{}".format(converted_value, plus_minus_sign, converted_error,
+                                                       order_of_value, num=number_of_decimals)
 
 
-def __round_values_to_sig_figs(value, error) -> tuple:
+def __round_values_to_sig_figs(value: float, error: float) -> tuple:
     """Rounds the value and uncertainty based on sig-fig settings
 
-    This method works by first finding the order of magnitude for the error, or
-    the value, depending on the significant figure settings. It calculates a value
-    called back-off, which is a helper value for rounding.
+    This method works by first finding the order of magnitude for the error, or the value,
+    depending on the significant figure settings. It calculates a value called back-off,
+    which is a helper value for rounding.
 
-    For example, to round 12345 to 3 significant figures, log10(12345) would return
-    4, which is the order of magnitude of the number. The formula for the back-off
-    is order_of_magnitude - significant_digits + 1. In this case, the back-off
-    would be 4 - 3 + 1 = 2. With the back-off, we first divide 12345 by 10^2, which
-    results in 123.45, then round it to 123, before re-multiplying the back-off,
-    which would result in 12300
+    For example, to round 12345 to 3 significant figures, log10(12345) would return 4, which
+    is the order of magnitude of the number. The formula for the back-off is:
+
+    back-off = order_of_magnitude - significant_digits + 1.
+
+    In this case, the back-off would 4 - 3 + 1 = 2. With the back-off, we first divide 12345
+    by 10^2, which results in 123.45, then round it to 123, before re-multiplying the back-off,
+    which produces 12300
 
     Args:
         value (float): the value of the quantity to be rounded
@@ -113,7 +96,7 @@ def __round_values_to_sig_figs(value, error) -> tuple:
     sig_fig_value = settings.get_sig_fig_value()
 
     # first find the back-off value for rounding
-    if sig_fig_mode == settings.SigFigMode.AUTOMATIC or sig_fig_mode == settings.SigFigMode.ERROR:
+    if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR]:
         order_of_error = m.floor(m.log10(error))
         back_off = 10 ** (order_of_error - sig_fig_value + 1)
     else:
@@ -141,8 +124,16 @@ def __round_values_to_sig_figs(value, error) -> tuple:
     return rounded_value, rounded_error
 
 
-def __find_number_of_decimals(value, error) -> int:
-    """Finds the correct number of decimal places to show for a value-error pair"""
+def __find_number_of_decimals(value: float, error: float) -> int:
+    """Finds the correct number of decimal places to show for a value-error pair
+
+    This method checks the settings for significant figures and tweaks the already rounded value
+    and error to having the correct number of significant figures. For example, if the value of
+    a variable is 5.001, and 3 significant figures is requested. After rounding, the value would
+    become 5. However, if we want it to be represented as 5.00, we need to find the proper number
+    of digits after the decimal.
+
+    """
 
     sig_fig_mode = settings.get_sig_fig_mode()
     sig_fig_value = settings.get_sig_fig_value()
@@ -152,7 +143,7 @@ def __find_number_of_decimals(value, error) -> int:
     raw_number_of_decimals = max(error_number_of_decimals, value_number_of_decimals)
 
     # check if the current number of significant figures satisfy the settings
-    if sig_fig_mode == settings.SigFigMode.AUTOMATIC or sig_fig_mode == settings.SigFigMode.ERROR:
+    if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR]:
         current_sig_figs_of_error = utils.count_significant_figures(error)
         if current_sig_figs_of_error < sig_fig_value:
             return raw_number_of_decimals + (sig_fig_value - current_sig_figs_of_error)
@@ -164,7 +155,7 @@ def __find_number_of_decimals(value, error) -> int:
     return raw_number_of_decimals
 
 
-def __count_number_of_decimals(number) -> int:
+def __count_number_of_decimals(number: float) -> int:
     string_repr_of_value = str(number)
     if "." not in string_repr_of_value:
         return 0
@@ -172,7 +163,7 @@ def __count_number_of_decimals(number) -> int:
     return len(decimal_part)
 
 
-def get_printer(print_style=settings.get_print_style()):
+def get_printer(print_style=settings.get_print_style()) -> Callable[[float, float], str]:
     """Gets the printer function for the given print style
 
     This method will use the global setting for print style if none is specified
@@ -181,15 +172,15 @@ def get_printer(print_style=settings.get_print_style()):
         print_style (PrintStyle): the print style
 
     Returns:
-        the printer function
+        a printer function that takes two numbers as inputs for value and uncertainty and
+        returns the string representation of the value-error pair
 
     """
     if not isinstance(print_style, settings.PrintStyle):
         raise ValueError("Error: the print styles supported are default, latex, and scientific.\n"
                          "These values are found under the enum settings.PrintStyle")
-    if print_style == settings.PrintStyle.DEFAULT:
-        return _default_print
-    elif print_style == settings.PrintStyle.LATEX:
-        return _latex_print
-    else:
+    if print_style == settings.PrintStyle.SCIENTIFIC:
         return _scientific_print
+    if print_style == settings.PrintStyle.LATEX:
+        return _latex_print
+    return _default_print

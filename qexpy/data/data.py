@@ -6,16 +6,16 @@ operations done with these instances will have the properly propagated errors an
 
 """
 
-import numpy as np
-import math as m
-import numbers
 import warnings
 import uuid
 import collections
-from typing import Dict
+from numbers import Real
+from typing import Dict, Union, List
+import math as m
+import numpy as np
 
 import qexpy.utils.utils as utils
-from . import operations as op
+import qexpy.data.operations as op
 import qexpy.settings.literals as lit
 import qexpy.utils.units as units
 import qexpy.utils.printing as printing
@@ -23,6 +23,12 @@ import qexpy.settings.settings as settings
 
 # a simple structure for a value-error pair
 ValueWithError = collections.namedtuple("ValueWithError", "value, error")
+
+# a data structure to store an expression tree of a formula
+Formula = collections.namedtuple("Formula", "operator, operands")
+
+# a data structure to store the correlation between two values
+Correlation = collections.namedtuple("Correlation", "values, correlation, covariance")
 
 
 class ExperimentalValue:
@@ -45,26 +51,27 @@ class ExperimentalValue:
         _values (dict): the values and uncertainties on the values
         _units (dict): the units and their exponents
         _name (str): the name of this instance
-        _id (UUID): the unique ID of an instance
+        _id (uuid.UUID): the unique ID of an instance
 
     TODO:
         Implement smart unit tracking.
-        Find better way of tracking relationships between values
 
     """
 
-    _register = {}  # module level database for instantiated MeasuredValues and DerivedValues
-    _correlations = {}  # database for correlation between values
-    _formula_register = {}  # module level database for calculated values
+    # module level database for instantiated MeasuredValues and DerivedValues
+    _register = {}  # type: Dict[uuid.UUID, ExperimentalValue]
+
+    # stores the correlation between values
+    _correlations = {}  # type: Dict[str, Correlation]
 
     def __init__(self, unit="", name=""):
         """Default constructor, not to be called directly"""
 
         # initialize values
         self._values = {}  # type: Dict[str, ValueWithError]
-        self._units = units.parse_units(unit) if unit else {}
-        self._name = name
-        self._id = uuid.uuid4()
+        self._units = units.parse_units(unit) if unit else {}  # type: Dict[str, int]
+        self._name = name  # type: str
+        self._id = uuid.uuid4()  # type: uuid.UUID
 
     def __str__(self):
         string = ""
@@ -97,6 +104,7 @@ class ExperimentalValue:
 
     @property
     def name(self) -> str:
+        """Default getter for the value name"""
         return self._name
 
     @name.setter
@@ -108,6 +116,7 @@ class ExperimentalValue:
 
     @property
     def unit(self) -> str:
+        """Default getter for the string representation of the units"""
         if not self._units:
             return ""
         return units.construct_unit_string(self._units)
@@ -120,76 +129,46 @@ class ExperimentalValue:
             raise ValueError("You can only set the unit of a value using its string representation")
 
     def __eq__(self, other):
-        return self.value == _wrap_operand(other).value
+        return self.value == wrap_operand(other).value
 
     def __gt__(self, other):
-        return self.value > _wrap_operand(other).value
+        return self.value > wrap_operand(other).value
 
     def __ge__(self, other):
-        return self.value >= _wrap_operand(other).value
+        return self.value >= wrap_operand(other).value
 
     def __lt__(self, other):
-        return self.value < _wrap_operand(other).value
+        return self.value < wrap_operand(other).value
 
     def __le__(self, other):
-        return self.value <= _wrap_operand(other).value
+        return self.value <= wrap_operand(other).value
 
     def __neg__(self):
-        return DerivedValue({
-            lit.OPERATOR: lit.NEG,
-            lit.OPERANDS: [self]
-        })
+        return DerivedValue(Formula(lit.NEG, [self]))
 
     def __add__(self, other):
-        return DerivedValue({
-            lit.OPERATOR: lit.ADD,
-            lit.OPERANDS: [self, _wrap_operand(other)]
-        })
+        return DerivedValue(Formula(lit.ADD, [self, wrap_operand(other)]))
 
     def __radd__(self, other):
-        return DerivedValue({
-            lit.OPERATOR: lit.ADD,
-            lit.OPERANDS: [_wrap_operand(other), self]
-        })
+        return DerivedValue(Formula(lit.ADD, [wrap_operand(other), self]))
 
     def __sub__(self, other):
-        if op.construct_formula_string(self) == op.construct_formula_string(other):
-            # For values subtracting themselves, the result should be exactly 0
-            return Constant(0)
-        return DerivedValue({
-            lit.OPERATOR: lit.SUB,
-            lit.OPERANDS: [self, _wrap_operand(other)]
-        })
+        return DerivedValue(Formula(lit.SUB, [self, wrap_operand(other)]))
 
     def __rsub__(self, other):
-        return DerivedValue({
-            lit.OPERATOR: lit.SUB,
-            lit.OPERANDS: [_wrap_operand(other), self]
-        })
+        return DerivedValue(Formula(lit.SUB, [wrap_operand(other), self]))
 
     def __mul__(self, other):
-        return DerivedValue({
-            lit.OPERATOR: lit.MUL,
-            lit.OPERANDS: [self, _wrap_operand(other)]
-        })
+        return DerivedValue(Formula(lit.MUL, [self, wrap_operand(other)]))
 
     def __rmul__(self, other):
-        return DerivedValue({
-            lit.OPERATOR: lit.MUL,
-            lit.OPERANDS: [_wrap_operand(other), self]
-        })
+        return DerivedValue(Formula(lit.MUL, [wrap_operand(other), self]))
 
     def __truediv__(self, other):
-        return DerivedValue({
-            lit.OPERATOR: lit.DIV,
-            lit.OPERANDS: [self, _wrap_operand(other)]
-        })
+        return DerivedValue(Formula(lit.DIV, [self, wrap_operand(other)]))
 
     def __rtruediv__(self, other):
-        return DerivedValue({
-            lit.OPERATOR: lit.DIV,
-            lit.OPERANDS: [_wrap_operand(other), self]
-        })
+        return DerivedValue(Formula(lit.DIV, [wrap_operand(other), self]))
 
     def scale(self, factor, update_units=True):
         """Scale the value and error of this instance by a factor
@@ -200,9 +179,8 @@ class ExperimentalValue:
         This feature can be disabled by passing update_units=False
 
         """
-        # TODO: this is cool , implement this
 
-    def derivative(self, other: "ExperimentalValue"):
+    def derivative(self, other: "ExperimentalValue") -> float:
         """Finds the derivative with respect to another ExperimentalValue
 
         This method is usually called from a DerivedValue object. When you take the derivative
@@ -210,16 +188,15 @@ class ExperimentalValue:
         be 0. The derivative of any quantity with respect to itself is always 1
 
         Args:
-            other (ExperimentalValue): the other ExperimentalValue
+            other (ExperimentalValue): the target of the differentiation
 
         """
-        if isinstance(other, ExperimentalValue):
-            return 1 if self._id == other._id else 0
-        else:
-            raise ValueError("You can only find the derivative of a value with respect to another "
-                             "qexpy defined value.")
+        if not isinstance(other, ExperimentalValue):
+            raise ValueError("You can only find the derivative of a variable with respect to another "
+                             "qexpy defined variable.")
+        return 1 if self._id == other._id else 0
 
-    def get_units(self):
+    def get_units(self) -> Dict[str, int]:
         """Gets the raw dictionary object for units"""
         from copy import deepcopy
         # use deep copy because a dictionary object is mutable
@@ -250,9 +227,9 @@ class MeasuredValue(ExperimentalValue):
         return self._values[lit.RECORDED].value
 
     @value.setter
-    def value(self, new_value):
+    def value(self, new_value: Real):
         """Modifies the value of a measurement"""
-        if isinstance(new_value, numbers.Real):
+        if isinstance(new_value, Real):
             self._values[lit.RECORDED] = ValueWithError(new_value, self._values[lit.RECORDED].error)
         else:
             raise ValueError("You can only set the value of a measurement to a number")
@@ -267,14 +244,9 @@ class MeasuredValue(ExperimentalValue):
         return self._values[lit.RECORDED].error
 
     @error.setter
-    def error(self, new_error):
-        """Modifies the value of a measurement
-
-        Args:
-            new_error (float): The new uncertainty
-
-        """
-        if isinstance(new_error, numbers.Real) and new_error > 0:
+    def error(self, new_error: Real):
+        """Modifies the value of a measurement"""
+        if isinstance(new_error, Real) and float(new_error) > 0:
             self._values[lit.RECORDED] = ValueWithError(self._values[lit.RECORDED].value, new_error)
         else:
             raise ValueError("You can only set the error of a measurement to a positive number")
@@ -287,14 +259,14 @@ class MeasuredValue(ExperimentalValue):
         return self.error / self.value if self.value != 0 else 0.
 
     @relative_error.setter
-    def relative_error(self, relative_error):
+    def relative_error(self, relative_error: Real):
         """Sets the relative error (error/mean) of a MeasuredValue object.
 
         Args:
-            relative_error (float): The new uncertainty
+            relative_error (Real): The new uncertainty
 
         """
-        if isinstance(relative_error, numbers.Real) and relative_error > 0:
+        if isinstance(relative_error, Real) and float(relative_error) > 0:
             new_error = self.value * float(relative_error)
             self._values[lit.RECORDED] = ValueWithError(self.value, new_error)
         else:
@@ -324,7 +296,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
     """
 
-    def __init__(self, measurement_array, unit, name):
+    def __init__(self, measurement_array: List[Real], unit: str, name: str):
         super().__init__(unit=unit, name=name)
         measurements = np.array(measurement_array)
         self._std = measurements.std(ddof=1)
@@ -341,17 +313,26 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
     @property
     def std(self) -> float:
+        """Getter for the standard deviation"""
         return self._std
 
     @property
     def error_on_mean(self) -> float:
+        """Getter for the error on the mean"""
         return self._error_on_mean
 
     def use_std_for_uncertainty(self):
+        """Sets the uncertainty of this value to the standard deviation"""
         value = self._values[lit.RECORDED]
         self._values[lit.RECORDED] = ValueWithError(value.value, self._std)
 
     def use_error_on_mean_for_uncertainty(self):
+        """Sets the uncertainty of this value to the error on the mean
+
+        This is default behaviour, because the reason for taking multiple measurements is to
+        reduce the uncertainty, not to find out what the uncertainty of a single measurement is.
+
+        """
         value = self._values[lit.RECORDED]
         self._values[lit.RECORDED] = ValueWithError(value.value, self._error_on_mean)
 
@@ -366,7 +347,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
 
 # noinspection PyPep8Naming
-def Measurement(*args, **kwargs):
+def Measurement(*args: Union[Real, List[Real]], **kwargs: str):  # pylint: disable=invalid-name
     """Records a measurement with uncertainties
 
     This method is used to create a MeasuredValue object from a single measurement or an array
@@ -399,44 +380,48 @@ def Measurement(*args, **kwargs):
 
     if len(args) == 1 and isinstance(args[0], utils.ARRAY_TYPES):
         return RepeatedlyMeasuredValue(args[0], unit, name)
-    elif len(args) == 1 and isinstance(args[0], numbers.Real):
+    if len(args) == 1 and isinstance(args[0], Real):
         return MeasuredValue(float(args[0]), 0.0, unit, name)
-    elif len(args) == 2 and isinstance(args[0], numbers.Real) and isinstance(args[1], numbers.Real):
+    if len(args) == 2 and isinstance(args[0], Real) and isinstance(args[1], Real):
         return MeasuredValue(float(args[0]), float(args[1]), unit, name)
-    else:
-        raise ValueError("Input must be either a single array of values, or the central value "
-                         "and its uncertainty in one measurement")
+
+    raise ValueError("Invalid Arguments! Measurements can be recorded either using a center value "
+                     "with its uncertainty or an array of repeated measurements on the same quantity.")
 
 
 class DerivedValue(ExperimentalValue):
     """Values derived from operations with other experimental values
 
     This class is not to be instantiated directly. It will be created when operations are done
-    on other ExperimentalValue objects. The error of the DerivedValue object will be propagated
+    with other ExperimentalValue objects. The error of the DerivedValue object will be propagated
     from the original ExperimentalValue objects.
 
     The DerivedValue object is preserves information on how it was derived. This is stored in the
-    "_formula" attribute, which is a dictionary object with the operator and the operands specified.
-    If the operands are also DerivedValues, their formula can also be accessed, which in some way
-    works like a syntax tree
+    "_formula" attribute, which is a named tuple "Formula" with the operator and the operands specified.
+    If the operands are also DerivedValues, their "formula" can also be accessed, which works like
+    an expression tree
+
+    Each "Formula" has an "operator" and an "operands". The "operator" is the name of the operation, such
+    as "ADD" or "MUL". The "operands" is a list of operands on which the operation is executed. An
+    "operand" can be either a value, or an ExperimentalValue object
 
     Attributes:
         _error_method (ErrorMethod): the error method used for this value
-        _is_error_method_specified (bool): true if the user specified an error method for
-            this value, false if default was used
-        _formula (dict): the formula of this object
+        _is_error_method_specified (bool): true if the user specified an error method for this value,
+            false if default was used
+        _formula (Formula): the formula of this object
 
     """
 
-    def __init__(self, formula, error_method=None):
+    def __init__(self, formula: Formula, error_method: settings.ErrorMethod = None):
         """The default constructor for the result of an operation
 
-        The operation is stored as a syntax tree in the "_formula" attribute.
-
-        Args:
-            formula (dict): the formula organized as a tree
+        The value and uncertainty of this variable is not calculated in the constructor. It will only
+        be calculated when it is requested by the user, either by explicitly calling the accessors
+        or by printing the string representation of the value.
 
         """
+
         super().__init__()
         ExperimentalValue._register[self._id] = self
 
@@ -448,22 +433,10 @@ class DerivedValue(ExperimentalValue):
             # use global default if not specified
             self._is_error_method_specified = False
             self._error_method = settings.get_error_method()
+
+        # store the formula in the instance
         self._formula = formula
-
-        # record formula in register
-        formula_string = op.construct_formula_string(formula)
-        if formula_string in ExperimentalValue._formula_register:
-            from copy import deepcopy
-            existing_result = ExperimentalValue._formula_register[formula_string]  # type: ExperimentalValue
-            self._values = deepcopy(existing_result._values)
-            self._units = deepcopy(existing_result._units)
-            return  # for values that is already calculated, return the result
-        else:
-            ExperimentalValue._formula_register[formula_string] = self
-
-        # propagate results
-        self._values = op.execute(formula[lit.OPERATOR], formula[lit.OPERANDS])
-        self._units = op.propagate_units(formula[lit.OPERATOR], formula[lit.OPERANDS])
+        self._units = op.propagate_units(formula)
 
     @property
     def value(self) -> float:
@@ -471,9 +444,9 @@ class DerivedValue(ExperimentalValue):
         return self.__get_value_error_pair().value
 
     @value.setter
-    def value(self, new_value):
+    def value(self, new_value: Real):
         """Modifies the value of this quantity"""
-        if isinstance(new_value, numbers.Real):
+        if isinstance(new_value, Real):
             self._values = {lit.RECORDED: ValueWithError(new_value, self.error)}  # reset the values of this object
             # TODO: don't forget to reset the relations between this instance and other values
             warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
@@ -488,16 +461,13 @@ class DerivedValue(ExperimentalValue):
         return self.__get_value_error_pair().error
 
     @error.setter
-    def error(self, new_error):
+    def error(self, new_error: Real):
         """Modifies the uncertainty of this quantity
 
         This is not recommended. Doing so will cause this object to be casted to MeasuredValue
 
-        Args:
-            new_error (float): The new uncertainty
-
         """
-        if isinstance(new_error, numbers.Real) and new_error > 0:
+        if isinstance(new_error, Real) and float(new_error) > 0:
             self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
             # TODO: don't remember to reset the relations between this instance and other values
             warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
@@ -512,16 +482,14 @@ class DerivedValue(ExperimentalValue):
         return self.error / self.value if self.value != 0 else 0.
 
     @relative_error.setter
-    def relative_error(self, relative_error):
+    def relative_error(self, relative_error: Real):
         """Sets the relative error (error/mean) of a DerivedValue object.
 
         This is not recommended. Doing so will cause this object to be casted to MeasuredValue
 
-        Args:
-            relative_error (float): The new relative uncertainty
 
         """
-        if isinstance(relative_error, numbers.Real) and relative_error > 0:
+        if isinstance(relative_error, Real) and float(relative_error) > 0:
             new_error = self.value * float(relative_error)
             self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
             # TODO: don't remember to reset the relations between this instance and other values
@@ -531,31 +499,27 @@ class DerivedValue(ExperimentalValue):
         else:
             raise ValueError("The relative uncertainty of a ExperimentalValue has to be a positive number")
 
-    def derivative(self, other):
-        """Finds the derivative with respect to another ExperimentalValue
-
-        Args:
-            other (ExperimentalValue): the other value
-
-        """
+    def derivative(self, other: ExperimentalValue) -> float:
+        """Finds the derivative with respect to another ExperimentalValue"""
 
         if self._id == other._id:
             return 1  # the derivative of anything with respect to itself is 1
-        root_operator = self._formula[lit.OPERATOR]
-        raw_operands = self._formula[lit.OPERANDS]
-        operands = list(map(_wrap_operand, raw_operands))
-        return op.differentiator(root_operator)(other, *operands)
+        return op.differentiate(self._formula, other)
 
     def __get_value_error_pair(self) -> ValueWithError:
         """Gets the value-error pair for the current specified method"""
+
         if self._is_error_method_specified:
             error_method = self._error_method
         else:
             error_method = settings.get_error_method()
-        if error_method == settings.ErrorMethod.MONTE_CARLO and lit.MONTE_CARLO_PROPAGATED not in self._values:
-            # The Monte Carlo method is slower than the derivative method, so it's not calculated by default
-            # unless specifically requested by the user.
-            self._values[lit.MONTE_CARLO_PROPAGATED] = op.get_monte_carlo_propagated_value(self)
+
+        # calculate the values if not present
+        if error_method == settings.ErrorMethod.DERIVATIVE and lit.DERIVATIVE_PROPAGATED not in self._values:
+            self._values[lit.DERIVATIVE_PROPAGATED] = op.get_derivative_propagated_value_and_error(self._formula)
+        elif error_method == settings.ErrorMethod.MONTE_CARLO and lit.MONTE_CARLO_PROPAGATED not in self._values:
+            self._values[lit.MONTE_CARLO_PROPAGATED] = op.get_monte_carlo_propagated_value_and_error(self._formula)
+
         return self._values[error_method.value]
 
 
@@ -570,7 +534,7 @@ class Constant(ExperimentalValue):
 
     def __init__(self, value, unit="", name=""):
         super().__init__(unit=unit, name=name)
-        if isinstance(value, numbers.Real):
+        if isinstance(value, Real):
             self._values[lit.RECORDED] = ValueWithError(value, 0)
         else:
             raise ValueError("The value must be a number")
@@ -583,7 +547,7 @@ class Constant(ExperimentalValue):
     def error(self):
         return 0
 
-    def derivative(self, other):
+    def derivative(self, other) -> 0:
         return 0  # the derivative of a constant with respect to anything is 0
 
 
@@ -596,7 +560,12 @@ class MeasurementArray(np.ndarray):
     """
 
 
-def set_covariance(a, b, cov=None):
+def get_variable_by_id(variable_id: uuid.UUID) -> ExperimentalValue:
+    """Internal method used to retrieve an ExperimentalValue instance with its ID"""
+    return ExperimentalValue._register[variable_id]
+
+
+def set_covariance(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue], cov: Real = None):
     """Sets the covariance of two MeasuredValue objects
 
     Users can manually set the covariance of two MeasuredValue objects. If the two objects are
@@ -608,182 +577,155 @@ def set_covariance(a, b, cov=None):
     easy reference during error propagation. By default the error propagation process assumes
     that the covariance between any two values is 0, unless specified or calculated
 
-    Args:
-        a (MeasuredValue): an instances of MeasuredValue
-        b (MeasuredValue: an instances of MeasuredValue
-        cov (float): the new covariance value
-
     """
-    if not isinstance(a, MeasuredValue) or not isinstance(b, MeasuredValue):
+    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
+        var1 = ExperimentalValue._register[var1]
+        var2 = ExperimentalValue._register[var2]
+    if not isinstance(var1, MeasuredValue) or not isinstance(var2, MeasuredValue):
         raise ValueError("You can only set the covariance between two Measurements")
-    if a.error == 0 or b.error == 0:
+    if var1.error == 0 or var2.error == 0:
         raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
-    if isinstance(a, RepeatedlyMeasuredValue) and isinstance(b, RepeatedlyMeasuredValue):
+    if isinstance(var1, RepeatedlyMeasuredValue) and isinstance(var2, RepeatedlyMeasuredValue):
         covariance = cov
-        if len(a.raw_data) == len(b.raw_data) and cov is None:
-            covariance = utils.calculate_covariance(a.raw_data, b.raw_data)
-        elif len(a.raw_data) != len(b.raw_data) and cov is None:
+        if len(var1.raw_data) == len(var2.raw_data) and cov is None:
+            covariance = utils.calculate_covariance(var1.raw_data, var2.raw_data)
+        elif len(var1.raw_data) != len(var2.raw_data) and cov is None:
             raise ValueError("The two arrays of repeated measurements are not of the same length")
-        correlation = covariance / (a.std * b.std)
+        correlation = covariance / (var1.std * var2.std)
     elif cov is None:
         raise ValueError("The covariance value is not provided")
     else:
         covariance = cov
-        correlation = cov / (a.error * b.error)
+        correlation = cov / (var1.error * var2.error)
 
     # check that the result makes sense
     if correlation > 1 or correlation < -1:
         raise ValueError("The covariance provided: {} is non-physical".format(cov))
 
     # set relations in the module level register
-    __set_covariance(a, b, covariance)
-    __set_correlation(a, b, correlation)
+    id_string = "_".join(sorted(map(str, [var1._id, var2._id])))
+    ExperimentalValue._correlations[id_string] = Correlation((var1, var2), correlation, covariance)
 
 
-def get_covariance(a, b) -> float:
+def get_covariance(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
     """Finds the covariance of two ExperimentalValues"""
-    if isinstance(a, uuid.UUID) and isinstance(b, uuid.UUID):
-        a = ExperimentalValue._register[a]
-        b = ExperimentalValue._register[b]
-    if a.error == 0 or b.error == 0:
+    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
+        var1 = ExperimentalValue._register[var1]
+        var2 = ExperimentalValue._register[var2]
+    if var1.error == 0 or var2.error == 0:
         return 0  # constants don't correlate with anyone
-    if isinstance(a, MeasuredValue) and isinstance(b, MeasuredValue):
-        return __get_covariance(a, b)
-    else:
-        return 0  # TODO: implement covariance propagation for DerivedValues
+    if isinstance(var1, MeasuredValue) and isinstance(var2, MeasuredValue):
+        return __get_covariance(var1, var2)
+    return 0  # TODO: implement covariance propagation for DerivedValues
 
 
-def set_correlation(a, b, cor=None):
+def set_correlation(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue], cor: Real = None):
     """Sets the correlation factor between two MeasuredValue objects
 
     See Also:
         set_covariance
 
     """
+    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
+        var1 = ExperimentalValue._register[var1]
+        var2 = ExperimentalValue._register[var2]
     # check that the input makes sense
-    if cor and (cor > 1 or cor < -1):
+    if cor and (float(cor) > 1 or float(cor) < -1):
         raise ValueError("The correlation factor provided: {} is non-physical.".format(cor))
 
-    if not isinstance(a, MeasuredValue) or not isinstance(b, MeasuredValue):
+    if not isinstance(var1, MeasuredValue) or not isinstance(var2, MeasuredValue):
         raise ValueError("You can only set the correlation factor between two Measurements")
-    if a.error == 0 or b.error == 0:
+    if var1.error == 0 or var2.error == 0:
         raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
-    if isinstance(a, RepeatedlyMeasuredValue) and isinstance(b, RepeatedlyMeasuredValue):
-        if len(a.raw_data) == len(b.raw_data) and cor is None:
-            covariance = utils.calculate_covariance(a.raw_data, b.raw_data)
-            correlation = covariance / (a.std * b.std)
-        elif len(a.raw_data) != len(b.raw_data) and cor is None:
+    if isinstance(var1, RepeatedlyMeasuredValue) and isinstance(var2, RepeatedlyMeasuredValue):
+        if len(var1.raw_data) == len(var2.raw_data) and cor is None:
+            covariance = utils.calculate_covariance(var1.raw_data, var2.raw_data)
+            correlation = covariance / (var1.std * var2.std)
+        elif len(var1.raw_data) != len(var2.raw_data) and cor is None:
             raise ValueError("The two arrays of repeated measurements are not of the same length")
         else:
             correlation = cor
-            covariance = cor * (a.std * b.std)
+            covariance = cor * (var1.std * var2.std)
     elif cor is None:
         raise ValueError("The covariance value is not provided")
     else:
-        covariance = cor * (a.error * b.error)
+        covariance = cor * (var1.error * var2.error)
         correlation = cor
 
     # set relations in the module level register
-    __set_covariance(a, b, covariance)
-    __set_correlation(a, b, correlation)
+    id_string = "_".join(sorted(map(str, [var1._id, var2._id])))
+    ExperimentalValue._correlations[id_string] = Correlation((var1, var2), correlation, covariance)
 
 
-def get_correlation(a, b) -> float:
+def get_correlation(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
     """Finds the correlation factor of two ExperimentalValues"""
-    if isinstance(a, uuid.UUID) and isinstance(b, uuid.UUID):
-        a = ExperimentalValue._register[a]
-        b = ExperimentalValue._register[b]
-    if a.error == 0 or b.error == 0:
+    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
+        var1 = ExperimentalValue._register[var1]
+        var2 = ExperimentalValue._register[var2]
+    if var1.error == 0 or var2.error == 0:
         return 0  # constants don't correlate with anyone
-    if isinstance(a, MeasuredValue) and isinstance(b, MeasuredValue):
-        return __get_correlation(a, b)
-    else:
-        return 0  # TODO: implement covariance propagation for DerivedValues
+    if isinstance(var1, MeasuredValue) and isinstance(var2, MeasuredValue):
+        return __get_correlation(var1, var2)
+
+    # TODO: implement covariance propagation for DerivedValues
+    return 0
 
 
-def _wrap_operand(operand):
-    """Wraps the operand of an operation in an ExperimentalValue instance
+def wrap_operand(operand: Union[Real, ExperimentalValue]) -> ExperimentalValue:
+    """Wraps the operand of an operation as an ExperimentalValue instance
 
     If the operand is a number, construct a Constant object with this value. If the operand
     is an ExperimentalValue object, return the object directly.
 
     """
-    if isinstance(operand, numbers.Real):
+    if isinstance(operand, Real):
         return Constant(operand)
-    elif isinstance(operand, ExperimentalValue):
+    if isinstance(operand, ExperimentalValue):
         return operand
-    else:
-        raise ValueError("Operand of type {} for this operation is invalid!".format(type(operand)))
+    raise ValueError("Operand of type {} for this operation is invalid!".format(type(operand)))
 
 
-def __set_covariance(a, b, cov):
-    """sets a covariance between two MeasuredValue objects
+def _get_formula(operand: Union[Real, ExperimentalValue]) -> Union[Formula, MeasuredValue, Constant]:
+    """Takes the input and returns the formula representation
 
-    Args:
-        a (MeasuredValue): the first MeasuredValue object
-        b (MeasuredValue): the second MeasuredValue object
-        cov (float): the covariance factor
+    If the operand is a number, construct a Constant object with this value, if the operand is a
+    Constant or MeasuredValue, return the object directly. If the operand is a derived value, return
+    the formula of that object
 
     """
-    id_string = "_".join(sorted(map(str, [a._id, b._id])))
-    if id_string in ExperimentalValue._correlations:
-        ExperimentalValue._correlations[id_string][lit.COVARIANCE] = cov
-    else:
-        ExperimentalValue._correlations[id_string] = {
-            lit.VALUES: (a, b),
-            lit.COVARIANCE: cov
-        }
+    if isinstance(operand, Real):
+        return Constant(operand)
+    if isinstance(operand, (Constant, MeasuredValue)):
+        return operand
+    if isinstance(operand, DerivedValue):
+        return operand._formula
+    raise ValueError("Operand of type {} for this operation is invalid!".format(type(operand)))
 
 
-def __set_correlation(a, b, cor):
-    """sets a correlation factor between two MeasuredValue objects
-
-    Args:
-        a (MeasuredValue): the first MeasuredValue object
-        b (MeasuredValue): the second MeasuredValue object
-        cor (float): the correlation factor
-
-    """
-    id_string = "_".join(sorted(map(str, [a._id, b._id])))
-    if id_string in ExperimentalValue._correlations:
-        ExperimentalValue._correlations[id_string][lit.CORRELATION] = cor
-    else:
-        ExperimentalValue._correlations[id_string] = {
-            lit.VALUES: (a, b),
-            lit.CORRELATION: cor
-        }
-
-
-def __get_covariance(a, b) -> float:
-    """Gets the covariance factor between two values
-
-    Args:
-        a (ExperimentalValue): the first ExperimentalValue object
-        b (ExperimentalValue): the second ExperimentalValue object
-
-    """
-    if a._id == b._id:
+def __get_covariance(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
+    """Gets the covariance factor between two values"""
+    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
+        var1 = ExperimentalValue._register[var1]
+        var2 = ExperimentalValue._register[var2]
+    if var1._id == var2._id:
         # the covariance between a value and itself is the variance
-        return a.std ** 2 if isinstance(a, RepeatedlyMeasuredValue) else a.error ** 2
-    id_string = "_".join(sorted(map(str, [a._id, b._id])))
+        return var1.std ** 2 if isinstance(var1, RepeatedlyMeasuredValue) else var1.error ** 2
+    id_string = "_".join(sorted(map(str, [var1._id, var2._id])))
     if id_string in ExperimentalValue._correlations:
-        return ExperimentalValue._correlations[id_string][lit.COVARIANCE]
-    else:
-        return 0
+        return ExperimentalValue._correlations[id_string].covariance
+
+    return 0
 
 
-def __get_correlation(a, b) -> float:
-    """Gets the correlation factor between two values
-
-    Args:
-        a (ExperimentalValue): the first ExperimentalValue object
-        b (ExperimentalValue): the second ExperimentalValue object
-
-    """
-    if a._id == b._id:
+def __get_correlation(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
+    """Gets the correlation factor between two values"""
+    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
+        var1 = ExperimentalValue._register[var1]
+        var2 = ExperimentalValue._register[var2]
+    if var1._id == var2._id:
         return 1  # values have unit correlation with themselves
-    id_string = "_".join(sorted(map(str, [a._id, b._id])))
+    id_string = "_".join(sorted(map(str, [var1._id, var2._id])))
     if id_string in ExperimentalValue._correlations:
-        return ExperimentalValue._correlations[id_string][lit.CORRELATION]
-    else:
-        return 0
+        return ExperimentalValue._correlations[id_string].correlation
+
+    return 0
