@@ -99,3 +99,13 @@ class TestRepeatedlyMeasuredValue:
         # try unphysical covariance
         with pytest.raises(ValueError):
             q.set_covariance(c, d, 1)
+
+    def test_error_weighted_mean_and_uncertainties(self):
+        a = q.Measurement([10, 11], [0.1, 1])
+        assert str(a) == "10.5 +/- 0.5"
+        assert a.error_weighted_mean == 10.00990099009901
+        assert a.propagated_error == 0.09950371902099892
+        a.use_error_weighted_mean_as_value()
+        a.use_propagated_error_for_uncertainty()
+        q.set_sig_figs_for_error(2)
+        assert str(a) == "10.010 +/- 0.100"

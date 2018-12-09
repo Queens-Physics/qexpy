@@ -284,25 +284,61 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
     The mean and error on the mean is used as the default value and error of this measurement.
     The user also has an option of using the standard deviation as the error on this measurement.
+    If the corresponding uncertainties for the list of raw data is also passed in, the user can
+    choose the error weighted mean and propagated error as the value-error pair.
 
     The user can also manually set the uncertainty of this object. However, if the user choose
     to manually override the value of this measurement. The original raw data will be lost, and
     the instance will be casted to its parent class MeasuredValue
 
     Attributes:
+        _raw_data (np.ndarray): the original list of raw measurements
+        _raw_errors (np.ndarray): the corresponding uncertainties for the raw data
+        _mean (float): the raw mean of the raw measurements
         _std (float): the standard derivative of set of measurements
         _error_on_mean (float): the error on the mean of the set of measurements
-        _raw_data (np.ndarray): the original list of raw measurements
+        _error_weighted_mean (float): the error weighted mean
+        _propagated_error (float): the uncertainty propagated
 
     """
 
-    def __init__(self, measurement_array: List[Real], unit: str, name: str):
+    def __init__(self, measurement_array: List[Real], error: Union[Real, List[Real]] = None, unit="", name=""):
+        """default constructor for a repeatedly measured value"""
+
+        # check validity of inputs
+        if isinstance(error, utils.ARRAY_TYPES) and len(error) != len(measurement_array):
+            raise ValueError("The error array and raw measurements are not of the same length")
+
+        # call parent constructor
         super().__init__(unit=unit, name=name)
+
+        # initialize raw data and its corresponding uncertainties
         measurements = np.array(measurement_array)
+        self._raw_data = measurements
+        raw_errors = np.empty(0)
+        if isinstance(error, utils.ARRAY_TYPES):
+            raw_errors = np.array(error)
+        elif isinstance(error, Real):
+            raw_errors = np.full((1, len(measurements)), float(error))
+        self._raw_errors = raw_errors
+
+        def _get_weighted_mean_and_error() -> (float, float):
+            if not error:
+                # returns None if no errors are specified for the measurements
+                return None, None
+            weights = np.array(list(1 / (err ** 2) for err in raw_errors))
+            error_weighted_mean = np.sum(weights * measurements) / np.sum(weights)
+            propagated_error = 1 / np.sqrt(np.sum(weights))
+            return error_weighted_mean, propagated_error
+
+        # calculate its statistical properties
+        self._mean = measurements.mean()
         self._std = measurements.std(ddof=1)
         self._error_on_mean = self._std / m.sqrt(measurements.size)
-        self._values[lit.RECORDED] = ValueWithError(measurements.mean(), self._error_on_mean)
-        self._raw_data = measurements
+        self._error_weighted_mean, self._propagated_error = _get_weighted_mean_and_error()
+
+        # sets the value and error pair adopted for this object
+        self._values[lit.RECORDED] = ValueWithError(self._mean, self._error_on_mean)
 
     @property
     def raw_data(self) -> np.ndarray:
@@ -321,6 +357,29 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         """Getter for the error on the mean"""
         return self._error_on_mean
 
+    @property
+    def mean(self) -> float:
+        """default getter for the mean of raw measurements"""
+        return self._mean
+
+    @property
+    def error_weighted_mean(self) -> float:
+        """default getter for the error weighted mean if errors are specified"""
+        if not self._error_weighted_mean:
+            warnings.warn("This measurement was not taken with individual uncertainties. The error "
+                          "weighted mean is not applicable. Returning 0")
+            return 0
+        return self._error_weighted_mean
+
+    @property
+    def propagated_error(self) -> float:
+        """getter for the error propagated with errors passed in if present"""
+        if not self._propagated_error:
+            warnings.warn("This measurement was not taken with individual uncertainties. The propagated "
+                          "error is not applicable. Returning 0")
+            return 0
+        return self._propagated_error
+
     def use_std_for_uncertainty(self):
         """Sets the uncertainty of this value to the standard deviation"""
         value = self._values[lit.RECORDED]
@@ -336,6 +395,24 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         value = self._values[lit.RECORDED]
         self._values[lit.RECORDED] = ValueWithError(value.value, self._error_on_mean)
 
+    def use_error_weighted_mean_as_value(self):
+        """Sets the value of this object to the error weighted mean"""
+        value = self._values[lit.RECORDED]
+        if self._error_weighted_mean:
+            self._values[lit.RECORDED] = ValueWithError(self._error_weighted_mean, value.error)
+        else:
+            warnings.warn("This measurement was not taken with individual uncertainties. The error "
+                          "weighted mean is not applicable")
+
+    def use_propagated_error_for_uncertainty(self):
+        """Sets the uncertainty of this object to the weight propagated error"""
+        value = self._values[lit.RECORDED]
+        if self._propagated_error:
+            self._values[lit.RECORDED] = ValueWithError(value.value, self._propagated_error)
+        else:
+            warnings.warn("This measurement was not taken with individual uncertainties. The propagated "
+                          "error is not applicable")
+
     def show_histogram(self):
         """Plots the raw measurement data in a histogram
 
@@ -347,8 +424,8 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
 
 # noinspection PyPep8Naming
-def Measurement(*args: Union[Real, List[Real]], **kwargs: str):  # pylint: disable=invalid-name
-    """Records a measurement with uncertainties
+def Measurement(data: Union[Real, List[Real]], error: Union[Real, List[Real]] = None, unit="", name=""):
+    """Record a measurement with uncertainties
 
     This method is used to create a MeasuredValue object from a single measurement or an array
     of repeated measurements on a single quantity (if you want them averaged). This method is
@@ -375,15 +452,14 @@ def Measurement(*args: Union[Real, List[Real]], **kwargs: str):  # pylint: disab
 
     """
 
-    unit = kwargs["unit"] if "unit" in kwargs else ""
-    name = kwargs["name"] if "name" in kwargs else ""
-
-    if len(args) == 1 and isinstance(args[0], utils.ARRAY_TYPES):
-        return RepeatedlyMeasuredValue(args[0], unit, name)
-    if len(args) == 1 and isinstance(args[0], Real):
-        return MeasuredValue(float(args[0]), 0.0, unit, name)
-    if len(args) == 2 and isinstance(args[0], Real) and isinstance(args[1], Real):
-        return MeasuredValue(float(args[0]), float(args[1]), unit, name)
+    if isinstance(data, utils.ARRAY_TYPES) and error is None:
+        return RepeatedlyMeasuredValue(data, unit=unit, name=name)
+    if isinstance(data, utils.ARRAY_TYPES) and isinstance(error, (Real, utils.ARRAY_TYPES)):
+        return RepeatedlyMeasuredValue(data, error=error, unit=unit, name=name)
+    if isinstance(data, Real) and error is None:
+        return MeasuredValue(float(data), 0.0, unit=unit, name=name)
+    if isinstance(data, Real) and isinstance(error, Real):
+        return MeasuredValue(float(data), float(error), unit=unit, name=name)
 
     raise ValueError("Invalid Arguments! Measurements can be recorded either using a center value "
                      "with its uncertainty or an array of repeated measurements on the same quantity.")
@@ -551,13 +627,23 @@ class Constant(ExperimentalValue):
         return 0  # the derivative of a constant with respect to anything is 0
 
 
-class MeasurementArray(np.ndarray):
+class MeasuredValueArray(np.ndarray):
     """An array of measurements
 
     This class is used to hold a series of measurements. It can be used for data analysis,
     fitting, and plotting.
 
     """
+
+    # pylint: disable=too-many-arguments
+    def __new__(cls, shape, dtype=float, buffer=None, offset=0, strides=None, order=None):
+        """Default constructor for a MeasuredValueArray
+
+        This is used instead of __init__ for object initialization. This is the convention for
+        subclassing numpy arrays. The MeasuredValueArray class is not to be called directly. The
+        constructor wrapper MeasurementArray is recommended as it's easier to use
+
+        """
 
 
 def get_variable_by_id(variable_id: uuid.UUID) -> ExperimentalValue:
