@@ -104,21 +104,8 @@ def __round_values_to_sig_figs(value: float, error: float) -> tuple:
         back_off = 10 ** (order_of_value - sig_fig_value + 1)
 
     # then round the value and error to the same digit
-    if back_off < 1:
-        # This weird extra condition is added because sometimes in Python, when you do
-        # operations with a small floating point number, the result gets a little funky
-        # For example, 1200 * 0.0001 will return 0.12000000000000001, but 12 / 10000
-        # will return 0.12 as expected.
-        #
-        # The reason for this has to do with the way floating point numbers are stored
-        # in Python, see https://docs.python.org/3.4/tutorial/floatingpoint.html for a more
-        # elaborate explanation. The following hack avoids multiplication with a small
-        # floating point number by replacing with with regular division
-        rounded_error = round(error / back_off) / round(1 / back_off)
-        rounded_value = round(value / back_off) / round(1 / back_off)
-    else:
-        rounded_error = round(error / back_off) * back_off
-        rounded_value = round(value / back_off) * back_off
+    rounded_error = round(error / back_off) * back_off
+    rounded_value = round(value / back_off) * back_off
 
     # return the two rounded values as a tuple
     return rounded_value, rounded_error
@@ -133,34 +120,27 @@ def __find_number_of_decimals(value: float, error: float) -> int:
     become 5. However, if we want it to be represented as 5.00, we need to find the proper number
     of digits after the decimal.
 
+    The implementation is similar to that of the rounding algorithm described in the method above.
+    The key is to start counting significant figures from the most significant digit, which is
+    calculated by finding the order of magnitude of the value.
+
+    See Also:
+        __round_values_to_sig_figs
+
     """
 
     sig_fig_mode = settings.get_sig_fig_mode()
     sig_fig_value = settings.get_sig_fig_value()
 
-    error_number_of_decimals = __count_number_of_decimals(error)
-    value_number_of_decimals = __count_number_of_decimals(value)
-    raw_number_of_decimals = max(error_number_of_decimals, value_number_of_decimals)
-
     # check if the current number of significant figures satisfy the settings
     if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR]:
-        current_sig_figs_of_error = utils.count_significant_figures(error)
-        if current_sig_figs_of_error < sig_fig_value:
-            return raw_number_of_decimals + (sig_fig_value - current_sig_figs_of_error)
+        order_of_error = m.floor(m.log10(error))
+        number_of_decimals = - order_of_error + sig_fig_value - 1
     else:
-        current_sig_figs_of_value = utils.count_significant_figures(value)
-        if current_sig_figs_of_value < sig_fig_value:
-            return raw_number_of_decimals + (sig_fig_value - current_sig_figs_of_value)
+        order_of_value = m.floor(m.log10(value))
+        number_of_decimals = - order_of_value + sig_fig_value - 1
 
-    return raw_number_of_decimals
-
-
-def __count_number_of_decimals(number: float) -> int:
-    string_repr_of_value = str(number)
-    if "." not in string_repr_of_value:
-        return 0
-    decimal_part = string_repr_of_value.split(".")[1]
-    return len(decimal_part)
+    return number_of_decimals if number_of_decimals > 0 else 0
 
 
 def get_printer(print_style=settings.get_print_style()) -> Callable[[float, float], str]:
