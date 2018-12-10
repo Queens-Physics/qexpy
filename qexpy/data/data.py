@@ -212,11 +212,62 @@ class ExperimentalValue:
 class MeasuredValue(ExperimentalValue):
     """Class for user recorded experimental values with an uncertainty
 
-    This class is not to be instantiated directly, use the Measurement method instead.
+    The MeasuredValue class represents a single measurement, or more precisely, a single data point
+    in an experiment. For backwards compatibility, this class is given an alias "Measurement"
+
+    Usage:
+        Measurement(12, 1) -> 12 +/- 1
+        Measurement(12) -> 12 +/- 0
+
+    You can also specify the name and unit of the value as keyword arguments.
+
+    For example:
+        Measurement(12, 1, name="length", unit="m") -> length = 12 +/- 1 [m]
+
+    Usually during an experiment, the user may wish to take multiple measurements on the same quantity,
+    and use their average as the final value. This is also supported:
+
+    For example:
+        Measurement([5.6, 4.8, 6.1, 4.9, 5.1]) -> 5.3000 +/- 0.5431
+
+    The user does not need to pass in the uncertainties on each measurement. By default, the mean and
+    error on the mean is used as the value-error pair of this variable. For more details, see comments
+    on the RepeatedlyMeasuredValue class.
 
     """
 
+    def __new__(cls, data: Union[Real, List[Real]], error: Union[Real, List[Real]] = None, unit="", name=""):
+        """Default constructor for a MeasuredValue
+
+        This method is called when the user instantiate a MeasuredValue object by calling its alias
+        Measurement. The user can create a MeasuredValue from a single measurement or an array of
+        repeated measurements on a single quantity (to be averaged).
+
+        When two values are passed to this method, the first argument will be recognized as the value,
+        the second as the uncertainty. If the second value is not provided, the uncertainty is by default
+        set to 0. If a list of values is passed to this method, the mean and standard deviation of the
+        value will be calculated and preserved.
+
+        """
+        if isinstance(data, utils.ARRAY_TYPES) and error is None:
+            instance = super().__new__(RepeatedlyMeasuredValue)
+            instance.__init__(data, unit=unit, name=name)
+        elif isinstance(data, utils.ARRAY_TYPES) and isinstance(error, (Real, utils.ARRAY_TYPES)):
+            instance = super().__new__(RepeatedlyMeasuredValue)
+            instance.__init__(data, error=error, unit=unit, name=name)
+        elif isinstance(data, Real) and error is None:
+            instance = super().__new__(cls)
+            instance.__init__(float(data), 0.0, unit=unit, name=name)
+        elif isinstance(data, Real) and isinstance(error, Real):
+            instance = super().__new__(cls)
+            instance.__init__(float(data), float(error), unit=unit, name=name)
+        else:
+            raise ValueError("Invalid Arguments! Measurements can be recorded either using a center value "
+                             "with its uncertainty or an array of repeated measurements on the same quantity.")
+        return instance
+
     def __init__(self, value=0.0, error=0.0, unit="", name=""):
+        """Default initializer for a regular measurement"""
         super().__init__(unit, name)
         self._values[lit.RECORDED] = ValueWithError(value, error)
         ExperimentalValue._register[self._id] = self
@@ -233,7 +284,7 @@ class MeasuredValue(ExperimentalValue):
             self._values[lit.RECORDED] = ValueWithError(new_value, self._values[lit.RECORDED].error)
         else:
             raise ValueError("You can only set the value of a measurement to a number")
-        if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
+        if isinstance(self, RepeatedlyMeasuredValue):  # check if the instance is a repeated measurement
             warnings.warn("You are trying to modify the value of a repeated measurement. Doing so has "
                           "caused you to lose the original list of raw measurement data")
             self.__class__ = MeasuredValue  # casting it to base class
@@ -250,7 +301,7 @@ class MeasuredValue(ExperimentalValue):
             self._values[lit.RECORDED] = ValueWithError(self._values[lit.RECORDED].value, new_error)
         else:
             raise ValueError("You can only set the error of a measurement to a positive number")
-        if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
+        if isinstance(self, RepeatedlyMeasuredValue):  # check if the instance is a repeated measurement
             warnings.warn("You are trying to modify the uncertainty of a repeated measurement.")
 
     @property
@@ -271,7 +322,7 @@ class MeasuredValue(ExperimentalValue):
             self._values[lit.RECORDED] = ValueWithError(self.value, new_error)
         else:
             raise ValueError("The relative uncertainty of a measurement has to be a positive number")
-        if hasattr(self, "_raw_data"):  # check if the instance is a repeated measurement
+        if isinstance(self, RepeatedlyMeasuredValue):  # check if the instance is a repeated measurement
             warnings.warn("You are trying to modify the uncertainty of a repeated measurement.")
 
 
@@ -421,48 +472,6 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         with lines corresponding to the mean and the range covered by one standard deviation
 
         """
-
-
-# noinspection PyPep8Naming
-def Measurement(data: Union[Real, List[Real]], error: Union[Real, List[Real]] = None, unit="", name=""):
-    """Record a measurement with uncertainties
-
-    This method is used to create a MeasuredValue object from a single measurement or an array
-    of repeated measurements on a single quantity (if you want them averaged). This method is
-    named upper case because it is a wrapper for constructors, and should look like a constructor
-    from the outside
-
-    When two values are passed to this method, the first argument will be recognized as the value,
-    the second as the uncertainty. If the second value is not provided, the uncertainty is by
-    default set to 0. If a list of values is passed to this method, the mean and standard deviation
-    of the value will be calculated and preserved.
-
-    TODO:
-        Enable users to add uncertainties to an array of measurements for a single quantity
-
-    Usage:
-        Measurement(12, 1) -> 12 +/- 1
-        Measurement(12) -> 12 +/- 0
-        Measurement([5.6, 4.8, 6.1, 4.9, 5.1]) -> 5.3000 +/- 0.5431
-
-    You can also specify the name and unit of the value as keyword arguments.
-
-    For example:
-        Measurement(12, 1, name="length", unit="m") -> length = 12 +/- 1 [m]
-
-    """
-
-    if isinstance(data, utils.ARRAY_TYPES) and error is None:
-        return RepeatedlyMeasuredValue(data, unit=unit, name=name)
-    if isinstance(data, utils.ARRAY_TYPES) and isinstance(error, (Real, utils.ARRAY_TYPES)):
-        return RepeatedlyMeasuredValue(data, error=error, unit=unit, name=name)
-    if isinstance(data, Real) and error is None:
-        return MeasuredValue(float(data), 0.0, unit=unit, name=name)
-    if isinstance(data, Real) and isinstance(error, Real):
-        return MeasuredValue(float(data), float(error), unit=unit, name=name)
-
-    raise ValueError("Invalid Arguments! Measurements can be recorded either using a center value "
-                     "with its uncertainty or an array of repeated measurements on the same quantity.")
 
 
 class DerivedValue(ExperimentalValue):
@@ -635,8 +644,7 @@ class MeasuredValueArray(np.ndarray):
 
     """
 
-    # pylint: disable=too-many-arguments
-    def __new__(cls, shape, dtype=float, buffer=None, offset=0, strides=None, order=None):
+    def __new__(cls, data):
         """Default constructor for a MeasuredValueArray
 
         This is used instead of __init__ for object initialization. This is the convention for
