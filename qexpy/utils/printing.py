@@ -114,8 +114,8 @@ def __round_values_to_sig_figs(value: float, error: float) -> tuple:
         # in Python, see https://docs.python.org/3.4/tutorial/floatingpoint.html for a more
         # elaborate explanation. The following hack avoids multiplication with a small
         # floating point number by replacing with with regular division
-        rounded_error = round(error / back_off) / (1 / back_off)
-        rounded_value = round(value / back_off) / (1 / back_off)
+        rounded_error = round(error / back_off) / round(1 / back_off)
+        rounded_value = round(value / back_off) / round(1 / back_off)
     else:
         rounded_error = round(error / back_off) * back_off
         rounded_value = round(value / back_off) * back_off

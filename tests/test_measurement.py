@@ -52,7 +52,7 @@ class TestRepeatedlyMeasuredValue:
 
     def test_record_repeated_measurements(self):
         # create value from repeated measurements
-        measurement = q.Measurement([9, 10, 11], unit="m", name="test")
+        measurement = q.Measurement([9, 10, 11], unit="m", name="test")  # type: q.data.data.RepeatedlyMeasuredValue
         assert measurement.value == 10
         for entry, expected in zip(measurement.raw_data, [9, 10, 11]):
             assert entry == expected
@@ -66,7 +66,7 @@ class TestRepeatedlyMeasuredValue:
 
     def test_modify_repeated_measurements(self):
         # create value from repeated measurements
-        measurement = q.Measurement([9, 10, 11], unit="m", name="test")
+        measurement = q.Measurement([9, 10, 11], unit="m", name="test")  # type: q.data.data.RepeatedlyMeasuredValue
         # check modification of uncertainty and values
         with pytest.warns(UserWarning):
             # modification of error is allowed but warned
@@ -101,11 +101,11 @@ class TestRepeatedlyMeasuredValue:
             q.set_covariance(c, d, 1)
 
     def test_error_weighted_mean_and_uncertainties(self):
-        a = q.Measurement([10, 11], [0.1, 1])
+        a = q.Measurement([10, 11], [0.1, 1])  # type: q.data.data.RepeatedlyMeasuredValue
         assert str(a) == "10.5 +/- 0.5"
         assert a.error_weighted_mean == 10.00990099009901
         assert a.propagated_error == 0.09950371902099892
         a.use_error_weighted_mean_as_value()
         a.use_propagated_error_for_uncertainty()
-        q.set_sig_figs_for_error(2)
-        assert str(a) == "10.010 +/- 0.100"
+        q.set_sig_figs_for_error(4)
+        assert str(a) == "10.00990 +/- 0.09950"
