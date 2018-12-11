@@ -18,6 +18,8 @@ import qexpy.settings.literals as lit
 import qexpy.settings.settings as settings
 import qexpy.data.data as data  # pylint: disable=cyclic-import
 
+pi, e = np.pi, np.e
+
 
 def differentiate(formula: "data.Formula", variable: "data.ExperimentalValue") -> float:
     """Find the derivative of a formula with respect to a variable"""
@@ -157,6 +159,10 @@ def execute_without_wrapping(operator: str, *operands: Union[Real, "data.Experim
         # if all operands involved are just numbers, return the value as a number
         return OPERATIONS[operator](*operands)
 
+    if any(not isinstance(x, (Real, data.ExperimentalValue)) for x in operands):
+        raise ValueError("Invalid Arguments! Numerical operations can only be done with real numbers or "
+                         "qexpy defined experimental values")
+
     # technically at this point, since the operand passed in is definitely not a number, there is no need
     # for this "_wrap_operand" call. However, this call is added as a type check
     values = map(data.wrap_operand, operands)
@@ -282,6 +288,20 @@ def atan(x):
     return execute_without_wrapping(lit.ATAN, x)
 
 
+def log(*args):
+    """log with a base and power"""
+    if len(args) == 2:
+        return execute_without_wrapping(lit.LOG, args[0], args[1])
+    if len(args) == 1:
+        return execute_without_wrapping(lit.LN, args[0])
+    raise ValueError("Invalid number of arguments")
+
+
+def log10(x):
+    """log with base 10 for a value"""
+    return execute_without_wrapping(lit.LOG10, x)
+
+
 def evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None) -> Union[np.ndarray, float]:
     """Evaluate a formula and update intermediate values
 
@@ -388,7 +408,11 @@ OPERATIONS = {
     lit.ATAN: np.arctan,
     lit.SEC: lambda x: 1 / np.cos(x),
     lit.CSC: lambda x: 1 / np.sin(x),
-    lit.COT: lambda x: 1 / np.tan(x)
+    lit.COT: lambda x: 1 / np.tan(x),
+    lit.POW: lambda x, a: x ** a,
+    lit.LOG: lambda base, x: np.log(x) / np.log(base),
+    lit.LOG10: np.log10,
+    lit.LN: np.log
 }
 
 # the usage of the differentiators are documented under the method differentiator
@@ -408,5 +432,11 @@ DIFFERENTIATORS = {
     lit.ATAN: lambda other, x: 1 / (1 + x.value ** 2) * x.derivative(other),
     lit.SEC: lambda other, x: np.tan(x.value) / np.cos(x.value) * x.derivative(other),
     lit.CSC: lambda other, x: -1 / (np.tan(x.value) * np.sin(x.value)) * x.derivative(other),
-    lit.COT: lambda other, x: -1 / (np.sin(x.value) ** 2) * x.derivative(other)
+    lit.COT: lambda other, x: -1 / (np.sin(x.value) ** 2) * x.derivative(other),
+    lit.POW: lambda other, x, a: x.value ** (a.value - 1) * (
+        a.value * x.derivative(other) + x.value * np.log(x.value) * a.derivative(other)),
+    lit.LOG: lambda other, base, x: ((np.log(base.value) * x.derivative(other) / x.value) - (
+        base.derivative(other) * np.log(x.value) / base.value)) / (np.log(base.value) ** 2),
+    lit.LOG10: lambda other, x: x.derivative(other) / (np.log(10) * x.value),
+    lit.LN: lambda other, x: x.derivative(other) / x.value
 }

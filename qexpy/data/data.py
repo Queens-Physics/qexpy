@@ -146,6 +146,12 @@ class ExperimentalValue:
     def __neg__(self):
         return DerivedValue(Formula(lit.NEG, [self]))
 
+    def __pow__(self, power):
+        return DerivedValue(Formula(lit.POW, [self, wrap_operand(power)]))
+
+    def __rpow__(self, other):
+        return DerivedValue(Formula(lit.POW, [wrap_operand(other), self]))
+
     def __add__(self, other):
         return DerivedValue(Formula(lit.ADD, [self, wrap_operand(other)]))
 
@@ -644,7 +650,7 @@ class MeasuredValueArray(np.ndarray):
 
     """
 
-    def __new__(cls, data):
+    def __new__(cls, data, error, unit="", name=""):
         """Default constructor for a MeasuredValueArray
 
         This is used instead of __init__ for object initialization. This is the convention for

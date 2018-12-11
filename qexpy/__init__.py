@@ -13,7 +13,7 @@ from .settings import UnitStyle, PrintStyle, ErrorMethod
 
 from .data import Measurement
 from .data import get_covariance, set_covariance, get_correlation, set_correlation
-from .data import sqrt, exp, sin, cos, tan, csc, sec, cot, asin, acos, atan, sind, cosd, tand
+from .data import sqrt, exp, sin, cos, tan, asin, acos, atan, csc, sec, cot, log, log10, sind, cosd, tand, pi, e
 
 # Check the python interpreter version
 if sys.version_info[0] < 3:  # No reason to assume a future Python 4 will break comparability.

@@ -9,7 +9,6 @@ figures, and common conventions for writing values and uncertainties
 import math as m
 from typing import Callable
 import qexpy.settings.settings as settings
-import qexpy.utils.utils as utils
 
 
 def _default_print(value: float, error: float, latex=False) -> str:

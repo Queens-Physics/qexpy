@@ -119,5 +119,17 @@ class TestFunctions:
         assert res_sec.value == pytest.approx(1.139493927324549)
         assert res_sec.error == pytest.approx(0.012450167393185607)
 
-    def test_multi_argument_functions(self):
-        pass
+    def test_more_advanced_functions(self):
+        a = q.Measurement(2, 0.5)
+        b = q.Measurement(5, 0.5)
+        res_pow = b ** a
+        assert res_pow.value == 25
+        assert res_pow.error == pytest.approx(20.72999937432251)
+
+        res_ln = q.log(a)
+        assert res_ln.value == pytest.approx(0.6931471805599453)
+        assert res_ln.error == pytest.approx(0.25)
+
+        res_log = q.log(a, b)
+        assert res_log.value == pytest.approx(2.321928094887362)
+        assert res_log.error == pytest.approx(0.8497943815525582)

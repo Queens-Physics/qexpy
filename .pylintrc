@@ -422,6 +422,8 @@ good-names=i,
            Run,
            _,
            x,
+           e,
+           pi,
            Measurement,
            MeasurementArray
 
