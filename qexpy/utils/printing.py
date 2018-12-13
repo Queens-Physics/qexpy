@@ -30,8 +30,6 @@ def _default_print(value: float, error: float, latex=False) -> str:
 
     # construct the string to return
     plus_minus_sign = r"\pm" if latex else "+/-"
-    if number_of_decimals == 0:
-        return "{} {} {}".format(rounded_value, plus_minus_sign, rounded_error)
     return "{:.{num}f} {} {:.{num}f}".format(rounded_value, plus_minus_sign, rounded_error, num=number_of_decimals)
 
 

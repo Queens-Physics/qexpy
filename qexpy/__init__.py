@@ -5,13 +5,12 @@ import sys
 __version__ = '2.0.1'
 
 from .utils import load_data_from_file
-from .settings import reset_default_configuration
-from .settings import set_print_style, set_unit_style
-from .settings import set_error_method, set_sig_figs_for_value, set_sig_figs_for_error
-from .settings import set_monte_carlo_sample_size
-from .settings import UnitStyle, PrintStyle, ErrorMethod
 
-from .data import Measurement
+from .settings import reset_default_configuration, UnitStyle, PrintStyle, ErrorMethod
+from .settings import set_print_style, set_unit_style, set_error_method, set_monte_carlo_sample_size
+from .settings import set_sig_figs_for_value, set_sig_figs_for_error
+
+from .data import Measurement, MeasurementArray
 from .data import get_covariance, set_covariance, get_correlation, set_correlation
 from .data import sqrt, exp, sin, cos, tan, asin, acos, atan, csc, sec, cot, log, log10, sind, cosd, tand, pi, e
 

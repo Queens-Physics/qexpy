@@ -349,13 +349,10 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     the instance will be casted to its parent class MeasuredValue
 
     Attributes:
-        _raw_data (np.ndarray): the original list of raw measurements
-        _raw_errors (np.ndarray): the corresponding uncertainties for the raw data
+        _raw_data (MeasuredValueArray): the original list of raw measurements
         _mean (float): the raw mean of the raw measurements
         _std (float): the standard derivative of set of measurements
         _error_on_mean (float): the error on the mean of the set of measurements
-        _error_weighted_mean (float): the error weighted mean
-        _propagated_error (float): the uncertainty propagated
 
     """
 
@@ -370,39 +367,20 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         super().__init__(unit=unit, name=name)
 
         # initialize raw data and its corresponding uncertainties
-        measurements = np.array(measurement_array)
-        self._raw_data = measurements
-        raw_errors = np.empty(0)
-        if isinstance(error, utils.ARRAY_TYPES):
-            raw_errors = np.array(error)
-        elif isinstance(error, Real):
-            raw_errors = np.full((1, len(measurements)), float(error))
-        self._raw_errors = raw_errors
-
-        def _get_weighted_mean_and_error() -> (float, float):
-            if not error:
-                # returns None if no errors are specified for the measurements
-                return None, None
-            weights = np.array(list(1 / (err ** 2) for err in raw_errors))
-            error_weighted_mean = np.sum(weights * measurements) / np.sum(weights)
-            propagated_error = 1 / np.sqrt(np.sum(weights))
-            return error_weighted_mean, propagated_error
+        self._raw_data = MeasuredValueArray(measurement_array, error, unit, name)
 
         # calculate its statistical properties
-        self._mean = measurements.mean()
-        self._std = measurements.std(ddof=1)
-        self._error_on_mean = self._std / m.sqrt(measurements.size)
-        self._error_weighted_mean, self._propagated_error = _get_weighted_mean_and_error()
+        self._mean = self._raw_data.mean
+        self._std = self._raw_data.std(ddof=1)
+        self._error_on_mean = self._raw_data.error_on_mean
 
         # sets the value and error pair adopted for this object
         self._values[lit.RECORDED] = ValueWithError(self._mean, self._error_on_mean)
 
     @property
-    def raw_data(self) -> np.ndarray:
+    def raw_data(self) -> List[Real]:
         """Gets the raw data that was used to generate this measurement"""
-        from copy import deepcopy
-        # returns a copy of the list so that the original data is not tempered
-        return deepcopy(self._raw_data)
+        return self._raw_data.values
 
     @property
     def std(self) -> float:
@@ -422,20 +400,12 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     @property
     def error_weighted_mean(self) -> float:
         """default getter for the error weighted mean if errors are specified"""
-        if not self._error_weighted_mean:
-            warnings.warn("This measurement was not taken with individual uncertainties. The error "
-                          "weighted mean is not applicable. Returning 0")
-            return 0
-        return self._error_weighted_mean
+        return self._raw_data.error_weighted_mean
 
     @property
     def propagated_error(self) -> float:
         """getter for the error propagated with errors passed in if present"""
-        if not self._propagated_error:
-            warnings.warn("This measurement was not taken with individual uncertainties. The propagated "
-                          "error is not applicable. Returning 0")
-            return 0
-        return self._propagated_error
+        return self._raw_data.propagated_error
 
     def use_std_for_uncertainty(self):
         """Sets the uncertainty of this value to the standard deviation"""
@@ -455,8 +425,9 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     def use_error_weighted_mean_as_value(self):
         """Sets the value of this object to the error weighted mean"""
         value = self._values[lit.RECORDED]
-        if self._error_weighted_mean:
-            self._values[lit.RECORDED] = ValueWithError(self._error_weighted_mean, value.error)
+        error_weighted_mean = self.error_weighted_mean
+        if error_weighted_mean != 0:
+            self._values[lit.RECORDED] = ValueWithError(error_weighted_mean, value.error)
         else:
             warnings.warn("This measurement was not taken with individual uncertainties. The error "
                           "weighted mean is not applicable")
@@ -464,8 +435,9 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     def use_propagated_error_for_uncertainty(self):
         """Sets the uncertainty of this object to the weight propagated error"""
         value = self._values[lit.RECORDED]
-        if self._propagated_error:
-            self._values[lit.RECORDED] = ValueWithError(value.value, self._propagated_error)
+        propagated_error = self.propagated_error
+        if propagated_error != 0:
+            self._values[lit.RECORDED] = ValueWithError(value.value, propagated_error)
         else:
             warnings.warn("This measurement was not taken with individual uncertainties. The propagated "
                           "error is not applicable")
@@ -650,7 +622,7 @@ class MeasuredValueArray(np.ndarray):
 
     """
 
-    def __new__(cls, data, error, unit="", name=""):
+    def __new__(cls, data: List[Real], error: Union[List[Real], Real] = None, unit="", name=""):
         """Default constructor for a MeasuredValueArray
 
         This is used instead of __init__ for object initialization. This is the convention for
@@ -658,6 +630,89 @@ class MeasuredValueArray(np.ndarray):
         constructor wrapper MeasurementArray is recommended as it's easier to use
 
         """
+
+        # initialize raw data and its corresponding uncertainties
+        measurements = np.array(data)
+        if error is None:
+            error_array = np.asarray(list(0 for _ in measurements))
+        elif isinstance(error, Real):
+            error_array = np.asarray(list(float(error) for _ in measurements))
+        elif isinstance(error, utils.ARRAY_TYPES) and len(error) == len(data):
+            error_array = np.asarray(error)
+        else:
+            raise ValueError("The error of a MeasurementArray can only be a single value, or an "
+                             "array of values that are of the same length as the measurement array.")
+
+        measured_values = list(MeasuredValue(val, err, unit, name) for val, err in zip(measurements, error_array))
+        obj = np.asarray(measured_values).view(MeasuredValueArray)
+        return obj
+
+    @property
+    def name(self) -> str:
+        """Default getter for the value name"""
+        return self[0].name
+
+    @name.setter
+    def name(self, new_name: str):
+        if not isinstance(new_name, str):
+            raise ValueError("The name of a value must be a string")
+        for data in self:
+            data.name = new_name
+
+    @property
+    def unit(self) -> str:
+        """Default getter for the string representation of the units"""
+        return self[0].unit
+
+    @unit.setter
+    def unit(self, new_unit: str):
+        if not isinstance(new_unit, str):
+            raise ValueError("You can only set the unit of a value using its string representation")
+        new_unit = units.parse_units(new_unit)
+        for data in self:
+            data._units = new_unit
+
+    @property
+    def values(self):
+        """Gets an array of values"""
+        return np.asarray(list(data.value for data in self))
+
+    @property
+    def errors(self):
+        """Gets the error array"""
+        return np.asarray(list(data.error for data in self))
+
+    @property
+    def mean(self) -> float:
+        """Gets the mean of the array"""
+        return float(np.mean(self.values))
+
+    def std(self, ddof=1) -> float:
+        """Gets the standard deviation of this array"""
+        return float(np.std(self.values, ddof=ddof))
+
+    @property
+    def error_on_mean(self):
+        """Gets the error on the mean of this array"""
+        return self.std() / m.sqrt(self.size)
+
+    @property
+    def error_weighted_mean(self):
+        """Gets the error weighted mean of this array"""
+        if any(err == 0 for err in self.errors):
+            warnings.warn("One or more of the errors are 0, the error weighted mean cannot be calculated.")
+            return 0
+        weights = np.asarray(list(1 / (err ** 2) for err in self.errors))
+        return np.sum(weights * self.values) / np.sum(weights)
+
+    @property
+    def propagated_error(self):
+        """Gets the propagated error from the error weighted mean calculation"""
+        if any(err == 0 for err in self.errors):
+            warnings.warn("One or more of the errors are 0, the propagated error cannot be calculated.")
+            return 0
+        weights = np.asarray(list(1 / (err ** 2) for err in self.errors))
+        return 1 / np.sqrt(np.sum(weights))
 
 
 def get_variable_by_id(variable_id: uuid.UUID) -> ExperimentalValue:

@@ -61,6 +61,7 @@ class TestRepeatedlyMeasuredValue:
         assert measurement.error_on_mean == pytest.approx(0.5773502691896258)
         assert measurement.error == pytest.approx(0.5773502691896258)
         measurement.use_std_for_uncertainty()
+        q.set_sig_figs_for_error(2)
         assert measurement.error == 1
         assert str(measurement) == "test = 10.0 +/- 1.0 [m]"
 
@@ -109,3 +110,10 @@ class TestRepeatedlyMeasuredValue:
         a.use_propagated_error_for_uncertainty()
         q.set_sig_figs_for_error(4)
         assert str(a) == "10.00990 +/- 0.09950"
+
+
+class TestMeasurementArray:
+
+    @pytest.fixture(autouse=True)
+    def reset_environment(self):
+        q.reset_default_configuration()
