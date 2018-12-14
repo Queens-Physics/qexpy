@@ -370,15 +370,15 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         self._raw_data = MeasuredValueArray(measurement_array, error, unit, name)
 
         # calculate its statistical properties
-        self._mean = self._raw_data.mean
+        self._mean = self._raw_data.mean().value
         self._std = self._raw_data.std(ddof=1)
-        self._error_on_mean = self._raw_data.error_on_mean
+        self._error_on_mean = self._raw_data.error_on_mean()
 
         # sets the value and error pair adopted for this object
         self._values[lit.RECORDED] = ValueWithError(self._mean, self._error_on_mean)
 
     @property
-    def raw_data(self) -> List[Real]:
+    def raw_data(self) -> np.ndarray:
         """Gets the raw data that was used to generate this measurement"""
         return self._raw_data.values
 
@@ -400,12 +400,12 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     @property
     def error_weighted_mean(self) -> float:
         """default getter for the error weighted mean if errors are specified"""
-        return self._raw_data.error_weighted_mean
+        return self._raw_data.error_weighted_mean()
 
     @property
     def propagated_error(self) -> float:
         """getter for the error propagated with errors passed in if present"""
-        return self._raw_data.propagated_error
+        return self._raw_data.propagated_error()
 
     def use_std_for_uncertainty(self):
         """Sets the uncertainty of this value to the standard deviation"""
@@ -550,7 +550,6 @@ class DerivedValue(ExperimentalValue):
 
         This is not recommended. Doing so will cause this object to be casted to MeasuredValue
 
-
         """
         if isinstance(relative_error, Real) and float(relative_error) > 0:
             new_error = self.value * float(relative_error)
@@ -673,40 +672,45 @@ class MeasuredValueArray(np.ndarray):
             data._units = new_unit
 
     @property
-    def values(self):
+    def values(self) -> np.ndarray:
         """Gets an array of values"""
         return np.asarray(list(data.value for data in self))
 
     @property
-    def errors(self):
+    def errors(self) -> np.ndarray:
         """Gets the error array"""
         return np.asarray(list(data.error for data in self))
 
-    @property
-    def mean(self) -> float:
+    def mean(self, **kwargs) -> MeasuredValue:
         """Gets the mean of the array"""
-        return float(np.mean(self.values))
+        result = np.mean(self.values)
+        error = self.error_on_mean()
+        name = "Mean of {}".format(self.name) if self.name else ""
+        return MeasuredValue(float(result), error, self.unit, name)
 
-    def std(self, ddof=1) -> float:
+    def std(self, ddof=1, **kwargs) -> float:
         """Gets the standard deviation of this array"""
         return float(np.std(self.values, ddof=ddof))
 
-    @property
-    def error_on_mean(self):
+    def sum(self, **kwargs) -> MeasuredValue:
+        """Gets the sum of the array"""
+        result = np.sum(self.values)
+        error = np.sqrt(np.sum(self.errors ** 2))
+        return MeasuredValue(float(result), float(error), self.unit, self.name)
+
+    def error_on_mean(self) -> float:
         """Gets the error on the mean of this array"""
         return self.std() / m.sqrt(self.size)
 
-    @property
-    def error_weighted_mean(self):
+    def error_weighted_mean(self) -> float:
         """Gets the error weighted mean of this array"""
         if any(err == 0 for err in self.errors):
             warnings.warn("One or more of the errors are 0, the error weighted mean cannot be calculated.")
             return 0
         weights = np.asarray(list(1 / (err ** 2) for err in self.errors))
-        return np.sum(weights * self.values) / np.sum(weights)
+        return float(np.sum(weights * self.values) / np.sum(weights))
 
-    @property
-    def propagated_error(self):
+    def propagated_error(self) -> float:
         """Gets the propagated error from the error weighted mean calculation"""
         if any(err == 0 for err in self.errors):
             warnings.warn("One or more of the errors are 0, the propagated error cannot be calculated.")

@@ -148,7 +148,7 @@ def get_monte_carlo_propagated_value_and_error(formula: "data.Formula") -> "data
     return data.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
 
 
-def execute_without_wrapping(operator: str, *operands: Union[Real, "data.ExperimentalValue"]):
+def execute(operator: str, *operands):
     """Execute an operation without wrapping real values into Constant objects
 
     For functions such as sqrt, sin, cos, ..., if a regular number is passed in, a regular
@@ -203,103 +203,127 @@ def propagate_units(formula: "data.Formula") -> Dict[str, int]:
     return units
 
 
+@np.vectorize
 def sqrt(x):
     """square root"""
-    return execute_without_wrapping(lit.SQRT, x)
+    return execute(lit.SQRT, x)
 
 
+@np.vectorize
 def exp(x):
     """e raised to the power of x"""
-    return execute_without_wrapping(lit.EXP, x)
+    return execute(lit.EXP, x)
 
 
+@np.vectorize
 def sin(x):
     """sine of x in rad"""
-    return execute_without_wrapping(lit.SIN, x)
+    return execute(lit.SIN, x)
 
 
+@np.vectorize
 def sind(x):
     """sine of x in degrees"""
     return sin(x / 180 * np.pi)
 
 
+@np.vectorize
 def cos(x):
     """cosine of x in rad"""
-    return execute_without_wrapping(lit.COS, x)
+    return execute(lit.COS, x)
 
 
+@np.vectorize
 def cosd(x):
     """cosine of x in degrees"""
     return cos(x / 180 * np.pi)
 
 
+@np.vectorize
 def tan(x):
     """tan of x in rad"""
-    return execute_without_wrapping(lit.TAN, x)
+    return execute(lit.TAN, x)
 
 
+@np.vectorize
 def tand(x):
     """tan of x in degrees"""
     return tan(x / 180 * np.pi)
 
 
+@np.vectorize
 def sec(x):
     """sec of x in rad"""
-    return execute_without_wrapping(lit.SEC, x)
+    return execute(lit.SEC, x)
 
 
+@np.vectorize
 def secd(x):
     """sec of x in degrees"""
     return sec(x / 180 * np.pi)
 
 
+@np.vectorize
 def csc(x):
     """csc of x in rad"""
-    return execute_without_wrapping(lit.CSC, x)
+    return execute(lit.CSC, x)
 
 
+@np.vectorize
 def cscd(x):
     """csc of x in degrees"""
     return csc(x / 180 * np.pi)
 
 
+@np.vectorize
 def cot(x):
     """cot of x in rad"""
-    return execute_without_wrapping(lit.COT, x)
+    return execute(lit.COT, x)
 
 
+@np.vectorize
 def cotd(x):
     """cot of x in degrees"""
     return cotd(x / 180 * np.pi)
 
 
+@np.vectorize
 def asin(x):
     """arcsine of x"""
-    return execute_without_wrapping(lit.ASIN, x)
+    return execute(lit.ASIN, x)
 
 
+@np.vectorize
 def acos(x):
     """arccos of x"""
-    return execute_without_wrapping(lit.ACOS, x)
+    return execute(lit.ACOS, x)
 
 
+@np.vectorize
 def atan(x):
     """arctan of x"""
-    return execute_without_wrapping(lit.ATAN, x)
+    return execute(lit.ATAN, x)
 
 
+@np.vectorize
 def log(*args):
-    """log with a base and power"""
+    """log with a base and power
+
+    If two arguments are provided, returns the log of the second with the first on base
+    If only one argument is provided, returns the natural log of that argument
+
+    """
     if len(args) == 2:
-        return execute_without_wrapping(lit.LOG, args[0], args[1])
+        return execute(lit.LOG, args[0], args[1])
     if len(args) == 1:
-        return execute_without_wrapping(lit.LN, args[0])
+        return execute(lit.LN, args[0])
     raise ValueError("Invalid number of arguments")
 
 
+@np.vectorize
 def log10(x):
     """log with base 10 for a value"""
-    return execute_without_wrapping(lit.LOG10, x)
+    return execute(lit.LOG10, x)
 
 
 def evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None) -> Union[np.ndarray, float]:
