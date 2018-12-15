@@ -79,10 +79,13 @@ class ExperimentalValue:
         if self.name:
             string += self.name + " = "
         # print the value and error
-        string += self.__print_value()
+        string += self.print_value()
         if self._units:
             string += " [" + self.unit + "]"
         return string
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, self.print_value())
 
     @property
     def value(self) -> float:
@@ -123,8 +126,10 @@ class ExperimentalValue:
 
     @unit.setter
     def unit(self, new_unit: str):
-        if isinstance(new_unit, str):
+        if isinstance(new_unit, str) and new_unit:
             self._units = units.parse_units(new_unit)
+        elif not new_unit:
+            self._units = {}
         else:
             raise ValueError("You can only set the unit of a value using its string representation")
 
@@ -208,7 +213,7 @@ class ExperimentalValue:
         # use deep copy because a dictionary object is mutable
         return deepcopy(self._units)
 
-    def __print_value(self) -> str:
+    def print_value(self) -> str:
         """Helper method that prints the value-error pair in proper format"""
         if self.value == float('inf'):
             return "inf"
@@ -643,8 +648,18 @@ class MeasuredValueArray(np.ndarray):
                              "array of values that are of the same length as the measurement array.")
 
         measured_values = list(MeasuredValue(val, err, unit, name) for val, err in zip(measurements, error_array))
-        obj = np.asarray(measured_values).view(MeasuredValueArray)
+        obj = np.asarray(measured_values, dtype=ExperimentalValue).view(MeasuredValueArray)
         return obj
+
+    def __str__(self):
+        string = ", ".join(variable.print_value() for variable in self)
+        name = self.name + " = " if self.name else ""
+        unit = " (" + self.unit + ")" if self.unit else ""
+        return "{}[ {} ]{}".format(name, string, unit)
+
+    def __setitem__(self, key, value):
+        value = self.__wrap_measurement(value)
+        super().__setitem__(key, value)
 
     @property
     def name(self) -> str:
@@ -681,18 +696,43 @@ class MeasuredValueArray(np.ndarray):
         """Gets the error array"""
         return np.asarray(list(data.error for data in self))
 
-    def mean(self, **kwargs) -> MeasuredValue:
+    def append(self, new_value) -> "MeasuredValueArray":
+        """adds a value to the end of this array and returns the new array"""
+        if isinstance(new_value, MeasuredValueArray):
+            pass  # don't do anything if the new value is already a MeasuredValueArray
+        elif isinstance(new_value, utils.ARRAY_TYPES):
+            new_value = list(self.__wrap_measurement(value) for value in new_value)
+        else:
+            new_value = self.__wrap_measurement(new_value)
+        # append new value and cast to MeasuredValueArray
+        return np.append(self, new_value).view(MeasuredValueArray)
+
+    def insert(self, position, new_value) -> "MeasuredValueArray":
+        """adds a value to a position in this array and returns the new array"""
+        if isinstance(new_value, MeasuredValueArray):
+            pass  # don't do anything if the new value is already a MeasuredValueArray
+        elif isinstance(new_value, utils.ARRAY_TYPES):
+            new_value = list(self.__wrap_measurement(value) for value in new_value)
+        else:
+            new_value = self.__wrap_measurement(new_value)
+        return np.insert(self, position, new_value).view(MeasuredValueArray)
+
+    def delete(self, position) -> "MeasuredValueArray":
+        """deletes the value on the requested position and returns the new array"""
+        return np.delete(self, position).view(MeasuredValueArray)
+
+    def mean(self, **kwargs) -> MeasuredValue:  # pylint: disable=unused-argument
         """Gets the mean of the array"""
         result = np.mean(self.values)
         error = self.error_on_mean()
         name = "Mean of {}".format(self.name) if self.name else ""
         return MeasuredValue(float(result), error, self.unit, name)
 
-    def std(self, ddof=1, **kwargs) -> float:
+    def std(self, ddof=1, **kwargs) -> float:  # pylint: disable=unused-argument
         """Gets the standard deviation of this array"""
         return float(np.std(self.values, ddof=ddof))
 
-    def sum(self, **kwargs) -> MeasuredValue:
+    def sum(self, **kwargs) -> MeasuredValue:  # pylint: disable=unused-argument
         """Gets the sum of the array"""
         result = np.sum(self.values)
         error = np.sqrt(np.sum(self.errors ** 2))
@@ -717,6 +757,16 @@ class MeasuredValueArray(np.ndarray):
             return 0
         weights = np.asarray(list(1 / (err ** 2) for err in self.errors))
         return 1 / np.sqrt(np.sum(weights))
+
+    def __wrap_measurement(self, value) -> ExperimentalValue:
+        if isinstance(value, Real):
+            value = MeasuredValue(float(value), 0, unit=self.unit, name=self.name)
+        elif isinstance(value, tuple) and len(value) == 2:
+            value = MeasuredValue(float(value[0]), float(value[1]), unit=self.unit, name=self.name)
+        elif not isinstance(value, ExperimentalValue):
+            # TODO: also check for units and names to see if they are compatible
+            raise ValueError("Elements of MeasurementArray must be or are convertible qexpy defined values")
+        return value
 
 
 def get_variable_by_id(variable_id: uuid.UUID) -> ExperimentalValue:
@@ -841,6 +891,8 @@ def wrap_operand(operand: Union[Real, ExperimentalValue]) -> ExperimentalValue:
         return Constant(operand)
     if isinstance(operand, ExperimentalValue):
         return operand
+    if isinstance(operand, tuple) and len(operand) == 2:
+        return MeasuredValue(operand[0], operand[1])
     raise ValueError("Operand of type {} for this operation is invalid!".format(type(operand)))
 
 

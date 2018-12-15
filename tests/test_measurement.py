@@ -145,3 +145,26 @@ class TestMeasurementArray:
         second = b[1]
         assert second.value == 2
         assert second.error == 0.2
+
+    def test_manipulate_measurement_array(self):
+        a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit=["m"], name="length")
+        a = a.append(6).append((7, 0.2)).append([8, 9]).append([(10, 0.1), (11, 0.3)])
+        assert len(a) == 11
+        assert a[5].value == 6
+        assert a[6].value == 7
+        assert a[6].error == 0.2
+        assert a[7].value == 8
+        assert a[9].value == 10
+        assert a[10].error == 0.3
+
+        a = a.delete(0)
+        assert len(a) == 10
+        assert a[0].value == 2
+        assert a[0].error == 0.5
+
+        a = a.insert(0, (2, 0.9))
+        assert len(a) == 11
+        assert a[0].value == 2
+        assert a[0].error == 0.9
+        assert a.name == "length"
+        assert a.unit == "m"

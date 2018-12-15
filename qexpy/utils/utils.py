@@ -9,7 +9,7 @@ import numpy as np
 _MPL_OUTPUT_NOTEBOOK_CALLED = False
 
 # helper constant for type checking
-ARRAY_TYPES = tuple, list, np.ndarray
+ARRAY_TYPES = list, np.ndarray
 
 
 def count_significant_figures(number: Union[str, Real]) -> int:
