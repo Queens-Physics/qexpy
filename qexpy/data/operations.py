@@ -8,12 +8,14 @@ This file also contains helper methods for operations with ExperimentalValue obj
 
 import itertools
 import warnings
+import functools
 from typing import Set, Dict, Union, List
 from numbers import Real
 from uuid import UUID
 
 import numpy as np
 
+import qexpy.utils.utils as utils
 import qexpy.settings.literals as lit
 import qexpy.settings.settings as settings
 import qexpy.data.data as data  # pylint: disable=cyclic-import
@@ -203,109 +205,121 @@ def propagate_units(formula: "data.Formula") -> Dict[str, int]:
     return units
 
 
-@np.vectorize
+def vectorize(func):
+    """vectorize a function if inputs are arrays"""
+
+    @functools.wraps(func)
+    def wrapper_vectorize(*args):
+        if any(isinstance(arg, utils.ARRAY_TYPES) for arg in args):
+            return np.vectorize(func)(*args)
+        return func(*args)
+
+    return wrapper_vectorize
+
+
+@vectorize
 def sqrt(x):
     """square root"""
     return execute(lit.SQRT, x)
 
 
-@np.vectorize
+@vectorize
 def exp(x):
     """e raised to the power of x"""
     return execute(lit.EXP, x)
 
 
-@np.vectorize
+@vectorize
 def sin(x):
     """sine of x in rad"""
     return execute(lit.SIN, x)
 
 
-@np.vectorize
+@vectorize
 def sind(x):
     """sine of x in degrees"""
     return sin(x / 180 * np.pi)
 
 
-@np.vectorize
+@vectorize
 def cos(x):
     """cosine of x in rad"""
     return execute(lit.COS, x)
 
 
-@np.vectorize
+@vectorize
 def cosd(x):
     """cosine of x in degrees"""
     return cos(x / 180 * np.pi)
 
 
-@np.vectorize
+@vectorize
 def tan(x):
     """tan of x in rad"""
     return execute(lit.TAN, x)
 
 
-@np.vectorize
+@vectorize
 def tand(x):
     """tan of x in degrees"""
     return tan(x / 180 * np.pi)
 
 
-@np.vectorize
+@vectorize
 def sec(x):
     """sec of x in rad"""
     return execute(lit.SEC, x)
 
 
-@np.vectorize
+@vectorize
 def secd(x):
     """sec of x in degrees"""
     return sec(x / 180 * np.pi)
 
 
-@np.vectorize
+@vectorize
 def csc(x):
     """csc of x in rad"""
     return execute(lit.CSC, x)
 
 
-@np.vectorize
+@vectorize
 def cscd(x):
     """csc of x in degrees"""
     return csc(x / 180 * np.pi)
 
 
-@np.vectorize
+@vectorize
 def cot(x):
     """cot of x in rad"""
     return execute(lit.COT, x)
 
 
-@np.vectorize
+@vectorize
 def cotd(x):
     """cot of x in degrees"""
     return cotd(x / 180 * np.pi)
 
 
-@np.vectorize
+@vectorize
 def asin(x):
     """arcsine of x"""
     return execute(lit.ASIN, x)
 
 
-@np.vectorize
+@vectorize
 def acos(x):
     """arccos of x"""
     return execute(lit.ACOS, x)
 
 
-@np.vectorize
+@vectorize
 def atan(x):
     """arctan of x"""
     return execute(lit.ATAN, x)
 
 
-@np.vectorize
+@vectorize
 def log(*args):
     """log with a base and power
 
@@ -320,7 +334,7 @@ def log(*args):
     raise ValueError("Invalid number of arguments")
 
 
-@np.vectorize
+@vectorize
 def log10(x):
     """log with base 10 for a value"""
     return execute(lit.LOG10, x)

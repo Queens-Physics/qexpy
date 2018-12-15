@@ -7,6 +7,7 @@ correct, and that they can be printed in the correct format
 """
 
 import pytest
+import numpy as np
 import qexpy as q
 
 
@@ -117,3 +118,30 @@ class TestMeasurementArray:
     @pytest.fixture(autouse=True)
     def reset_environment(self):
         q.reset_default_configuration()
+
+    def test_record_measurement_array(self):
+        a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit=["m"], name="length")
+        assert np.sum(a).value == 15
+        assert np.sum(a).error == 1.118033988749895
+        assert a.mean().value == 3
+        assert a.mean().error == 0.7071067811865476
+        assert a.std() == 1.5811388300841898
+        assert a.unit == "m"
+        assert a.name == "length"
+
+        first = a[0]
+        assert first.value == 1
+        assert first.error == 0.5
+        assert first.unit == "m"
+        assert first.name == "length"
+
+        b = q.MeasurementArray([1, 2, 3, 4, 5], [0.1, 0.2, 0.3, 0.4, 0.5])
+        assert np.sum(b).value == 15
+        assert np.sum(b).error == 0.7416198487095663
+        assert b.mean().value == 3
+        assert b.mean().error == 0.7071067811865476
+        assert b.std() == 1.5811388300841898
+
+        second = b[1]
+        assert second.value == 2
+        assert second.error == 0.2

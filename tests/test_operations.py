@@ -76,6 +76,17 @@ class TestArithmetic:
         v2 = s / 2
         assert v2.value == 5
 
+    def test_measurement_arrays(self):
+        a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5)
+
+        res = a + 2
+        assert res[0].value == 3
+        assert res[1].value == 4
+
+        res = a * 2
+        assert res[0].value == 2
+        assert res[1].value == 4
+
 
 class TestFunctions:
 
@@ -133,3 +144,14 @@ class TestFunctions:
         res_log = q.log(a, b)
         assert res_log.value == pytest.approx(2.321928094887362)
         assert res_log.error == pytest.approx(0.8497943815525582)
+
+    def test_measurement_arrays(self):
+        a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5)
+        res = q.sqrt(a)
+        assert res[3].value == 2
+        assert res[3].error == 0.125
+
+        res = q.log(5, a)
+        assert isinstance(res, q.data.data.MeasuredValueArray)
+        assert res[2].value == 0.6826061944859854
+        assert res[2].error == 0.10355582242660198
