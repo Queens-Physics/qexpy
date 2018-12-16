@@ -2,8 +2,10 @@
 
 import re
 import collections
+import warnings
 from typing import Dict, List, Union
 import qexpy.settings.settings as settings
+import qexpy.settings.literals as lit
 
 DOT_STRING = "⋅"
 
@@ -95,71 +97,67 @@ def __parse_unit_string_to_list(unit_string: str) -> List[Union[str, List]]:
     """Transforms a raw unit string into a list of tokens
 
     For example, kg*m/s^2A^2 would be converted into the following list of tokens:
-    ["kg", "*", "m", "/", ["s", "^", "2", "*", "A", "^", "2"]]
+    ["kg", "*", "m", "/", [["s", "^", "2"], "*", ["A", "^", "2"]]]
 
     This list is later on used to construct the abstract syntax tree
 
     """
+
+    raw_tokens_list = []  # the raw list of tokens
     tokens_list = []  # the final list of tokens
-    bracket_buffer = ""  # buffer for processing brackets
-    bracket_on = False  # flag indicating tokens inside of a bracket is being processed
 
-    def __process_char_for_list(char: str, tokens: list):
-        nonlocal bracket_on, bracket_buffer
-        # access the last character in the existing token list
-        top = tokens[len(tokens) - 1] if tokens else ""
-        if char == "(":
-            # set flag to true, all of the following characters will be stored in temp_string
-            bracket_on = True
-        elif char == ")":
-            bracket_on = False
-            # once the end bracket is found, process the temp_string buffer into a separate list
-            # and then append the list as one single token to the list of tokens, as everything
-            # inside a bracket should be considered as one
-            tokens.append(__parse_unit_string_to_list(bracket_buffer))
-            tokens.append("*")  # append implicit multiplication sign
-            # empty out the buffer
-            bracket_buffer = ""
-        elif bracket_on:
-            # load character into buffer if the current character is inside of a bracket
-            bracket_buffer += char
-        elif not tokens and re.match(r"[a-zA-Z]", char):
-            # validate the first entry and push it into the stack
-            tokens.append(char)
-        elif not tokens and not re.match(r"[a-zA-Z]", char):
-            raise ValueError("The unit string must start with a unit")
-        elif re.match(r"[*/]", char):
-            if not isinstance(top, list) and top == "*":
-                tokens.pop()
-            tokens.append(char)
-        elif isinstance(top, list):
-            # if the last element of the tokens array is a list
-            __process_char_for_list(char, top)
-        elif re.fullmatch(r"[a-zA-Z]+", top) and re.match(r"[a-zA-Z]", char):
-            # if both the last character and this character are alphabetical, combine them into
-            # one single unit string
-            tokens.pop()
-            tokens.append(top + char)
-        elif re.fullmatch(r"-?[1-9]*", top) and re.match(r"[1-9]", char):
-            # combine characters that belong to the same exponent expression
-            tokens.pop()
-            tokens.append(top + char)
-        elif re.fullmatch(r"-?[1-9]*", top) and re.match(r"[a-zA-Z]", char):
-            # for units entered in formats such as s^2A^2, add implicit multiplication sign and
-            # consider them together. It will practically be processed like (s^2*A^2)
-            exponent = tokens.pop()
-            exp_sign = tokens.pop()
-            unit = tokens.pop()
-            tokens.append([unit, exp_sign, exponent, "*", char])
+    # The following regex patterns matches the individual tokens in a unit string
+    # "[a-zA-Z]+(\^[0-9]+)*" matches any individual unit strings or ones with exponents
+    # "\).*?\)" matches any bracket enclosed expressions
+    # "/" and "\*" are the division and multiplication signs
+    token_pattern = re.compile(r"[a-zA-Z]+(\^-?[0-9]+)?|/|\*|\(.*?\)")
+    bracket_pattern = re.compile(r"\(.*?\)")
+    unit_with_exponent_pattern = re.compile(r"[a-zA-Z]+\^-?[0-9]+")
+    operator_pattern = re.compile(r"[/*]")
+
+    # check if the input is valid using regex
+    if not re.fullmatch(r"({})+".format(token_pattern.pattern), unit_string):
+        raise ValueError("The given unit string \"{}\" is invalid!".format(unit_string))
+
+    # for every token found, process it and append it to the list
+    for result in token_pattern.finditer(unit_string):
+        token = result.group()
+        if bracket_pattern.fullmatch(token):
+            # if the token is a bracket enclosed expression, recursively parse the content of
+            # that bracket and append it to the tokens list as a list
+            raw_tokens_list.append(__parse_unit_string_to_list(token[1:len(token) - 1]))
+        elif unit_with_exponent_pattern.fullmatch(token):
+            # append a unit with exponent pattern as a list because it should be seen as a whole
+            exponent_sign_index = token.find("^")
+            raw_tokens_list.append([token[:exponent_sign_index], "^", token[exponent_sign_index + 1:]])
         else:
-            tokens.append(char)
+            # during this stage, all tokens are appended in order, no grouping has happened yet
+            # unless there is an explicit bracket, for expressions such as "s^2A^2", implicit
+            # multiplications signs still need to be added, and this expression should also be
+            # seen as enclosed by brackets so that it's considered as one
+            raw_tokens_list.append(token)
 
-    for character in unit_string:
-        # read character by character
-        __process_char_for_list(character, tokens_list)
-    # delete trailing operators
-    if tokens_list[len(tokens_list) - 1] == "*":
-        tokens_list.pop()
+    # the following flag indicates if there is a preceding operator in the list of tokens, if
+    # not, an implicit multiplication sign needs to be added, and this token should be grouped
+    # with the previous one. This value starts as True because the first item in the list does
+    # not need any preceding operators
+    preceding_operator_exists = True
+
+    # process the raw token list, add implicit brackets or multiplication signs if needed
+    for token in raw_tokens_list:
+        if preceding_operator_exists:
+            tokens_list.append(token)
+            preceding_operator_exists = False
+        elif isinstance(token, str) and operator_pattern.fullmatch(token):
+            # if an actual operator is found
+            tokens_list.append(token)
+            preceding_operator_exists = True
+        else:
+            last_token = tokens_list.pop()
+            # add implicit multiplication sign and group this item with the previous one
+            tokens_list.append([last_token, "*", token])
+            preceding_operator_exists = False
+
     return tokens_list
 
 
@@ -233,13 +231,59 @@ def __evaluate_unit_tree(tree: Union[Expression, str]) -> dict:
     if isinstance(tree, Expression) and tree.operator == "^":
         # when a unit with an exponent is found, add it to the dictionary object
         units[tree.left] = int(tree.right)
-    elif isinstance(tree, Expression) and (tree.operator == "/" or tree.operator == "*"):
+    elif isinstance(tree, Expression) and tree.operator in ["*", "/"]:
         for unit, exponent in __evaluate_unit_tree(tree.left).items():
             units[unit] = exponent
         for unit, exponent in __evaluate_unit_tree(tree.right).items():
             start_exponent_from = units[unit] if unit in units else 0
             plus_or_minus = 1 if tree.operator == "*" else -1
             units[unit] = start_exponent_from + plus_or_minus * exponent
-    elif not isinstance(tree, Expression):
+    elif isinstance(tree, str):
         units[tree] = 1
     return units
+
+
+def operate_with_units(operator, *operands):
+    # TODO: implement unit propagation for non-linear operations
+    return UNIT_OPERATIONS[operator](*operands) if operator in UNIT_OPERATIONS else {}
+
+
+def _add_and_sub(units_var1, units_var2):
+    from copy import deepcopy
+    if units_var1 and units_var2 and units_var1 != units_var2:
+        warnings.warn("You're trying to add/subtract two values with mismatching units, returning empty unit")
+        return {}
+    elif not units_var1:
+        return deepcopy(units_var2)
+    else:
+        return deepcopy(units_var1)
+
+
+def _mul(units_var1, units_var2):
+    units = {}
+    for unit, exponent in units_var1.items():
+        __update_unit_exponent_count_in_dict(units, unit, exponent)
+    for unit, exponent in units_var2.items():
+        __update_unit_exponent_count_in_dict(units, unit, exponent)
+    return units
+
+
+def _div(units_var1, units_var2):
+    units = {}
+    for unit, exponent in units_var1.items():
+        __update_unit_exponent_count_in_dict(units, unit, exponent)
+    for unit, exponent in units_var2.items():
+        __update_unit_exponent_count_in_dict(units, unit, -exponent)
+    return units
+
+
+def __update_unit_exponent_count_in_dict(unit_dict, unit_string, count):
+    unit_dict[unit_string] = (0 if unit_string not in unit_dict else unit_dict[unit_string]) + count
+
+
+UNIT_OPERATIONS = {
+    lit.ADD: _add_and_sub,
+    lit.SUB: _add_and_sub,
+    lit.MUL: _mul,
+    lit.DIV: _div
+}

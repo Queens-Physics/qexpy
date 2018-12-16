@@ -16,6 +16,7 @@ from uuid import UUID
 import numpy as np
 
 import qexpy.utils.utils as utils
+import qexpy.utils.units as units
 import qexpy.settings.literals as lit
 import qexpy.settings.settings as settings
 import qexpy.data.data as data  # pylint: disable=cyclic-import
@@ -179,30 +180,7 @@ def propagate_units(formula: "data.Formula") -> Dict[str, int]:
     operator = formula.operator
     operands = formula.operands
 
-    units = {}
-    if operator == lit.MUL:
-        for operand in operands:
-            for unit, exponent in operand.get_units().items():
-                units[unit] = (0 if unit not in units else units[unit]) + exponent
-    elif operator == lit.DIV:
-        for unit, exponent in operands[0].get_units().items():
-            units[unit] = (0 if unit not in units else units[unit]) + exponent
-        for unit, exponent in operands[1].get_units().items():
-            units[unit] = (0 if unit not in units else units[unit]) - exponent
-    elif operator in [lit.ADD, lit.SUB]:
-        if not operands[0].get_units() and operands[1].get_units():
-            units = operands[1].get_units()
-        elif not operands[1].get_units() and operands[0].get_units():
-            units = operands[0].get_units()
-        elif operands[1].get_units() != operands[0].get_units():
-            warnings.warn("You're trying to add/subtract two values with mismatching units, returning empty unit")
-            return units
-        else:
-            units = operands[0].get_units()
-    elif operator == lit.NEG:
-        units = operands[0].get_units()
-    # TODO: implement unit propagation for non-linear operations
-    return units
+    return units.operate_with_units(operator, *(operand.get_units() for operand in operands))
 
 
 def vectorize(func):

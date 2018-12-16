@@ -774,7 +774,7 @@ def get_variable_by_id(variable_id: uuid.UUID) -> ExperimentalValue:
     return ExperimentalValue._register[variable_id]
 
 
-def set_covariance(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue], cov: Real = None):
+def set_covariance(var1: MeasuredValue, var2: MeasuredValue, cov: Real = None):
     """Sets the covariance of two MeasuredValue objects
 
     Users can manually set the covariance of two MeasuredValue objects. If the two objects are
@@ -787,25 +787,21 @@ def set_covariance(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID,
     that the covariance between any two values is 0, unless specified or calculated
 
     """
-    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
-        var1 = ExperimentalValue._register[var1]
-        var2 = ExperimentalValue._register[var2]
+
     if not isinstance(var1, MeasuredValue) or not isinstance(var2, MeasuredValue):
         raise ValueError("You can only set the covariance between two Measurements")
     if var1.error == 0 or var2.error == 0:
         raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
-    if isinstance(var1, RepeatedlyMeasuredValue) and isinstance(var2, RepeatedlyMeasuredValue):
-        covariance = cov
-        if len(var1.raw_data) == len(var2.raw_data) and cov is None:
-            covariance = utils.calculate_covariance(var1.raw_data, var2.raw_data)
-        elif len(var1.raw_data) != len(var2.raw_data) and cov is None:
-            raise ValueError("The two arrays of repeated measurements are not of the same length")
-        correlation = covariance / (var1.std * var2.std)
+
+    if isinstance(var1, RepeatedlyMeasuredValue) and isinstance(var2, RepeatedlyMeasuredValue) and cov is None:
+        covariance, correlation = __calculate_covariance_and_correlation(var1, var2)
     elif cov is None:
-        raise ValueError("The covariance value is not provided")
+        raise ValueError("The covariance value is not provided and it cannot be calculated for the inputs given")
     else:
         covariance = cov
-        correlation = cov / (var1.error * var2.error)
+        var1_std = var1.std if isinstance(var1, RepeatedlyMeasuredValue) else var1.error
+        var2_std = var2.std if isinstance(var2, RepeatedlyMeasuredValue) else var2.error
+        correlation = cov / (var1_std * var2_std)
 
     # check that the result makes sense
     if correlation > 1 or correlation < -1:
@@ -828,38 +824,30 @@ def get_covariance(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID,
     return 0  # TODO: implement covariance propagation for DerivedValues
 
 
-def set_correlation(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue], cor: Real = None):
+def set_correlation(var1: MeasuredValue, var2: MeasuredValue, cor: Real = None):
     """Sets the correlation factor between two MeasuredValue objects
 
     See Also:
         set_covariance
 
     """
-    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
-        var1 = ExperimentalValue._register[var1]
-        var2 = ExperimentalValue._register[var2]
-    # check that the input makes sense
-    if cor and (float(cor) > 1 or float(cor) < -1):
-        raise ValueError("The correlation factor provided: {} is non-physical.".format(cor))
 
     if not isinstance(var1, MeasuredValue) or not isinstance(var2, MeasuredValue):
         raise ValueError("You can only set the correlation factor between two Measurements")
+    if cor and (float(cor) > 1 or float(cor) < -1):
+        raise ValueError("The correlation factor provided: {} is non-physical.".format(cor))
     if var1.error == 0 or var2.error == 0:
         raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
-    if isinstance(var1, RepeatedlyMeasuredValue) and isinstance(var2, RepeatedlyMeasuredValue):
-        if len(var1.raw_data) == len(var2.raw_data) and cor is None:
-            covariance = utils.calculate_covariance(var1.raw_data, var2.raw_data)
-            correlation = covariance / (var1.std * var2.std)
-        elif len(var1.raw_data) != len(var2.raw_data) and cor is None:
-            raise ValueError("The two arrays of repeated measurements are not of the same length")
-        else:
-            correlation = cor
-            covariance = cor * (var1.std * var2.std)
+
+    if isinstance(var1, RepeatedlyMeasuredValue) and isinstance(var2, RepeatedlyMeasuredValue) and cor is None:
+        covariance, correlation = __calculate_covariance_and_correlation(var1, var2)
     elif cor is None:
         raise ValueError("The covariance value is not provided")
     else:
-        covariance = cor * (var1.error * var2.error)
         correlation = cor
+        var1_std = var1.std if isinstance(var1, RepeatedlyMeasuredValue) else var1.error
+        var2_std = var2.std if isinstance(var2, RepeatedlyMeasuredValue) else var2.error
+        covariance = cor * (var1_std * var2_std)
 
     # set relations in the module level register
     id_string = "_".join(sorted(map(str, [var1._id, var2._id])))
@@ -940,3 +928,12 @@ def __get_correlation(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UU
         return ExperimentalValue._correlations[id_string].correlation
 
     return 0
+
+
+def __calculate_covariance_and_correlation(var1: RepeatedlyMeasuredValue, var2: RepeatedlyMeasuredValue) -> tuple:
+    if len(var1.raw_data) == len(var2.raw_data):
+        covariance = utils.calculate_covariance(var1.raw_data, var2.raw_data)
+        correlation = covariance / (var1.std * var2.std)
+    else:
+        raise ValueError("The two arrays of repeated measurements are not of the same length")
+    return covariance, correlation

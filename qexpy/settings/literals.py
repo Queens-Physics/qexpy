@@ -17,7 +17,7 @@ COVARIANCE = "covariance"
 CORRELATION = "correlation"
 VALUES = "values"
 
-# global settings
+# settings
 ERROR_METHOD = "error_method"
 PRINT_STYLE = "print_style"
 UNIT_STYLE = "unit_style"

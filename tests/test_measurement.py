@@ -120,7 +120,7 @@ class TestMeasurementArray:
         q.reset_default_configuration()
 
     def test_record_measurement_array(self):
-        a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit=["m"], name="length")
+        a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit="m", name="length")
         assert np.sum(a).value == 15
         assert np.sum(a).error == 1.118033988749895
         assert a.mean().value == 3
@@ -147,7 +147,7 @@ class TestMeasurementArray:
         assert second.error == 0.2
 
     def test_manipulate_measurement_array(self):
-        a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit=["m"], name="length")
+        a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit="m", name="length")
         a = a.append(6).append((7, 0.2)).append([8, 9]).append([(10, 0.1), (11, 0.3)])
         assert len(a) == 11
         assert a[5].value == 6
