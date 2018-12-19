@@ -1,7 +1,7 @@
 """Module containing data structures for experimental values
 
 This module defines ExperimentalValue and all its sub-classes. Experimental measurements
-and their corresponding uncertainties can be recorded as an instance of this class. Any
+and their corresponding uncertainties can be recorded as a instances of this class. Any
 operations done with these instances will have the properly propagated errors and units.
 
 """
@@ -10,7 +10,7 @@ import warnings
 import uuid
 import collections
 from numbers import Real
-from typing import Dict, Union, List
+from typing import Dict, Union, List, Tuple
 import math as m
 import numpy as np
 
@@ -32,106 +32,132 @@ Correlation = collections.namedtuple("Correlation", "values, correlation, covari
 
 
 class ExperimentalValue:
-    """Root class for objects with a value and an uncertainty
+    """Base class for objects with a value and an uncertainty
 
-    This class is practically an abstract class, not to be instantiated directly. An instance
-    of this class can store multiple value-error pairs. These pairs are stored in the _values
-    attribute, a dictionary object where the key of the entries indicate the source of this
-    value-error pair. "recorded" indicates that this value and its uncertainty are directly
-    recorded by the user. Another two possible keys are "derivative" and "monte-carlo", which
-    represents the two error methods by which the uncertainties can be propagated.
+    The ExperimentalValue is a wrapper class for any individual value involved in an experiment
+    and subsequent data analysis. Each ExperimentalValue has a center value and an uncertainty,
+    and optionally, a name and a unit. When working with QExPy, any measurements recorded with
+    QExPy and the result of any data analysis done with these measurements will all be instances
+    of this class.
 
-    This class also contains functionality for automatic unit tracking. Each instance of this
-    class has a _units attribute, a dictionary object which stores each separate independent
-    unit this value has, and their exponents. For example, the unit for Newton (kg*m^2/s^2) is
-    stored as {"kg": 1, "m": 2, "s": -2}. These units will be tracked and propagated during
-    any operation done with objects of this class.
+    Examples:
+        >>> import qexpy as q
+        >>> a = q.Measurement(302, 5)
 
-    Attributes:
-        _values (dict): the values and uncertainties on the values
-        _units (dict): the units and their exponents
-        _name (str): the name of this instance
-        _id (uuid.UUID): the unique ID of an instance
+        The ExperimentalValue object has the following basic properties
+        >>> a.value
+        302
+        >>> a.error
+        5
+        >>> a.relative_error
+        0.016556291390728478
 
-    TODO:
-        Implement smart unit tracking.
+        These properties can be changed
+        >>> a.value = 303
+        >>> a.value
+        303
+        >>> a.relative_error = 0.05
+        >>> a.error
+        15.15
+
+        You can specify the name or the units of a value
+        >>> a.name = "force"
+        >>> a.unit = "kg*m^2/s^2"
+
+        The string representation of the value will include the name and units if specified
+        >>> print(a)
+        force = 300 +/- 20 [kg⋅m^2⋅s^-2]
+
+        You can also specify how you want the values or the units to be printed
+        >>> q.set_print_style("scientific")
+        >>> q.set_unit_style("fraction")
+        >>> q.set_sig_figs_for_error(2)
+        >>> print(a)
+        force = (3.03 +/- 0.15) * 10^2 [kg⋅m^2/s^2]
 
     """
 
-    # module level database for instantiated MeasuredValues and DerivedValues
-    _register = {}  # type: Dict[uuid.UUID, ExperimentalValue]
+    # module level register that stores references to all instantiated MeasuredValue and
+    # DerivedValue objects during a session.
+    _register: Dict[uuid.UUID, "ExperimentalValue"] = {}
 
-    # stores the correlation between values
-    _correlations = {}  # type: Dict[str, Correlation]
+    # stores the correlation between values, where the key is the unique IDs of the two
+    # instances combined.
+    _correlations: Dict[str, Correlation] = {}
 
     def __init__(self, unit="", name=""):
-        """Default constructor, not to be called directly"""
+        """Constructor for ExperimentalValue
 
-        # initialize values
+        The ExperimentalValue is practically an abstract class. It should not be instantiated directly
+
+        """
+
+        # Stores the value/error pairs corresponding to their source. User recorded values are stored
+        # with the key "recorded", derived values are stored with the key "derivative" or "monte-carlo",
+        # depending which error propagation method the user specifies.
         self._values = {}  # type: Dict[str, ValueWithError]
+
+        # Stores each unit string and their corresponding exponents.
         self._units = units.parse_units(unit) if unit else {}  # type: Dict[str, int]
+
+        # The name of this quantity if given
         self._name = name  # type: str
+
+        # Each instance is given a unique ID for easy reference
         self._id = uuid.uuid4()  # type: uuid.UUID
 
     def __str__(self):
-        string = ""
-        # print name of the quantity
-        if self.name:
-            string += self.name + " = "
-        # print the value and error
-        string += self.print_value()
-        if self._units:
-            string += " [" + self.unit + "]"
-        return string
+        """The string representation of this quantity
+
+        The default string representation for an ExperimentalValue is "name = value +/- error [unit]",
+        but if the name or unit is not specified, they won't be shown
+
+        """
+        name_string = "{} = ".format(self.name) if self.name else ""
+        unit_string = " [{}]".format(self.unit) if self.unit else ""
+        return "{}{}{}".format(name_string, self.print_value(), unit_string)
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, self.print_value())
 
     @property
     def value(self) -> float:
-        """Default getter for value of the quantity
-
-        This is practically an abstract method, to be overridden by its child classes
-
-        """
+        """The center value of this quantity"""
         return 0
 
     @property
     def error(self) -> float:
-        """Default getter for uncertainty of the quantity
+        """The uncertainty of this quantity"""
+        return 0
 
-        This is practically an abstract method, to be overridden by its child classes
-
-        """
+    @property
+    def relative_error(self) -> float:
+        """The ratio of the uncertainty to its center value"""
         return 0
 
     @property
     def name(self) -> str:
-        """Default getter for the value name"""
+        """The name of this quantity"""
         return self._name
 
     @name.setter
     def name(self, new_name: str):
-        if isinstance(new_name, str):
-            self._name = new_name
-        else:
-            raise ValueError("The name of a value must be a string")
+        if not isinstance(new_name, str):
+            raise ValueError("Cannot set the name to type {}, only strings are allowed".format(type(new_name)))
+        self._name = new_name
 
     @property
     def unit(self) -> str:
-        """Default getter for the string representation of the units"""
+        """The unit of this quantity"""
         if not self._units:
             return ""
         return units.construct_unit_string(self._units)
 
     @unit.setter
     def unit(self, new_unit: str):
-        if isinstance(new_unit, str) and new_unit:
-            self._units = units.parse_units(new_unit)
-        elif not new_unit:
-            self._units = {}
-        else:
-            raise ValueError("You can only set the unit of a value using its string representation")
+        if not isinstance(new_unit, str):
+            raise ValueError("Cannot set unit to type {}, use the string representation".format(type(new_unit)))
+        self._units = units.parse_units(new_unit) if new_unit else {}
 
     def __eq__(self, other):
         return self.value == wrap_operand(other).value
@@ -184,232 +210,253 @@ class ExperimentalValue:
     def scale(self, factor, update_units=True):
         """Scale the value and error of this instance by a factor
 
-        This method can be used to scale up or down a value, usually due to the change of
-        unit (for example, change from using [m] to using [mm]. The uncertainty of the value
-        will be updated accordingly. By default, the units will be updated if applicable.
-        This feature can be disabled by passing update_units=False
+        This method can be used to scale up or down a value, usually called when the user wish to
+        change the unit of this value (e.g. from [m] to [km]). Using this method, the uncertainty
+        of this quantity will be undated accordingly. By default, the unit will also be scaled if
+        applicable, but this can be disabled by passing "update_units=False" as an argument
+
+        This method is not implemented yet. Right now this is just a placeholder.
 
         """
 
     def derivative(self, other: "ExperimentalValue") -> float:
-        """Finds the derivative with respect to another ExperimentalValue
+        """Calculates the derivative of this quantity with respect to another
 
-        This method is usually called from a DerivedValue object. When you take the derivative
-        of a measured value with respect to anything other than itself, the return value should
-        be 0. The derivative of any quantity with respect to itself is always 1
+        The derivative of any value with respect to itself is 1, and for unrelated values, the
+        derivative is always 0. This method is typically called from a DerivedValue, to find out
+        its derivative with respect to one of the measurements it's derived from.
 
         Args:
-            other (ExperimentalValue): the target of the differentiation
+            other (ExperimentalValue): the target for finding the derivative
 
         """
         if not isinstance(other, ExperimentalValue):
-            raise ValueError("You can only find the derivative of a variable with respect to another "
-                             "qexpy defined variable.")
+            raise ValueError("Unable to find derivative with respect to type {}".format(type(other)))
         return 1 if self._id == other._id else 0
-
-    def get_units(self) -> Dict[str, int]:
-        """Gets the raw dictionary object for units"""
-        from copy import deepcopy
-        # use deep copy because a dictionary object is mutable
-        return deepcopy(self._units)
 
     def print_value(self) -> str:
         """Helper method that prints the value-error pair in proper format"""
-        if self.value == float('inf'):
-            return "inf"
-        return printing.get_printer()(self.value, self.error)
+        res = printing.get_printer()(self.value, self.error)
+        return res
 
 
 class MeasuredValue(ExperimentalValue):
-    """Class for user recorded experimental values with an uncertainty
+    """Class for any user recorded values with uncertainties, alias: Measurement
 
-    The MeasuredValue class represents a single measurement, or more precisely, a single data point
-    in an experiment. For backwards compatibility, this class is given an alias "Measurement"
+    A MeasuredValue (Measurement) object represents a single measured quantity with a center value
+    and an uncertainty. For backwards compatibility, this class is given an alias "Measurement".
+    The user is encouraged to call "Measurement" instead of "MeasuredValue" to record a measurement.
 
-    Usage:
-        Measurement(12, 1) -> 12 +/- 1
-        Measurement(12) -> 12 +/- 0
+    Args:
+        data: the value of this measurement. It's either a real number or an array of real numbers that
+            represents a series of repeated measurements taken on this single quantity
+        error: the uncertainty of this measurement. It's either a real number or an array of real numbers
+            if the data is also an array of repeated measurements.
+        unit: the string representation of the unit, e.g. "kg*m^2/s^2"
+        name: the name of this quantity, e.g. "length"
 
-    You can also specify the name and unit of the value as keyword arguments.
+    Examples:
+        >>> import qexpy as q
 
-    For example:
-        Measurement(12, 1, name="length", unit="m") -> length = 12 +/- 1 [m]
+        You can create a measurement with a value and an uncertainty
+        >>> a = q.Measurement(12, 1)
+        >>> print(a)
+        12 +/- 1
 
-    Usually during an experiment, the user may wish to take multiple measurements on the same quantity,
-    and use their average as the final value. This is also supported:
+        If the uncertainty is not specified, it's by default set to 0
+        >>> b = q.Measurement(12)
+        >>> print(b)
+        12 +/- 0
 
-    For example:
-        Measurement([5.6, 4.8, 6.1, 4.9, 5.1]) -> 5.3000 +/- 0.5431
+        You can also specify the name and unit of this quantity
+        >>> c = q.Measurement(302, 5, unit="kg*m^2/s^2", name="force")
+        >>> print(c)
+        force = 302 +/- 5 [kg⋅m^2⋅s^-2]
 
-    The user does not need to pass in the uncertainties on each measurement. By default, the mean and
-    error on the mean is used as the value-error pair of this variable. For more details, see comments
-    on the RepeatedlyMeasuredValue class.
+        For repeated measurements, simply pass an array into the constructor as data, and the average will
+        be taken as the center value for this measurement, with the error on the mean as the uncertainty.
+        >>> q.reset_default_configuration()
+        >>> q.set_sig_figs_for_error(4)
+        >>> d = q.Measurement([5.6, 4.8, 6.1, 4.9, 5.1])
+        >>> print(d)
+        5.3000 +/- 0.5431
+
+        More examples for recording repeated measurements are documented under RepeatedlyMeasuredValue
+
+    See Also:
+        :py:class:`.RepeatedlyMeasuredValue`
 
     """
 
     def __new__(cls, data: Union[Real, List[Real]], error: Union[Real, List[Real]] = None, unit="", name=""):
-        """Default constructor for a MeasuredValue
-
-        This method is called when the user instantiate a MeasuredValue object by calling its alias
-        Measurement. The user can create a MeasuredValue from a single measurement or an array of
-        repeated measurements on a single quantity (to be averaged).
-
-        When two values are passed to this method, the first argument will be recognized as the value,
-        the second as the uncertainty. If the second value is not provided, the uncertainty is by default
-        set to 0. If a list of values is passed to this method, the mean and standard deviation of the
-        value will be calculated and preserved.
-
-        """
-        if isinstance(data, utils.ARRAY_TYPES) and error is None:
-            instance = super().__new__(RepeatedlyMeasuredValue)
-            instance.__init__(data, unit=unit, name=name)
-        elif isinstance(data, utils.ARRAY_TYPES) and isinstance(error, (Real, utils.ARRAY_TYPES)):
-            instance = super().__new__(RepeatedlyMeasuredValue)
-            instance.__init__(data, error=error, unit=unit, name=name)
-        elif isinstance(data, Real) and error is None:
+        if isinstance(data, Real):
             instance = super().__new__(cls)
-            instance.__init__(float(data), 0.0, unit=unit, name=name)
-        elif isinstance(data, Real) and isinstance(error, Real):
-            instance = super().__new__(cls)
-            instance.__init__(float(data), float(error), unit=unit, name=name)
+        elif isinstance(data, utils.ARRAY_TYPES):
+            instance = super().__new__(RepeatedlyMeasuredValue)
         else:
-            raise ValueError("Invalid Arguments! Measurements can be recorded either using a center value "
-                             "with its uncertainty or an array of repeated measurements on the same quantity.")
+            raise ValueError("Cannot create Measurement with {} of type {}".format(data, type(data)))
         return instance
 
-    def __init__(self, value=0.0, error=0.0, unit="", name=""):
-        """Default initializer for a regular measurement"""
+    def __init__(self, data, error=None, unit="", name=""):
+        if error is not None and not isinstance(error, Real):
+            raise ValueError("Cannot create Measurement with uncertainty {} of type {}".format(error, type(error)))
         super().__init__(unit, name)
-        self._values[lit.RECORDED] = ValueWithError(value, error)
+        self._values[lit.RECORDED] = ValueWithError(data, float(error) if error else 0.0)
         ExperimentalValue._register[self._id] = self
 
     @property
     def value(self) -> float:
-        """Gets the value for this measurement"""
+        """The value of this measurement"""
         return self._values[lit.RECORDED].value
 
     @value.setter
     def value(self, new_value: Real):
-        """Modifies the value of a measurement"""
-        if isinstance(new_value, Real):
-            self._values[lit.RECORDED] = ValueWithError(new_value, self._values[lit.RECORDED].error)
-        else:
-            raise ValueError("You can only set the value of a measurement to a number")
-        if isinstance(self, RepeatedlyMeasuredValue):  # check if the instance is a repeated measurement
-            warnings.warn("You are trying to modify the value of a repeated measurement. Doing so has "
-                          "caused you to lose the original list of raw measurement data")
-            self.__class__ = MeasuredValue  # casting it to base class
+        if not isinstance(new_value, Real):
+            raise ValueError("Cannot set value to type {}, expecting a real number.".format(type(new_value)))
+        self._values[lit.RECORDED] = ValueWithError(new_value, self._values[lit.RECORDED].error)
 
     @property
     def error(self) -> float:
-        """Gets the uncertainty on the measurement"""
+        """The uncertainty of this measurement"""
         return self._values[lit.RECORDED].error
 
     @error.setter
     def error(self, new_error: Real):
-        """Modifies the value of a measurement"""
-        if isinstance(new_error, Real) and float(new_error) > 0:
-            self._values[lit.RECORDED] = ValueWithError(self._values[lit.RECORDED].value, new_error)
-        else:
-            raise ValueError("You can only set the error of a measurement to a positive number")
-        if isinstance(self, RepeatedlyMeasuredValue):  # check if the instance is a repeated measurement
-            warnings.warn("You are trying to modify the uncertainty of a repeated measurement.")
+        if not isinstance(new_error, Real) or float(new_error) < 0:
+            raise ValueError("Cannot set error to {}, expecting a positive real number.".format(new_error))
+        self._values[lit.RECORDED] = ValueWithError(self._values[lit.RECORDED].value, new_error)
 
     @property
     def relative_error(self) -> float:
-        """Gets the relative error (error/mean) of a MeasuredValue object."""
+        """The relative error (uncertainty/center value) of this measurement"""
         return self.error / self.value if self.value != 0 else 0.
 
     @relative_error.setter
     def relative_error(self, relative_error: Real):
-        """Sets the relative error (error/mean) of a MeasuredValue object.
-
-        Args:
-            relative_error (Real): The new uncertainty
-
-        """
-        if isinstance(relative_error, Real) and float(relative_error) > 0:
-            new_error = self.value * float(relative_error)
-            self._values[lit.RECORDED] = ValueWithError(self.value, new_error)
-        else:
-            raise ValueError("The relative uncertainty of a measurement has to be a positive number")
-        if isinstance(self, RepeatedlyMeasuredValue):  # check if the instance is a repeated measurement
-            warnings.warn("You are trying to modify the uncertainty of a repeated measurement.")
+        if not isinstance(relative_error, Real) or float(relative_error) < 0:
+            raise ValueError("Cannot set error to {}, expecting a positive real number.".format(relative_error))
+        new_error = self.value * float(relative_error)
+        self._values[lit.RECORDED] = ValueWithError(self.value, new_error)
 
 
 class RepeatedlyMeasuredValue(MeasuredValue):
-    """Class to store the result of repeated measurements on a single quantity
+    """A MeasuredValue recorded with an array of repeated measurements
 
-    This class is instantiated when the user takes multiple measurements on a single quantity.
-    It is just like any regular MeasuredValue object, with the original array of measurements
-    preserved as "raw_data".
+    There is no designated constructor for this class. When the user calls "Measurement" with an
+    array of real numbers, this class is automatically instantiated.
 
-    The mean and error on the mean is used as the default value and error of this measurement.
-    The user also has an option of using the standard deviation as the error on this measurement.
-    If the corresponding uncertainties for the list of raw data is also passed in, the user can
-    choose the error weighted mean and propagated error as the value-error pair.
+    By default, the mean of the array of measurements and the standard error (error on the mean)
+    is used as the value and uncertainty for this measurement when accessed.
 
-    The user can also manually set the uncertainty of this object. However, if the user choose
-    to manually override the value of this measurement. The original raw data will be lost, and
-    the instance will be casted to its parent class MeasuredValue
+    References:
+        https://en.wikipedia.org/wiki/Standard_error
+        https://en.wikipedia.org/wiki/Standard_deviation
+        https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
 
-    Attributes:
-        _raw_data (MeasuredValueArray): the original list of raw measurements
-        _mean (float): the raw mean of the raw measurements
-        _std (float): the standard derivative of set of measurements
-        _error_on_mean (float): the error on the mean of the set of measurements
+    See Also:
+        :py:class:`.MeasuredValue`
+        :py:class:`.ExperimentalValueArray`
+
+    Examples:
+        >>> import qexpy as q
+
+        The most common way of recording a value with repeated measurements is to only give the
+        center values for the measurements
+        >>> a = q.Measurement([9, 10, 11])
+        >>> print(a)
+        10.0 +/- 0.6
+
+        There are other statistical properties of the array of measurements
+        >>> a.std
+        1
+        >>> a.error_on_mean
+        0.5773502691896258
+
+        You can choose to use the standard deviation as the uncertainty
+        >>> a.use_std_for_uncertainty()
+        >>> a.error
+        1
+
+        You can also specify individual uncertainties for the measurements
+        >>> a = q.Measurement([10, 11], [0.1, 1])
+        >>> print(a)
+        10.5 +/- 0.5
+        >>> a.error_weighted_mean
+        10.00990099009901
+        >>> a.propagated_mean
+        0.09950371902099892
+
+        You can choose which statistical properties to be used as the value/error as usual
+        >>> a.use_error_weighted_mean_as_value()
+        >>> a.use_propagated_error_for_uncertainty()
+        >>> q.set_sig_figs_for_error(4)
+        >>> print(a)
+        10.00990 +/- 0.09950
 
     """
 
     def __init__(self, measurement_array: List[Real], error: Union[Real, List[Real]] = None, unit="", name=""):
-        """default constructor for a repeatedly measured value"""
 
         # check validity of inputs
         if isinstance(error, utils.ARRAY_TYPES) and len(error) != len(measurement_array):
-            raise ValueError("The error array and raw measurements are not of the same length")
+            raise ValueError(
+                "Cannot map {} uncertainties to {} measurements".format(len(error), len(measurement_array)))
 
-        # call parent constructor
-        super().__init__(unit=unit, name=name)
-
-        # initialize raw data and its corresponding uncertainties
-        self._raw_data = MeasuredValueArray(measurement_array, error, unit, name)
+        # Initialize raw data and its corresponding uncertainties. Internally, the array of measurements
+        # is stored as a ExperimentalValueArray, however, the principal is that ExperimentalValueArray should be
+        # used only to represent an array of measurements of different quantities.
+        self._raw_data = ExperimentalValueArray(measurement_array, error, unit, name)
 
         # calculate its statistical properties
         self._mean = self._raw_data.mean().value
         self._std = self._raw_data.std(ddof=1)
         self._error_on_mean = self._raw_data.error_on_mean()
 
-        # sets the value and error pair adopted for this object
-        self._values[lit.RECORDED] = ValueWithError(self._mean, self._error_on_mean)
+        # call parent constructor with mean and error on mean as value and uncertainty
+        super().__init__(self._mean, self._error_on_mean, unit=unit, name=name)
+
+    @property
+    def value(self) -> float:
+        """The value of this measurement"""
+        return self._values[lit.RECORDED].value
+
+    @value.setter
+    def value(self, new_value: Real):
+        if not isinstance(new_value, Real):
+            raise ValueError("Cannot set value to type {}, expecting a real number.".format(type(new_value)))
+        self._values[lit.RECORDED] = ValueWithError(new_value, self._values[lit.RECORDED].error)
+        warnings.warn("You are trying to set the mean of an array of repeated measurements, as a result, "
+                      "the original array of data is overridden.")
+        self.__class__ = MeasuredValue
 
     @property
     def raw_data(self) -> np.ndarray:
         """Gets the raw data that was used to generate this measurement"""
-        return self._raw_data.values
+        return self._raw_data.values if all(x.error == 0 for x in self._raw_data) else self._raw_data
 
     @property
     def std(self) -> float:
-        """Getter for the standard deviation"""
+        """the standard deviation of the raw data"""
         return self._std
 
     @property
     def error_on_mean(self) -> float:
-        """Getter for the error on the mean"""
+        """the error on the mean or the standard error"""
         return self._error_on_mean
 
     @property
     def mean(self) -> float:
-        """default getter for the mean of raw measurements"""
+        """the mean of raw measurements"""
         return self._mean
 
     @property
     def error_weighted_mean(self) -> float:
-        """default getter for the error weighted mean if errors are specified"""
+        """error weighted mean if individual errors are specified"""
         return self._raw_data.error_weighted_mean()
 
     @property
     def propagated_error(self) -> float:
-        """getter for the error propagated with errors passed in if present"""
+        """error propagated with errors passed in if present"""
         return self._raw_data.propagated_error()
 
     def use_std_for_uncertainty(self):
@@ -420,8 +467,8 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     def use_error_on_mean_for_uncertainty(self):
         """Sets the uncertainty of this value to the error on the mean
 
-        This is default behaviour, because the reason for taking multiple measurements is to
-        reduce the uncertainty, not to find out what the uncertainty of a single measurement is.
+        This is default behaviour, because the reason for taking multiple measurements is usually to
+        minimize the uncertainty, not to find out what the uncertainty of a single measurement is.
 
         """
         value = self._values[lit.RECORDED]
@@ -448,50 +495,49 @@ class RepeatedlyMeasuredValue(MeasuredValue):
                           "error is not applicable")
 
     def show_histogram(self):
-        """Plots the raw measurement data in a histogram
-
-        For the result of repeated measurements of a single quantity, the raw measurement
-        data is preserved. With this method, you can visualize these values in a histogram.
-        with lines corresponding to the mean and the range covered by one standard deviation
-
-        """
+        """Plots the raw measurement data in a histogram"""
 
 
 class DerivedValue(ExperimentalValue):
-    """Values derived from operations with other experimental values
+    """Values derived from other ExperimentalValue instances
 
-    This class is not to be instantiated directly. It will be created when operations are done
-    with other ExperimentalValue objects. The error of the DerivedValue object will be propagated
-    from the original ExperimentalValue objects.
+    The user does not need to instantiate this class. It is automatically created When the user performs
+    an operation using other ExperimentalValue instances, and it comes with the properly propagated
+    uncertainties. The two available methods for error propagation are the regular derivative method, and
+    the Monte Carlo simulation method.
 
-    The DerivedValue object is preserves information on how it was derived. This is stored in the
-    "_formula" attribute, which is a named tuple "Formula" with the operator and the operands specified.
-    If the operands are also DerivedValues, their "formula" can also be accessed, which works like
-    an expression tree
+    Internally, a DerivedValue object preserves information on how it is derived, so the user is able to
+    make use of that information. For example, the user can find the derivative of a DerivedValue with
+    respect to another ExperimentalValue that this value is derived from.
 
-    Each "Formula" has an "operator" and an "operands". The "operator" is the name of the operation, such
-    as "ADD" or "MUL". The "operands" is a list of operands on which the operation is executed. An
-    "operand" can be either a value, or an ExperimentalValue object
+    Examples:
+        >>> import qexpy as q
 
-    Attributes:
-        _error_method (ErrorMethod): the error method used for this value
-        _is_error_method_specified (bool): true if the user specified an error method for this value,
-            false if default was used
-        _formula (Formula): the formula of this object
+        First let's create some standard measurements
+        >>> a = q.Measurement(5, 0.2)
+        >>> b = q.Measurement(4, 0.1)
+        >>> c = q.Measurement(6.3, 0.5)
+        >>> d = q.Measurement(7.2, 0.5)
+
+        Now we can perform operations on them
+        >>> result = q.sqrt(c) * d - b / q.exp(a)
+        >>> result
+        DerivedValue(18 +/- 1)
+        >>> result.value
+        18.04490478513969
+        >>> result.error
+        1.4454463754287323
+
+        By default, the standard derivative method is used, but we can change it ourselves
+        >>> q.set_error_method("monte-carlo")
+        >>> result.value
+        18.03203135268583
+        >>> result.error
+        1.4116412532654283
 
     """
 
     def __init__(self, formula: Formula, error_method: settings.ErrorMethod = None):
-        """The default constructor for the result of an operation
-
-        The value and uncertainty of this variable is not calculated in the constructor. It will only
-        be calculated when it is requested by the user, either by explicitly calling the accessors
-        or by printing the string representation of the value.
-
-        """
-
-        super().__init__()
-        ExperimentalValue._register[self._id] = self
 
         # set default error method for this value
         if error_method:
@@ -502,47 +548,48 @@ class DerivedValue(ExperimentalValue):
             self._is_error_method_specified = False
             self._error_method = settings.get_error_method()
 
-        # store the formula in the instance
+        # The _formula attribute is the core of a DerivedValue object. It is the formula by which this
+        # value is derived. It is stored as a namedtuple with two fields: "operator" and "operands"
+        # The "operator" is a string representing the operation performed (e.g. "mul", "add", ...),
+        # and "operands" is a list of ExperimentalValue objects on which the operation was executed.
+        # If the operand is another DerivedValue, its formula can also be accessed. This structure
+        # practically works as an expression tree, allowing the value and uncertainty to be calculated
+        # on the fly, instead of set in stone during instantiation.
         self._formula = formula
+
+        super().__init__()
+        ExperimentalValue._register[self._id] = self
+
+        # propagate units if applicable
         self._units = op.propagate_units(formula)
 
     @property
     def value(self) -> float:
-        """Gets the value for this calculated quantity"""
+        """The value of this calculated quantity"""
         return self.__get_value_error_pair().value
 
     @value.setter
     def value(self, new_value: Real):
-        """Modifies the value of this quantity"""
-        if isinstance(new_value, Real):
-            self._values = {lit.RECORDED: ValueWithError(new_value, self.error)}  # reset the values of this object
-            # TODO: don't forget to reset the relations between this instance and other values
-            warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
-                          "this value to be regarded as a Measurement and all other information lost")
-            self.__class__ = MeasuredValue  # casting it to MeasuredValue
-        else:
-            raise ValueError("You can only set the value of a ExperimentalValue to a number")
+        if not isinstance(new_value, Real):
+            raise ValueError("Cannot set value to type {}, expecting a real number.".format(type(new_value)))
+        self._values = {lit.RECORDED: ValueWithError(new_value, self.error)}  # reset the values of this object
+        warnings.warn("You are trying to override the calculated value of a derived quantity. As a result, "
+                      "this value is casted to a regular Measurement")
+        self.__class__ = MeasuredValue  # casting it to MeasuredValue
 
     @property
     def error(self) -> float:
-        """Gets the uncertainty on the calculated quantity"""
+        """The propagated error on the calculated quantity"""
         return self.__get_value_error_pair().error
 
     @error.setter
     def error(self, new_error: Real):
-        """Modifies the uncertainty of this quantity
-
-        This is not recommended. Doing so will cause this object to be casted to MeasuredValue
-
-        """
-        if isinstance(new_error, Real) and float(new_error) > 0:
-            self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
-            # TODO: don't remember to reset the relations between this instance and other values
-            warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
-                          "this value to be regarded as a Measurement and all other information lost")
-            self.__class__ = MeasuredValue  # casting it to MeasuredValue
-        else:
-            raise ValueError("You can only set the error of a ExperimentalValue to a positive number")
+        if not isinstance(new_error, Real) or float(new_error) < 0:
+            raise ValueError("Cannot set error to {}, expecting a positive real number.".format(new_error))
+        self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
+        warnings.warn("You are trying to override the propagated error of a calculated quantity. As a result, "
+                      "this value is casted to a regular Measurement")
+        self.__class__ = MeasuredValue  # casting it to MeasuredValue
 
     @property
     def relative_error(self) -> float:
@@ -551,20 +598,13 @@ class DerivedValue(ExperimentalValue):
 
     @relative_error.setter
     def relative_error(self, relative_error: Real):
-        """Sets the relative error (error/mean) of a DerivedValue object.
-
-        This is not recommended. Doing so will cause this object to be casted to MeasuredValue
-
-        """
-        if isinstance(relative_error, Real) and float(relative_error) > 0:
-            new_error = self.value * float(relative_error)
-            self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
-            # TODO: don't remember to reset the relations between this instance and other values
-            warnings.warn("You are trying to modify the value of a calculated quantity. Doing so has caused "
-                          "this value to be regarded as a Measurement and all other information lost")
-            self.__class__ = MeasuredValue  # casting it to MeasuredValue
-        else:
-            raise ValueError("The relative uncertainty of a ExperimentalValue has to be a positive number")
+        if not isinstance(relative_error, Real) or float(relative_error) < 0:
+            raise ValueError("Cannot set error to {}, expecting a positive real number.".format(relative_error))
+        new_error = self.value * float(relative_error)
+        self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
+        warnings.warn("You are trying to override the propagated error of a calculated quantity. As a result, "
+                      "this value is casted to a regular Measurement")
+        self.__class__ = MeasuredValue  # casting it to MeasuredValue
 
     def derivative(self, other: ExperimentalValue) -> float:
         """Finds the derivative with respect to another ExperimentalValue"""
@@ -574,7 +614,7 @@ class DerivedValue(ExperimentalValue):
         return op.differentiate(self._formula, other)
 
     def __get_value_error_pair(self) -> ValueWithError:
-        """Gets the value-error pair for the current specified method"""
+        """Gets the value-error pair for the current specified error method"""
 
         if self._is_error_method_specified:
             error_method = self._error_method
@@ -591,20 +631,13 @@ class DerivedValue(ExperimentalValue):
 
 
 class Constant(ExperimentalValue):
-    """A value with no uncertainty
-
-    This is created when a constant (int, float, etc.) is used in operation with another
-    ExperimentalValue. This class is instantiated before calculating operations to ensure
-    objects can be combined.
-
-    """
+    """A value with no uncertainty"""
 
     def __init__(self, value, unit="", name=""):
+        if not isinstance(value, Real):
+            raise ValueError("Cannot create Constant with {} of type {}".format(value, type(value)))
         super().__init__(unit=unit, name=name)
-        if isinstance(value, Real):
-            self._values[lit.RECORDED] = ValueWithError(value, 0)
-        else:
-            raise ValueError("The value must be a number")
+        self._values[lit.RECORDED] = ValueWithError(value, 0)
 
     @property
     def value(self):
@@ -618,37 +651,119 @@ class Constant(ExperimentalValue):
         return 0  # the derivative of a constant with respect to anything is 0
 
 
-class MeasuredValueArray(np.ndarray):
-    """An array of measurements
+class ExperimentalValueArray(np.ndarray):
+    """An array of experimental values. alias: MeasurementArray
 
-    This class is used to hold a series of measurements. It can be used for data analysis,
-    fitting, and plotting.
+    A ExperimentalValueArray (MeasurementArray) represents a series of ExperimentalValue objects, It can
+    be used for data analysis, fitting, and plotting. This is implemented as a subclass of numpy.ndarray.
+
+    For backwards compatibility, this class is given the alias "MeasurementArray". Users are encouraged
+    to call "MeasurementArray" instead of "ExperimentalValueArray" to record arrays of measurements.
+
+    Args:
+        data: a list of measurements
+        error: the uncertainty of the measurements. It can either be an array of uncertainties,
+            corresponding to each individual measurement, or a single uncertainty that applies to
+            all measurements in this series.
+        unit: the unit of this series of measurements
+        name: the name of this series of measurements
+
+    Examples:
+        >>> import qexpy as q
+
+        We can instantiate an array of measurements with two lists
+        >>> a = q.MeasurementArray([1, 2, 3, 4, 5], [0.1, 0.2, 0.3, 0.4, 0.5])
+        >>> a
+        ExperimentalValueArray([MeasuredValue(1.0 +/- 0.1),
+                    MeasuredValue(2.0 +/- 0.2),
+                    MeasuredValue(3.0 +/- 0.3),
+                    MeasuredValue(4.0 +/- 0.4),
+                    MeasuredValue(5.0 +/- 0.5)], dtype=object)
+
+        We can also create an array of measurements with a single uncertainty. As usual, if the error
+        is not specified, they will be set to 0 by default
+        >>> a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit="m", name="length")
+        >>> a
+        ExperimentalValueArray([MeasuredValue(1.0 +/- 0.5),
+                    MeasuredValue(2.0 +/- 0.5),
+                    MeasuredValue(3.0 +/- 0.5),
+                    MeasuredValue(4.0 +/- 0.5),
+                    MeasuredValue(5.0 +/- 0.5)], dtype=object)
+
+        We can access the different statistical properties of this array
+        >>> print(np.sum(a))
+        15 +/- 1 [m]
+        >>> print(a.mean())
+        3.0 +/- 0.7 [m]
+        >>> a.std()
+        1.5811388300841898
+
+        Manipulation of a MeasurementArray is also very easy. We can append or insert into the array
+        values in multiple formats
+        >>> a = a.append((7, 0.2))  # a measurement can be inserted as a tuple
+        >>> print(a[5])
+        length = 7.0 +/- 0.2 [m]
+        >>> a = a.insert(0, 8)  # if error is not specified, it is set to 0 by default
+        >>> print(a[0])
+        length = 8 +/- 0 [m]
+
+        The same operations also works with array-like objects, in which case they are concatenated
+        >>> a = a.append([(10, 0.1), (11, 0.3)])
+        >>> a
+        ExperimentalValueArray([MeasuredValue(8.0 +/- 0),
+                    MeasuredValue(1.0 +/- 0.5),
+                    MeasuredValue(2.0 +/- 0.5),
+                    MeasuredValue(3.0 +/- 0.5),
+                    MeasuredValue(4.0 +/- 0.5),
+                    MeasuredValue(5.0 +/- 0.5),
+                    MeasuredValue(7.0 +/- 0.2),
+                    MeasuredValue(10.0 +/- 0.1),
+                    MeasuredValue(11.0 +/- 0.3)], dtype=object)
+
+        The ExperimentalValueArray object is vectorized just like numpy.ndarray. You can perform basic
+        arithmetic operations as well as functions with them and get back ExperimentalValueArray objects
+        >>> a = q.MeasurementArray([0, 1, 2], 0.5)
+        >>> a + 2
+        ExperimentalValueArray([DerivedValue(2.0 +/- 0.5),
+                        DerivedValue(3.0 +/- 0.5),
+                        DerivedValue(4.0 +/- 0.5)], dtype=object)
+        >>> q.sin(a)
+        ExperimentalValueArray([DerivedValue(0.0 +/- 0.5),
+                        DerivedValue(0.8 +/- 0.3),
+                        DerivedValue(0.9 +/- 0.2)], dtype=object)
+
+
+    See Also:
+        numpy.ndarray
 
     """
 
     def __new__(cls, data: List[Real], error: Union[List[Real], Real] = None, unit="", name=""):
-        """Default constructor for a MeasuredValueArray
+        """Default constructor for a ExperimentalValueArray
 
-        This is used instead of __init__ for object initialization. This is the convention for
-        subclassing numpy arrays. The MeasuredValueArray class is not to be called directly. The
-        constructor wrapper MeasurementArray is recommended as it's easier to use
+        __new__ is used instead of __init__ for object initialization. This is the convention for
+        subclassing numpy arrays.
 
         """
 
         # initialize raw data and its corresponding uncertainties
-        measurements = np.array(data)
+        if not isinstance(data, utils.ARRAY_TYPES):
+            raise ValueError("Cannot create MeasurementArray with data of type {}, a list of real numbers "
+                             "is expected".format(type(error)))
+        measurements = np.asarray(data)
+
         if error is None:
-            error_array = np.asarray(list(0 for _ in measurements))
+            error_array = [0] * len(measurements)
         elif isinstance(error, Real):
-            error_array = np.asarray(list(float(error) for _ in measurements))
+            error_array = [float(error)] * len(measurements)
         elif isinstance(error, utils.ARRAY_TYPES) and len(error) == len(data):
             error_array = np.asarray(error)
         else:
-            raise ValueError("The error of a MeasurementArray can only be a single value, or an "
-                             "array of values that are of the same length as the measurement array.")
+            raise ValueError("Cannot create MeasurementArray with uncertainties of type {}, a list of real "
+                             "numbers or a single real number is expected.".format(type(error)))
 
         measured_values = list(MeasuredValue(val, err, unit, name) for val, err in zip(measurements, error_array))
-        obj = np.asarray(measured_values, dtype=ExperimentalValue).view(MeasuredValueArray)
+        obj = np.asarray(measured_values, dtype=ExperimentalValue).view(ExperimentalValueArray)
         return obj
 
     def __str__(self):
@@ -663,7 +778,7 @@ class MeasuredValueArray(np.ndarray):
 
     @property
     def name(self) -> str:
-        """Default getter for the value name"""
+        """name of this array of values"""
         return self[0].name
 
     @name.setter
@@ -675,75 +790,75 @@ class MeasuredValueArray(np.ndarray):
 
     @property
     def unit(self) -> str:
-        """Default getter for the string representation of the units"""
+        """The unit of this array of values"""
         return self[0].unit
 
     @unit.setter
     def unit(self, new_unit: str):
         if not isinstance(new_unit, str):
-            raise ValueError("You can only set the unit of a value using its string representation")
+            raise ValueError("Cannot set unit to type {}, expecting string".format(type(new_unit)))
         new_unit = units.parse_units(new_unit)
         for data in self:
             data._units = new_unit
 
     @property
     def values(self) -> np.ndarray:
-        """Gets an array of values"""
+        """An array of center values"""
         return np.asarray(list(data.value for data in self))
 
     @property
     def errors(self) -> np.ndarray:
-        """Gets the error array"""
+        """An array of the uncertainties"""
         return np.asarray(list(data.error for data in self))
 
-    def append(self, new_value) -> "MeasuredValueArray":
+    def append(self, value: Union[Real, List, Tuple, ExperimentalValue]) -> "ExperimentalValueArray":
         """adds a value to the end of this array and returns the new array"""
-        if isinstance(new_value, MeasuredValueArray):
-            pass  # don't do anything if the new value is already a MeasuredValueArray
-        elif isinstance(new_value, utils.ARRAY_TYPES):
-            new_value = list(self.__wrap_measurement(value) for value in new_value)
+        if isinstance(value, ExperimentalValueArray):
+            pass  # don't do anything if the new value is already a ExperimentalValueArray
+        elif isinstance(value, utils.ARRAY_TYPES):
+            value = list(self.__wrap_measurement(value) for value in value)
         else:
-            new_value = self.__wrap_measurement(new_value)
-        # append new value and cast to MeasuredValueArray
-        return np.append(self, new_value).view(MeasuredValueArray)
+            value = self.__wrap_measurement(value)
+        # append new value and cast to ExperimentalValueArray
+        return np.append(self, value).view(ExperimentalValueArray)
 
-    def insert(self, position, new_value) -> "MeasuredValueArray":
+    def insert(self, position: int, value: Union[Real, List, Tuple, ExperimentalValue]) -> "ExperimentalValueArray":
         """adds a value to a position in this array and returns the new array"""
-        if isinstance(new_value, MeasuredValueArray):
-            pass  # don't do anything if the new value is already a MeasuredValueArray
-        elif isinstance(new_value, utils.ARRAY_TYPES):
-            new_value = list(self.__wrap_measurement(value) for value in new_value)
+        if isinstance(value, ExperimentalValueArray):
+            pass  # don't do anything if the new value is already a ExperimentalValueArray
+        elif isinstance(value, utils.ARRAY_TYPES):
+            value = list(self.__wrap_measurement(value) for value in value)
         else:
-            new_value = self.__wrap_measurement(new_value)
-        return np.insert(self, position, new_value).view(MeasuredValueArray)
+            value = self.__wrap_measurement(value)
+        return np.insert(self, position, value).view(ExperimentalValueArray)
 
-    def delete(self, position) -> "MeasuredValueArray":
+    def delete(self, position: int) -> "ExperimentalValueArray":
         """deletes the value on the requested position and returns the new array"""
-        return np.delete(self, position).view(MeasuredValueArray)
+        return np.delete(self, position).view(ExperimentalValueArray)
 
     def mean(self, **kwargs) -> MeasuredValue:  # pylint: disable=unused-argument
-        """Gets the mean of the array"""
+        """The mean of the array"""
         result = np.mean(self.values)
         error = self.error_on_mean()
         name = "Mean of {}".format(self.name) if self.name else ""
         return MeasuredValue(float(result), error, self.unit, name)
 
     def std(self, ddof=1, **kwargs) -> float:  # pylint: disable=unused-argument
-        """Gets the standard deviation of this array"""
+        """The standard deviation of this array"""
         return float(np.std(self.values, ddof=ddof))
 
     def sum(self, **kwargs) -> MeasuredValue:  # pylint: disable=unused-argument
-        """Gets the sum of the array"""
+        """The sum of the array"""
         result = np.sum(self.values)
         error = np.sqrt(np.sum(self.errors ** 2))
         return MeasuredValue(float(result), float(error), self.unit, self.name)
 
     def error_on_mean(self) -> float:
-        """Gets the error on the mean of this array"""
+        """The error on the mean of this array"""
         return self.std() / m.sqrt(self.size)
 
     def error_weighted_mean(self) -> float:
-        """Gets the error weighted mean of this array"""
+        """The error weighted mean of this array"""
         if any(err == 0 for err in self.errors):
             warnings.warn("One or more of the errors are 0, the error weighted mean cannot be calculated.")
             return 0
@@ -751,21 +866,22 @@ class MeasuredValueArray(np.ndarray):
         return float(np.sum(weights * self.values) / np.sum(weights))
 
     def propagated_error(self) -> float:
-        """Gets the propagated error from the error weighted mean calculation"""
+        """The propagated error from the error weighted mean calculation"""
         if any(err == 0 for err in self.errors):
             warnings.warn("One or more of the errors are 0, the propagated error cannot be calculated.")
             return 0
         weights = np.asarray(list(1 / (err ** 2) for err in self.errors))
         return 1 / np.sqrt(np.sum(weights))
 
-    def __wrap_measurement(self, value) -> ExperimentalValue:
+    def __wrap_measurement(self, value: Union[Real, Tuple, ExperimentalValue]) -> ExperimentalValue:
+        """wraps a value in a Measurement object"""
         if isinstance(value, Real):
             value = MeasuredValue(float(value), 0, unit=self.unit, name=self.name)
         elif isinstance(value, tuple) and len(value) == 2:
             value = MeasuredValue(float(value[0]), float(value[1]), unit=self.unit, name=self.name)
         elif not isinstance(value, ExperimentalValue):
             # TODO: also check for units and names to see if they are compatible
-            raise ValueError("Elements of MeasurementArray must be or are convertible qexpy defined values")
+            raise ValueError("Elements of MeasurementArray must be or are convertible to qexpy defined values")
         return value
 
 
@@ -774,22 +890,63 @@ def get_variable_by_id(variable_id: uuid.UUID) -> ExperimentalValue:
     return ExperimentalValue._register[variable_id]
 
 
+def get_covariance(var1: ExperimentalValue, var2: ExperimentalValue) -> float:
+    """Finds the covariances between two ExperimentalValues
+
+    As of now, the covariance between DerivedValue objects is always 0, covariance propagation
+    is still under development.
+
+    TODO:
+        implement covariance propagation for DerivedValues
+
+    """
+    if any(not isinstance(var, ExperimentalValue) for var in [var1, var2]):
+        raise ValueError("Unable to find covariance between variable of types {} and {}, "
+                         "expecting ExperimentalValue objects".format(type(var1), type(var2)))
+    if var1.error == 0 or var2.error == 0:
+        return 0  # constants don't correlate with anyone
+    if isinstance(var1, MeasuredValue) and isinstance(var2, MeasuredValue):
+        return __get_covariance(var1, var2)
+    return 0
+
+
 def set_covariance(var1: MeasuredValue, var2: MeasuredValue, cov: Real = None):
-    """Sets the covariance of two MeasuredValue objects
+    """Sets the covariance between two measurements
 
-    Users can manually set the covariance of two MeasuredValue objects. If the two objects are
-    both RepeatedMeasurement with raw_data of the same length, the user can omit the input
-    value, and the covariance will be calculated automatically. If a value is specified, the
-    calculated value will be overridden with the user specified value
+    The covariance between two variables is by default 0. The user can set the covariance between two
+    Measurements to any value, and it will be taken into account during error propagation. When two
+    Measurement objects are recorded as arrays of repeated measurements of the same length, the user
+    can leave the covariance term blank, and have QExPy calculate the covariance between them.
 
-    Once the covariance is set or calculated, it will be stored in a module level register for
-    easy reference during error propagation. By default the error propagation process assumes
-    that the covariance between any two values is 0, unless specified or calculated
+    Examples:
+        >>> import qexpy as q
+        >>> a = q.Measurement(5, 0.5)
+        >>> b = q.Measurement(6, 0.3)
+
+        The user can manually set the covariance between two values
+        >>> q.set_covariance(a, b, 0.135)
+        >>> q.get_covariance(a, b)
+        0.135
+
+        The correlation factor is calculated behind the scene as well
+        >>> q.get_correlation(a, b)
+        0.9
+
+        The user can ask QExPy to calculate the covariance if applicable
+        >>> a = q.Measurement([1, 1.2, 1.3, 1.4])
+        >>> b = q.Measurement([2, 2.1, 3, 2.3])
+        >>> q.set_covariance(a, b)  # this will declare that a and b are indeed correlated
+        >>> q.get_covariance(a, b)
+        0.0416667
+
+    See Also:
+        :py:method:`.set_correlation`
 
     """
 
     if not isinstance(var1, MeasuredValue) or not isinstance(var2, MeasuredValue):
-        raise ValueError("You can only set the covariance between two Measurements")
+        raise ValueError("Unable to set covariance between variable of types {} and {}, "
+                         "expecting Measurement objects".format(type(var1), type(var2)))
     if var1.error == 0 or var2.error == 0:
         raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
 
@@ -812,23 +969,28 @@ def set_covariance(var1: MeasuredValue, var2: MeasuredValue, cov: Real = None):
     ExperimentalValue._correlations[id_string] = Correlation((var1, var2), correlation, covariance)
 
 
-def get_covariance(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
-    """Finds the covariance of two ExperimentalValues"""
+def get_correlation(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
+    """Finds the correlation factor of two ExperimentalValues"""
     if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
         var1 = ExperimentalValue._register[var1]
         var2 = ExperimentalValue._register[var2]
     if var1.error == 0 or var2.error == 0:
         return 0  # constants don't correlate with anyone
     if isinstance(var1, MeasuredValue) and isinstance(var2, MeasuredValue):
-        return __get_covariance(var1, var2)
-    return 0  # TODO: implement covariance propagation for DerivedValues
+        return __get_correlation(var1, var2)
+
+    # TODO: implement covariance propagation for DerivedValues
+    return 0
 
 
 def set_correlation(var1: MeasuredValue, var2: MeasuredValue, cor: Real = None):
     """Sets the correlation factor between two MeasuredValue objects
 
+    The correlation factor is a value between -1 and 1. This method can be used the same way
+    as set_covariance.
+
     See Also:
-        set_covariance
+        :py:method:`.set_covariance`
 
     """
 
@@ -854,20 +1016,6 @@ def set_correlation(var1: MeasuredValue, var2: MeasuredValue, cor: Real = None):
     ExperimentalValue._correlations[id_string] = Correlation((var1, var2), correlation, covariance)
 
 
-def get_correlation(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
-    """Finds the correlation factor of two ExperimentalValues"""
-    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
-        var1 = ExperimentalValue._register[var1]
-        var2 = ExperimentalValue._register[var2]
-    if var1.error == 0 or var2.error == 0:
-        return 0  # constants don't correlate with anyone
-    if isinstance(var1, MeasuredValue) and isinstance(var2, MeasuredValue):
-        return __get_correlation(var1, var2)
-
-    # TODO: implement covariance propagation for DerivedValues
-    return 0
-
-
 def wrap_operand(operand: Union[Real, ExperimentalValue]) -> ExperimentalValue:
     """Wraps the operand of an operation as an ExperimentalValue instance
 
@@ -884,56 +1032,31 @@ def wrap_operand(operand: Union[Real, ExperimentalValue]) -> ExperimentalValue:
     raise ValueError("Operand of type {} for this operation is invalid!".format(type(operand)))
 
 
-def _get_formula(operand: Union[Real, ExperimentalValue]) -> Union[Formula, MeasuredValue, Constant]:
-    """Takes the input and returns the formula representation
-
-    If the operand is a number, construct a Constant object with this value, if the operand is a
-    Constant or MeasuredValue, return the object directly. If the operand is a derived value, return
-    the formula of that object
-
-    """
-    if isinstance(operand, Real):
-        return Constant(operand)
-    if isinstance(operand, (Constant, MeasuredValue)):
-        return operand
-    if isinstance(operand, DerivedValue):
-        return operand._formula
-    raise ValueError("Operand of type {} for this operation is invalid!".format(type(operand)))
-
-
-def __get_covariance(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
+def __get_covariance(var1: MeasuredValue, var2: MeasuredValue) -> float:
     """Gets the covariance factor between two values"""
-    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
-        var1 = ExperimentalValue._register[var1]
-        var2 = ExperimentalValue._register[var2]
     if var1._id == var2._id:
         # the covariance between a value and itself is the variance
         return var1.std ** 2 if isinstance(var1, RepeatedlyMeasuredValue) else var1.error ** 2
-    id_string = "_".join(sorted(map(str, [var1._id, var2._id])))
+    id_string = "_".join(sorted([str(var1._id), str(var2._id)]))
     if id_string in ExperimentalValue._correlations:
         return ExperimentalValue._correlations[id_string].covariance
-
     return 0
 
 
-def __get_correlation(var1: Union[uuid.UUID, MeasuredValue], var2: Union[uuid.UUID, MeasuredValue]) -> float:
+def __get_correlation(var1: MeasuredValue, var2: MeasuredValue) -> float:
     """Gets the correlation factor between two values"""
-    if isinstance(var1, uuid.UUID) and isinstance(var2, uuid.UUID):
-        var1 = ExperimentalValue._register[var1]
-        var2 = ExperimentalValue._register[var2]
     if var1._id == var2._id:
         return 1  # values have unit correlation with themselves
-    id_string = "_".join(sorted(map(str, [var1._id, var2._id])))
+    id_string = "_".join(sorted([str(var1._id), str(var2._id)]))
     if id_string in ExperimentalValue._correlations:
         return ExperimentalValue._correlations[id_string].correlation
-
     return 0
 
 
 def __calculate_covariance_and_correlation(var1: RepeatedlyMeasuredValue, var2: RepeatedlyMeasuredValue) -> tuple:
-    if len(var1.raw_data) == len(var2.raw_data):
-        covariance = utils.calculate_covariance(var1.raw_data, var2.raw_data)
-        correlation = covariance / (var1.std * var2.std)
-    else:
-        raise ValueError("The two arrays of repeated measurements are not of the same length")
+    if len(var1.raw_data) != len(var2.raw_data):
+        raise ValueError("Cannot calculate covariance between arrays of length {} and {}."
+                         "".format(len(var1.raw_data), len(var2.raw_data)))
+    covariance = utils.calculate_covariance(var1.raw_data, var2.raw_data)
+    correlation = covariance / (var1.std * var2.std)
     return covariance, correlation

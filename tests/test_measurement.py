@@ -19,6 +19,7 @@ class TestMeasuredValue:
 
     def test_record_measurement_with_no_uncertainty(self):
         measurement = q.Measurement(12.34, unit="m", name="test")
+        q.set_sig_figs_for_value(4)
         assert measurement.value == 12.34
         assert measurement.error == 0
         assert measurement.relative_error == 0
@@ -69,11 +70,7 @@ class TestRepeatedlyMeasuredValue:
     def test_modify_repeated_measurements(self):
         # create value from repeated measurements
         measurement = q.Measurement([9, 10, 11], unit="m", name="test")  # type: q.data.data.RepeatedlyMeasuredValue
-        # check modification of uncertainty and values
-        with pytest.warns(UserWarning):
-            # modification of error is allowed but warned
-            measurement.error = 0.5
-        assert measurement.error == 0.5
+        # check modification of center value
         with pytest.warns(UserWarning):
             # modification of value is allowed but warned
             measurement.value = 20

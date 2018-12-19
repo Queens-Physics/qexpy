@@ -180,7 +180,7 @@ def propagate_units(formula: "data.Formula") -> Dict[str, int]:
     operator = formula.operator
     operands = formula.operands
 
-    return units.operate_with_units(operator, *(operand.get_units() for operand in operands))
+    return units.operate_with_units(operator, *(operand._units for operand in operands))
 
 
 def vectorize(func):

@@ -152,6 +152,6 @@ class TestFunctions:
         assert res[3].error == 0.125
 
         res = q.log(5, a)
-        assert isinstance(res, q.data.data.MeasuredValueArray)
+        assert isinstance(res, q.data.data.ExperimentalValueArray)
         assert res[2].value == 0.6826061944859854
         assert res[2].error == 0.10355582242660198

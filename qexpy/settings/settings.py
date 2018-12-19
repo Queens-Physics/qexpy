@@ -14,7 +14,7 @@ import qexpy.settings.literals as lit
 class ErrorMethod(Enum):
     """Preferred method of error propagation"""
     DERIVATIVE = "derivative"
-    MONTE_CARLO = "monte_carlo"
+    MONTE_CARLO = "monte-carlo"
 
 
 class PrintStyle(Enum):

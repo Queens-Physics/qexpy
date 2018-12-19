@@ -244,6 +244,7 @@ def __evaluate_unit_tree(tree: Union[Expression, str]) -> dict:
 
 
 def operate_with_units(operator, *operands):
+    """perform an operation with two sets of units"""
     # TODO: implement unit propagation for non-linear operations
     return UNIT_OPERATIONS[operator](*operands) if operator in UNIT_OPERATIONS else {}
 
@@ -253,10 +254,9 @@ def _add_and_sub(units_var1, units_var2):
     if units_var1 and units_var2 and units_var1 != units_var2:
         warnings.warn("You're trying to add/subtract two values with mismatching units, returning empty unit")
         return {}
-    elif not units_var1:
+    if not units_var1:
         return deepcopy(units_var2)
-    else:
-        return deepcopy(units_var1)
+    return deepcopy(units_var1)
 
 
 def _mul(units_var1, units_var2):

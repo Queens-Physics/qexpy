@@ -14,13 +14,12 @@ import qexpy.settings.settings as settings
 def _default_print(value: float, error: float, latex=False) -> str:
     """Prints out the value and uncertainty in its default format"""
 
-    if error == 0:
-        # if the uncertainty is 0, there's no need for further parsing unless there is
-        # a requirement on the significant figures of the value
-        if settings.get_sig_fig_mode() == settings.SigFigMode.VALUE:
-            rounded_value, rounded_error = __round_values_to_sig_figs(value, error)
-            return "{} +/- {}".format(rounded_value, 0)
-        return "{} +/- {}".format(value, 0)
+    pm = r"\pm" if latex else "+/-"
+
+    if value == 0 and error == 0:
+        return "0 {} 0".format(pm)
+    if m.isinf(value):
+        return "inf {} inf".format(pm)
 
     # round the values based on significant digits
     rounded_value, rounded_error = __round_values_to_sig_figs(value, error)
@@ -29,8 +28,9 @@ def _default_print(value: float, error: float, latex=False) -> str:
     number_of_decimals = __find_number_of_decimals(rounded_value, rounded_error)
 
     # construct the string to return
-    plus_minus_sign = r"\pm" if latex else "+/-"
-    return "{:.{num}f} {} {:.{num}f}".format(rounded_value, plus_minus_sign, rounded_error, num=number_of_decimals)
+    value_string = "{:.{num}f}".format(rounded_value, num=number_of_decimals)
+    error_string = "{:.{num}f}".format(rounded_error, num=number_of_decimals) if error != 0 else "0"
+    return "{} {} {}".format(value_string, pm, error_string)
 
 
 def _latex_print(value: float, error: float) -> str:
@@ -41,27 +41,34 @@ def _latex_print(value: float, error: float) -> str:
 def _scientific_print(value: float, error: float, latex=False) -> str:
     """Prints out the value and uncertainty in scientific notation"""
 
+    pm = r"\pm" if latex else "+/-"
+
+    if value == 0 and error == 0:
+        return "0 {} 0".format(pm)
+    if m.isinf(value):
+        return "inf {} inf".format(pm)
+
     # find order of magnitude
-    order_of_value = m.floor(m.log10(value))
-    if order_of_value == 0:
+    order = m.floor(m.log10(value))
+    if order == 0:
         return _default_print(value, error, latex)
 
     # round the values based on significant digits
     rounded_value, rounded_error = __round_values_to_sig_figs(value, error)
 
     # convert to scientific notation
-    converted_value = rounded_value / (10 ** order_of_value)
-    converted_error = rounded_error / (10 ** order_of_value)
+    converted_value = rounded_value / (10 ** order)
+    converted_error = rounded_error / (10 ** order)
 
     # check if the number of decimals matches the requirement of significant figures
-    number_of_decimals = __find_number_of_decimals(converted_value, converted_error)
+    decimals = __find_number_of_decimals(converted_value, converted_error)
 
     # construct the string to return
-    plus_minus_sign = r"\pm" if latex else "+/-"
-    if number_of_decimals == 0:
-        return "({} {} {}) * 10^{}".format(converted_value, plus_minus_sign, converted_error, order_of_value)
-    return "({:.{num}f} {} {:.{num}f}) * 10^{}".format(converted_value, plus_minus_sign, converted_error,
-                                                       order_of_value, num=number_of_decimals)
+    if decimals == 0:
+        return "({} {} {}) * 10^{}".format(converted_value, pm, converted_error, order)
+    value_string = "{:.{num}f}".format(converted_value, num=decimals)
+    error_string = "{:.{num}f}".format(converted_error, num=decimals) if error != 0 else "0"
+    return "({} {} {}) * 10^{}".format(value_string, pm, error_string, order)
 
 
 def __round_values_to_sig_figs(value: float, error: float) -> tuple:
@@ -91,6 +98,15 @@ def __round_values_to_sig_figs(value: float, error: float) -> tuple:
 
     sig_fig_mode = settings.get_sig_fig_mode()
     sig_fig_value = settings.get_sig_fig_value()
+
+    def is_valid(number):
+        return not m.isinf(number) and not m.isnan(number) and number != 0
+
+    # check any of the inputs are invalid for the following calculations
+    if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR] and not is_valid(error):
+        return value, error  # do no rounding if the error is 0 or invalid
+    if sig_fig_mode == settings.SigFigMode.VALUE and value == 0:
+        return value, error
 
     # first find the back-off value for rounding
     if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR]:
@@ -129,33 +145,30 @@ def __find_number_of_decimals(value: float, error: float) -> int:
     sig_fig_mode = settings.get_sig_fig_mode()
     sig_fig_value = settings.get_sig_fig_value()
 
+    def is_valid(number):
+        return not m.isinf(number) and not m.isnan(number) and number != 0
+
     # check if the current number of significant figures satisfy the settings
     if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR]:
-        order_of_error = m.floor(m.log10(error))
-        number_of_decimals = - order_of_error + sig_fig_value - 1
+        order = m.floor(m.log10(error)) if is_valid(error) else m.floor(m.log10(value))
     else:
-        order_of_value = m.floor(m.log10(value))
-        number_of_decimals = - order_of_value + sig_fig_value - 1
+        order = m.floor(m.log10(value)) if value != 0 else 1
 
+    number_of_decimals = - order + sig_fig_value - 1
     return number_of_decimals if number_of_decimals > 0 else 0
 
 
-def get_printer(print_style=settings.get_print_style()) -> Callable[[float, float], str]:
+def get_printer() -> Callable[[float, float], str]:
     """Gets the printer function for the given print style
 
     This method will use the global setting for print style if none is specified
-
-    Args:
-        print_style (PrintStyle): the print style
 
     Returns:
         a printer function that takes two numbers as inputs for value and uncertainty and
         returns the string representation of the value-error pair
 
     """
-    if not isinstance(print_style, settings.PrintStyle):
-        raise ValueError("Error: the print styles supported are default, latex, and scientific.\n"
-                         "These values are found under the enum settings.PrintStyle")
+    print_style = settings.get_print_style()
     if print_style == settings.PrintStyle.SCIENTIFIC:
         return _scientific_print
     if print_style == settings.PrintStyle.LATEX:

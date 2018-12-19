@@ -9,7 +9,7 @@ and prevents typos
 # value types
 RECORDED = "recorded"
 DERIVATIVE_PROPAGATED = "derivative"
-MONTE_CARLO_PROPAGATED = "monte_carlo"
+MONTE_CARLO_PROPAGATED = "monte-carlo"
 CONSTANT = "constant"
 
 # data fields

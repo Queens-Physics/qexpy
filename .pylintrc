@@ -139,7 +139,9 @@ disable=print-statement,
         deprecated-sys-function,
         exception-escape,
         comprehension-escape,
-        global-statement
+        global-statement,
+        unused-argument,
+        too-many-lines
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -424,6 +426,7 @@ good-names=i,
            x,
            e,
            pi,
+           pm,
            Measurement,
            MeasurementArray
 
