@@ -9,6 +9,7 @@ operations done with these instances will have the properly propagated errors an
 import warnings
 import uuid
 import collections
+import functools
 from numbers import Real
 from typing import Dict, Union, List, Tuple
 import math as m
@@ -20,6 +21,7 @@ import qexpy.settings.literals as lit
 import qexpy.utils.units as units
 import qexpy.utils.printing as printing
 import qexpy.settings.settings as settings
+from qexpy.utils.exceptions import InvalidArgumentTypeError, UndefinedOperationError
 
 # a simple structure for a value-error pair
 ValueWithError = collections.namedtuple("ValueWithError", "value, error")
@@ -29,6 +31,22 @@ Formula = collections.namedtuple("Formula", "operator, operands")
 
 # a data structure to store the correlation between two values
 Correlation = collections.namedtuple("Correlation", "values, correlation, covariance")
+
+
+def check_operand_type(operation):
+    """wrapper decorator for undefined operation error reporting"""
+
+    def check_operand_type_wrapper(func):
+        @functools.wraps(func)
+        def operation_wrapper(*args):
+            try:
+                return func(*args)
+            except TypeError:
+                raise UndefinedOperationError(operation, got=args, expected="real numbers or QExPy defined values")
+
+        return operation_wrapper
+
+    return check_operand_type_wrapper
 
 
 class ExperimentalValue:
@@ -143,7 +161,7 @@ class ExperimentalValue:
     @name.setter
     def name(self, new_name: str):
         if not isinstance(new_name, str):
-            raise ValueError("Cannot set the name to type {}, only strings are allowed".format(type(new_name)))
+            raise InvalidArgumentTypeError("name", got=new_name, expected="string")
         self._name = new_name
 
     @property
@@ -156,54 +174,69 @@ class ExperimentalValue:
     @unit.setter
     def unit(self, new_unit: str):
         if not isinstance(new_unit, str):
-            raise ValueError("Cannot set unit to type {}, use the string representation".format(type(new_unit)))
+            raise InvalidArgumentTypeError("unit", got=new_unit, expected="string")
         self._units = units.parse_units(new_unit) if new_unit else {}
 
+    @check_operand_type("==")
     def __eq__(self, other):
         return self.value == wrap_operand(other).value
 
+    @check_operand_type(">")
     def __gt__(self, other):
         return self.value > wrap_operand(other).value
 
+    @check_operand_type(">=")
     def __ge__(self, other):
         return self.value >= wrap_operand(other).value
 
+    @check_operand_type("<")
     def __lt__(self, other):
         return self.value < wrap_operand(other).value
 
+    @check_operand_type("<=")
     def __le__(self, other):
         return self.value <= wrap_operand(other).value
 
     def __neg__(self):
         return DerivedValue(Formula(lit.NEG, [self]))
 
+    @check_operand_type("pow")
     def __pow__(self, power):
         return DerivedValue(Formula(lit.POW, [self, wrap_operand(power)]))
 
+    @check_operand_type("pow")
     def __rpow__(self, other):
         return DerivedValue(Formula(lit.POW, [wrap_operand(other), self]))
 
+    @check_operand_type("+")
     def __add__(self, other):
         return DerivedValue(Formula(lit.ADD, [self, wrap_operand(other)]))
 
+    @check_operand_type("+")
     def __radd__(self, other):
         return DerivedValue(Formula(lit.ADD, [wrap_operand(other), self]))
 
+    @check_operand_type("-")
     def __sub__(self, other):
         return DerivedValue(Formula(lit.SUB, [self, wrap_operand(other)]))
 
+    @check_operand_type("-")
     def __rsub__(self, other):
         return DerivedValue(Formula(lit.SUB, [wrap_operand(other), self]))
 
+    @check_operand_type("*")
     def __mul__(self, other):
         return DerivedValue(Formula(lit.MUL, [self, wrap_operand(other)]))
 
+    @check_operand_type("*")
     def __rmul__(self, other):
         return DerivedValue(Formula(lit.MUL, [wrap_operand(other), self]))
 
+    @check_operand_type("/")
     def __truediv__(self, other):
         return DerivedValue(Formula(lit.DIV, [self, wrap_operand(other)]))
 
+    @check_operand_type("/")
     def __rtruediv__(self, other):
         return DerivedValue(Formula(lit.DIV, [wrap_operand(other), self]))
 
@@ -231,7 +264,7 @@ class ExperimentalValue:
 
         """
         if not isinstance(other, ExperimentalValue):
-            raise ValueError("Unable to find derivative with respect to type {}".format(type(other)))
+            raise InvalidArgumentTypeError("derivative()", got=other, expected="ExperimentalValue")
         return 1 if self._id == other._id else 0
 
     def print_value(self) -> str:
@@ -294,12 +327,12 @@ class MeasuredValue(ExperimentalValue):
         elif isinstance(data, utils.ARRAY_TYPES):
             instance = super().__new__(RepeatedlyMeasuredValue)
         else:
-            raise ValueError("Cannot create Measurement with {} of type {}".format(data, type(data)))
+            raise InvalidArgumentTypeError("creating a Measurement", got=data, expected="real number or array")
         return instance
 
     def __init__(self, data, error=None, unit="", name=""):
         if error is not None and not isinstance(error, Real):
-            raise ValueError("Cannot create Measurement with uncertainty {} of type {}".format(error, type(error)))
+            raise InvalidArgumentTypeError("setting uncertainties", got=error, expected="real number or array")
         super().__init__(unit, name)
         self._values[lit.RECORDED] = ValueWithError(data, float(error) if error else 0.0)
         ExperimentalValue._register[self._id] = self
@@ -312,7 +345,7 @@ class MeasuredValue(ExperimentalValue):
     @value.setter
     def value(self, new_value: Real):
         if not isinstance(new_value, Real):
-            raise ValueError("Cannot set value to type {}, expecting a real number.".format(type(new_value)))
+            raise InvalidArgumentTypeError("value", got=new_value, expected="real number")
         self._values[lit.RECORDED] = ValueWithError(new_value, self._values[lit.RECORDED].error)
 
     @property
@@ -322,8 +355,10 @@ class MeasuredValue(ExperimentalValue):
 
     @error.setter
     def error(self, new_error: Real):
-        if not isinstance(new_error, Real) or float(new_error) < 0:
-            raise ValueError("Cannot set error to {}, expecting a positive real number.".format(new_error))
+        if not isinstance(new_error, Real):
+            raise InvalidArgumentTypeError("error", got=new_error, expected="positive real number")
+        if new_error < 0:
+            raise ValueError("Invalid argument for error: {}, expecting: positive real number".format(new_error))
         self._values[lit.RECORDED] = ValueWithError(self._values[lit.RECORDED].value, new_error)
 
     @property
@@ -333,8 +368,10 @@ class MeasuredValue(ExperimentalValue):
 
     @relative_error.setter
     def relative_error(self, relative_error: Real):
-        if not isinstance(relative_error, Real) or float(relative_error) < 0:
-            raise ValueError("Cannot set error to {}, expecting a positive real number.".format(relative_error))
+        if not isinstance(relative_error, Real):
+            raise InvalidArgumentTypeError("error", got=relative_error, expected="positive real number")
+        if relative_error < 0:
+            raise ValueError("Invalid argument for error: {}, expecting: positive real number".format(relative_error))
         new_error = self.value * float(relative_error)
         self._values[lit.RECORDED] = ValueWithError(self.value, new_error)
 
@@ -423,10 +460,10 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     @value.setter
     def value(self, new_value: Real):
         if not isinstance(new_value, Real):
-            raise ValueError("Cannot set value to type {}, expecting a real number.".format(type(new_value)))
+            raise InvalidArgumentTypeError("value", got=new_value, expected="real number")
         self._values[lit.RECORDED] = ValueWithError(new_value, self._values[lit.RECORDED].error)
-        warnings.warn("You are trying to set the mean of an array of repeated measurements, as a result, "
-                      "the original array of data is overridden.")
+        warnings.warn("\nYou are trying to set the mean of an array of repeated measurements, as a result, "
+                      "\nthe original array of data is overridden.")
         self.__class__ = MeasuredValue
 
     @property
@@ -481,8 +518,8 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         if error_weighted_mean != 0:
             self._values[lit.RECORDED] = ValueWithError(error_weighted_mean, value.error)
         else:
-            warnings.warn("This measurement was not taken with individual uncertainties. The error "
-                          "weighted mean is not applicable")
+            warnings.warn("\nThis measurement was not taken with individual uncertainties. The error "
+                          "\nweighted mean is not applicable")
 
     def use_propagated_error_for_uncertainty(self):
         """Sets the uncertainty of this object to the weight propagated error"""
@@ -491,8 +528,8 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         if propagated_error != 0:
             self._values[lit.RECORDED] = ValueWithError(value.value, propagated_error)
         else:
-            warnings.warn("This measurement was not taken with individual uncertainties. The propagated "
-                          "error is not applicable")
+            warnings.warn("\nThis measurement was not taken with individual uncertainties. The propagated "
+                          "\nerror is not applicable")
 
     def show_histogram(self):
         """Plots the raw measurement data in a histogram"""
@@ -571,10 +608,10 @@ class DerivedValue(ExperimentalValue):
     @value.setter
     def value(self, new_value: Real):
         if not isinstance(new_value, Real):
-            raise ValueError("Cannot set value to type {}, expecting a real number.".format(type(new_value)))
+            raise InvalidArgumentTypeError("value", got=new_value, expected="real number")
         self._values = {lit.RECORDED: ValueWithError(new_value, self.error)}  # reset the values of this object
-        warnings.warn("You are trying to override the calculated value of a derived quantity. As a result, "
-                      "this value is casted to a regular Measurement")
+        warnings.warn("\nYou are trying to override the calculated value of a derived quantity. As a result, "
+                      "\nthis value is casted to a regular Measurement")
         self.__class__ = MeasuredValue  # casting it to MeasuredValue
 
     @property
@@ -584,11 +621,13 @@ class DerivedValue(ExperimentalValue):
 
     @error.setter
     def error(self, new_error: Real):
-        if not isinstance(new_error, Real) or float(new_error) < 0:
-            raise ValueError("Cannot set error to {}, expecting a positive real number.".format(new_error))
+        if not isinstance(new_error, Real):
+            raise InvalidArgumentTypeError("error", got=new_error, expected="positive real number")
+        if new_error < 0:
+            raise ValueError("Invalid argument for error: {}, expecting: positive real number".format(new_error))
         self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
-        warnings.warn("You are trying to override the propagated error of a calculated quantity. As a result, "
-                      "this value is casted to a regular Measurement")
+        warnings.warn("\nYou are trying to override the propagated error of a calculated quantity. As a result, "
+                      "\nthis value is casted to a regular Measurement")
         self.__class__ = MeasuredValue  # casting it to MeasuredValue
 
     @property
@@ -598,8 +637,10 @@ class DerivedValue(ExperimentalValue):
 
     @relative_error.setter
     def relative_error(self, relative_error: Real):
-        if not isinstance(relative_error, Real) or float(relative_error) < 0:
-            raise ValueError("Cannot set error to {}, expecting a positive real number.".format(relative_error))
+        if not isinstance(relative_error, Real):
+            raise InvalidArgumentTypeError("error", got=relative_error, expected="positive real number")
+        if relative_error < 0:
+            raise ValueError("Invalid argument for error: {}, expecting: positive real number".format(relative_error))
         new_error = self.value * float(relative_error)
         self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}  # reset the values of this object
         warnings.warn("You are trying to override the propagated error of a calculated quantity. As a result, "
@@ -635,7 +676,7 @@ class Constant(ExperimentalValue):
 
     def __init__(self, value, unit="", name=""):
         if not isinstance(value, Real):
-            raise ValueError("Cannot create Constant with {} of type {}".format(value, type(value)))
+            raise ValueError("Cannot create Constant with value {} of type {}".format(value, type(value)))
         super().__init__(unit=unit, name=name)
         self._values[lit.RECORDED] = ValueWithError(value, 0)
 
@@ -748,8 +789,8 @@ class ExperimentalValueArray(np.ndarray):
 
         # initialize raw data and its corresponding uncertainties
         if not isinstance(data, utils.ARRAY_TYPES):
-            raise ValueError("Cannot create MeasurementArray with data of type {}, a list of real numbers "
-                             "is expected".format(type(error)))
+            raise InvalidArgumentTypeError("creating MeasurementArray",
+                                           got=[data], expected="a list or real numbers")
         measurements = np.asarray(data)
 
         if error is None:
@@ -759,8 +800,8 @@ class ExperimentalValueArray(np.ndarray):
         elif isinstance(error, utils.ARRAY_TYPES) and len(error) == len(data):
             error_array = np.asarray(error)
         else:
-            raise ValueError("Cannot create MeasurementArray with uncertainties of type {}, a list of real "
-                             "numbers or a single real number is expected.".format(type(error)))
+            raise InvalidArgumentTypeError("uncertainties of a MeasurementArray",
+                                           got=error, expected="real number or a list of real numbers")
 
         measured_values = list(MeasuredValue(val, err, unit, name) for val, err in zip(measurements, error_array))
         obj = np.asarray(measured_values, dtype=ExperimentalValue).view(ExperimentalValueArray)
@@ -784,7 +825,7 @@ class ExperimentalValueArray(np.ndarray):
     @name.setter
     def name(self, new_name: str):
         if not isinstance(new_name, str):
-            raise ValueError("The name of a value must be a string")
+            raise InvalidArgumentTypeError("name", got=new_name, expected="string")
         for data in self:
             data.name = new_name
 
@@ -796,7 +837,7 @@ class ExperimentalValueArray(np.ndarray):
     @unit.setter
     def unit(self, new_unit: str):
         if not isinstance(new_unit, str):
-            raise ValueError("Cannot set unit to type {}, expecting string".format(type(new_unit)))
+            raise InvalidArgumentTypeError("unit", got=new_unit, expected="string")
         new_unit = units.parse_units(new_unit)
         for data in self:
             data._units = new_unit
@@ -901,8 +942,7 @@ def get_covariance(var1: ExperimentalValue, var2: ExperimentalValue) -> float:
 
     """
     if any(not isinstance(var, ExperimentalValue) for var in [var1, var2]):
-        raise ValueError("Unable to find covariance between variable of types {} and {}, "
-                         "expecting ExperimentalValue objects".format(type(var1), type(var2)))
+        raise UndefinedOperationError("get_covariance()", [var1, var2], "ExperimentalValue instances")
     if var1.error == 0 or var2.error == 0:
         return 0  # constants don't correlate with anyone
     if isinstance(var1, MeasuredValue) and isinstance(var2, MeasuredValue):
@@ -945,8 +985,7 @@ def set_covariance(var1: MeasuredValue, var2: MeasuredValue, cov: Real = None):
     """
 
     if not isinstance(var1, MeasuredValue) or not isinstance(var2, MeasuredValue):
-        raise ValueError("Unable to set covariance between variable of types {} and {}, "
-                         "expecting Measurement objects".format(type(var1), type(var2)))
+        raise UndefinedOperationError("set_covariance()", [var1, var2], "Measurement objects")
     if var1.error == 0 or var2.error == 0:
         raise ArithmeticError("Constants or values with no standard deviation don't correlate with other values")
 
@@ -995,7 +1034,7 @@ def set_correlation(var1: MeasuredValue, var2: MeasuredValue, cor: Real = None):
     """
 
     if not isinstance(var1, MeasuredValue) or not isinstance(var2, MeasuredValue):
-        raise ValueError("You can only set the correlation factor between two Measurements")
+        raise UndefinedOperationError("set_correlation()", [var1, var2], "Measurement objects")
     if cor and (float(cor) > 1 or float(cor) < -1):
         raise ValueError("The correlation factor provided: {} is non-physical.".format(cor))
     if var1.error == 0 or var2.error == 0:
@@ -1029,7 +1068,7 @@ def wrap_operand(operand: Union[Real, ExperimentalValue]) -> ExperimentalValue:
         return operand
     if isinstance(operand, tuple) and len(operand) == 2:
         return MeasuredValue(operand[0], operand[1])
-    raise ValueError("Operand of type {} for this operation is invalid!".format(type(operand)))
+    raise TypeError
 
 
 def __get_covariance(var1: MeasuredValue, var2: MeasuredValue) -> float:

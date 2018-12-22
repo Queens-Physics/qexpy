@@ -117,7 +117,7 @@ def __parse_unit_string_to_list(unit_string: str) -> List[Union[str, List]]:
 
     # check if the input is valid using regex
     if not re.fullmatch(r"({})+".format(token_pattern.pattern), unit_string):
-        raise ValueError("The given unit string \"{}\" is invalid!".format(unit_string))
+        raise ValueError("\"{}\" is not a valid unit".format(unit_string))
 
     # for every token found, process it and append it to the list
     for result in token_pattern.finditer(unit_string):
@@ -220,8 +220,6 @@ def __construct_expression_tree_with_list(tokens: List[Union[str, List]]) -> Exp
     while len(operator_stack) > 1:
         __construct_sub_tree_and_push_to_operand_stack()
 
-    if len(operand_stack) > 1:
-        raise RuntimeError("Fail to construct AST. Please report the bug to the package github page")
     return operand_stack[0] if operand_stack else Expression("", "", "")
 
 

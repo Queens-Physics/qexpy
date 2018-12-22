@@ -4,6 +4,7 @@ import re
 from typing import Union
 from numbers import Real
 import numpy as np
+from qexpy.utils.exceptions import InvalidArgumentTypeError
 
 # Global variable to keep track of whether the output_notebook command was run
 _MPL_OUTPUT_NOTEBOOK_CALLED = False
@@ -18,16 +19,16 @@ def count_significant_figures(number: Union[str, Real]) -> int:
     The input can be either a number or the string representation of a number
 
     """
+
     try:
-        float(number)
         # first remove the decimal point
         str_repr_of_value = str(number).replace(".", "")
         # then strip the leading 0s
         str_repr_of_value = re.sub(r"^0*", "", str_repr_of_value)
         return len(str_repr_of_value)
     except (ValueError, TypeError):
-        raise ValueError("Invalid input! You can only count significant figures for a number "
-                         "or the string representation of a number.")
+        raise InvalidArgumentTypeError("count_significant_figures()", got=number,
+                                       expected="a number or the string representation of a number")
 
 
 def load_data_from_file(path: str, delimiter=',') -> np.ndarray:
@@ -59,8 +60,6 @@ def load_data_from_file(path: str, delimiter=',') -> np.ndarray:
 
 def calculate_covariance(arr_x: ARRAY_TYPES, arr_y: ARRAY_TYPES):
     """Calculates the covariance of two arrays"""
-    if not isinstance(arr_x, ARRAY_TYPES) or not isinstance(arr_y, ARRAY_TYPES) or len(arr_x) != len(arr_y):
-        raise ValueError("You can only calculate the covariance between two arrays of the same length")
     return 1 / (len(arr_x) - 1) * sum(((x - arr_x.mean()) * (y - arr_y.mean()) for x, y in zip(arr_x, arr_y)))
 
 
