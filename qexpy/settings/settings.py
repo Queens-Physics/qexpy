@@ -95,7 +95,7 @@ def set_print_style(new_style: Union[PrintStyle, str]):
 
     """
     if isinstance(new_style, PrintStyle):
-        CONFIG[lit.ERROR_METHOD] = new_style
+        CONFIG[lit.PRINT_STYLE] = new_style
     elif isinstance(new_style, str) and new_style in ["default", "latex", "scientific"]:
         CONFIG[lit.PRINT_STYLE] = PrintStyle(new_style)
     else:

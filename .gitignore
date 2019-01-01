@@ -51,6 +51,7 @@ ipython_config.py
 .python-version
 
 # Environments
+.DS_Store
 .idea
 .venv
 venv/

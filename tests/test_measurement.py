@@ -130,7 +130,7 @@ class TestMeasurementArray:
         assert first.value == 1
         assert first.error == 0.5
         assert first.unit == "m"
-        assert first.name == "length"
+        assert first.name == "length_0"
 
         b = q.MeasurementArray([1, 2, 3, 4, 5], [0.1, 0.2, 0.3, 0.4, 0.5])
         assert np.sum(b).value == 15

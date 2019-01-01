@@ -358,6 +358,8 @@ def _correlate_random_samples(variables: List["data.MeasuredValue"], sample_vect
 
     """
     correlation_matrix = np.array([[data.get_correlation(row, col) for col in variables] for row in variables])
+    if np.count_nonzero(correlation_matrix - np.diag(np.diagonal(correlation_matrix))) == 0:
+        return sample_vector  # if no correlations are there
     try:
         chelosky_decomposition = np.linalg.cholesky(correlation_matrix)
         result_vector = np.dot(chelosky_decomposition, sample_vector)

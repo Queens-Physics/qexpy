@@ -10,6 +10,7 @@ import warnings
 import uuid
 import collections
 import functools
+import re
 from numbers import Real
 from typing import Dict, Union, List, Tuple
 import math as m
@@ -647,6 +648,10 @@ class DerivedValue(ExperimentalValue):
                       "this value is casted to a regular Measurement")
         self.__class__ = MeasuredValue  # casting it to MeasuredValue
 
+    def recalculate(self):
+        """Recalculates the value"""
+        self._values = {}
+
     def derivative(self, other: ExperimentalValue) -> float:
         """Finds the derivative with respect to another ExperimentalValue"""
 
@@ -804,6 +809,8 @@ class ExperimentalValueArray(np.ndarray):
                                            got=error, expected="real number or a list of real numbers")
 
         measured_values = list(MeasuredValue(val, err, unit, name) for val, err in zip(measurements, error_array))
+        for index, measurement in enumerate(measured_values):
+            measurement.name = "{}_{}".format(measurement.name, index)
         obj = np.asarray(measured_values, dtype=ExperimentalValue).view(ExperimentalValueArray)
         return obj
 
@@ -820,14 +827,14 @@ class ExperimentalValueArray(np.ndarray):
     @property
     def name(self) -> str:
         """name of this array of values"""
-        return self[0].name
+        return re.sub(r"_[0-9]+$", "", self[0].name)
 
     @name.setter
     def name(self, new_name: str):
         if not isinstance(new_name, str):
             raise InvalidArgumentTypeError("name", got=new_name, expected="string")
-        for data in self:
-            data.name = new_name
+        for index, measurement in enumerate(self):
+            measurement.name = "{}_{}".format(new_name, index)
 
     @property
     def unit(self) -> str:
@@ -861,7 +868,10 @@ class ExperimentalValueArray(np.ndarray):
         else:
             value = self.__wrap_measurement(value)
         # append new value and cast to ExperimentalValueArray
-        return np.append(self, value).view(ExperimentalValueArray)
+        result = np.append(self, value).view(ExperimentalValueArray)
+        for index, measurement in enumerate(result):
+            measurement.name = "{}_{}".format(self.name, index)
+        return result
 
     def insert(self, position: int, value: Union[Real, List, Tuple, ExperimentalValue]) -> "ExperimentalValueArray":
         """adds a value to a position in this array and returns the new array"""
@@ -871,17 +881,23 @@ class ExperimentalValueArray(np.ndarray):
             value = list(self.__wrap_measurement(value) for value in value)
         else:
             value = self.__wrap_measurement(value)
-        return np.insert(self, position, value).view(ExperimentalValueArray)
+        result = np.insert(self, position, value).view(ExperimentalValueArray)
+        for index, measurement in enumerate(result):
+            measurement.name = "{}_{}".format(self.name, index)
+        return result
 
     def delete(self, position: int) -> "ExperimentalValueArray":
         """deletes the value on the requested position and returns the new array"""
-        return np.delete(self, position).view(ExperimentalValueArray)
+        result = np.delete(self, position).view(ExperimentalValueArray)
+        for index, measurement in enumerate(result):
+            measurement.name = "{}_{}".format(self.name, index)
+        return result
 
     def mean(self, **kwargs) -> MeasuredValue:  # pylint: disable=unused-argument
         """The mean of the array"""
         result = np.mean(self.values)
         error = self.error_on_mean()
-        name = "Mean of {}".format(self.name) if self.name else ""
+        name = "mean of {}".format(self.name) if self.name else ""
         return MeasuredValue(float(result), error, self.unit, name)
 
     def std(self, ddof=1, **kwargs) -> float:  # pylint: disable=unused-argument
