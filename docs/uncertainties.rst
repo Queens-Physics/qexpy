@@ -1,8 +1,9 @@
 Error Propagation
 =================
 
-The propagation of measurements, including the propagation of errors is at
-the heart of this package.  This section will describe how :py:class:`.Measurement`
+QExpy is designed to facilitate the propagation of errors from a measurement
+(or set of measurement) to quantities that depend on that (those) measurement(s).
+This section will describe how :py:class:`.Measurement`
 objects are created and used in calculations.  Furthermore, features such
 as the calculation of the exact numerical derivative of expressions will be
 outlined.  While some aspects of this documentation will not necessarily be
