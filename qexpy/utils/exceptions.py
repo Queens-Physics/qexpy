@@ -2,10 +2,11 @@
 
 
 class QExPyBaseError(Exception):
-    pass
+    """This is the base error type for QExPy"""
 
 
 class InvalidArgumentTypeError(QExPyBaseError):
+    """Exception thrown for invalid function arguments"""
 
     def __init__(self, objective, got, expected=""):
         message = "Invalid argument type for {}: \"{}\"".format(objective, type(got))
@@ -15,6 +16,7 @@ class InvalidArgumentTypeError(QExPyBaseError):
 
 
 class UndefinedOperationError(QExPyBaseError):
+    """Exception thrown for undefined operations"""
 
     def __init__(self, operation, got, expected=""):
         if isinstance(got, list):

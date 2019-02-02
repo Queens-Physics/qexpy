@@ -49,3 +49,10 @@ LN = "ln"
 ASIN = "asin"
 ACOS = "acos"
 ATAN = "atan"
+
+# fitting
+LIN = "linear"
+QUAD = "quadratic"
+POLY = "polynomial"
+GAUSS = "gaussian"
+EXPO = "exponential"

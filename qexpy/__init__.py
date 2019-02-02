@@ -10,9 +10,11 @@ from .settings import reset_default_configuration, UnitStyle, PrintStyle, ErrorM
 from .settings import set_print_style, set_unit_style, set_error_method, set_monte_carlo_sample_size
 from .settings import set_sig_figs_for_value, set_sig_figs_for_error
 
-from .data import Measurement, MeasurementArray
+from .data import Measurement, MeasurementArray, XYDataSet
 from .data import get_covariance, set_covariance, get_correlation, set_correlation
 from .data import sqrt, exp, sin, cos, tan, asin, acos, atan, csc, sec, cot, log, log10, sind, cosd, tand, pi, e
+
+from .fitting import fit, FitModel
 
 # Check the python interpreter version
 if sys.version_info[0] < 3:  # No reason to assume a future Python 4 will break comparability.

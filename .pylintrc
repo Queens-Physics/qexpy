@@ -427,6 +427,8 @@ good-names=i,
            e,
            pi,
            pm,
+           x0,
+           dx,
            Measurement,
            MeasurementArray
 

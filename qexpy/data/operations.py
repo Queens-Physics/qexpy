@@ -174,6 +174,11 @@ def propagate_units(formula: "data.Formula") -> Dict[str, int]:
     operator = formula.operator
     operands = formula.operands
 
+    # if one of the operands is a non-constant value with units unknown, the units of the result
+    # of this operation should also stay unknown
+    if any(not isinstance(operand, data.Constant) and not operand._units for operand in operands):
+        return {}
+
     return units.operate_with_units(operator, *(operand._units for operand in operands))
 
 

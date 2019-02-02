@@ -1,7 +1,7 @@
 """Miscellaneous utility methods"""
 
 import re
-from typing import Union
+from typing import Union, Callable
 from numbers import Real
 import numpy as np
 from qexpy.utils.exceptions import InvalidArgumentTypeError
@@ -61,6 +61,12 @@ def load_data_from_file(path: str, delimiter=',') -> np.ndarray:
 def calculate_covariance(arr_x: ARRAY_TYPES, arr_y: ARRAY_TYPES):
     """Calculates the covariance of two arrays"""
     return 1 / (len(arr_x) - 1) * sum(((x - arr_x.mean()) * (y - arr_y.mean()) for x, y in zip(arr_x, arr_y)))
+
+
+@np.vectorize
+def numerical_derivative(function: Callable, x0: Real, dx=1e-10):
+    """Calculates the numerical derivative of a function with respect to x at x0"""
+    return (function(x0 + dx) - function(x0 - dx)) / (2 * dx)
 
 
 def _in_notebook() -> bool:
