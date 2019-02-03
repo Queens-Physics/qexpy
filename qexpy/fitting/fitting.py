@@ -74,35 +74,38 @@ class XYFit:
         return self._ndof
 
 
-def fit(xdata, ydata, model, **kwargs) -> XYFit:
+def fit(xdata: List, ydata: List, model: Union[Callable, str, FitModel], **kwargs) -> XYFit:
     """Perform a fit for an xy data set
 
     Args:
-        xdata(list): the x-data
-        ydata(list): the y-data
+        xdata: the x-data
+        ydata: the y-data
         model: the fit model given as the string or enum representation of a pre-set model
             or a callable function as a custom fit model
+
+    Keyword Args:
+        parguess(list): initial guess for the parameters
+        parnames(list): the names of each parameter
+        parunits(list): the units for each parameter
 
     """
 
     dataset = datasets.XYDataSet(xdata, ydata, **kwargs)
-    return fit_with_dataset(dataset, model, **kwargs)
+    return fit_to_xy_dataset(dataset, model, **kwargs)
 
 
-def fit_with_dataset(dataset, model, **kwargs):
+def fit_to_xy_dataset(dataset, model, **kwargs):
     """Perform a fit on an XYDataSet"""
 
-    from inspect import signature
-
     model_name, fit_func = _wrap_fit_func(model)
-    num_of_params = len(signature(fit_func).parameters) - 1
+    num_of_params, is_variable = __check_fit_func_and_get_number_of_params(fit_func)
 
     parguess = kwargs.get("parguess", None)
-    __check_type_and_len_of_params(num_of_params, parguess, "parguess")
+    __check_type_and_len_of_params(num_of_params, is_variable, parguess, "parguess")
     parnames = kwargs.get("parnames", _get_param_names(model, num_of_params))
-    __check_type_and_len_of_params(num_of_params, parnames, "parnames")
+    __check_type_and_len_of_params(num_of_params, is_variable, parnames, "parnames")
     parunits = kwargs.get("parunits", [""] * num_of_params)
-    __check_type_and_len_of_params(num_of_params, parunits, "parunits")
+    __check_type_and_len_of_params(num_of_params, is_variable, parunits, "parunits")
 
     yerr = dataset.yerr if any(err > 0 for err in dataset.yerr) else None
 
@@ -179,7 +182,40 @@ def _combine_fit_func_and_fit_params(func: Callable, params) -> Callable:
     return np.vectorize(lambda x: func(x, *params))
 
 
-def __check_type_and_len_of_params(expected: int, param_ref: List, param_name: str):
+def __check_fit_func_and_get_number_of_params(func: Callable) -> Tuple[int, bool]:
+    """checks the validity of a fit function and figure out the expected number of arguments
+
+    Args:
+        func: the fit function to be checked
+
+    Returns:
+        The number of parameters for this fit function, and a flag indicating if the number
+        of parameters is variable
+
+    """
+
+    from inspect import signature, Parameter
+
+    parameters = signature(func).parameters
+
+    param_count = 0
+    is_variable = False
+
+    for param in parameters.values():
+        if param.kind in [Parameter.KEYWORD_ONLY, Parameter.VAR_KEYWORD]:
+            raise ValueError("The fit function should not have keyword arguments")
+        if param.kind == Parameter.VAR_POSITIONAL:
+            is_variable = True
+        else:
+            param_count = param_count + 1
+
+    # the first argument of the fit function is the variable, only the rest are parameters
+    param_count = param_count - 1
+
+    return param_count, is_variable
+
+
+def __check_type_and_len_of_params(expected: int, is_variable: bool, param_ref: List, param_name: str):
     """helper function to check the validity of parameter guess and names
 
     Args:
@@ -198,9 +234,10 @@ def __check_type_and_len_of_params(expected: int, param_ref: List, param_name: s
 
     if not isinstance(param_ref, (list, tuple)):
         raise InvalidArgumentTypeError(param_name, got=param_ref, expected="list or tuple")
-    if len(param_ref) != expected:
-        raise ValueError("The length of {} doesn't match the number of parameters in the fit function. "
-                         "Got: {}, Expected: {}".format(param_name, len(param_ref), expected))
+    if len(param_ref) < expected if is_variable else len(param_ref) != expected:
+        expected_string = "{}{}".format(expected, " or higher" if is_variable else "")
+        raise ValueError("The length of {} doesn't match the number of parameters of the fit function. "
+                         "Got: {}, Expected: {}".format(param_name, len(param_ref), expected_string))
 
 
 FITTERS = {
