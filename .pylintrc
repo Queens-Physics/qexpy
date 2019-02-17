@@ -428,9 +428,7 @@ good-names=i,
            pi,
            pm,
            x0,
-           dx,
-           Measurement,
-           MeasurementArray
+           dx
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no

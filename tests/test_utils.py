@@ -27,7 +27,7 @@ class TestUtils:
         assert utils.count_significant_figures("0012.1") == 3
 
     def test_load_data_from_file(self):
-        data = utils.load_data_from_file("./resources/sample_data.csv")
+        data = utils.load_data_from_file("./resources/data_for_test_load_data.csv")
         assert len(data) == 4
         for data_set in data:
             assert len(data_set) == 30

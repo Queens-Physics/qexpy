@@ -40,6 +40,17 @@ class TestFitting:
         assert result.chi_squared == 1.1335539393939595
         assert result.ndof == 6
 
+    def test_gaussian_fit(self):
+        """unit test for gaussian fit function"""
+        data = q.load_data_from_file("./resources/data_for_test_gaussian_fit.csv")
+        xydata = q.XYDataSet(xdata=data[0], ydata=data[1], yerr=0.5)
+
+        result = xydata.fit("gaussian", parguess=[55, 20, 4])
+
+        assert result[0].value == pytest.approx(50, 1e-1)
+        assert result[1].value == pytest.approx(25, 1e-1)
+        assert result[2].value == pytest.approx(3, 1e-1)
+
     def test_custom_fit(self):
         """unit test for custom fit functions"""
 
