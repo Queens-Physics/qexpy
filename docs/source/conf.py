@@ -40,12 +40,12 @@ release = '3.0.0'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'nbsphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
     'sphinx.ext.todo',
-    'nbsphinx',
     'IPython.sphinxext.ipython_console_highlighting'
 ]
 
