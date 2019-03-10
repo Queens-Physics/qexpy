@@ -34,7 +34,7 @@ class ExperimentalValueArray(np.ndarray):
     Examples:
         >>> import qexpy as q
 
-        We can instantiate an array of measurements with two lists
+        >>> # We can instantiate an array of measurements with two lists
         >>> a = q.MeasurementArray([1, 2, 3, 4, 5], [0.1, 0.2, 0.3, 0.4, 0.5])
         >>> a
         ExperimentalValueArray([MeasuredValue(1.0 +/- 0.1),
@@ -43,8 +43,8 @@ class ExperimentalValueArray(np.ndarray):
                     MeasuredValue(4.0 +/- 0.4),
                     MeasuredValue(5.0 +/- 0.5)], dtype=object)
 
-        We can also create an array of measurements with a single uncertainty. As usual, if the error
-        is not specified, they will be set to 0 by default
+        >>> # We can also create an array of measurements with a single uncertainty. As usual,
+        >>> # if the error is not specified, they will be set to 0 by default
         >>> a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit="m", name="length")
         >>> a
         ExperimentalValueArray([MeasuredValue(1.0 +/- 0.5),
@@ -53,7 +53,7 @@ class ExperimentalValueArray(np.ndarray):
                     MeasuredValue(4.0 +/- 0.5),
                     MeasuredValue(5.0 +/- 0.5)], dtype=object)
 
-        We can access the different statistical properties of this array
+        >>> # We can access the different statistical properties of this array
         >>> print(np.sum(a))
         15 +/- 1 [m]
         >>> print(a.mean())
@@ -61,8 +61,8 @@ class ExperimentalValueArray(np.ndarray):
         >>> a.std()
         1.5811388300841898
 
-        Manipulation of a MeasurementArray is also very easy. We can append or insert into the array
-        values in multiple formats
+        >>> # Manipulation of a MeasurementArray is also very easy. We can append or insert into
+        >>> # the array values in multiple formats
         >>> a = a.append((7, 0.2))  # a measurement can be inserted as a tuple
         >>> print(a[5])
         length = 7.0 +/- 0.2 [m]
@@ -70,7 +70,8 @@ class ExperimentalValueArray(np.ndarray):
         >>> print(a[0])
         length = 8 +/- 0 [m]
 
-        The same operations also works with array-like objects, in which case they are concatenated
+        >>> # The same operations also works with array-like objects, in which case they are
+        >>> # concatenated
         >>> a = a.append([(10, 0.1), (11, 0.3)])
         >>> a
         ExperimentalValueArray([MeasuredValue(8.0 +/- 0),
@@ -83,8 +84,9 @@ class ExperimentalValueArray(np.ndarray):
                     MeasuredValue(10.0 +/- 0.1),
                     MeasuredValue(11.0 +/- 0.3)], dtype=object)
 
-        The ExperimentalValueArray object is vectorized just like numpy.ndarray. You can perform basic
-        arithmetic operations as well as functions with them and get back ExperimentalValueArray objects
+        >>> # The ExperimentalValueArray object is vectorized just like numpy.ndarray. You can
+        >>> # perform basic arithmetic operations as well as functions with them and get back
+        >>> # ExperimentalValueArray objects
         >>> a = q.MeasurementArray([0, 1, 2], 0.5)
         >>> a + 2
         ExperimentalValueArray([DerivedValue(2.0 +/- 0.5),
@@ -151,7 +153,13 @@ class ExperimentalValueArray(np.ndarray):
 
     @property
     def name(self) -> str:
-        """name of this array of values"""
+        """name of this array of values
+
+        A name can be given to this data set, and each measurement within this list will be named
+        in the form of "name_index". For example, if the name is specified as "length", the items
+        in this array will be named "length_0", "length_1", "length_2", ...
+
+        """
         return re.sub(r"_[0-9]+$", "", self[0].name)
 
     @name.setter
@@ -163,7 +171,12 @@ class ExperimentalValueArray(np.ndarray):
 
     @property
     def unit(self) -> str:
-        """The unit of this array of values"""
+        """The unit of this array of values
+
+        It is assumed that the set of data that constitutes one ExperimentalValueArray have the
+        same unit, which, when assigned, is given too all the items of the array.
+
+        """
         return self[0].unit
 
     @unit.setter
@@ -176,16 +189,24 @@ class ExperimentalValueArray(np.ndarray):
 
     @property
     def values(self) -> np.ndarray:
-        """An array of center values"""
+        """An array consisting of the center values of each item"""
         return np.asarray(list(data.value for data in self))
 
     @property
     def errors(self) -> np.ndarray:
-        """An array of the uncertainties"""
+        """An array consisting of the uncertainties of each item"""
         return np.asarray(list(data.error for data in self))
 
     def append(self, value: Union[Real, List, Tuple, ExperimentalValue]) -> "ExperimentalValueArray":
-        """adds a value to the end of this array and returns the new array"""
+        """adds a value to the end of this array and returns the new array
+
+        Args:
+            value: the value to be appended to this array.
+
+        Returns:
+            The new array
+
+        """
         if isinstance(value, ExperimentalValueArray):
             pass  # don't do anything if the new value is already a ExperimentalValueArray
         elif isinstance(value, utils.ARRAY_TYPES):
@@ -198,38 +219,55 @@ class ExperimentalValueArray(np.ndarray):
             measurement.name = "{}_{}".format(self.name, index)
         return result
 
-    def insert(self, position: int, value: Union[Real, List, Tuple, ExperimentalValue]) -> "ExperimentalValueArray":
-        """adds a value to a position in this array and returns the new array"""
+    def insert(self, index: int, value: Union[Real, List, Tuple, ExperimentalValue]) -> "ExperimentalValueArray":
+        """adds a value to a position in this array and returns the new array
+
+        Args:
+            index: the position to insert the value
+            value: the value to be inserted
+
+        Returns:
+            The new array
+
+        """
         if isinstance(value, ExperimentalValueArray):
             pass  # don't do anything if the new value is already a ExperimentalValueArray
         elif isinstance(value, utils.ARRAY_TYPES):
             value = list(self.__wrap_measurement(value) for value in value)
         else:
             value = self.__wrap_measurement(value)
-        result = np.insert(self, position, value).view(ExperimentalValueArray)
-        for index, measurement in enumerate(result):
-            measurement.name = "{}_{}".format(self.name, index)
+        result = np.insert(self, index, value).view(ExperimentalValueArray)
+        for idx, measurement in enumerate(result):
+            measurement.name = "{}_{}".format(self.name, idx)
         return result
 
-    def delete(self, position: int) -> "ExperimentalValueArray":
-        """deletes the value on the requested position and returns the new array"""
-        result = np.delete(self, position).view(ExperimentalValueArray)
-        for index, measurement in enumerate(result):
-            measurement.name = "{}_{}".format(self.name, index)
+    def delete(self, index: int) -> "ExperimentalValueArray":
+        """deletes the value on the requested position and returns the new array
+
+        Args:
+            index: the index of the value to be deleted
+
+        Returns:
+            The new array
+
+        """
+        result = np.delete(self, index).view(ExperimentalValueArray)
+        for idx, measurement in enumerate(result):
+            measurement.name = "{}_{}".format(self.name, idx)
         return result
 
-    def mean(self, **kwargs) -> MeasuredValue:  # pylint: disable=unused-argument
+    def mean(self, **_) -> MeasuredValue:
         """The mean of the array"""
         result = np.mean(self.values)
         error = self.error_on_mean()
         name = "mean of {}".format(self.name) if self.name else ""
         return MeasuredValue(float(result), error, self.unit, name)
 
-    def std(self, ddof=1, **kwargs) -> float:  # pylint: disable=unused-argument
+    def std(self, ddof=1, **_) -> float:
         """The standard deviation of this array"""
         return float(np.std(self.values, ddof=ddof))
 
-    def sum(self, **kwargs) -> MeasuredValue:  # pylint: disable=unused-argument
+    def sum(self, **_) -> MeasuredValue:
         """The sum of the array"""
         result = np.sum(self.values)
         error = np.sqrt(np.sum(self.errors ** 2))
@@ -297,7 +335,7 @@ class XYDataSet:
 
         if xrange:
             if isinstance(xrange, (tuple, list)) and len(xrange) == 2 and xrange[0] < xrange[1]:
-                indices = (xrange[0] <= data.xdata) & (data.xdata < xrange[1])
+                indices = (xrange[0] <= xdata) & (xdata < xrange[1])
                 self.xdata = self.xdata[indices]
                 self.ydata = self.ydata[indices]
             else:

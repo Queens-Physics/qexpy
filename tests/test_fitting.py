@@ -5,7 +5,6 @@ This file contains tests for fitting a function to a data set.
 """
 
 import pytest
-import numpy as np
 import qexpy as q
 
 

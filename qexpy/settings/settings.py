@@ -72,7 +72,7 @@ def set_error_method(new_method: Union[ErrorMethod, str]):
     """
     if isinstance(new_method, ErrorMethod):
         CONFIG[lit.ERROR_METHOD] = new_method
-    elif isinstance(new_method, str) and new_method in [lit.MONTE_CARLO_PROPAGATED, lit.DERIVATIVE_PROPAGATED]:
+    elif new_method in [lit.MONTE_CARLO_PROPAGATED, lit.DERIVATIVE_PROPAGATED]:
         CONFIG[lit.ERROR_METHOD] = ErrorMethod(new_method)
     else:
         raise ValueError("The error methods supported are derivative, min-max, and monte carlo.\n"
