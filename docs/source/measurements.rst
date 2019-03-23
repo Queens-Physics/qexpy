@@ -4,6 +4,7 @@ The Measurement Object
 
 To record values with an uncertainty, we use the :py:class:`.MeasuredValue` object. It is a child class of :py:class:`.ExperimentalValue`, so it inherits all attributes and methods from the :py:class:`.ExperimentalValue` class.
 
+.. autoclass:: qexpy.data.Measurement
 .. autoclass:: qexpy.data.data.MeasuredValue
 
 Repeated Measurements

@@ -16,6 +16,7 @@ Welcome to QExPy's documentation!
    measurements
    measurement_array
    error_propagation
+   xydata
 
 Indices and tables
 ==================

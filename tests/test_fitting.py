@@ -20,8 +20,8 @@ class TestFitting:
         xydata = q.XYDataSet(xdata=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                              ydata=[0.6, 1.6, 3.5, 4.1, 4.6, 5.6, 6.1, 7.9, 8.7, 9.8],
                              yerr=0.5,
-                             xname='length', xunits='m',
-                             yname='force', yunits='N')
+                             xname='length', xunit='m',
+                             yname='force', yunit='N')
         result = xydata.fit("linear")
         assert str(result[0]) == "slope = 0.98 +/- 0.04"
         assert str(result[1]) == "intercept = -0.1 +/- 0.3"

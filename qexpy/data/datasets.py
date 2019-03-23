@@ -311,12 +311,48 @@ class XYDataSet:
     QExPy is capable of multiple ways of data handling. One typical case in experimental data
     analysis is for a pair of data sets, which is usually plotted or fitted with a curve.
 
+    Args:
+        xdata (list|ExperimentalValueArray): an array of values for x-data
+        ydata (list|ExperimentalValueArray): an array of values for y-data
+
+    Keyword Args:
+        xerr (list|float): the uncertainty on x data
+        yerr (list|float): the uncertainty on y data
+        xunit (str): the unit of the x data set
+        yunit (str): the unit of the y data set
+        xname (str): the name of the x data set
+        yname (str): the name of the y data set
+
+    See Also:
+        There are different ways to specify an array of data, see :py:class:`.ExperimentalValueArray`
+        for more details. If you have a :py:class:`.ExperimentalValueArray` object, you can pass that
+        in as well.
+
+    Examples:
+
+        >>> import qexpy as q
+
+        >>> a = q.XYDataSet(xdata=[0,1,2,3,4], ydata=[3,4,5,6,7], xerr=0.5, yerr=[0.1,0.2,0.3,0.4,0.5],
+        >>>                 xunit="m", xname="length", yunit="kg", yname="weight")
+        >>> a.xvalues
+        array([0, 1, 2, 3, 4])
+        >>> a.xerr
+        array([0.5, 0.5, 0.5, 0.5, 0.5])
+        >>> a.yerr
+        array([0.1, 0.2, 0.3, 0.4, 0.5])
+        >>> a.xdata
+        ExperimentalValueArray([MeasuredValue(0.0 +/- 0.5),
+                        MeasuredValue(1.0 +/- 0.5),
+                        MeasuredValue(2.0 +/- 0.5),
+                        MeasuredValue(3.0 +/- 0.5),
+                        MeasuredValue(4.0 +/- 0.5)], dtype=object)
+
     """
 
     def __init__(self, xdata, ydata, **kwargs):
 
-        xunits = kwargs.get("xunits", "")
-        yunits = kwargs.get("yunits", "")
+        xunit = kwargs.get("xunit", "")
+        yunit = kwargs.get("yunit", "")
         xname = kwargs.get("xname", "")
         yname = kwargs.get("yname", "")
 
@@ -328,18 +364,8 @@ class XYDataSet:
         if len(xdata) != len(ydata):
             raise ValueError("The length of xdata and ydata don't match!")
 
-        self.xdata = self.__wrap_data(xdata, xerr, name=xname, unit=xunits)
-        self.ydata = self.__wrap_data(ydata, yerr, name=yname, unit=yunits)
-
-        xrange = kwargs.get("xrange", None)
-
-        if xrange:
-            if isinstance(xrange, (tuple, list)) and len(xrange) == 2 and xrange[0] < xrange[1]:
-                indices = (xrange[0] <= xdata) & (xdata < xrange[1])
-                self.xdata = self.xdata[indices]
-                self.ydata = self.ydata[indices]
-            else:
-                raise ValueError("invalid fit range for xdata: {}".format(xrange))
+        self.xdata = self.__wrap_data(xdata, xerr, name=xname, unit=xunit)
+        self.ydata = self.__wrap_data(ydata, yerr, name=yname, unit=yunit)
 
     @property
     def xvalues(self):
@@ -401,7 +427,7 @@ class XYDataSet:
         """fits the current dataset to a model
 
         See Also:
-            :py:method:`qexpy.fitting.fitting.fit`
+            :py:func:`.qexpy.fitting.fit`
 
         """
         import qexpy.fitting.fitting as fitting  # pylint: disable=cyclic-import
