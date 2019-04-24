@@ -8,10 +8,11 @@ from typing import List, Union, Tuple
 
 import numpy as np
 
-from qexpy.data.data import MeasuredValue, ExperimentalValue
 import qexpy.utils.utils as utils
 import qexpy.utils.units as units
 from qexpy.utils.exceptions import InvalidArgumentTypeError
+
+from .data import MeasuredValue, ExperimentalValue
 
 
 class ExperimentalValueArray(np.ndarray):
