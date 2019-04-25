@@ -8,7 +8,7 @@ plot settings and error propagation settings
 from enum import Enum
 import numbers
 from typing import Union
-import qexpy.settings.literals as lit
+from . import literals as lit
 
 
 class ErrorMethod(Enum):

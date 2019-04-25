@@ -19,9 +19,9 @@ import qexpy.utils.utils as utils
 import qexpy.utils.units as units
 import qexpy.settings.literals as lit
 import qexpy.settings.settings as settings
-import qexpy.data.data as data  # pylint: disable=cyclic-import
-
 from qexpy.utils.exceptions import InvalidArgumentTypeError
+
+from . import data  # pylint: disable=cyclic-import
 
 pi, e = np.pi, np.e
 

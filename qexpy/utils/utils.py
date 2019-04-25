@@ -4,7 +4,7 @@ import re
 from typing import Union, Callable
 from numbers import Real
 import numpy as np
-from qexpy.utils.exceptions import InvalidArgumentTypeError
+from .exceptions import InvalidArgumentTypeError
 
 # Global variable to keep track of whether the output_notebook command was run
 _MPL_OUTPUT_NOTEBOOK_CALLED = False
