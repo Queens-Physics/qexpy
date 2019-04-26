@@ -18,7 +18,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Programming Language :: Python',
     ],
-    install_requires=['numpy', 'matplotlib', 'scipy'],
+    install_requires=['numpy', 'matplotlib', 'scipy', 'IPython'],
     extra_require={
         'dev': ['pylint'],
         'test': ['pytest']

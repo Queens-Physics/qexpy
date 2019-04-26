@@ -117,6 +117,8 @@ def get_monte_carlo_propagated_value_and_error(formula: "data.Formula") -> "data
         return offsets * std + center_value
 
     source_measurement_ids = _find_source_measurements(formula)  # type: Set[UUID]
+
+    # noinspection PyTypeChecker
     source_measurements = list(
         data.get_variable_by_id(_id) for _id in source_measurement_ids)  # type: List[data.MeasuredValue]
 

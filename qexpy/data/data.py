@@ -96,10 +96,10 @@ class ExperimentalValue:
     """
 
     # module level register that stores references to all instantiated values during a session.
-    _register: Dict[uuid.UUID, "ExperimentalValue"] = {}
+    _register = {}  # type: Dict[uuid.UUID, "ExperimentalValue"]
 
     # stores the correlation between values, where the key is the unique IDs of the two instances combined.
-    _correlations: Dict[str, Correlation] = {}
+    _correlations = {}  # type: Dict[str, Correlation]
 
     def __init__(self, unit: str = "", name: str = ""):
         """Constructor for ExperimentalValue
@@ -111,16 +111,16 @@ class ExperimentalValue:
         # Stores the value/error pairs corresponding to their source. User recorded values are stored
         # with the key "recorded", derived values are stored with the key "derivative" or "monte-carlo",
         # which indicates the method of error propagation used.
-        self._values: Dict[str, "ValueWithError"] = {}
+        self._values = {}  # type: Dict[str, "ValueWithError"]
 
         # Stores each unit string and their corresponding exponents.
-        self._units: Dict[str, int] = units.parse_units(unit) if unit else {}
+        self._units = units.parse_units(unit) if unit else {}  # type: Dict[str, int]
 
         # The name of this quantity if given
-        self._name: str = name
+        self._name = name  # type: str
 
         # Each instance is given a unique ID for easy reference
-        self._id: uuid.UUID = uuid.uuid4()
+        self._id = uuid.uuid4()  # type: uuid.UUID
 
     def __str__(self):
         """The string representation of this quantity
