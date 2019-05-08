@@ -1,3 +1,5 @@
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Queens-Physics/qexpy/master)
+
 # QExPy
 
 ## Introduction
@@ -26,5 +28,3 @@ Up to date examples are maintained in the examples directory of the repository. 
 Refer to the example notebooks in the examples/jupyter directory to learn how to use the package, and browse through the official documentstion.
 
 Read the documentation at http://qexpy.readthedocs.io/en/latest/intro.html
-
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Queens-Physics/qexpy/master)
