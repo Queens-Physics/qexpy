@@ -3,6 +3,7 @@
 from typing import List, Callable, Tuple, Union
 from enum import Enum
 
+import functools
 import numpy as np
 import scipy.optimize as opt
 import qexpy.settings.literals as lit
@@ -23,7 +24,7 @@ class FitModel(Enum):
 
 
 class XYFit:
-    """Data structure for results of a curve fit"""
+    """Stores the results of a curve fit"""
 
     def __init__(self, dataset, model_name, fit_func, result_func, result_params):
         self._dataset = dataset
@@ -51,26 +52,32 @@ class XYFit:
 
     @property
     def dataset(self) -> "datasets.XYDataSet":
+        """The dataset used for this fit"""
         return self._dataset
 
     @property
     def fit_function(self) -> Callable:
+        """The function that fits to this data set"""
         return self._result_func
 
     @property
     def params(self) -> List[str]:
+        """The fit parameters of the fit function"""
         return self._result_params
 
     @property
     def residuals(self) -> List:
+        """The residuals of the fit"""
         return self._residuals
 
     @property
     def chi_squared(self) -> "data.DerivedValue":
+        """The goodness of fit represented as chi^2"""
         return self._chi2
 
     @property
     def ndof(self) -> int:
+        """The degree of freedom of this fit function"""
         return self._ndof
 
 
@@ -84,6 +91,8 @@ def fit(xdata: List, ydata: List, model: Union[Callable, str, FitModel], **kwarg
             or a callable function as a custom fit model
 
     Keyword Args:
+        xrange (tuple|list): a pair of numbers indicating the domain of the function
+        degrees(int): the degree of the polynomial if polynomial fit were chosen
         parguess(list): initial guess for the parameters
         parnames(list): the names of each parameter
         parunits(list): the units for each parameter
@@ -94,11 +103,16 @@ def fit(xdata: List, ydata: List, model: Union[Callable, str, FitModel], **kwarg
     return fit_to_xy_dataset(dataset, model, **kwargs)
 
 
-def fit_to_xy_dataset(dataset, model, **kwargs):
+def fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint: disable = too-many-locals
     """Perform a fit on an XYDataSet"""
 
     model_name, fit_func = _wrap_fit_func(model)
     num_of_params, is_variable = __check_fit_func_and_get_number_of_params(fit_func)
+
+    if model_name == lit.POLY:
+        # default degree of polynomial is 3 because for degree 2 polynomials,
+        # a quadratic fit would've been chosen
+        num_of_params = kwargs.get("degrees", 3) + 1
 
     parguess = kwargs.get("parguess", None)
     __check_type_and_len_of_params(num_of_params, is_variable, parguess, "parguess")
@@ -107,7 +121,44 @@ def fit_to_xy_dataset(dataset, model, **kwargs):
     parunits = kwargs.get("parunits", [""] * num_of_params)
     __check_type_and_len_of_params(num_of_params, is_variable, parunits, "parunits")
 
+    xrange = kwargs.get("xrange", None)
+
+    if xrange:
+        if isinstance(xrange, (tuple, list)) and len(xrange) == 2 and xrange[0] < xrange[1]:
+            indices = (xrange[0] <= dataset.xdata) & (dataset.xdata < xrange[1])
+            dataset.xdata = dataset.xdata[indices]
+            dataset.ydata = dataset.ydata[indices]
+        else:
+            raise ValueError("invalid fit range for xdata: {}".format(xrange))
+
     yerr = dataset.yerr if any(err > 0 for err in dataset.yerr) else None
+
+    if model_name == lit.POLY:
+        popt, perr = _linear_fit(dataset, num_of_params - 1, yerr)
+    else:
+        popt, perr = _non_linear_fit(fit_func, dataset, parguess, yerr)
+
+    # wrap the parameters in MeasuredValue objects
+    params = [data.MeasuredValue(param, err, unit=parunit, name=name)
+              for param, err, parunit, name in zip(popt, perr, parunits, parnames)]
+
+    # wrap the result function
+    result_func = _combine_fit_func_and_fit_params(fit_func, params)
+
+    return XYFit(dataset, model_name, fit_func, result_func, params)
+
+
+def _linear_fit(dataset, degrees, yerr):
+    """perform a linear fit with numpy.polyfit"""
+
+    # noinspection PyTupleAssignmentBalance
+    popt, v_matrix = np.polyfit(dataset.xvalues, dataset.yvalues, degrees, cov=True, w=1/yerr)
+    perr = np.sqrt(np.diag(np.flipud(np.fliplr(v_matrix))))
+    return popt, perr
+
+
+def _non_linear_fit(fit_func, dataset, parguess, yerr):
+    """perform a non-linear fit with scipy.optimize.curve_fit"""
 
     try:
         popt, pcov = opt.curve_fit(fit_func, dataset.xvalues, dataset.yvalues, p0=parguess, sigma=yerr)
@@ -129,14 +180,7 @@ def fit_to_xy_dataset(dataset, model, **kwargs):
     # the error on the parameters
     perr = np.sqrt(np.diag(pcov))
 
-    # wrap the parameters in MeasuredValue objects
-    params = [data.MeasuredValue(param, err, unit=parunit, name=name)
-              for param, err, parunit, name in zip(popt, perr, parunits, parnames)]
-
-    # wrap the result function
-    result_func = _combine_fit_func_and_fit_params(fit_func, params)
-
-    return XYFit(dataset, model_name, fit_func, result_func, params)
+    return popt, perr
 
 
 def _wrap_fit_func(model: Union[str, FitModel, Callable]) -> Tuple[str, Callable]:
@@ -243,7 +287,7 @@ def __check_type_and_len_of_params(expected: int, is_variable: bool, param_ref: 
 FITTERS = {
     lit.LIN: lambda x, a, b: a * x + b,
     lit.QUAD: lambda x, a, b, c: a * x ** 2 + b * x + c,
-    lit.POLY: lambda x, *coeffs: sum(coeff * x ** power for power, coeff in enumerate(coeffs[::-1])),
+    lit.POLY: lambda x, *coeffs: functools.reduce(lambda a, b: a * x + b, reversed(coeffs)),
     lit.EXPO: lambda x, c, a: c * op.exp(-a * x),
     lit.GAUSS: lambda x, norm, mean, std: norm / op.sqrt(2 * op.pi * std ** 2) * op.exp(
         -1 / 2 * (x - mean) ** 2 / std ** 2)

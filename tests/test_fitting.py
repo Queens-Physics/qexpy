@@ -39,6 +39,12 @@ class TestFitting:
         assert result.chi_squared == 1.1335539393939595
         assert result.ndof == 6
 
+        xdata = q.XYDataSet(xdata=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                            ydata=[3.89, 18.01, 58.02, 135.92, 264.01, 453.99, 718.02, 1067.98, 1516.01, 2074],
+                            xerr=0.5,
+                            yerr=0.5)
+        result = xydata.fit(q.FitModel.POLYNOMIAL, degree=3)
+
     def test_gaussian_fit(self):
         """unit test for gaussian fit function"""
         data = q.load_data_from_file("./resources/data_for_test_gaussian_fit.csv")
