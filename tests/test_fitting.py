@@ -39,11 +39,15 @@ class TestFitting:
         assert result.chi_squared == 1.1335539393939595
         assert result.ndof == 6
 
-        xdata = q.XYDataSet(xdata=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                            ydata=[3.89, 18.01, 58.02, 135.92, 264.01, 453.99, 718.02, 1067.98, 1516.01, 2074],
-                            xerr=0.5,
-                            yerr=0.5)
+        xydata = q.XYDataSet(xdata=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                             ydata=[3.89, 18.01, 58.02, 135.92, 264.01, 453.99, 718.02, 1067.98, 1516.01, 2074],
+                             xerr=0.5,
+                             yerr=0.5)
         result = xydata.fit(q.FitModel.POLYNOMIAL, degree=3)
+        assert pytest.approx(2, result[0])
+        assert pytest.approx(9.882, result[1])
+        assert pytest.approx(-2.928, result[2])
+        assert pytest.approx(3.86, result[3])
 
     def test_gaussian_fit(self):
         """unit test for gaussian fit function"""
