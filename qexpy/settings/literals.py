@@ -56,3 +56,10 @@ QUAD = "quadratic"
 POLY = "polynomial"
 GAUSS = "gaussian"
 EXPO = "exponential"
+
+# plotting
+TITLE = "title"
+XLABEL = "xlabel"
+YLABEL = "ylabel"
+XUNIT = "xunit"
+YUNIT = "yunit"
