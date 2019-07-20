@@ -123,20 +123,23 @@ def fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint: disable = t
 
     xrange = kwargs.get("xrange", None)
 
+    xdata_to_fit = dataset.xdata
+    ydata_to_fit = dataset.ydata
+
     if xrange:
         if isinstance(xrange, (tuple, list)) and len(xrange) == 2 and xrange[0] < xrange[1]:
             indices = (xrange[0] <= dataset.xdata) & (dataset.xdata < xrange[1])
-            dataset.xdata = dataset.xdata[indices]
-            dataset.ydata = dataset.ydata[indices]
+            xdata_to_fit = dataset.xdata[indices]
+            ydata_to_fit = dataset.ydata[indices]
         else:
             raise ValueError("invalid fit range for xdata: {}".format(xrange))
 
-    yerr = dataset.yerr if any(err > 0 for err in dataset.yerr) else None
+    yerr = ydata_to_fit.errors if any(err > 0 for err in ydata_to_fit.errors) else None
 
     if model_name == lit.POLY:
-        popt, perr = _linear_fit(dataset, num_of_params - 1, yerr)
+        popt, perr = _linear_fit(xdata_to_fit, ydata_to_fit, num_of_params - 1, yerr)
     else:
-        popt, perr = _non_linear_fit(fit_func, dataset, parguess, yerr)
+        popt, perr = _non_linear_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr)
 
     # wrap the parameters in MeasuredValue objects
     params = [data.MeasuredValue(param, err, unit=parunit, name=name)
@@ -148,28 +151,28 @@ def fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint: disable = t
     return XYFit(dataset, model_name, fit_func, result_func, params)
 
 
-def _linear_fit(dataset, degrees, yerr):
+def _linear_fit(xdata_to_fit, ydata_to_fit, degrees, yerr):
     """perform a linear fit with numpy.polyfit"""
 
     # noinspection PyTupleAssignmentBalance
-    popt, v_matrix = np.polyfit(dataset.xvalues, dataset.yvalues, degrees, cov=True, w=1/yerr)
+    popt, v_matrix = np.polyfit(xdata_to_fit.values, ydata_to_fit.values, degrees, cov=True, w=1/yerr)
     perr = np.sqrt(np.diag(np.flipud(np.fliplr(v_matrix))))
     return popt, perr
 
 
-def _non_linear_fit(fit_func, dataset, parguess, yerr):
+def _non_linear_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr):
     """perform a non-linear fit with scipy.optimize.curve_fit"""
 
     try:
-        popt, pcov = opt.curve_fit(fit_func, dataset.xvalues, dataset.yvalues, p0=parguess, sigma=yerr)
+        popt, pcov = opt.curve_fit(fit_func, xdata_to_fit.values, ydata_to_fit.values, p0=parguess, sigma=yerr)
 
         # adjust the fit by factoring in the uncertainty on x
-        if any(err > 0 for err in dataset.xerr):
+        if any(err > 0 for err in xdata_to_fit.errors):
             tmp_func = _combine_fit_func_and_fit_params(fit_func, popt)
-            adjusted_yerr = np.sqrt(yerr ** 2 + dataset.xerr * utils.numerical_derivative(tmp_func, dataset.xerr))
+            adjusted_yerr = np.sqrt(yerr ** 2 + xdata_to_fit.errors * utils.numerical_derivative(tmp_func, xdata_to_fit.errors))
 
             # re-calculate the fit with adjusted uncertainties for ydata
-            popt, pcov = opt.curve_fit(fit_func, dataset.xvalues, dataset.yvalues, p0=parguess, sigma=adjusted_yerr)
+            popt, pcov = opt.curve_fit(fit_func, xdata_to_fit.values, ydata_to_fit.values, p0=parguess, sigma=adjusted_yerr)
 
     except RuntimeError:
 

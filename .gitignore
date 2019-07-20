@@ -57,3 +57,4 @@ ipython_config.py
 venv/
 env.bak/
 venv.bak/
+.vscode/

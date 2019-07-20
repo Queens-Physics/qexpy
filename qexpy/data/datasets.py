@@ -432,8 +432,7 @@ class XYDataSet:
 
         """
         import qexpy.fitting.fitting as fitting  # pylint: disable=cyclic-import
-        from copy import deepcopy
-        return fitting.fit_to_xy_dataset(deepcopy(self), model, **kwargs)
+        return fitting.fit_to_xy_dataset(self, model, **kwargs)
 
     @staticmethod
     def __wrap_data(data, error, unit, name):
