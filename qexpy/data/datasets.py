@@ -357,7 +357,7 @@ class XYDataSet:
         xname = kwargs.get("xname", "")
         yname = kwargs.get("yname", "")
 
-        self.name = kwargs.get("name", "")
+        self._name = kwargs.get("name", "")
 
         xerr = kwargs.get("xerr", None)
         yerr = kwargs.get("yerr", None)
@@ -369,7 +369,18 @@ class XYDataSet:
         self.ydata = self.__wrap_data(ydata, yerr, name=yname, unit=yunit)
 
     @property
-    def xvalues(self):
+    def name(self) -> str:
+        """The name of this data set"""
+        return self._name if self._name else "XY Dataset"
+
+    @name.setter
+    def name(self, new_name: str):
+        if not isinstance(new_name, str):
+            raise InvalidArgumentTypeError("name", got=new_name, expected="string")
+        self._name = new_name
+
+    @property
+    def xvalues(self) -> np.ndarray:
         """the values of the x data set"""
         return self.xdata.values
 
@@ -379,7 +390,7 @@ class XYDataSet:
         return self.xdata.errors
 
     @property
-    def yvalues(self):
+    def yvalues(self) -> np.ndarray:
         """the values of the y data set"""
         return self.ydata.values
 
@@ -389,7 +400,7 @@ class XYDataSet:
         return self.ydata.errors
 
     @property
-    def xname(self):
+    def xname(self) -> str:
         """name of the xdata set"""
         return self.xdata.name
 
@@ -398,7 +409,7 @@ class XYDataSet:
         self.xdata.name = name
 
     @property
-    def xunit(self):
+    def xunit(self) -> str:
         """unit of the xdata set"""
         return self.xdata.unit
 
@@ -407,7 +418,7 @@ class XYDataSet:
         self.xdata.unit = unit
 
     @property
-    def yname(self):
+    def yname(self) -> str:
         """name of the ydata set"""
         return self.ydata.name
 
@@ -416,7 +427,7 @@ class XYDataSet:
         self.ydata.name = name
 
     @property
-    def yunit(self):
+    def yunit(self) -> str:
         """unit of the ydata set"""
         return self.ydata.unit
 

@@ -27,6 +27,7 @@ class TestFitting:
         assert str(result[1]) == "intercept = -0.1 +/- 0.3"
         assert result.chi_squared == 4.751515151515154
         assert result.ndof == 7
+        print(result)
 
         xydata = q.XYDataSet(xdata=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                              ydata=[3.86, 8.80, 16.11, 24.6, 35.71, 48.75, 64, 81.15, 99.72, 120.94],

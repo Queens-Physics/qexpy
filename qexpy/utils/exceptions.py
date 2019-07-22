@@ -25,3 +25,10 @@ class UndefinedOperationError(QExPyBaseError):
         if expected:
             message += ", expected: {}".format(expected)
         super().__init__(message)
+
+
+class IllegalArgumentError(QExPyBaseError):
+    """Exception for general invalid arguments"""
+
+    def __init__(self, message):
+        super().__init__(message)

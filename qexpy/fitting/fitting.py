@@ -9,7 +9,7 @@ import scipy.optimize as opt
 import qexpy.settings.literals as lit
 import qexpy.data.data as data
 import qexpy.data.operations as op
-import qexpy.data.datasets as datasets
+import qexpy.data.datasets as dts
 import qexpy.utils.utils as utils
 from qexpy.utils.exceptions import InvalidArgumentTypeError
 
@@ -26,12 +26,14 @@ class FitModel(Enum):
 class XYFit:
     """Stores the results of a curve fit"""
 
-    def __init__(self, dataset, model_name, fit_func, result_func, result_params):
+    def __init__(self, dataset, model, fit_func, res_func, res_params, pcorr):
+        """Constructor for an XYFit object"""
+
         self._dataset = dataset
-        self._model_name = model_name
+        self._model_name = model
         self._fit_func = fit_func
-        self._result_func = result_func
-        self._result_params = result_params
+        self._result_func = res_func
+        self._result_params = res_params
 
         y_fit_res = self.fit_function(self.dataset.xdata)
         y_err = self.dataset.ydata - y_fit_res
@@ -41,17 +43,25 @@ class XYFit:
 
         self._residuals = y_err
         self._chi2 = chi2
-        self._ndof = len(y_fit_res) - len(result_params) - 1
+        self._ndof = len(y_fit_res) - len(res_params) - 1
+
+        self._pcorr = pcorr
 
     def __getitem__(self, index):
         return self._result_params[index]
 
     def __str__(self):
         header = "----------------- Fit Results -------------------"
-        return "{}\n".format(header)
+        fit_type = "Fit of {} to {}\n".format(self._dataset.name, self._model_name)
+        result_param_values = map(str, self._result_params)
+        result_params = "Result Parameter List: \n" + ",\n".join(result_param_values) + "\n"
+        correlation_matrix = "Correlation Matrix: \n" + np.array_str(self._pcorr, precision=3) + "\n"
+        chi2_ndof = "chi2/ndof = {:.2f}/{}\n".format(self._chi2, self._ndof)
+        ending = "----------------- End Fit Results -------------------"
+        return "\n".join([header, fit_type, result_params, correlation_matrix, chi2_ndof, ending])
 
     @property
-    def dataset(self) -> "datasets.XYDataSet":
+    def dataset(self) -> "dts.XYDataSet":
         """The dataset used for this fit"""
         return self._dataset
 
@@ -99,7 +109,7 @@ def fit(xdata: List, ydata: List, model: Union[Callable, str, FitModel], **kwarg
 
     """
 
-    dataset = datasets.XYDataSet(xdata, ydata, **kwargs)
+    dataset = dts.XYDataSet(xdata, ydata, **kwargs)
     return fit_to_xy_dataset(dataset, model, **kwargs)
 
 
@@ -137,9 +147,9 @@ def fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint: disable = t
     yerr = ydata_to_fit.errors if any(err > 0 for err in ydata_to_fit.errors) else None
 
     if model_name == lit.POLY:
-        popt, perr = _linear_fit(xdata_to_fit, ydata_to_fit, num_of_params - 1, yerr)
+        popt, perr, pcov = _polynomial_fit(xdata_to_fit, ydata_to_fit, num_of_params - 1, yerr)
     else:
-        popt, perr = _non_linear_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr)
+        popt, perr, pcov = _curve_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr)
 
     # wrap the parameters in MeasuredValue objects
     params = [data.MeasuredValue(param, err, unit=parunit, name=name)
@@ -148,20 +158,28 @@ def fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint: disable = t
     # wrap the result function
     result_func = _combine_fit_func_and_fit_params(fit_func, params)
 
-    return XYFit(dataset, model_name, fit_func, result_func, params)
+    return XYFit(dataset, model_name, fit_func, result_func, params, _cov2corr(pcov))
 
 
-def _linear_fit(xdata_to_fit, ydata_to_fit, degrees, yerr):
-    """perform a linear fit with numpy.polyfit"""
+def _cov2corr(pcov):
+    """Return a correlation matrix given a covariance matrix."""
+
+    std = np.sqrt(np.diag(pcov))
+    return pcov / np.outer(std, std)
+
+
+def _polynomial_fit(xdata_to_fit, ydata_to_fit, degrees, yerr):
+    """perform a polynomial fit with numpy.polyfit"""
 
     # noinspection PyTupleAssignmentBalance
-    popt, v_matrix = np.polyfit(xdata_to_fit.values, ydata_to_fit.values, degrees, cov=True, w=1/yerr)
-    perr = np.sqrt(np.diag(np.flipud(np.fliplr(v_matrix))))
-    return popt, perr
+    popt, v_matrix = np.polyfit(xdata_to_fit.values, ydata_to_fit.values, degrees, cov=True, w=1 / yerr)
+    pcov = np.flipud(np.fliplr(v_matrix))
+    perr = np.sqrt(np.diag(pcov))
+    return popt, perr, pcov
 
 
-def _non_linear_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr):
-    """perform a non-linear fit with scipy.optimize.curve_fit"""
+def _curve_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr):
+    """perform a regular curve fit with scipy.optimize.curve_fit"""
 
     try:
         popt, pcov = opt.curve_fit(fit_func, xdata_to_fit.values, ydata_to_fit.values, p0=parguess, sigma=yerr)
@@ -169,10 +187,12 @@ def _non_linear_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr):
         # adjust the fit by factoring in the uncertainty on x
         if any(err > 0 for err in xdata_to_fit.errors):
             tmp_func = _combine_fit_func_and_fit_params(fit_func, popt)
-            adjusted_yerr = np.sqrt(yerr ** 2 + xdata_to_fit.errors * utils.numerical_derivative(tmp_func, xdata_to_fit.errors))
+            adjusted_yerr = np.sqrt(
+                yerr ** 2 + xdata_to_fit.errors * utils.numerical_derivative(tmp_func, xdata_to_fit.errors))
 
             # re-calculate the fit with adjusted uncertainties for ydata
-            popt, pcov = opt.curve_fit(fit_func, xdata_to_fit.values, ydata_to_fit.values, p0=parguess, sigma=adjusted_yerr)
+            popt, pcov = opt.curve_fit(fit_func, xdata_to_fit.values, ydata_to_fit.values, p0=parguess,
+                                       sigma=adjusted_yerr)
 
     except RuntimeError:
 
@@ -183,7 +203,7 @@ def _non_linear_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr):
     # the error on the parameters
     perr = np.sqrt(np.diag(pcov))
 
-    return popt, perr
+    return popt, perr, pcov
 
 
 def _wrap_fit_func(model: Union[str, FitModel, Callable]) -> Tuple[str, Callable]:
