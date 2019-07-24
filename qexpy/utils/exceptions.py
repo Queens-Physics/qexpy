@@ -29,6 +29,3 @@ class UndefinedOperationError(QExPyBaseError):
 
 class IllegalArgumentError(QExPyBaseError):
     """Exception for general invalid arguments"""
-
-    def __init__(self, message):
-        super().__init__(message)
