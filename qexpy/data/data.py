@@ -10,6 +10,7 @@ import warnings
 import uuid
 import collections
 import functools
+import abc
 from numbers import Real
 from typing import Dict, Union, List
 import numpy as np
@@ -48,7 +49,7 @@ def check_operand_type(operation):
     return check_operand_type_wrapper
 
 
-class ExperimentalValue:
+class ExperimentalValue(abc.ABC):
     """Base class for objects with a value and an uncertainty
 
     The ExperimentalValue is a container for any individual quantities involved in an experiment
@@ -137,19 +138,19 @@ class ExperimentalValue:
         return "{}({})".format(self.__class__.__name__, self.print_value())
 
     @property
+    @abc.abstractmethod
     def value(self):
         """float: The center value of this quantity"""
-        return 0
 
     @property
+    @abc.abstractmethod
     def error(self):
         """float: The uncertainty of this quantity"""
-        return 0
 
     @property
+    @abc.abstractmethod
     def relative_error(self):
         """float: The ratio of the uncertainty to its center value"""
-        return 0
 
     @property
     def name(self):
@@ -796,6 +797,10 @@ class Constant(ExperimentalValue):
 
     @property
     def error(self):
+        return 0
+
+    @property
+    def relative_error(self):
         return 0
 
     def derivative(self, other) -> 0:
