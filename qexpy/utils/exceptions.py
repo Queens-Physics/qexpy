@@ -5,7 +5,15 @@ class QExPyBaseError(Exception):
     """This is the base error type for QExPy"""
 
 
-class InvalidArgumentTypeError(QExPyBaseError):
+class IllegalArgumentError(QExPyBaseError):
+    """Exception for general invalid arguments"""
+
+
+class InvalidRequestError(QExPyBaseError):
+    """Exception for undefined behaviours"""
+
+
+class InvalidArgumentTypeError(IllegalArgumentError):
     """Exception thrown for invalid function arguments"""
 
     def __init__(self, objective, got, expected=""):
@@ -25,7 +33,3 @@ class UndefinedOperationError(QExPyBaseError):
         if expected:
             message += ", expected: {}".format(expected)
         super().__init__(message)
-
-
-class IllegalArgumentError(QExPyBaseError):
-    """Exception for general invalid arguments"""
