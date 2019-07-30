@@ -43,20 +43,7 @@ class Plot:
     @property
     def xlabel(self):
         """The name of the x data, which will appear as x label"""
-
-        if self._plot_info[lit.XLABEL]:
-            # use the user specified label if there is one
-            return self._plot_info[lit.XLABEL]
-
-        # else find the first data set and use the name of the data set as the label
-        data_set = next((obj for obj in self._objects if isinstance(obj, XYDataSetOnPlot)), None)
-        while data_set and not data_set.xname:
-            data_set = next((obj for obj in self._objects if isinstance(obj, XYDataSetOnPlot)), None)
-        if data_set and data_set.xname:
-            return data_set.xname
-
-        # if nothing is found, return empty string
-        return ""
+        return self.__get_or_make_plot_labels(lit.XLABEL)
 
     @xlabel.setter
     def xlabel(self, new_label: str):
@@ -67,20 +54,7 @@ class Plot:
     @property
     def ylabel(self):
         """The name of the y data, which will appear as the y axis label"""
-
-        if self._plot_info[lit.YLABEL]:
-            # use the user specified label if there is one
-            return self._plot_info[lit.YLABEL]
-
-        # else find the first data set and use the name of the data set as the label
-        data_set = next((obj for obj in self._objects if isinstance(obj, XYDataSetOnPlot)), None)
-        while data_set and not data_set.yname:
-            data_set = next((obj for obj in self._objects if isinstance(obj, XYDataSetOnPlot)), None)
-        if data_set and data_set.yname:
-            return data_set.yname
-
-        # if nothing is found, return empty string
-        return ""
+        return self.__get_or_make_plot_labels(lit.YLABEL)
 
     @property
     def xrange(self):
@@ -93,7 +67,7 @@ class Plot:
 
     @xrange.setter
     def xrange(self, new_range):
-        utils._validate_xrange(new_range)
+        utils.validate_xrange(new_range)
         self._xrange = new_range
 
     @ylabel.setter
@@ -108,6 +82,25 @@ class Plot:
 
     def show(self):
         """Draws the plot to output"""
+
+    def __get_or_make_plot_labels(self, axis: str):
+        """Helper method for getting a label for the plot"""
+
+        if self._plot_info[axis]:
+            # use the user specified label if there is one
+            return self._plot_info[axis]
+
+        # else find the first data set and use the name of the data set as the label
+        data_set = next((obj for obj in self._objects if isinstance(obj, XYDataSetOnPlot)), None)
+        data_name = getattr(data_set, "xname" if axis == lit.XLABEL else "yname")
+        while data_set and not data_name:
+            data_set = next((obj for obj in self._objects if isinstance(obj, XYDataSetOnPlot)), None)
+            data_name = getattr(data_set, "xname" if axis == lit.XLABEL else "yname")
+        if data_set and data_name:
+            return data_name
+
+        # if nothing is found, return empty string
+        return ""
 
 
 def plot(*args, **kwargs) -> Plot:

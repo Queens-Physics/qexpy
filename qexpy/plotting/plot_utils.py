@@ -4,7 +4,7 @@ import re
 from qexpy.utils.exceptions import InvalidArgumentTypeError, IllegalArgumentError
 
 
-def _validate_xrange(new_range: tuple, allow_empty=False):
+def validate_xrange(new_range: tuple, allow_empty=False):
     """Helper function to validate the xrange specified"""
     if not isinstance(new_range, tuple) and not isinstance(new_range, list):
         raise InvalidArgumentTypeError("xrange", new_range, "tuple or list of length 2")
@@ -15,7 +15,7 @@ def _validate_xrange(new_range: tuple, allow_empty=False):
             "Error: the xrange has to be a tuple of length 2 where the second number is larger than the first.")
 
 
-def _validate_fmt(new_fmt: str):
+def validate_fmt(new_fmt: str):
     """Helper function to validate the format string of a plot object"""
     if not isinstance(new_fmt, str):
         raise InvalidArgumentTypeError("fmt", new_fmt, "string")

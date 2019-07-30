@@ -13,10 +13,10 @@ class ObjectOnPlot(abc.ABC):
 
     def __init__(self, *args, **kwargs):
         fmt = kwargs.get("fmt", args[0] if isinstance(args[0], str) else "")
-        utils._validate_fmt(fmt)
+        utils.validate_fmt(fmt)
         self._fmt = fmt
         xrange = kwargs.get("xrange", ())
-        utils._validate_xrange(xrange, allow_empty=True)
+        utils.validate_xrange(xrange, allow_empty=True)
         self._xrange = xrange
 
     @property
@@ -36,7 +36,7 @@ class ObjectOnPlot(abc.ABC):
 
     @fmt.setter
     def fmt(self, fmt: str):
-        # TODO: validate fmt string
+        utils.validate_fmt(fmt)
         self._fmt = fmt
 
     @property
@@ -46,7 +46,7 @@ class ObjectOnPlot(abc.ABC):
 
     @xrange.setter
     def xrange(self, new_range: tuple):
-        utils._validate_xrange(new_range)
+        utils.validate_xrange(new_range)
         self._xrange = new_range
 
 
@@ -113,6 +113,11 @@ def _create_object_on_plot(*args, **kwargs) -> ObjectOnPlot:
     func = kwargs.get("func", args[0] if inspect.isfunction(args[0]) else None)
     if func:
         return FunctionOnPlot(func, **kwargs)
+
+    # check if a complete data set was passed in
+    dataset = kwargs.get("dataset", args[0] if isinstance(args[0], dts.XYDataSet) else None)
+    if dataset:
+        return XYDataSetOnPlot.from_xy_dataset(dataset)
 
     # else try to create a data set out of the arguments
     xdata = kwargs.get("xdata", args[0] if len(args) >= 2 else None)
