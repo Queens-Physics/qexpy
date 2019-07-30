@@ -19,6 +19,6 @@ def validate_fmt(new_fmt: str):
     """Helper function to validate the format string of a plot object"""
     if not isinstance(new_fmt, str):
         raise InvalidArgumentTypeError("fmt", new_fmt, "string")
-    if not re.fullmatch(r"(\.|,|o|v|^|<|>|1|2|3|4|s|p|\*|h|H|\+|x|D|d|\||_)?(-|(--)|(-.)|(:))?([bgrcmykw])?", new_fmt):
+    if not re.fullmatch(r"(\.|,|o|v|^|<|>|1|2|3|4|s|p|\*|h|H|\+|x|D|d|\||_|-|(--)|(-.)|(:)|[a-z])+", new_fmt):
         raise IllegalArgumentError(
             "The format string is invalid. Please refer to documentations for a list of valid format strings.")

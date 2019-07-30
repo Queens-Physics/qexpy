@@ -443,7 +443,7 @@ class XYDataSet:
 
         """
         import qexpy.fitting.fitting as fitting  # pylint: disable=cyclic-import
-        return fitting.fit_to_xy_dataset(self, model, **kwargs)
+        return fitting.fit(self, model, **kwargs)
 
     @staticmethod
     def __wrap_data(data, error, unit, name):

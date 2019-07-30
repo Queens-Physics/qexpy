@@ -91,16 +91,12 @@ class XYFit:
         return self._ndof
 
 
-def fit(xdata: List, ydata: List, model: Union[Callable, str, FitModel], **kwargs) -> XYFit:
+def fit(*args, **kwargs) -> XYFit:
     """Perform a fit for an xy data set
 
-    Args:
-        xdata: the x-data
-        ydata: the y-data
+    Keyword Args:
         model: the fit model given as the string or enum representation of a pre-set model
             or a callable function as a custom fit model
-
-    Keyword Args:
         xrange (tuple|list): a pair of numbers indicating the domain of the function
         degrees(int): the degree of the polynomial if polynomial fit were chosen
         parguess(list): initial guess for the parameters
@@ -109,11 +105,19 @@ def fit(xdata: List, ydata: List, model: Union[Callable, str, FitModel], **kwarg
 
     """
 
-    dataset = dts.XYDataSet(xdata, ydata, **kwargs)
-    return fit_to_xy_dataset(dataset, model, **kwargs)
+    # first check if a data set was passed in
+    dataset, model = __try_fit_to_xy_dataset(*args, **kwargs)
+    if dataset and model:
+        return _fit_to_xy_dataset(dataset, model, **kwargs)
+
+    # then check if xdata and ydata were passed in separately
+    xdata, ydata, model = __try_fit_to_xdata_and_ydata(*args, **kwargs)
+    if xdata and ydata and model:
+        dataset = dts.XYDataSet(xdata, ydata, **kwargs)
+        return _fit_to_xy_dataset(dataset, model, **kwargs)
 
 
-def fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint: disable = too-many-locals
+def _fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint: disable = too-many-locals
     """Perform a fit on an XYDataSet"""
 
     model_name, fit_func = _wrap_fit_func(model)
@@ -247,6 +251,23 @@ def _get_param_names(model: Union[str, FitModel, Callable], num_of_params: int) 
 def _combine_fit_func_and_fit_params(func: Callable, params) -> Callable:
     """wraps a function with params to a function of x"""
     return np.vectorize(lambda x: func(x, *params))
+
+
+def __try_fit_to_xy_dataset(*args, **kwargs):
+    """Helper function to parse the inputs to a call to fit() for a single XYDataSet"""
+    dataset = kwargs.get("dataset", args[0] if len(args) > 0 and isinstance(args[0], dts.XYDataSet) else None)
+    model = kwargs.get("model", args[1] if len(args) > 1 and (
+        isinstance(args[1], (str, FitModel)) or callable(args[1])) else None)
+    return dataset, model
+
+
+def __try_fit_to_xdata_and_ydata(*args, **kwargs):
+    """Helper function to parse the inputs to a call to fit() for separate xdata and ydata"""
+    xdata = kwargs.get("xdata", args[0] if len(args) > 0 and isinstance(args[0], dts.ExperimentalValueArray) else None)
+    ydata = kwargs.get("ydata", args[1] if len(args) > 1 and isinstance(args[1], dts.ExperimentalValueArray) else None)
+    model = kwargs.get("model", args[2] if len(args) > 2 and (
+        isinstance(args[2], (str, FitModel)) or callable(args[2])) else None)
+    return xdata, ydata, model
 
 
 def __check_fit_func_and_get_number_of_params(func: Callable) -> Tuple[int, bool]:

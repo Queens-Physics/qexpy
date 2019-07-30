@@ -12,7 +12,7 @@ class ObjectOnPlot(abc.ABC):
     """A container for each individual dataset or function to be plotted"""
 
     def __init__(self, *args, **kwargs):
-        fmt = kwargs.get("fmt", args[0] if isinstance(args[0], str) else "")
+        fmt = kwargs.get("fmt", args[0] if len(args) > 0 and isinstance(args[0], str) else "")
         utils.validate_fmt(fmt)
         self._fmt = fmt
         xrange = kwargs.get("xrange", ())
@@ -72,18 +72,18 @@ class XYDataSetOnPlot(dts.XYDataSet, ObjectOnPlot):
         return self.yvalues
 
     @classmethod
-    def from_xy_dataset(cls, dataset):
+    def from_xy_dataset(cls, dataset, **kwargs):
         """Wraps a regular XYDataSet object in a XYDataSetOnPlot object"""
         dataset.__class__ = cls
-        ObjectOnPlot.__init__(dataset)
+        ObjectOnPlot.__init__(dataset, **kwargs)
         return dataset
 
 
 class FunctionOnPlot(ObjectOnPlot):
     """This is the wrapper for a function to be plotted"""
 
-    def __init__(self, func, *args, **kwargs):
-        ObjectOnPlot.__init__(self, *args, **kwargs)
+    def __init__(self, func, **kwargs):
+        ObjectOnPlot.__init__(self, **kwargs)
         parameters = inspect.signature(func).parameters
         if len(parameters) != 1:
             raise IllegalArgumentError("QExPy only supports plotting functions with one variable.")
@@ -110,20 +110,38 @@ def _create_object_on_plot(*args, **kwargs) -> ObjectOnPlot:
     """Factory method to create the appropriate sub-class of ObjectOnPlot"""
 
     # first check if the object requested is a function
-    func = kwargs.get("func", args[0] if inspect.isfunction(args[0]) else None)
+    func, fmt = __try_function_on_plot(*args, **kwargs)
     if func:
-        return FunctionOnPlot(func, **kwargs)
+        return FunctionOnPlot(func, fmt=fmt, **kwargs)
 
     # check if a complete data set was passed in
-    dataset = kwargs.get("dataset", args[0] if isinstance(args[0], dts.XYDataSet) else None)
+    dataset, fmt = __try_data_set_on_plot(*args, **kwargs)
     if dataset:
-        return XYDataSetOnPlot.from_xy_dataset(dataset)
+        return XYDataSetOnPlot.from_xy_dataset(dataset, fmt=fmt)
 
     # else try to create a data set out of the arguments
-    xdata = kwargs.get("xdata", args[0] if len(args) >= 2 else None)
-    ydata = kwargs.get("xdata", args[1] if len(args) >= 2 else None)
-    fmt = kwargs.get("fmt", args[2] if len(args) >= 3 else "")
+    xdata, ydata, fmt = __try_xdata_and_y_data(*args, **kwargs)
     if xdata and ydata:
         return XYDataSetOnPlot(xdata, ydata, fmt=fmt, **kwargs)
 
     raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
+
+
+def __try_function_on_plot(*args, **kwargs):
+    func = kwargs.get("func", args[0] if len(args) > 0 and inspect.isfunction(args[0]) else None)
+    # if there's a second argument, assume that is is the fmt string
+    fmt = kwargs.get("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
+    return func, fmt
+
+
+def __try_data_set_on_plot(*args, **kwargs):
+    dataset = kwargs.get("dataset", args[0] if len(args) > 0 and isinstance(args[0], dts.XYDataSet) else None)
+    fmt = kwargs.get("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
+    return dataset, fmt
+
+
+def __try_xdata_and_y_data(*args, **kwargs):
+    xdata = kwargs.get("xdata", args[0] if len(args) >= 2 else None)
+    ydata = kwargs.get("xdata", args[1] if len(args) >= 2 else None)
+    fmt = kwargs.get("fmt", args[2] if len(args) >= 3 else "")
+    return xdata, ydata, fmt
