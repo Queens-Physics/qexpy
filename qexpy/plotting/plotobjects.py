@@ -12,7 +12,7 @@ class ObjectOnPlot(abc.ABC):
     """A container for each individual dataset or function to be plotted"""
 
     def __init__(self, *args, **kwargs):
-        fmt = kwargs.get("fmt", args[0] if len(args) > 0 and isinstance(args[0], str) else "")
+        fmt = kwargs.get("fmt", args[0] if args and isinstance(args[0], str) else "")
         utils.validate_fmt(fmt)
         self._fmt = fmt
         xrange = kwargs.get("xrange", ())
@@ -128,14 +128,14 @@ def _create_object_on_plot(*args, **kwargs) -> ObjectOnPlot:
 
 
 def __try_function_on_plot(*args, **kwargs):
-    func = kwargs.get("func", args[0] if len(args) > 0 and inspect.isfunction(args[0]) else None)
+    func = kwargs.get("func", args[0] if args and inspect.isfunction(args[0]) else None)
     # if there's a second argument, assume that is is the fmt string
     fmt = kwargs.get("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
     return func, fmt
 
 
 def __try_data_set_on_plot(*args, **kwargs):
-    dataset = kwargs.get("dataset", args[0] if len(args) > 0 and isinstance(args[0], dts.XYDataSet) else None)
+    dataset = kwargs.get("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
     fmt = kwargs.get("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
     return dataset, fmt
 

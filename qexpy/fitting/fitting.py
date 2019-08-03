@@ -11,7 +11,7 @@ import qexpy.data.data as data
 import qexpy.data.operations as op
 import qexpy.data.datasets as dts
 import qexpy.utils.utils as utils
-from qexpy.utils.exceptions import InvalidArgumentTypeError
+from qexpy.utils.exceptions import InvalidArgumentTypeError, IllegalArgumentError
 
 
 class FitModel(Enum):
@@ -116,8 +116,10 @@ def fit(*args, **kwargs) -> XYFit:
         dataset = dts.XYDataSet(xdata, ydata, **kwargs)
         return _fit_to_xy_dataset(dataset, model, **kwargs)
 
+    raise IllegalArgumentError("Unable to execute fit. Please make sure the arguments provided are correct.")
 
-def _fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint: disable = too-many-locals
+
+def _fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint:disable=too-many-locals
     """Perform a fit on an XYDataSet"""
 
     model_name, fit_func = _wrap_fit_func(model)
@@ -255,7 +257,7 @@ def _combine_fit_func_and_fit_params(func: Callable, params) -> Callable:
 
 def __try_fit_to_xy_dataset(*args, **kwargs):
     """Helper function to parse the inputs to a call to fit() for a single XYDataSet"""
-    dataset = kwargs.get("dataset", args[0] if len(args) > 0 and isinstance(args[0], dts.XYDataSet) else None)
+    dataset = kwargs.get("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
     model = kwargs.get("model", args[1] if len(args) > 1 and (
         isinstance(args[1], (str, FitModel)) or callable(args[1])) else None)
     return dataset, model
@@ -263,7 +265,7 @@ def __try_fit_to_xy_dataset(*args, **kwargs):
 
 def __try_fit_to_xdata_and_ydata(*args, **kwargs):
     """Helper function to parse the inputs to a call to fit() for separate xdata and ydata"""
-    xdata = kwargs.get("xdata", args[0] if len(args) > 0 and isinstance(args[0], dts.ExperimentalValueArray) else None)
+    xdata = kwargs.get("xdata", args[0] if args and isinstance(args[0], dts.ExperimentalValueArray) else None)
     ydata = kwargs.get("ydata", args[1] if len(args) > 1 and isinstance(args[1], dts.ExperimentalValueArray) else None)
     model = kwargs.get("model", args[2] if len(args) > 2 and (
         isinstance(args[2], (str, FitModel)) or callable(args[2])) else None)

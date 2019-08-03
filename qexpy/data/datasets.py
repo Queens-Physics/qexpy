@@ -376,7 +376,7 @@ class XYDataSet:
     @name.setter
     def name(self, new_name: str):
         if not isinstance(new_name, str):
-            raise InvalidArgumentTypeError("name", got=new_name, expected="string")
+            raise InvalidArgumentTypeError("name of data set", got=new_name, expected="string")
         self._name = new_name
 
     @property
