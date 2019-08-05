@@ -16,6 +16,9 @@ from .data import sqrt, exp, sin, cos, tan, asin, acos, atan, csc, sec, cot, log
 
 from .fitting import fit, FitModel
 
+from .plotting import plot, new_plot
+from .plotting import show as show_plot
+
 # Check the python interpreter version
 if sys.version_info[0] < 3:  # No reason to assume a future Python 4 will break comparability.
     raise ImportError("Error: QExPy is only supported on Python 3. Please upgrade your interpreter.\n"
