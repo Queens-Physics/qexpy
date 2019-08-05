@@ -41,6 +41,7 @@ release = '3.0.0'
 extensions = [
     'sphinx.ext.autodoc',
     'nbsphinx',
+    'nbsphinx_link',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',

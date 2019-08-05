@@ -11,7 +11,7 @@ Welcome to QExPy's documentation!
    :caption: Contents:
 
    intro
-   getting_started.ipynb
+   getting_started.nblink
    data
    measurements
    measurement_array
