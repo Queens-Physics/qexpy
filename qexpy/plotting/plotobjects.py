@@ -12,9 +12,10 @@ class ObjectOnPlot(abc.ABC):
     """A container for anything to be plotted"""
 
     def __init__(self, *args, **kwargs):
-        fmt = kwargs.get("fmt", args[0] if args and isinstance(args[0], str) else "")
+        fmt = kwargs.pop("fmt", args[0] if args and isinstance(args[0], str) else "")
         utils.validate_fmt(fmt)
         self._fmt = fmt
+        self.kwargs = kwargs
 
     @property
     def fmt(self) -> str:
@@ -27,7 +28,7 @@ class ObjectOnPlot(abc.ABC):
         self._fmt = fmt
 
     @staticmethod
-    def create_object_on_plot(*args, **kwargs):
+    def create_xy_object_on_plot(*args, **kwargs) -> "XYObjectOnPlot":
         """Factory method that creates the appropriate object to be plotted"""
 
         # first check if the object requested is a function
@@ -47,13 +48,24 @@ class ObjectOnPlot(abc.ABC):
 
         raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
 
+    @staticmethod
+    def create_histogram_on_plot(*args, **kwargs) -> "HistogramOnPlot":
+        """Factory method that creates a histogram object to be plotted"""
+
+        data = _try_histogram_on_plot(*args, **kwargs)
+        if data and isinstance(data, dts.ExperimentalValueArray):
+            return HistogramOnPlot.from_value_array(data)
+        if data and isinstance(data, (list, np.ndarray)):
+            return HistogramOnPlot(data, *args, **kwargs)
+        raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
+
 
 class XYObjectOnPlot(ObjectOnPlot):
     """A container for objects with x and y values to be drawn on a plot"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        xrange = kwargs.get("xrange", ())
+        xrange = kwargs.pop("xrange", ())
         utils.validate_xrange(xrange, allow_empty=True)
         self._xrange = xrange
 
@@ -103,7 +115,7 @@ class XYDataSetOnPlot(dts.XYDataSet, XYObjectOnPlot):
     def from_xy_dataset(cls, dataset, **kwargs):
         """Wraps a regular XYDataSet object in a XYDataSetOnPlot object"""
         dataset.__class__ = cls
-        ObjectOnPlot.__init__(dataset, **kwargs)
+        XYObjectOnPlot.__init__(dataset, **kwargs)
         return dataset
 
 
@@ -113,8 +125,8 @@ class FunctionOnPlot(XYObjectOnPlot):
     def __init__(self, func, **kwargs):
         XYObjectOnPlot.__init__(self, **kwargs)
         self.pars = []
-        self.xrange = kwargs.get("xrange", ())
-        self.pars = kwargs.get("pars", [])
+        self.xrange = kwargs.pop("xrange", ())
+        self.pars = kwargs.pop("pars", [])
 
         # this checks if the xrange of plot is specified by user or auto-generated
         self.xrange_specified = "xrange" in kwargs
@@ -149,22 +161,37 @@ class FunctionOnPlot(XYObjectOnPlot):
 class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):
     """Represents a histogram to be drawn on a plot"""
 
+    def __init__(self, *args, **kwargs):
+        dts.ExperimentalValueArray.__init__(*args, **kwargs)
+        ObjectOnPlot.__init__(*args, **kwargs)
+
+    @classmethod
+    def from_value_array(cls, array, **kwargs):
+        """Wraps a regular XYDataSet object in a XYDataSetOnPlot object"""
+        array.__class__ = cls
+        ObjectOnPlot.__init__(array, **kwargs)
+        return array
+
 
 def _try_function_on_plot(*args, **kwargs):
-    func = kwargs.get("func", args[0] if args and inspect.isfunction(args[0]) else None)
+    func = kwargs.pop("func", args[0] if args and inspect.isfunction(args[0]) else None)
     # if there's a second argument, assume that is is the fmt string
-    fmt = kwargs.get("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
+    fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
     return func, fmt
 
 
 def _try_data_set_on_plot(*args, **kwargs):
-    dataset = kwargs.get("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
-    fmt = kwargs.get("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
+    dataset = kwargs.pop("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
+    fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
     return dataset, fmt
 
 
 def _try_xdata_and_y_data(*args, **kwargs):
-    xdata = kwargs.get("xdata", args[0] if len(args) >= 2 else None)
-    ydata = kwargs.get("xdata", args[1] if len(args) >= 2 else None)
-    fmt = kwargs.get("fmt", args[2] if len(args) >= 3 else "")
+    xdata = kwargs.pop("xdata", args[0] if len(args) >= 2 else None)
+    ydata = kwargs.pop("xdata", args[1] if len(args) >= 2 else None)
+    fmt = kwargs.pop("fmt", args[2] if len(args) >= 3 else "")
     return xdata, ydata, fmt
+
+
+def _try_histogram_on_plot(*args, **kwargs):
+    return kwargs.pop("data", args[0] if args and isinstance(args[0], (np.ndarray, list)) else None)

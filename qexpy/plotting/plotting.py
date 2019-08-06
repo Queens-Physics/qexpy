@@ -79,14 +79,18 @@ class Plot:
 
     def plot(self, *args, **kwargs):
         """Adds a data set or function to plot"""
-        self._objects.append(plo.ObjectOnPlot.create_object_on_plot(*args, **kwargs))
+        self._objects.append(plo.ObjectOnPlot.create_xy_object_on_plot(*args, **kwargs))
+
+    def hist(self, *args, **kwargs):
+        """Adds a histogram to plot"""
+        self._objects.append(plo.ObjectOnPlot.create_histogram_on_plot(*args, **kwargs))
 
     def fit(self, *args, **kwargs):
         """Plots a curve fit to the last data set added to the figure"""
         dataset = next(obj for obj in reversed(self._objects) if isinstance(obj, plo.XYDataSetOnPlot))
         if dataset:
             result = fitting.fit(dataset, *args, **kwargs)
-            self._objects.append(plo.ObjectOnPlot.create_object_on_plot(result.fit_function, **kwargs))
+            self._objects.append(plo.ObjectOnPlot.create_xy_object_on_plot(result.fit_function, **kwargs))
         else:
             raise InvalidRequestError("There is not data set in this plot to be fitted.")
 
@@ -100,9 +104,9 @@ class Plot:
 
         for obj in self._objects:
             if isinstance(obj, plo.HistogramOnPlot):
-                plt.hist(obj.values)  # TODO: implement this in more detail
+                plt.hist(obj.values, **obj.kwargs)
             elif isinstance(obj, plo.XYObjectOnPlot):
-                plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt)  # TODO: more plot options
+                plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, **obj.kwargs)
 
         plt.show()
 
@@ -129,22 +133,21 @@ class Plot:
 def plot(*args, **kwargs) -> Plot:
     """Plots functions or data sets"""
 
-    # initialize buffer if not initialized
-    if not Plot.current_plot_buffer:
-        Plot.current_plot_buffer = Plot()
-
-    # first check the line which calls this function
-    frame_stack = inspect.getouterframes(inspect.currentframe())
-    code_context = frame_stack[1].code_context[0]
-    is_return_value_assigned = re.match(r"\w+ *=", code_context) is not None
-
-    # if this function call is assigned to a variable, create new Plot instance, else, the objects
-    # passed into this function call will be drawn on the latest created Plot instance
-    plot_obj = Plot() if is_return_value_assigned else Plot.current_plot_buffer
-    Plot.current_plot_buffer = plot_obj
+    plot_obj = __get_plot_obj()
 
     # invoke the instance method of the Plot to add objects to the plot
     plot_obj.plot(*args, **kwargs)
+
+    return plot_obj
+
+
+def hist(*args, **kwargs) -> Plot:
+    """Plots a histogram with a data set"""
+
+    plot_obj = __get_plot_obj()
+
+    # invoke the instance method of the Plot to add objects to the plot
+    plot_obj.hist(*args, **kwargs)
 
     return plot_obj
 
@@ -167,3 +170,26 @@ def show(plot_obj=None):
 def new_plot():
     """Clears the current plot buffer and start a new one"""
     Plot.current_plot_buffer = Plot()
+
+
+def __get_plot_obj():
+    """Helper function that gets the appropriate Plot instance to draw on"""
+
+    # initialize buffer if not initialized
+    if not Plot.current_plot_buffer:
+        Plot.current_plot_buffer = Plot()
+
+    # first check the line which calls this function
+    frame_stack = inspect.getouterframes(inspect.currentframe())
+    code_context = frame_stack[2].code_context[0]
+    is_return_value_assigned = re.match(r"\w+ *=", code_context) is not None
+
+    # if this function call is assigned to a variable, create new Plot instance, else, the objects
+    # passed into this function call will be drawn on the latest created Plot instance
+    if is_return_value_assigned:
+        plot_obj = Plot()
+        Plot.current_plot_buffer = plot_obj
+    else:
+        plot_obj = Plot.current_plot_buffer
+
+    return plot_obj

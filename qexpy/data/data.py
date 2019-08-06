@@ -582,8 +582,11 @@ class RepeatedlyMeasuredValue(MeasuredValue):
             warnings.warn("\nThis measurement was not taken with individual uncertainties. The propagated "
                           "\nerror is not applicable")
 
-    def show_histogram(self):
+    def show_histogram(self, **kwargs):
         """Plots the raw measurement data in a histogram"""
+        import qexpy.plotting as plt  # pylint:disable=cyclic-import
+        figure = plt.hist(self.raw_data, **kwargs)
+        figure.show()
 
 
 class DerivedValue(ExperimentalValue):
