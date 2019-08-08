@@ -15,6 +15,7 @@ class ObjectOnPlot(abc.ABC):
         fmt = kwargs.pop("fmt", args[0] if args and isinstance(args[0], str) else "")
         utils.validate_fmt(fmt)
         self._fmt = fmt
+        self.label = kwargs.pop("label", "")
         self.kwargs = kwargs
 
     @property
@@ -96,6 +97,8 @@ class XYDataSetOnPlot(dts.XYDataSet, XYObjectOnPlot):
     def __init__(self, xdata, ydata, *args, **kwargs):
         XYObjectOnPlot.__init__(self, *args, **kwargs)
         dts.XYDataSet.__init__(self, xdata, ydata, **kwargs)
+        if not self.label:
+            self.label = self.name
 
     @property
     def xvalues_to_plot(self):

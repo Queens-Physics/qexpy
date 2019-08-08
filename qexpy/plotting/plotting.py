@@ -106,7 +106,11 @@ class Plot:
             if isinstance(obj, plo.HistogramOnPlot):
                 plt.hist(obj.values, **obj.kwargs)
             elif isinstance(obj, plo.XYObjectOnPlot):
-                plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, **obj.kwargs)
+                plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **obj.kwargs)
+
+        plt.title(self.title)
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel)
 
         plt.show()
 
