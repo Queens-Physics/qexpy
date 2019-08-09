@@ -63,3 +63,6 @@ XLABEL = "xlabel"
 YLABEL = "ylabel"
 XUNIT = "xunit"
 YUNIT = "yunit"
+
+LEGEND = "legend"
+ERROR_BAR = "error_bar"

@@ -95,24 +95,40 @@ class XYDataSetOnPlot(dts.XYDataSet, XYObjectOnPlot):
     """A wrapper for an XYDataSet to be plotted"""
 
     def __init__(self, xdata, ydata, *args, **kwargs):
+
+        # call super constructors
         XYObjectOnPlot.__init__(self, *args, **kwargs)
         dts.XYDataSet.__init__(self, xdata, ydata, **kwargs)
+
+        # set default label and fmt if not requested
         if not self.label:
             self.label = self.name
+        if not self.fmt:
+            self.fmt = "o"
 
     @property
     def xvalues_to_plot(self):
         if self.xrange:
-            indices = (self.xrange[0] <= self.xvalues) & (self.xvalues < self.xrange[1])
-            return self.xvalues[indices]
+            return self.xvalues[self.__get_indices_from_xrange()]
         return self.xvalues
 
     @property
     def yvalues_to_plot(self):
         if self.xrange:
-            indices = (self.xrange[0] <= self.xvalues) & (self.xvalues < self.xrange[1])
-            return self.yvalues[indices]
+            return self.yvalues[self.__get_indices_from_xrange()]
         return self.yvalues
+
+    @property
+    def xerr_to_plot(self):
+        if self.xrange:
+            return self.xerr[self.__get_indices_from_xrange()]
+        return self.xerr
+
+    @property
+    def yerr_to_plot(self):
+        if self.xrange:
+            return self.yerr[self.__get_indices_from_xrange()]
+        return self.yerr
 
     @classmethod
     def from_xy_dataset(cls, dataset, **kwargs):
@@ -120,6 +136,9 @@ class XYDataSetOnPlot(dts.XYDataSet, XYObjectOnPlot):
         dataset.__class__ = cls
         XYObjectOnPlot.__init__(dataset, **kwargs)
         return dataset
+
+    def __get_indices_from_xrange(self):
+        return (self.xrange[0] <= self.xvalues) & (self.xvalues < self.xrange[1])
 
 
 class FunctionOnPlot(XYObjectOnPlot):
@@ -149,16 +168,23 @@ class FunctionOnPlot(XYObjectOnPlot):
         return self.func(*args, **kwargs)
 
     @property
-    def xvalues_to_plot(self):
+    def xvalues_to_plot(self) -> np.ndarray:
         if not self.xrange:
             raise InvalidRequestError("The domain of this function cannot be found.")
         return np.linspace(self.xrange[0], self.xrange[1], 100)
 
     @property
-    def yvalues_to_plot(self):
+    def yvalues_to_plot(self) -> np.ndarray:
         if not self.xrange:
             raise InvalidRequestError("The domain of this function cannot be found.")
         return np.vectorize(self.func)(self.xvalues_to_plot)
+
+    @property
+    def yerr_to_plot(self) -> np.ndarray:
+        yvalues = self.yvalues_to_plot
+        if isinstance(yvalues, dts.ExperimentalValueArray):
+            return yvalues.errors
+        return np.empty(0)
 
 
 class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):

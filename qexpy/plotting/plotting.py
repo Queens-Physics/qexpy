@@ -28,6 +28,10 @@ class Plot:
             lit.XUNIT: "",
             lit.YUNIT: ""
         }
+        self._plot_settings = {
+            lit.LEGEND: False,
+            lit.ERROR_BAR: False
+        }
         self._xrange = ()
 
     @property
@@ -94,6 +98,14 @@ class Plot:
         else:
             raise InvalidRequestError("There is not data set in this plot to be fitted.")
 
+    def legend(self, new_setting=True):
+        """Add or remove legend to plot"""
+        self._plot_settings[lit.LEGEND] = new_setting
+
+    def error_bars(self, new_setting=True):
+        """Add or remove error bars from plot"""
+        self._plot_settings[lit.ERROR_BAR] = new_setting
+
     def show(self):
         """Draws the plot to output"""
 
@@ -103,14 +115,14 @@ class Plot:
                 obj.xrange = self.xrange
 
         for obj in self._objects:
-            if isinstance(obj, plo.HistogramOnPlot):
-                plt.hist(obj.values, **obj.kwargs)
-            elif isinstance(obj, plo.XYObjectOnPlot):
-                plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **obj.kwargs)
+            self.__draw_object_on_plot(obj)
 
         plt.title(self.title)
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
+
+        if self._plot_settings[lit.LEGEND]:
+            plt.legend()  # show legend if requested
 
         plt.show()
 
@@ -132,6 +144,24 @@ class Plot:
 
         # if nothing is found, return empty string
         return ""
+
+    def __draw_object_on_plot(self, obj: plo.ObjectOnPlot):
+        """Helper method that draws an ObjectOnPlot to the output"""
+
+        if isinstance(obj, plo.HistogramOnPlot):
+            plt.hist(obj.values, **obj.kwargs)
+        elif isinstance(obj, plo.XYObjectOnPlot) and not self._plot_settings[lit.ERROR_BAR]:
+            plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **obj.kwargs)
+        elif isinstance(obj, plo.XYDataSetOnPlot):
+            plt.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
+                         label=obj.label, **obj.kwargs)
+        elif isinstance(obj, plo.FunctionOnPlot):
+            xvalues = obj.xvalues_to_plot
+            yvalues = obj.yvalues_to_plot
+            plt.plot(xvalues, yvalues, obj.fmt, label=obj.label, **obj.kwargs)
+            yerr = obj.yerr_to_plot
+            if yerr.size > 0:
+                _plot_error_band(xvalues, yvalues, yerr)
 
 
 def plot(*args, **kwargs) -> Plot:
@@ -197,3 +227,9 @@ def __get_plot_obj():
         plot_obj = Plot.current_plot_buffer
 
     return plot_obj
+
+
+def _plot_error_band(xvalues, yvalues, yerr):
+    max_values = yvalues + yerr
+    min_values = yvalues - yerr
+    plt.fill_between(xvalues, min_values, max_values, interpolate=True, edgecolor='none', alpha=0.3, zorder=0)
