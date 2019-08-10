@@ -104,7 +104,7 @@ class ExperimentalValueArray(np.ndarray):
 
     """
 
-    def __new__(cls, data: List[Real], error: Union[List[Real], Real] = None, unit="", name=""):
+    def __new__(cls, data: List[Real], error: Union[List[Real], Real] = None, **kwargs):
         """Default constructor for a ExperimentalValueArray
 
         __new__ is used instead of __init__ for object initialization. This is the convention for
@@ -128,10 +128,17 @@ class ExperimentalValueArray(np.ndarray):
             raise InvalidArgumentTypeError("uncertainties of a MeasurementArray",
                                            got=error, expected="real number or a list of real numbers")
 
+        unit = kwargs.pop("unit", "")
+        name = kwargs.pop("name", "")
+
         measured_values = list(MeasuredValue(val, err, unit, name) for val, err in zip(measurements, error_array))
         for index, measurement in enumerate(measured_values):
             measurement.name = "{}_{}".format(measurement.name, index) if measurement.name else ""
         obj = np.asarray(measured_values, dtype=ExperimentalValue).view(ExperimentalValueArray)
+
+        # added so that subclasses of this are of the correct type
+        obj.__class__ = cls
+
         return obj
 
     def __str__(self):
@@ -454,6 +461,6 @@ class XYDataSet:
             data.unit = unit if unit else data.unit
             return data
         if isinstance(data, utils.ARRAY_TYPES):
-            return ExperimentalValueArray(data, error, unit, name)
+            return ExperimentalValueArray(data, error, unit=unit, name=name)
 
         raise InvalidArgumentTypeError("Initiate XYDataSet", got=data, expected="an array of real numbers")

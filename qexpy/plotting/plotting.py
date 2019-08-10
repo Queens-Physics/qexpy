@@ -144,7 +144,7 @@ class Plot:
 
         # else find the first data set and use the name of the data set as the label
         data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
-        data_name = getattr(data_set, "xname" if axis == lit.XLABEL else "yname")
+        data_name = getattr(data_set, "xname" if axis == lit.XLABEL else "yname") if data_set else ""
         while data_set and not data_name:
             data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
             data_name = getattr(data_set, "xname" if axis == lit.XLABEL else "yname")

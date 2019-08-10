@@ -493,7 +493,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         # Initialize raw data and its corresponding uncertainties. Internally, the array of measurements
         # is stored as a ExperimentalValueArray, however, the principal is that ExperimentalValueArray should be
         # used only to represent an array of measurements of different quantities.
-        self._raw_data = ExperimentalValueArray(measurement_array, error, unit, name)
+        self._raw_data = ExperimentalValueArray(measurement_array, error, unit=unit, name=name)
 
         # calculate its statistical properties
         self._mean = self._raw_data.mean().value
@@ -585,8 +585,9 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     def show_histogram(self, **kwargs):
         """Plots the raw measurement data in a histogram"""
         import qexpy.plotting as plt  # pylint:disable=cyclic-import
-        figure = plt.hist(self.raw_data, **kwargs)
+        values, bins, figure = plt.hist(self.raw_data, **kwargs)
         figure.show()
+        return values, bins, figure
 
 
 class DerivedValue(ExperimentalValue):

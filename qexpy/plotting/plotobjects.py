@@ -54,9 +54,9 @@ class ObjectOnPlot(abc.ABC):
         """Factory method that creates a histogram object to be plotted"""
 
         data = _try_histogram_on_plot(*args, **kwargs)
-        if data and isinstance(data, dts.ExperimentalValueArray):
-            return HistogramOnPlot.from_value_array(data)
-        if data and isinstance(data, (list, np.ndarray)):
+        if isinstance(data, dts.ExperimentalValueArray):
+            return HistogramOnPlot.from_value_array(data, **kwargs)
+        if (isinstance(data, list) and data) or (isinstance(data, np.ndarray) and data.any()):
             return HistogramOnPlot(data, *args, **kwargs)
         raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
 
@@ -191,8 +191,8 @@ class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):
     """Represents a histogram to be drawn on a plot"""
 
     def __init__(self, *args, **kwargs):
-        dts.ExperimentalValueArray.__init__(*args, **kwargs)
-        ObjectOnPlot.__init__(*args, **kwargs)
+        ObjectOnPlot.__init__(self, *args, **kwargs)
+        dts.ExperimentalValueArray.__init__(self, **kwargs)
 
     @classmethod
     def from_value_array(cls, array, **kwargs):
@@ -223,4 +223,4 @@ def _try_xdata_and_y_data(*args, **kwargs):
 
 
 def _try_histogram_on_plot(*args, **kwargs):
-    return kwargs.pop("data", args[0] if args and isinstance(args[0], (np.ndarray, list)) else None)
+    return kwargs.pop("data", args[0] if args and isinstance(args[0], (np.ndarray, list)) else np.empty(0))
