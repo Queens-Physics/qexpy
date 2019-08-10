@@ -4,6 +4,7 @@ import inspect
 import re
 from typing import List
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 from qexpy.utils.exceptions import InvalidArgumentTypeError, InvalidRequestError
@@ -87,7 +88,15 @@ class Plot:
 
     def hist(self, *args, **kwargs):
         """Adds a histogram to plot"""
-        self._objects.append(plo.ObjectOnPlot.create_histogram_on_plot(*args, **kwargs))
+
+        # first add the object to plot
+        obj = plo.ObjectOnPlot.create_histogram_on_plot(*args, **kwargs)
+        self._objects.append(obj)
+
+        # use numpy to get the results of the histogram without plotting
+        values, bin_edges = np.histogram(obj.values, **obj.kwargs)
+
+        return values, bin_edges
 
     def fit(self, *args, **kwargs):
         """Plots a curve fit to the last data set added to the figure"""
@@ -175,15 +184,15 @@ def plot(*args, **kwargs) -> Plot:
     return plot_obj
 
 
-def hist(*args, **kwargs) -> Plot:
+def hist(*args, **kwargs) -> tuple:
     """Plots a histogram with a data set"""
 
     plot_obj = __get_plot_obj()
 
     # invoke the instance method of the Plot to add objects to the plot
-    plot_obj.hist(*args, **kwargs)
+    values, bin_edges = plot_obj.hist(*args, **kwargs)
 
-    return plot_obj
+    return values, bin_edges, plot_obj
 
 
 def show(plot_obj=None):
