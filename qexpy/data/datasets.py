@@ -10,7 +10,7 @@ import numpy as np
 
 import qexpy.utils.utils as utils
 import qexpy.utils.units as units
-from qexpy.utils.exceptions import InvalidArgumentTypeError
+from qexpy.utils.exceptions import InvalidArgumentTypeError, IllegalArgumentError
 
 from .data import MeasuredValue, ExperimentalValue
 
@@ -104,7 +104,7 @@ class ExperimentalValueArray(np.ndarray):
 
     """
 
-    def __new__(cls, data: List[Real], error: Union[List[Real], Real] = None, **kwargs):
+    def __new__(cls, data: List[Real], *args, **kwargs):
         """Default constructor for a ExperimentalValueArray
 
         __new__ is used instead of __init__ for object initialization. This is the convention for
@@ -118,8 +118,16 @@ class ExperimentalValueArray(np.ndarray):
                                            got=[data], expected="a list or real numbers")
         measurements = np.asarray(data)
 
-        if error is None:
-            error_array = [0] * len(measurements)
+        error = kwargs.get("error", args[0] if args else 0)
+        relative_error = kwargs.get("relative_error", 0)
+
+        if relative_error and error:
+            raise IllegalArgumentError("You either specify the absolute error or the relative error, not both.")
+
+        error = 0 if not error else error
+
+        if relative_error:
+            error_array = float(relative_error) * measurements
         elif isinstance(error, Real):
             error_array = [float(error)] * len(measurements)
         elif isinstance(error, utils.ARRAY_TYPES) and len(error) == len(data):

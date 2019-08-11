@@ -212,7 +212,7 @@ class Plot:
             plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **obj.kwargs)
         elif isinstance(obj, plo.XYDataSetOnPlot):
             plt.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
-                         label=obj.label, **obj.kwargs)
+                         fmt=obj.fmt, label=obj.label, **obj.kwargs)
         elif isinstance(obj, plo.FunctionOnPlot):
             xvalues = obj.xvalues_to_plot
             yvalues = obj.yvalues_to_plot
