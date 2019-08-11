@@ -59,8 +59,8 @@ EXPO = "exponential"
 
 # plotting
 TITLE = "title"
-XLABEL = "xlabel"
-YLABEL = "ylabel"
+XNAME = "xname"
+YNAME = "yname"
 XUNIT = "xunit"
 YUNIT = "yunit"
 

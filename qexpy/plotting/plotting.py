@@ -24,8 +24,8 @@ class Plot:
         self._objects = []  # type: List[plo.ObjectOnPlot]
         self._plot_info = {
             lit.TITLE: "",
-            lit.XLABEL: "",
-            lit.YLABEL: "",
+            lit.XNAME: "",
+            lit.YNAME: "",
             lit.XUNIT: "",
             lit.YUNIT: ""
         }
@@ -47,20 +47,56 @@ class Plot:
         self._plot_info[lit.TITLE] = new_title
 
     @property
-    def xlabel(self):
+    def xname(self):
         """The name of the x data, which will appear as x label"""
-        return self.__get_or_make_plot_labels(lit.XLABEL)
+        return self.__get_or_make_plot_labels(lit.XNAME)
 
-    @xlabel.setter
-    def xlabel(self, new_label: str):
+    @xname.setter
+    def xname(self, new_label: str):
         if not isinstance(new_label, str):
             raise InvalidArgumentTypeError("plot label", got=new_label, expected="string")
-        self._plot_info[lit.XLABEL] = new_label
+        self._plot_info[lit.XNAME] = new_label
+
+    @property
+    def yname(self):
+        """The name of the y data, which will appear as the y axis label"""
+        return self.__get_or_make_plot_labels(lit.YNAME)
+
+    @yname.setter
+    def yname(self, new_label: str):
+        if not isinstance(new_label, str):
+            raise InvalidArgumentTypeError("plot label", got=new_label, expected="string")
+        self._plot_info[lit.YNAME] = new_label
+
+    @property
+    def xunit(self):
+        """The name of the x data, which will appear as x label"""
+        return self.__get_or_make_plot_units(lit.XUNIT)
+
+    @xunit.setter
+    def xunit(self, new_unit: str):
+        if not isinstance(new_unit, str):
+            raise InvalidArgumentTypeError("plot unit", got=new_unit, expected="string")
+        self._plot_info[lit.XUNIT] = new_unit
+
+    @property
+    def yunit(self):
+        """The name of the x data, which will appear as x label"""
+        return self.__get_or_make_plot_units(lit.YUNIT)
+
+    @yunit.setter
+    def yunit(self, new_unit: str):
+        if not isinstance(new_unit, str):
+            raise InvalidArgumentTypeError("plot unit", got=new_unit, expected="string")
+        self._plot_info[lit.YUNIT] = new_unit
+
+    @property
+    def xlabel(self):
+        return self.xname + "[{}]".format(self.xunit) if self.xunit else ""
 
     @property
     def ylabel(self):
-        """The name of the y data, which will appear as the y axis label"""
-        return self.__get_or_make_plot_labels(lit.YLABEL)
+        return self.yname + "[{}]".format(self.yunit) if self.yunit else ""
 
     @property
     def xrange(self):
@@ -75,12 +111,6 @@ class Plot:
     def xrange(self, new_range):
         utils.validate_xrange(new_range)
         self._xrange = new_range
-
-    @ylabel.setter
-    def ylabel(self, new_label: str):
-        if not isinstance(new_label, str):
-            raise InvalidArgumentTypeError("plot label", got=new_label, expected="string")
-        self._plot_info[lit.YLABEL] = new_label
 
     def plot(self, *args, **kwargs):
         """Adds a data set or function to plot"""
@@ -144,12 +174,31 @@ class Plot:
 
         # else find the first data set and use the name of the data set as the label
         data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
-        data_name = getattr(data_set, "xname" if axis == lit.XLABEL else "yname") if data_set else ""
+        data_name = getattr(data_set, "xname" if axis == lit.XNAME else "yname") if data_set else ""
         while data_set and not data_name:
             data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
-            data_name = getattr(data_set, "xname" if axis == lit.XLABEL else "yname")
+            data_name = getattr(data_set, "xname" if axis == lit.XNAME else "yname")
         if data_set and data_name:
             return data_name
+
+        # if nothing is found, return empty string
+        return ""
+
+    def __get_or_make_plot_units(self, axis: str):
+        """Helper method for getting a unit for the plot"""
+
+        if self._plot_info[axis]:
+            # use the user specified label if there is one
+            return self._plot_info[axis]
+
+        # else find the first data set and use the name of the data set as the label
+        data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
+        unit = getattr(data_set, "xunit" if axis == lit.XUNIT else "yunit") if data_set else ""
+        while data_set and not unit:
+            data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
+            unit = getattr(data_set, "xunit" if axis == lit.XUNIT else "yunit")
+        if data_set and unit:
+            return unit
 
         # if nothing is found, return empty string
         return ""
