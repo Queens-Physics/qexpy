@@ -12,6 +12,7 @@ Welcome to QExPy's documentation!
 
    intro
    getting_started.nblink
+   plotting_and_fitting.nblink
    data
    measurements
    measurement_array
