@@ -49,7 +49,7 @@ class Plot:
     @property
     def xname(self):
         """The name of the x data, which will appear as x label"""
-        return self.__get_or_make_plot_labels(lit.XNAME)
+        return self.__get_plot_info_or_extract_from_datasets(lit.XNAME, lit.XNAME, lit.YNAME)
 
     @xname.setter
     def xname(self, new_label: str):
@@ -60,7 +60,7 @@ class Plot:
     @property
     def yname(self):
         """The name of the y data, which will appear as the y axis label"""
-        return self.__get_or_make_plot_labels(lit.YNAME)
+        return self.__get_plot_info_or_extract_from_datasets(lit.YNAME, lit.XNAME, lit.YNAME)
 
     @yname.setter
     def yname(self, new_label: str):
@@ -71,7 +71,7 @@ class Plot:
     @property
     def xunit(self):
         """The name of the x data, which will appear as x label"""
-        return self.__get_or_make_plot_units(lit.XUNIT)
+        return self.__get_plot_info_or_extract_from_datasets(lit.XUNIT, lit.XUNIT, lit.YUNIT)
 
     @xunit.setter
     def xunit(self, new_unit: str):
@@ -82,7 +82,7 @@ class Plot:
     @property
     def yunit(self):
         """The name of the x data, which will appear as x label"""
-        return self.__get_or_make_plot_units(lit.YUNIT)
+        return self.__get_plot_info_or_extract_from_datasets(lit.YUNIT, lit.XUNIT, lit.YUNIT)
 
     @yunit.setter
     def yunit(self, new_unit: str):
@@ -165,8 +165,8 @@ class Plot:
 
         plt.show()
 
-    def __get_or_make_plot_labels(self, axis: str):
-        """Helper method for getting a label for the plot"""
+    def __get_plot_info_or_extract_from_datasets(self, axis: str, reference_x_axis: str, other_axis: str):
+        """Helper method to get info from datasets for plot"""
 
         if self._plot_info[axis]:
             # use the user specified label if there is one
@@ -174,33 +174,13 @@ class Plot:
 
         # else find the first data set and use the name of the data set as the label
         data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
-        data_name = getattr(data_set, "xname" if axis == lit.XNAME else "yname") if data_set else ""
-        while data_set and not data_name:
+        info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis) if data_set else ""
+        while data_set and not info_str:
             data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
-            data_name = getattr(data_set, "xname" if axis == lit.XNAME else "yname")
-        if data_set and data_name:
-            return data_name
+            info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis)
+        if data_set and info_str:
+            return info_str
 
-        # if nothing is found, return empty string
-        return ""
-
-    def __get_or_make_plot_units(self, axis: str):
-        """Helper method for getting a unit for the plot"""
-
-        if self._plot_info[axis]:
-            # use the user specified label if there is one
-            return self._plot_info[axis]
-
-        # else find the first data set and use the name of the data set as the label
-        data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
-        unit = getattr(data_set, "xunit" if axis == lit.XUNIT else "yunit") if data_set else ""
-        while data_set and not unit:
-            data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
-            unit = getattr(data_set, "xunit" if axis == lit.XUNIT else "yunit")
-        if data_set and unit:
-            return unit
-
-        # if nothing is found, return empty string
         return ""
 
     def __draw_object_on_plot(self, obj: plo.ObjectOnPlot):

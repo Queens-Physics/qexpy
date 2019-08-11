@@ -2,7 +2,7 @@
 
 import abc
 import inspect
-from collections import Iterable
+from collections.abc import Iterable
 import numpy as np
 import qexpy.plotting.plot_utils as utils
 import qexpy.data.datasets as dts
