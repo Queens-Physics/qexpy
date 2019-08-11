@@ -320,8 +320,8 @@ class XYDataSet:
     analysis is for a pair of data sets, which is usually plotted or fitted with a curve.
 
     Args:
-        xdata (list|ExperimentalValueArray): an array of values for x-data
-        ydata (list|ExperimentalValueArray): an array of values for y-data
+        xdata (list|np.ndarray): an array of values for x-data
+        ydata (list|np.ndarray): an array of values for y-data
 
     Keyword Args:
         xerr (list|float): the uncertainty on x data

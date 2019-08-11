@@ -2,6 +2,7 @@
 
 import abc
 import inspect
+from collections import Iterable
 import numpy as np
 import qexpy.plotting.plot_utils as utils
 import qexpy.data.datasets as dts
@@ -44,7 +45,7 @@ class ObjectOnPlot(abc.ABC):
 
         # else try to create a data set out of the arguments
         xdata, ydata, fmt = _try_xdata_and_y_data(*args, **kwargs)
-        if xdata and ydata:
+        if xdata.size and ydata.size:
             return XYDataSetOnPlot(xdata, ydata, fmt=fmt, **kwargs)
 
         raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
@@ -56,7 +57,7 @@ class ObjectOnPlot(abc.ABC):
         data = _try_histogram_on_plot(*args, **kwargs)
         if isinstance(data, dts.ExperimentalValueArray):
             return HistogramOnPlot.from_value_array(data, **kwargs)
-        if (isinstance(data, list) and data) or (isinstance(data, np.ndarray) and data.any()):
+        if (isinstance(data, list) and data) or (isinstance(data, np.ndarray) and data.size):
             return HistogramOnPlot(data, *args, **kwargs)
         raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
 
@@ -216,9 +217,18 @@ def _try_data_set_on_plot(*args, **kwargs):
 
 
 def _try_xdata_and_y_data(*args, **kwargs):
-    xdata = kwargs.pop("xdata", args[0] if len(args) >= 2 else None)
-    ydata = kwargs.pop("xdata", args[1] if len(args) >= 2 else None)
-    fmt = kwargs.pop("fmt", args[2] if len(args) >= 3 else "")
+    """Helper function that checks if the arguments are in the form of xdata and ydata"""
+
+    xdata = kwargs.pop("xdata", args[0] if len(args) >= 2 and isinstance(args[0], Iterable) else np.empty(0))
+    ydata = kwargs.pop("xdata", args[1] if len(args) >= 2 and isinstance(args[1], Iterable) else np.empty(0))
+    fmt = kwargs.pop("fmt", args[2] if len(args) >= 3 and isinstance(args[2], str) else "")
+
+    # wrapping data in numpy array objects
+    if isinstance(xdata, list):
+        xdata = np.asarray(xdata)
+    if isinstance(ydata, list):
+        ydata = np.asarray(ydata)
+
     return xdata, ydata, fmt
 
 
