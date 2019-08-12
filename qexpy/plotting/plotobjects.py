@@ -5,6 +5,7 @@ import inspect
 from collections.abc import Iterable
 import numpy as np
 import qexpy.plotting.plot_utils as utils
+import qexpy.data.data as dt
 import qexpy.data.datasets as dts
 from qexpy.utils.exceptions import InvalidRequestError, IllegalArgumentError
 
@@ -33,43 +34,40 @@ class ObjectOnPlot(abc.ABC):
     def create_xy_object_on_plot(*args, **kwargs) -> "XYObjectOnPlot":
         """Factory method that creates the appropriate object to be plotted"""
 
-        # first check if the object requested is a function
-        func, fmt = _try_function_on_plot(*args, **kwargs)
-        if func:
-            return FunctionOnPlot(func, fmt=fmt, **kwargs)
+        functions_to_try = [_try_function_on_plot, _try_data_set_on_plot, _try_xdata_and_y_data]
 
-        # check if a complete data set was passed in
-        dataset, fmt = _try_data_set_on_plot(*args, **kwargs)
-        if dataset:
-            return XYDataSetOnPlot.from_xy_dataset(dataset, fmt=fmt)
+        # The three functions above returns an XYObjectOnPlot if the provided arguments works, and
+        # returns None otherwise. Try these functions in order, and return the first valid result
+        obj = next((_obj for _obj in map(lambda func: func(*args, **kwargs), functions_to_try) if _obj), None)
 
-        # else try to create a data set out of the arguments
-        xdata, ydata, fmt = _try_xdata_and_y_data(*args, **kwargs)
-        if xdata.size and ydata.size:
-            return XYDataSetOnPlot(xdata, ydata, fmt=fmt, **kwargs)
+        if not obj:
+            raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
 
-        raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
+        return obj
 
     @staticmethod
     def create_histogram_on_plot(*args, **kwargs) -> "HistogramOnPlot":
         """Factory method that creates a histogram object to be plotted"""
 
-        data = _try_histogram_on_plot(*args, **kwargs)
-        if isinstance(data, dts.ExperimentalValueArray):
-            return HistogramOnPlot.from_value_array(data, **kwargs)
-        if (isinstance(data, list) and data) or (isinstance(data, np.ndarray) and data.size):
-            return HistogramOnPlot(data, *args, **kwargs)
-        raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
+        obj = _try_histogram_on_plot(*args, **kwargs)
+
+        if not obj:
+            raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
+
+        return obj
 
 
 class XYObjectOnPlot(ObjectOnPlot):
     """A container for objects with x and y values to be drawn on a plot"""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        """Constructor for XYObjectOnPlot"""
+
         xrange = kwargs.pop("xrange", ())
         utils.validate_xrange(xrange, allow_empty=True)
         self._xrange = xrange
+
+        super().__init__(*args, **kwargs)
 
     @property
     @abc.abstractmethod
@@ -146,13 +144,12 @@ class FunctionOnPlot(XYObjectOnPlot):
     """This is the wrapper for a function to be plotted"""
 
     def __init__(self, func, **kwargs):
-        XYObjectOnPlot.__init__(self, **kwargs)
-        self.pars = []
-        self.xrange = kwargs.pop("xrange", ())
-        self.pars = kwargs.pop("pars", [])
+        """Constructor for FunctionOnPlot"""
 
         # this checks if the xrange of plot is specified by user or auto-generated
         self.xrange_specified = "xrange" in kwargs
+
+        self.pars = kwargs.pop("pars", [])
 
         parameters = inspect.signature(func).parameters
         if len(parameters) > 1 and not self.pars:
@@ -164,6 +161,8 @@ class FunctionOnPlot(XYObjectOnPlot):
             self.func = lambda x: func(x, *self.pars)
         else:
             raise IllegalArgumentError("The function supplied does not have an x-variable.")
+
+        XYObjectOnPlot.__init__(self, **kwargs)
 
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
@@ -178,7 +177,9 @@ class FunctionOnPlot(XYObjectOnPlot):
     def yvalues_to_plot(self) -> np.ndarray:
         if not self.xrange:
             raise InvalidRequestError("The domain of this function cannot be found.")
-        return np.vectorize(self.func)(self.xvalues_to_plot)
+        result = self.func(self.xvalues_to_plot)
+        simplified_result = list(res.value if isinstance(res, dt.DerivedValue) else res for res in result)
+        return np.asarray(simplified_result)
 
     @property
     def yerr_to_plot(self) -> np.ndarray:
@@ -204,20 +205,26 @@ class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):
 
 
 def _try_function_on_plot(*args, **kwargs):
-    func = kwargs.pop("func", args[0] if args and inspect.isfunction(args[0]) else None)
+    """Helper function which tries to create a FunctionOnPlot with the provided arguments"""
+
+    func = kwargs.pop("func", args[0] if args and callable(args[0]) else None)
     # if there's a second argument, assume that is is the fmt string
     fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
-    return func, fmt
+
+    return FunctionOnPlot(func, fmt=fmt, **kwargs) if func else None
 
 
 def _try_data_set_on_plot(*args, **kwargs):
+    """Helper function which tries to create a XYDataSetOnPlot with an existing XYDataSet"""
+
     dataset = kwargs.pop("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
     fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
-    return dataset, fmt
+
+    return XYDataSetOnPlot.from_xy_dataset(dataset, fmt=fmt) if dataset else None
 
 
 def _try_xdata_and_y_data(*args, **kwargs):
-    """Helper function that checks if the arguments are in the form of xdata and ydata"""
+    """Helper function which tries to create an XYDataSetOnPlot with xdata and ydata"""
 
     xdata = kwargs.pop("xdata", args[0] if len(args) >= 2 and isinstance(args[0], Iterable) else np.empty(0))
     ydata = kwargs.pop("xdata", args[1] if len(args) >= 2 and isinstance(args[1], Iterable) else np.empty(0))
@@ -229,8 +236,16 @@ def _try_xdata_and_y_data(*args, **kwargs):
     if isinstance(ydata, list):
         ydata = np.asarray(ydata)
 
-    return xdata, ydata, fmt
+    return XYDataSetOnPlot(xdata, ydata, fmt=fmt, **kwargs) if xdata.size and ydata.size else None
 
 
 def _try_histogram_on_plot(*args, **kwargs):
-    return kwargs.pop("data", args[0] if args and isinstance(args[0], (np.ndarray, list)) else np.empty(0))
+    """Helper function which tries to create a HistogramOnPlot with the arguments provided"""
+
+    data = kwargs.pop("data", args[0] if args and isinstance(args[0], (np.ndarray, list)) else np.empty(0))
+    if isinstance(data, dts.ExperimentalValueArray):
+        return HistogramOnPlot.from_value_array(data, **kwargs)
+    if (isinstance(data, list) and data) or (isinstance(data, np.ndarray) and data.size):
+        return HistogramOnPlot(data, *args, **kwargs)
+
+    return None

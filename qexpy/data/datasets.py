@@ -118,8 +118,8 @@ class ExperimentalValueArray(np.ndarray):
                                            got=[data], expected="a list or real numbers")
         measurements = np.asarray(data)
 
-        error = kwargs.get("error", args[0] if args else 0)
-        relative_error = kwargs.get("relative_error", 0)
+        error = kwargs.pop("error", args[0] if args else 0)
+        relative_error = kwargs.pop("relative_error", 0)
 
         if relative_error and error:
             raise IllegalArgumentError("You either specify the absolute error or the relative error, not both.")

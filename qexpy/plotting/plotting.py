@@ -102,8 +102,8 @@ class Plot:
     def xrange(self):
         """The range of this plot"""
         if not self._xrange:
-            low_bound = min(obj.xrange[0] for obj in self._objects if isinstance(obj, plo.XYObjectOnPlot))
-            high_bound = max(obj.xrange[1] for obj in self._objects if isinstance(obj, plo.XYObjectOnPlot))
+            low_bound = min(min(obj.xvalues) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
+            high_bound = max(max(obj.xvalues) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
             return low_bound, high_bound
         return self._xrange
 
@@ -130,12 +130,14 @@ class Plot:
 
     def fit(self, *args, **kwargs):
         """Plots a curve fit to the last data set added to the figure"""
-        dataset = next(obj for obj in reversed(self._objects) if isinstance(obj, plo.XYDataSetOnPlot))
+        dataset = next((obj for obj in reversed(self._objects) if isinstance(obj, plo.XYDataSetOnPlot)), None)
         if dataset:
             result = fitting.fit(dataset, *args, **kwargs)
             self._objects.append(plo.ObjectOnPlot.create_xy_object_on_plot(result.fit_function, **kwargs))
         else:
             raise InvalidRequestError("There is not data set in this plot to be fitted.")
+
+        return result
 
     def legend(self, new_setting=True):
         """Add or remove legend to plot"""
@@ -189,14 +191,17 @@ class Plot:
         if isinstance(obj, plo.HistogramOnPlot):
             plt.hist(obj.values, **obj.kwargs)
         elif isinstance(obj, plo.XYObjectOnPlot) and not self._plot_settings[lit.ERROR_BAR]:
-            plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **obj.kwargs)
+            kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
+            plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **kwargs)
         elif isinstance(obj, plo.XYDataSetOnPlot):
+            kwargs = utils.extract_plt_errorbar_arguments(obj.kwargs)
             plt.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
-                         fmt=obj.fmt, label=obj.label, **obj.kwargs)
+                         fmt=obj.fmt, label=obj.label, **kwargs)
         elif isinstance(obj, plo.FunctionOnPlot):
             xvalues = obj.xvalues_to_plot
             yvalues = obj.yvalues_to_plot
-            plt.plot(xvalues, yvalues, obj.fmt, label=obj.label, **obj.kwargs)
+            kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
+            plt.plot(xvalues, yvalues, obj.fmt, label=obj.label, **kwargs)
             yerr = obj.yerr_to_plot
             if yerr.size > 0:
                 _plot_error_band(xvalues, yvalues, yerr)

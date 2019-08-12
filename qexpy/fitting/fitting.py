@@ -1,6 +1,7 @@
 """This module contains curve fitting functions"""
 
 from typing import List, Callable, Tuple, Union
+from inspect import signature, Parameter
 from enum import Enum
 
 import functools
@@ -105,18 +106,14 @@ def fit(*args, **kwargs) -> XYFit:
 
     """
 
-    # first check if a data set was passed in
-    dataset, model = __try_fit_to_xy_dataset(*args, **kwargs)
-    if dataset and model:
-        return _fit_to_xy_dataset(dataset, model, **kwargs)
+    functions_to_try = [__try_fit_to_xy_dataset, __try_fit_to_xdata_and_ydata]
 
-    # then check if xdata and ydata were passed in separately
-    xdata, ydata, model = __try_fit_to_xdata_and_ydata(*args, **kwargs)
-    if xdata and ydata and model:
-        dataset = dts.XYDataSet(xdata, ydata, **kwargs)
-        return _fit_to_xy_dataset(dataset, model, **kwargs)
+    result = next((res for res in map(lambda func: func(*args, **kwargs), functions_to_try) if res), None)
 
-    raise IllegalArgumentError("Unable to execute fit. Please make sure the arguments provided are correct.")
+    if not result:
+        raise IllegalArgumentError("Unable to execute fit. Please make sure the arguments provided are correct.")
+
+    return result
 
 
 def _fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint:disable=too-many-locals
@@ -252,24 +249,39 @@ def _get_param_names(model: Union[str, FitModel, Callable], num_of_params: int) 
 
 def _combine_fit_func_and_fit_params(func: Callable, params) -> Callable:
     """wraps a function with params to a function of x"""
-    return np.vectorize(lambda x: func(x, *params))
+
+    result_func = np.vectorize(lambda x: func(x, *params))
+
+    # change signature of the function to match the actual signature
+    sig = signature(result_func).replace(parameters=[Parameter("x", Parameter.POSITIONAL_ONLY)])
+    result_func.__signature__ = sig
+
+    return result_func
 
 
 def __try_fit_to_xy_dataset(*args, **kwargs):
     """Helper function to parse the inputs to a call to fit() for a single XYDataSet"""
-    dataset = kwargs.get("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
-    model = kwargs.get("model", args[1] if len(args) > 1 and (
+
+    dataset = kwargs.pop("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
+    model = kwargs.pop("model", args[1] if len(args) > 1 and (
         isinstance(args[1], (str, FitModel)) or callable(args[1])) else None)
-    return dataset, model
+
+    return _fit_to_xy_dataset(dataset, model, **kwargs) if dataset and model else None
 
 
 def __try_fit_to_xdata_and_ydata(*args, **kwargs):
     """Helper function to parse the inputs to a call to fit() for separate xdata and ydata"""
-    xdata = kwargs.get("xdata", args[0] if args and isinstance(args[0], dts.ExperimentalValueArray) else None)
-    ydata = kwargs.get("ydata", args[1] if len(args) > 1 and isinstance(args[1], dts.ExperimentalValueArray) else None)
-    model = kwargs.get("model", args[2] if len(args) > 2 and (
+
+    xdata = kwargs.pop("xdata", args[0] if args and isinstance(args[0], dts.ExperimentalValueArray) else None)
+    ydata = kwargs.pop("ydata", args[1] if len(args) > 1 and isinstance(args[1], dts.ExperimentalValueArray) else None)
+    model = kwargs.pop("model", args[2] if len(args) > 2 and (
         isinstance(args[2], (str, FitModel)) or callable(args[2])) else None)
-    return xdata, ydata, model
+
+    if xdata and ydata and model:
+        dataset = dts.XYDataSet(xdata, ydata, **kwargs)
+        return _fit_to_xy_dataset(dataset, model, **kwargs)
+
+    return None
 
 
 def __check_fit_func_and_get_number_of_params(func: Callable) -> Tuple[int, bool]:
@@ -283,8 +295,6 @@ def __check_fit_func_and_get_number_of_params(func: Callable) -> Tuple[int, bool
         of parameters is variable
 
     """
-
-    from inspect import signature, Parameter
 
     parameters = signature(func).parameters
 
