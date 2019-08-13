@@ -247,6 +247,11 @@ def show(plot_obj=None):
     plot_obj.show()
 
 
+def get_plot():
+    """Gets the current plot buffer"""
+    return Plot.current_plot_buffer
+
+
 def new_plot():
     """Clears the current plot buffer and start a new one"""
     Plot.current_plot_buffer = Plot()
