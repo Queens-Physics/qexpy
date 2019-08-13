@@ -175,11 +175,14 @@ class Plot:
             return self._plot_info[axis]
 
         # else find the first data set and use the name of the data set as the label
-        data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
+        data_sets_in_plot = (obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
+
+        data_set = next(data_sets_in_plot, None)
         info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis) if data_set else ""
         while data_set and not info_str:
-            data_set = next((obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot)), None)
-            info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis)
+            data_set = next(data_sets_in_plot, None)
+            info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis) if data_set else ""
+
         if data_set and info_str:
             return info_str
 
