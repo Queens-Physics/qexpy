@@ -199,6 +199,8 @@ class ExperimentalValueArray(np.ndarray):
     def unit(self, new_unit: str):
         if not isinstance(new_unit, str):
             raise InvalidArgumentTypeError("unit", got=new_unit, expected="string")
+        if not new_unit:
+            return
         new_unit = units.parse_units(new_unit)
         for data in self:
             data._units = new_unit

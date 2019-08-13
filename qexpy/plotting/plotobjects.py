@@ -183,10 +183,11 @@ class FunctionOnPlot(XYObjectOnPlot):
 
     @property
     def yerr_to_plot(self) -> np.ndarray:
-        yvalues = self.yvalues_to_plot
-        if isinstance(yvalues, dts.ExperimentalValueArray):
-            return yvalues.errors
-        return np.empty(0)
+        if not self.xrange:
+            raise InvalidRequestError("The domain of this function cannot be found.")
+        result = self.func(self.xvalues_to_plot)
+        errors = np.asarray(list(res.error if isinstance(res, dt.DerivedValue) else 0 for res in result))
+        return errors if errors.any() else np.empty(0)
 
 
 class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):
