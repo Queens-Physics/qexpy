@@ -16,7 +16,9 @@ class ObjectOnPlot(abc.ABC):
     def __init__(self, *args, **kwargs):
         fmt = kwargs.pop("fmt", args[0] if args and isinstance(args[0], str) else "")
         utils.validate_fmt(fmt)
+        color = kwargs.pop("color", "")
         self._fmt = fmt
+        self._color = color
         self.label = kwargs.pop("label", "")
         self.kwargs = kwargs
 
@@ -25,10 +27,10 @@ class ObjectOnPlot(abc.ABC):
         """The format string to be used in PyPlot"""
         return self._fmt
 
-    @fmt.setter
-    def fmt(self, fmt: str):
-        utils.validate_fmt(fmt)
-        self._fmt = fmt
+    @property
+    def color(self) -> str:
+        """The color of the object"""
+        return self._color
 
     @staticmethod
     def create_xy_object_on_plot(*args, **kwargs) -> "XYObjectOnPlot":
@@ -103,7 +105,7 @@ class XYDataSetOnPlot(dts.XYDataSet, XYObjectOnPlot):
         if not self.label:
             self.label = self.name
         if not self.fmt:
-            self.fmt = "o"
+            self._fmt = "o"
 
     @property
     def xvalues_to_plot(self):

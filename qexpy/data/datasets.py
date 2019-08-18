@@ -162,7 +162,7 @@ class ExperimentalValueArray(np.ndarray):
 
     def __array_finalize__(self, obj):
         """wrap up array initialization"""
-        if obj is None or not isinstance(self[0], ExperimentalValue):
+        if obj is None or not self.shape or not isinstance(self[0], ExperimentalValue):
             return  # skip if this is not a regular array of ExperimentalValue objects
         name = getattr(obj, "name", "") if hasattr(obj, "name") else getattr(self, "name", "")
         for index, measurement in enumerate(self):

@@ -31,8 +31,10 @@ class Plot:
         }
         self._plot_settings = {
             lit.LEGEND: False,
-            lit.ERROR_BAR: False
+            lit.ERROR_BAR: False,
+            lit.PLOT_STYLE: lit.DEFAULT
         }
+        self._color_palette = ["C{}".format(idx) for idx in range(20)]
         self._xrange = ()
 
     @property
@@ -115,7 +117,8 @@ class Plot:
 
     def plot(self, *args, **kwargs):
         """Adds a data set or function to plot"""
-        self._objects.append(plo.ObjectOnPlot.create_xy_object_on_plot(*args, **kwargs))
+        color = self._color_palette.pop(0)
+        self._objects.append(plo.ObjectOnPlot.create_xy_object_on_plot(*args, color=color, **kwargs))
 
     def hist(self, *args, **kwargs) -> tuple:
         """Adds a histogram to plot"""
@@ -134,7 +137,9 @@ class Plot:
         dataset = next((obj for obj in reversed(self._objects) if isinstance(obj, plo.XYDataSetOnPlot)), None)
         if dataset:
             result = fitting.fit(dataset, *args, **kwargs)
-            self._objects.append(plo.ObjectOnPlot.create_xy_object_on_plot(result.fit_function, **kwargs))
+            color = kwargs.pop("color", dataset.color)
+            obj = plo.ObjectOnPlot.create_xy_object_on_plot(result.fit_function, color=color, **kwargs)
+            self._objects.append(obj)
         else:
             raise InvalidRequestError("There is not data set in this plot to be fitted.")
 
@@ -241,26 +246,26 @@ def _draw_object_on_plot(obj: plo.ObjectOnPlot, errorbar):
         plt.hist(obj.values, **obj.kwargs)
     elif isinstance(obj, plo.XYObjectOnPlot) and not errorbar:
         kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
-        plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **kwargs)
+        plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, color=obj.color, label=obj.label, **kwargs)
     elif isinstance(obj, plo.XYDataSetOnPlot):
         kwargs = utils.extract_plt_errorbar_arguments(obj.kwargs)
         plt.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
-                     fmt=obj.fmt, label=obj.label, **kwargs)
+                     fmt=obj.fmt, color=obj.color, label=obj.label, **kwargs)
     elif isinstance(obj, plo.FunctionOnPlot):
         xvalues = obj.xvalues_to_plot
         yvalues = obj.yvalues_to_plot
         kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
-        plt.plot(xvalues, yvalues, obj.fmt, label=obj.label, **kwargs)
+        plt.plot(xvalues, yvalues, obj.fmt, color=obj.color, label=obj.label, **kwargs)
         yerr = obj.yerr_to_plot
         if yerr.size > 0:
-            _plot_error_band(xvalues, yvalues, yerr)
+            _plot_error_band(xvalues, yvalues, yerr, obj.color)
 
 
-def _plot_error_band(xvalues, yvalues, yerr):
+def _plot_error_band(xvalues, yvalues, yerr, color):
     """Adds an error band to plot around a set of x-y values"""
-    max_values = yvalues + yerr
-    min_values = yvalues - yerr
-    plt.fill_between(xvalues, min_values, max_values, interpolate=True, edgecolor='none', alpha=0.3, zorder=0)
+    max_vals = yvalues + yerr
+    min_vals = yvalues - yerr
+    plt.fill_between(xvalues, min_vals, max_vals, interpolate=True, edgecolor='none', color=color, alpha=0.3, zorder=0)
 
 
 def __get_plot_obj():
