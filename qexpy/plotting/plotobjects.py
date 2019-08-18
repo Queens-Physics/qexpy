@@ -230,7 +230,7 @@ def _try_xdata_and_y_data(*args, **kwargs):
     """Helper function which tries to create an XYDataSetOnPlot with xdata and ydata"""
 
     xdata = kwargs.pop("xdata", args[0] if len(args) >= 2 and isinstance(args[0], Iterable) else np.empty(0))
-    ydata = kwargs.pop("xdata", args[1] if len(args) >= 2 and isinstance(args[1], Iterable) else np.empty(0))
+    ydata = kwargs.pop("ydata", args[1] if len(args) >= 2 and isinstance(args[1], Iterable) else np.empty(0))
     fmt = kwargs.pop("fmt", args[2] if len(args) >= 3 and isinstance(args[2], str) else "")
 
     # wrapping data in numpy array objects
