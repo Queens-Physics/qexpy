@@ -132,20 +132,20 @@ def get_unit_style() -> UnitStyle:
 
 def set_sig_figs_for_value(new_sig_figs: numbers.Integral):
     """Sets the number of significant figures to show for all values"""
-    if isinstance(new_sig_figs, numbers.Integral) and int(new_sig_figs) > 0:
-        sig_figs = int(new_sig_figs)
-        CONFIG[lit.SIG_FIGS][lit.SIG_FIG_VALUE] = sig_figs
-        CONFIG[lit.SIG_FIGS][lit.SIG_FIG_MODE] = SigFigMode.VALUE
-    else:
-        raise ValueError("The number of significant figures must be a positive integer")
+    __set_sig_figs_for_mode(new_sig_figs, SigFigMode.VALUE)
 
 
 def set_sig_figs_for_error(new_sig_figs: numbers.Integral):
     """Sets the number of significant figures to show for uncertainties"""
+    __set_sig_figs_for_mode(new_sig_figs, SigFigMode.ERROR)
+
+
+def __set_sig_figs_for_mode(new_sig_figs: numbers.Integral, mode: SigFigMode):
+    """Helper function that sets the number of significant figures and the mode"""
     if isinstance(new_sig_figs, numbers.Integral) and int(new_sig_figs) > 0:
         sig_figs = int(new_sig_figs)
         CONFIG[lit.SIG_FIGS][lit.SIG_FIG_VALUE] = sig_figs
-        CONFIG[lit.SIG_FIGS][lit.SIG_FIG_MODE] = SigFigMode.ERROR
+        CONFIG[lit.SIG_FIGS][lit.SIG_FIG_MODE] = mode
     else:
         raise ValueError("The number of significant figures must be a positive integer")
 

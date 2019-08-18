@@ -36,8 +36,8 @@ class Plot:
         self._xrange = ()
 
     @property
-    def title(self):
-        """The title of this plot, which will appear on top of the figure"""
+    def title(self) -> str:
+        """str: The title of this plot, which will appear on top of the figure"""
         return self._plot_info[lit.TITLE]
 
     @title.setter
@@ -47,8 +47,8 @@ class Plot:
         self._plot_info[lit.TITLE] = new_title
 
     @property
-    def xname(self):
-        """The name of the x data, which will appear as x label"""
+    def xname(self) -> str:
+        """str: The name of the x data, which will appear as x label"""
         return self.__get_plot_info_or_extract_from_datasets(lit.XNAME, lit.XNAME, lit.YNAME)
 
     @xname.setter
@@ -58,8 +58,8 @@ class Plot:
         self._plot_info[lit.XNAME] = new_label
 
     @property
-    def yname(self):
-        """The name of the y data, which will appear as the y axis label"""
+    def yname(self) -> str:
+        """str: The name of the y data, which will appear as the y axis label"""
         return self.__get_plot_info_or_extract_from_datasets(lit.YNAME, lit.XNAME, lit.YNAME)
 
     @yname.setter
@@ -69,8 +69,8 @@ class Plot:
         self._plot_info[lit.YNAME] = new_label
 
     @property
-    def xunit(self):
-        """The name of the x data, which will appear as x label"""
+    def xunit(self) -> str:
+        """str: The name of the x data, which will appear as x label"""
         return self.__get_plot_info_or_extract_from_datasets(lit.XUNIT, lit.XUNIT, lit.YUNIT)
 
     @xunit.setter
@@ -80,8 +80,8 @@ class Plot:
         self._plot_info[lit.XUNIT] = new_unit
 
     @property
-    def yunit(self):
-        """The name of the x data, which will appear as x label"""
+    def yunit(self) -> str:
+        """str: The name of the x data, which will appear as x label"""
         return self.__get_plot_info_or_extract_from_datasets(lit.YUNIT, lit.XUNIT, lit.YUNIT)
 
     @yunit.setter
@@ -91,7 +91,8 @@ class Plot:
         self._plot_info[lit.YUNIT] = new_unit
 
     @property
-    def xlabel(self):
+    def xlabel(self) -> str:
+        """str: The xlabel of the plot"""
         return self.xname + "[{}]".format(self.xunit) if self.xunit else ""
 
     @property
@@ -99,8 +100,8 @@ class Plot:
         return self.yname + "[{}]".format(self.yunit) if self.yunit else ""
 
     @property
-    def xrange(self):
-        """The range of this plot"""
+    def xrange(self) -> tuple:
+        """tuple: The x-value domain of this plot"""
         if not self._xrange:
             low_bound = min(min(obj.xvalues) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
             high_bound = max(max(obj.xvalues) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
@@ -116,7 +117,7 @@ class Plot:
         """Adds a data set or function to plot"""
         self._objects.append(plo.ObjectOnPlot.create_xy_object_on_plot(*args, **kwargs))
 
-    def hist(self, *args, **kwargs):
+    def hist(self, *args, **kwargs) -> tuple:
         """Adds a histogram to plot"""
 
         # first add the object to plot
@@ -156,7 +157,7 @@ class Plot:
                 obj.xrange = self.xrange
 
         for obj in self._objects:
-            self.__draw_object_on_plot(obj)
+            _draw_object_on_plot(obj, errorbar=self._plot_settings[lit.ERROR_BAR])
 
         plt.title(self.title)
         plt.xlabel(self.xlabel)
@@ -183,31 +184,7 @@ class Plot:
             data_set = next(data_sets_in_plot, None)
             info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis) if data_set else ""
 
-        if data_set and info_str:
-            return info_str
-
-        return ""
-
-    def __draw_object_on_plot(self, obj: plo.ObjectOnPlot):
-        """Helper method that draws an ObjectOnPlot to the output"""
-
-        if isinstance(obj, plo.HistogramOnPlot):
-            plt.hist(obj.values, **obj.kwargs)
-        elif isinstance(obj, plo.XYObjectOnPlot) and not self._plot_settings[lit.ERROR_BAR]:
-            kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
-            plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **kwargs)
-        elif isinstance(obj, plo.XYDataSetOnPlot):
-            kwargs = utils.extract_plt_errorbar_arguments(obj.kwargs)
-            plt.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
-                         fmt=obj.fmt, label=obj.label, **kwargs)
-        elif isinstance(obj, plo.FunctionOnPlot):
-            xvalues = obj.xvalues_to_plot
-            yvalues = obj.yvalues_to_plot
-            kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
-            plt.plot(xvalues, yvalues, obj.fmt, label=obj.label, **kwargs)
-            yerr = obj.yerr_to_plot
-            if yerr.size > 0:
-                _plot_error_band(xvalues, yvalues, yerr)
+        return info_str if data_set and info_str else ""
 
 
 def plot(*args, **kwargs) -> Plot:
@@ -257,6 +234,35 @@ def new_plot():
     Plot.current_plot_buffer = Plot()
 
 
+def _draw_object_on_plot(obj: plo.ObjectOnPlot, errorbar):
+    """Helper method that draws an ObjectOnPlot to the output"""
+
+    if isinstance(obj, plo.HistogramOnPlot):
+        plt.hist(obj.values, **obj.kwargs)
+    elif isinstance(obj, plo.XYObjectOnPlot) and not errorbar:
+        kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
+        plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, label=obj.label, **kwargs)
+    elif isinstance(obj, plo.XYDataSetOnPlot):
+        kwargs = utils.extract_plt_errorbar_arguments(obj.kwargs)
+        plt.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
+                     fmt=obj.fmt, label=obj.label, **kwargs)
+    elif isinstance(obj, plo.FunctionOnPlot):
+        xvalues = obj.xvalues_to_plot
+        yvalues = obj.yvalues_to_plot
+        kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
+        plt.plot(xvalues, yvalues, obj.fmt, label=obj.label, **kwargs)
+        yerr = obj.yerr_to_plot
+        if yerr.size > 0:
+            _plot_error_band(xvalues, yvalues, yerr)
+
+
+def _plot_error_band(xvalues, yvalues, yerr):
+    """Adds an error band to plot around a set of x-y values"""
+    max_values = yvalues + yerr
+    min_values = yvalues - yerr
+    plt.fill_between(xvalues, min_values, max_values, interpolate=True, edgecolor='none', alpha=0.3, zorder=0)
+
+
 def __get_plot_obj():
     """Helper function that gets the appropriate Plot instance to draw on"""
 
@@ -278,9 +284,3 @@ def __get_plot_obj():
         plot_obj = Plot.current_plot_buffer
 
     return plot_obj
-
-
-def _plot_error_band(xvalues, yvalues, yerr):
-    max_values = yvalues + yerr
-    min_values = yvalues - yerr
-    plt.fill_between(xvalues, min_values, max_values, interpolate=True, edgecolor='none', alpha=0.3, zorder=0)

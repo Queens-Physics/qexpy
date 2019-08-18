@@ -187,7 +187,7 @@ class FunctionOnPlot(XYObjectOnPlot):
             raise InvalidRequestError("The domain of this function cannot be found.")
         result = self.func(self.xvalues_to_plot)
         errors = np.asarray(list(res.error if isinstance(res, dt.DerivedValue) else 0 for res in result))
-        return errors if errors.any() else np.empty(0)
+        return errors if errors.size else np.empty(0)
 
 
 class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):

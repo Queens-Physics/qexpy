@@ -24,11 +24,11 @@ class FitModel(Enum):
     EXPONENTIAL = "exponential"
 
 
-class XYFit:
+class XYFitResult:
     """Stores the results of a curve fit"""
 
     def __init__(self, dataset, model, fit_func, res_func, res_params, pcorr):
-        """Constructor for an XYFit object"""
+        """Constructor for an XYFitResult object"""
 
         self._dataset = dataset
         self._model_name = model
@@ -92,17 +92,34 @@ class XYFit:
         return self._ndof
 
 
-def fit(*args, **kwargs) -> XYFit:
+def fit(*args, **kwargs) -> XYFitResult:
     """Perform a fit for an xy data set
+
+    The fit function is very versatile. It can be called on an XYDataSet object, two lists, or
+    two MeasurementArray objects. QExPy provides 5 builtin fit models, which includes linear fit,
+    quadratic fit, general polynomial fit, gaussian fit, and exponential fit. The user can also
+    pass in a custom function they wish to fit their dataset on. For non-polynomial fit functions,
+    the user would usually need to pass in an array of guesses for the parameters.
+
+    Args:
+        *args: An XYDataSet object or two arrays to be fitted.
 
     Keyword Args:
         model: the fit model given as the string or enum representation of a pre-set model
             or a callable function as a custom fit model
         xrange (tuple|list): a pair of numbers indicating the domain of the function
-        degrees(int): the degree of the polynomial if polynomial fit were chosen
-        parguess(list): initial guess for the parameters
-        parnames(list): the names of each parameter
-        parunits(list): the units for each parameter
+        degrees (int): the degree of the polynomial if polynomial fit were chosen
+        parguess (list): initial guess for the parameters
+        parnames (list): the names of each parameter
+        parunits (list): the units for each parameter
+        dataset: the XYDataSet instance to fit on
+        xdata : the x-data of the fit
+        ydata: the y-data of the fit
+        xerr: the uncertainty on the xdata
+        yerr: the uncertainty on the ydata
+
+    Returns:
+        an XYFitResult object
 
     """
 
@@ -116,7 +133,7 @@ def fit(*args, **kwargs) -> XYFit:
     return result
 
 
-def _fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint:disable=too-many-locals
+def _fit_to_xy_dataset(dataset, model, **kwargs) -> XYFitResult:  # pylint:disable=too-many-locals
     """Perform a fit on an XYDataSet"""
 
     model_name, fit_func = _wrap_fit_func(model)
@@ -161,7 +178,7 @@ def _fit_to_xy_dataset(dataset, model, **kwargs) -> XYFit:  # pylint:disable=too
     # wrap the result function
     result_func = _combine_fit_func_and_fit_params(fit_func, params)
 
-    return XYFit(dataset, model_name, fit_func, result_func, params, _cov2corr(pcov))
+    return XYFitResult(dataset, model_name, fit_func, result_func, params, _cov2corr(pcov))
 
 
 def _cov2corr(pcov):
@@ -220,8 +237,6 @@ def _wrap_fit_func(model: Union[str, FitModel, Callable]) -> Tuple[str, Callable
 
     """
 
-    from inspect import signature
-
     if isinstance(model, str) and model in [lit.LIN, lit.QUAD, lit.POLY, lit.GAUSS, lit.EXPO]:
         return model, FITTERS[model]
     if isinstance(model, FitModel):
@@ -263,8 +278,7 @@ def __try_fit_to_xy_dataset(*args, **kwargs):
     """Helper function to parse the inputs to a call to fit() for a single XYDataSet"""
 
     dataset = kwargs.pop("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
-    model = kwargs.pop("model", args[1] if len(args) > 1 and (
-        isinstance(args[1], (str, FitModel)) or callable(args[1])) else None)
+    model = kwargs.pop("model", args[1] if len(args) > 1 else None)
 
     return _fit_to_xy_dataset(dataset, model, **kwargs) if dataset and model else None
 
@@ -272,12 +286,17 @@ def __try_fit_to_xy_dataset(*args, **kwargs):
 def __try_fit_to_xdata_and_ydata(*args, **kwargs):
     """Helper function to parse the inputs to a call to fit() for separate xdata and ydata"""
 
-    xdata = kwargs.pop("xdata", args[0] if args and isinstance(args[0], dts.ExperimentalValueArray) else None)
-    ydata = kwargs.pop("ydata", args[1] if len(args) > 1 and isinstance(args[1], dts.ExperimentalValueArray) else None)
-    model = kwargs.pop("model", args[2] if len(args) > 2 and (
-        isinstance(args[2], (str, FitModel)) or callable(args[2])) else None)
+    xdata = kwargs.pop("xdata", args[0] if args else None)
+    ydata = kwargs.pop("ydata", args[1] if len(args) > 1 else None)
+    model = kwargs.pop("model", args[2] if len(args) > 2 else None)
 
-    if xdata and ydata and model:
+    if not isinstance(xdata, dts.ExperimentalValueArray):
+        xdata = np.asarray(xdata) if isinstance(xdata, list) else np.empty(0)
+
+    if not isinstance(ydata, dts.ExperimentalValueArray):
+        ydata = np.asarray(ydata) if isinstance(ydata, list) else np.empty(0)
+
+    if xdata.size and ydata.size and model:
         dataset = dts.XYDataSet(xdata, ydata, **kwargs)
         return _fit_to_xy_dataset(dataset, model, **kwargs)
 

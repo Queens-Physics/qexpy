@@ -26,9 +26,11 @@ class ExperimentalValueArray(np.ndarray):
 
     Args:
         data: a list of measurements
-        error: the uncertainty of the measurements. It can either be an array of uncertainties,
-            corresponding to each individual measurement, or a single uncertainty that applies to
-            all measurements in this series.
+
+    Keyword Args:
+        error: the uncertainty of the measurements. It can either be an array of uncertainties, corresponding to
+            each individual measurement, or a single uncertainty that applies to all measurements in this series.
+        relative_error: the uncertainty of the measurements as a ratio to the center value
         unit: the unit of this series of measurements
         name: the name of this series of measurements
 
@@ -97,7 +99,6 @@ class ExperimentalValueArray(np.ndarray):
         ExperimentalValueArray([DerivedValue(0.0 +/- 0.5),
                         DerivedValue(0.8 +/- 0.3),
                         DerivedValue(0.9 +/- 0.2)], dtype=object)
-
 
     See Also:
         numpy.ndarray
