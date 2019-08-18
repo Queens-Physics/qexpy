@@ -103,11 +103,7 @@ class ExperimentalValue(abc.ABC):
     _correlations = {}  # type: Dict[str, Correlation]
 
     def __init__(self, unit: str = "", name: str = ""):
-        """Constructor for ExperimentalValue
-
-        The ExperimentalValue is practically an abstract class. It should not be instantiated directly
-
-        """
+        """Constructor for ExperimentalValue"""
 
         # Stores the value/error pairs corresponding to their source. User recorded values are stored
         # with the key "recorded", derived values are stored with the key "derivative" or "monte-carlo",
@@ -130,6 +126,7 @@ class ExperimentalValue(abc.ABC):
         but if the name or unit is not specified, they won't be shown
 
         """
+
         name_string = "{} = ".format(self.name) if self.name else ""
         unit_string = " [{}]".format(self.unit) if self.unit else ""
         return "{}{}{}".format(name_string, self.print_value(), unit_string)
@@ -139,21 +136,21 @@ class ExperimentalValue(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def value(self):
+    def value(self) -> float:
         """float: The center value of this quantity"""
 
     @property
     @abc.abstractmethod
-    def error(self):
+    def error(self) -> float:
         """float: The uncertainty of this quantity"""
 
     @property
     @abc.abstractmethod
-    def relative_error(self):
+    def relative_error(self) -> float:
         """float: The ratio of the uncertainty to its center value"""
 
     @property
-    def name(self):
+    def name(self) -> str:
         """str: The name of this quantity"""
         return self._name
 
@@ -164,11 +161,9 @@ class ExperimentalValue(abc.ABC):
         self._name = new_name
 
     @property
-    def unit(self):
+    def unit(self) -> str:
         """str: The unit of this quantity"""
-        if not self._units:
-            return ""
-        return units.construct_unit_string(self._units)
+        return units.construct_unit_string(self._units) if self._units else ""
 
     @unit.setter
     def unit(self, new_unit: str):
@@ -251,6 +246,7 @@ class ExperimentalValue(abc.ABC):
 
         """
 
+    @abc.abstractmethod
     def derivative(self, other: "ExperimentalValue") -> float:
         """Calculates the derivative of this quantity with respect to another
 
@@ -262,14 +258,10 @@ class ExperimentalValue(abc.ABC):
             other (ExperimentalValue): the target for finding the derivative
 
         """
-        if not isinstance(other, ExperimentalValue):
-            raise InvalidArgumentTypeError("derivative()", got=other, expected="ExperimentalValue")
-        return 1 if self._id == other._id else 0
 
     def print_value(self) -> str:
         """Helper method that prints the value-error pair in proper format"""
-        res = printing.get_printer()(self.value, self.error)
-        return res
+        return printing.get_printer()(self.value, self.error)
 
 
 class MeasuredValue(ExperimentalValue):
@@ -337,7 +329,6 @@ class MeasuredValue(ExperimentalValue):
 
     @property
     def value(self) -> float:
-        """The value of this measurement"""
         return self._values[lit.RECORDED].value
 
     @value.setter
@@ -348,7 +339,6 @@ class MeasuredValue(ExperimentalValue):
 
     @property
     def error(self) -> float:
-        """The uncertainty of this measurement"""
         return self._values[lit.RECORDED].error
 
     @error.setter
@@ -361,7 +351,6 @@ class MeasuredValue(ExperimentalValue):
 
     @property
     def relative_error(self) -> float:
-        """The relative error (uncertainty/center value) of this measurement"""
         return self.error / self.value if self.value != 0 else 0.
 
     @relative_error.setter
@@ -372,6 +361,11 @@ class MeasuredValue(ExperimentalValue):
             raise ValueError("Invalid argument for error: {}, expecting: positive real number".format(relative_error))
         new_error = self.value * float(relative_error)
         self._values[lit.RECORDED] = ValueWithError(self.value, new_error)
+
+    def derivative(self, other: "ExperimentalValue") -> float:
+        if not isinstance(other, ExperimentalValue):
+            raise InvalidArgumentTypeError("derivative()", got=other, expected="ExperimentalValue")
+        return 1 if self._id == other._id else 0
 
     def set_covariance(self, other: "MeasuredValue", covariance: float):
         """Sets the covariance between this measurement and another
@@ -505,7 +499,6 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
     @property
     def value(self) -> float:
-        """The value of this measurement"""
         return self._values[lit.RECORDED].value
 
     @value.setter
@@ -582,7 +575,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
             warnings.warn("\nThis measurement was not taken with individual uncertainties. The propagated "
                           "\nerror is not applicable")
 
-    def show_histogram(self, **kwargs):
+    def show_histogram(self, **kwargs) -> tuple:
         """Plots the raw measurement data in a histogram"""
         import qexpy.plotting as plt  # pylint:disable=cyclic-import
         values, bins, figure = plt.hist(self.raw_data, **kwargs)
@@ -665,7 +658,6 @@ class DerivedValue(ExperimentalValue):
 
     @property
     def value(self) -> float:
-        """The value of this calculated quantity"""
         return self.__get_value_error_pair().value
 
     @value.setter
@@ -679,7 +671,6 @@ class DerivedValue(ExperimentalValue):
 
     @property
     def error(self) -> float:
-        """The propagated error on the calculated quantity"""
         return self.__get_value_error_pair().error
 
     @error.setter
@@ -766,11 +757,7 @@ class DerivedValue(ExperimentalValue):
         self._values = {}
 
     def derivative(self, other: ExperimentalValue) -> float:
-        """Finds the derivative with respect to another ExperimentalValue"""
-
-        if self._id == other._id:
-            return 1  # the derivative of anything with respect to itself is 1
-        return op.differentiate(self._formula, other)
+        return 1 if self._id == other._id else op.differentiate(self._formula, other)
 
     def __get_value_error_pair(self) -> ValueWithError:
         """Gets the value-error pair for the current specified error method"""
@@ -790,24 +777,22 @@ class Constant(ExperimentalValue):
     """A value with no uncertainty"""
 
     def __init__(self, value, unit="", name=""):
-        if not isinstance(value, Real):
-            raise ValueError("Cannot create Constant with value {} of type {}".format(value, type(value)))
         super().__init__(unit=unit, name=name)
         self._values[lit.RECORDED] = ValueWithError(value, 0)
 
     @property
-    def value(self):
+    def value(self) -> float:
         return self._values[lit.RECORDED].value
 
     @property
-    def error(self):
+    def error(self) -> float:
         return 0
 
     @property
-    def relative_error(self):
+    def relative_error(self) -> float:
         return 0
 
-    def derivative(self, other) -> 0:
+    def derivative(self, other: "ExperimentalValue") -> 0:
         return 0  # the derivative of a constant with respect to anything is 0
 
 
@@ -983,6 +968,7 @@ def __get_correlation(var1: MeasuredValue, var2: MeasuredValue) -> float:
 
 
 def __calculate_covariance_and_correlation(var1: RepeatedlyMeasuredValue, var2: RepeatedlyMeasuredValue) -> tuple:
+    """Calculates the covariance and correlation between two repeatedly measured values"""
     if len(var1.raw_data) != len(var2.raw_data):
         raise ValueError("Cannot calculate covariance between arrays of length {} and {}."
                          "".format(len(var1.raw_data), len(var2.raw_data)))
