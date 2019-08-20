@@ -66,3 +66,8 @@ YUNIT = "yunit"
 
 LEGEND = "legend"
 ERROR_BAR = "error_bar"
+PLOT_STYLE = "plot_style"
+
+# miscellaneous
+DEFAULT = "default"
+AUTO = "auto"
