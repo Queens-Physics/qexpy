@@ -3,13 +3,15 @@
 import inspect
 import re
 from typing import List
+from collections.abc import Iterable
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-from qexpy.utils.exceptions import InvalidArgumentTypeError, InvalidRequestError
+from qexpy.utils.exceptions import InvalidArgumentTypeError, InvalidRequestError, IllegalArgumentError
+import qexpy.data.datasets as dts
 import qexpy.settings.literals as lit
-import qexpy.fitting.fitting as fitting
+import qexpy.fitting.fitting as ft
 import qexpy.plotting.plot_utils as utils
 import qexpy.plotting.plotobjects as plo
 
@@ -98,15 +100,16 @@ class Plot:
         return self.xname + "[{}]".format(self.xunit) if self.xunit else ""
 
     @property
-    def ylabel(self):
+    def ylabel(self) -> str:
+        """str: the ylabel of the plot"""
         return self.yname + "[{}]".format(self.yunit) if self.yunit else ""
 
     @property
     def xrange(self) -> tuple:
         """tuple: The x-value domain of this plot"""
         if not self._xrange:
-            low_bound = min(min(obj.xvalues) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
-            high_bound = max(max(obj.xvalues) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
+            low_bound = min(min(obj.dataset.xvalues) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
+            high_bound = max(max(obj.dataset.xvalues) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
             return low_bound, high_bound
         return self._xrange
 
@@ -117,14 +120,14 @@ class Plot:
 
     def plot(self, *args, **kwargs):
         """Adds a data set or function to plot"""
-        color = self._color_palette.pop(0)
-        self._objects.append(plo.ObjectOnPlot.create_xy_object_on_plot(*args, color=color, **kwargs))
+        new_obj = self.__create_object_on_plot(*args, **kwargs)
+        self._objects.append(new_obj)
 
     def hist(self, *args, **kwargs) -> tuple:
         """Adds a histogram to plot"""
 
         # first add the object to plot
-        obj = plo.ObjectOnPlot.create_histogram_on_plot(*args, **kwargs)
+        obj = self.__create_histogram_on_plot(*args, **kwargs)
         self._objects.append(obj)
 
         # use numpy to get the results of the histogram without plotting
@@ -134,11 +137,11 @@ class Plot:
 
     def fit(self, *args, **kwargs):
         """Plots a curve fit to the last data set added to the figure"""
-        dataset = next((obj for obj in reversed(self._objects) if isinstance(obj, plo.XYDataSetOnPlot)), None)
-        if dataset:
-            result = fitting.fit(dataset, *args, **kwargs)
-            color = kwargs.pop("color", dataset.color)
-            obj = plo.ObjectOnPlot.create_xy_object_on_plot(result.fit_function, color=color, **kwargs)
+        obj = next((_obj for _obj in reversed(self._objects) if isinstance(_obj, plo.XYDataSetOnPlot)), None)
+        if obj:
+            result = ft.fit(obj.dataset, *args, **kwargs)
+            color = kwargs.pop("color", obj.color)
+            obj = self.__create_object_on_plot(result, color=color, **kwargs)
             self._objects.append(obj)
         else:
             raise InvalidRequestError("There is not data set in this plot to be fitted.")
@@ -181,7 +184,7 @@ class Plot:
             return self._plot_info[axis]
 
         # else find the first data set and use the name of the data set as the label
-        data_sets_in_plot = (obj for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
+        data_sets_in_plot = (obj.dataset for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
 
         data_set = next(data_sets_in_plot, None)
         info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis) if data_set else ""
@@ -190,6 +193,36 @@ class Plot:
             info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis) if data_set else ""
 
         return info_str if data_set and info_str else ""
+
+    def __create_object_on_plot(self, *args, **kwargs) -> "plo.ObjectOnPlot":
+        """Factory method that chooses the appropriate ObjectOnPlot to create with the arguments"""
+
+        color = kwargs.pop("color", None)
+
+        obj = _try_fit_result_on_plot(*args, **kwargs)
+        if obj:
+            dataset = next((_obj for _obj in self._objects if obj.fit_result.dataset == _obj), None)
+            obj.color = color if color else dataset.color if dataset else self._color_palette.pop(0)
+            return obj
+
+        for test in [_try_function_on_plot, _try_data_set_on_plot, _try_xdata_and_y_data]:
+            obj = test(*args, **kwargs)
+            if obj:
+                obj.color = color if color else self._color_palette.pop(0)
+                return obj
+
+        raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
+
+    def __create_histogram_on_plot(self, *args, **kwargs) -> "plo.HistogramOnPlot":
+        """Factory method that creates a histogram object to be plotted"""
+
+        color = kwargs.pop("color", self._color_palette.pop(0))
+        obj = _try_histogram_on_plot(*args, color=color, **kwargs)
+
+        if not obj:
+            raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
+
+        return obj
 
 
 def plot(*args, **kwargs) -> Plot:
@@ -259,6 +292,8 @@ def _draw_object_on_plot(obj: plo.ObjectOnPlot, errorbar):
         yerr = obj.yerr_to_plot
         if yerr.size > 0:
             _plot_error_band(xvalues, yvalues, yerr, obj.color)
+    elif isinstance(obj, plo.XYFitResultOnPlot):
+        _draw_object_on_plot(obj.func_on_plot, errorbar)
 
 
 def _plot_error_band(xvalues, yvalues, yerr, color):
@@ -289,3 +324,58 @@ def __get_plot_obj():
         plot_obj = Plot.current_plot_buffer
 
     return plot_obj
+
+
+def _try_function_on_plot(*args, **kwargs):
+    """Helper function which tries to create a FunctionOnPlot with the provided arguments"""
+
+    func = kwargs.pop("func", args[0] if args and callable(args[0]) else None)
+    # if there's a second argument, assume that is is the fmt string
+    fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
+
+    return plo.FunctionOnPlot(func, fmt=fmt, **kwargs) if func else None
+
+
+def _try_fit_result_on_plot(*args, **kwargs) -> "plo.XYFitResultOnPlot":
+    """Helper function that tries to plot an XYFitResult to plot"""
+
+    fit = args[0] if args and isinstance(args[0], ft.XYFitResult) else None
+    return plo.XYFitResultOnPlot(fit, **kwargs) if fit else None
+
+
+def _try_data_set_on_plot(*args, **kwargs) -> "plo.XYDataSetOnPlot":
+    """Helper function which tries to create a XYDataSetOnPlot with an existing XYDataSet"""
+
+    dataset = kwargs.pop("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
+    fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
+
+    return plo.XYDataSetOnPlot.from_xy_dataset(dataset, fmt=fmt, **kwargs) if dataset else None
+
+
+def _try_xdata_and_y_data(*args, **kwargs) -> "plo.XYDataSetOnPlot":
+    """Helper function which tries to create an XYDataSetOnPlot with xdata and ydata"""
+
+    xdata = kwargs.pop("xdata", args[0] if len(args) >= 2 and isinstance(args[0], Iterable) else np.empty(0))
+    ydata = kwargs.pop("ydata", args[1] if len(args) >= 2 and isinstance(args[1], Iterable) else np.empty(0))
+    fmt = kwargs.pop("fmt", args[2] if len(args) >= 3 and isinstance(args[2], str) else "")
+
+    # wrapping data in numpy array objects
+    if isinstance(xdata, list):
+        xdata = np.asarray(xdata)
+    if isinstance(ydata, list):
+        ydata = np.asarray(ydata)
+
+    return plo.XYDataSetOnPlot(xdata, ydata, fmt=fmt, **kwargs) if xdata.size and ydata.size else None
+
+
+def _try_histogram_on_plot(*args, **kwargs):
+    """Helper function which tries to create a HistogramOnPlot with the arguments provided"""
+
+    data = kwargs.pop("data", args[0] if args and isinstance(args[0], (np.ndarray, list)) else np.empty(0))
+
+    if isinstance(data, dts.ExperimentalValueArray):
+        return plo.HistogramOnPlot.from_value_array(data, **kwargs)
+    if (isinstance(data, list) and data) or (isinstance(data, np.ndarray) and data.size):
+        return plo.HistogramOnPlot(data, *args, **kwargs)
+
+    return None

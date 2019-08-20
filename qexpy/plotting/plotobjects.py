@@ -2,7 +2,6 @@
 
 import abc
 import inspect
-from collections.abc import Iterable
 import numpy as np
 import qexpy.plotting.plot_utils as utils
 import qexpy.data.data as dt
@@ -14,11 +13,15 @@ class ObjectOnPlot(abc.ABC):
     """A container for anything to be plotted"""
 
     def __init__(self, *args, **kwargs):
+        # process format string
         fmt = kwargs.pop("fmt", args[0] if args and isinstance(args[0], str) else "")
         utils.validate_fmt(fmt)
-        color = kwargs.pop("color", "")
         self._fmt = fmt
-        self._color = color
+
+        # process color
+        self._color = kwargs.pop("color", None)
+
+        # add the rest to the object
         self.label = kwargs.pop("label", "")
         self.kwargs = kwargs
 
@@ -32,31 +35,9 @@ class ObjectOnPlot(abc.ABC):
         """The color of the object"""
         return self._color
 
-    @staticmethod
-    def create_xy_object_on_plot(*args, **kwargs) -> "XYObjectOnPlot":
-        """Factory method that creates the appropriate object to be plotted"""
-
-        functions_to_try = [_try_function_on_plot, _try_data_set_on_plot, _try_xdata_and_y_data]
-
-        # The three functions above returns an XYObjectOnPlot if the provided arguments works, and
-        # returns None otherwise. Try these functions in order, and return the first valid result
-        obj = next((_obj for _obj in map(lambda func: func(*args, **kwargs), functions_to_try) if _obj), None)
-
-        if not obj:
-            raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
-
-        return obj
-
-    @staticmethod
-    def create_histogram_on_plot(*args, **kwargs) -> "HistogramOnPlot":
-        """Factory method that creates a histogram object to be plotted"""
-
-        obj = _try_histogram_on_plot(*args, **kwargs)
-
-        if not obj:
-            raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
-
-        return obj
+    @color.setter
+    def color(self, new_color):
+        self._color = new_color
 
 
 class XYObjectOnPlot(ObjectOnPlot):
@@ -92,44 +73,44 @@ class XYObjectOnPlot(ObjectOnPlot):
         self._xrange = new_range
 
 
-class XYDataSetOnPlot(dts.XYDataSet, XYObjectOnPlot):
+class XYDataSetOnPlot(XYObjectOnPlot):
     """A wrapper for an XYDataSet to be plotted"""
 
     def __init__(self, xdata, ydata, *args, **kwargs):
 
         # call super constructors
         XYObjectOnPlot.__init__(self, *args, **kwargs)
-        dts.XYDataSet.__init__(self, xdata, ydata, **kwargs)
+        self.dataset = dts.XYDataSet(xdata, ydata, **kwargs)
 
         # set default label and fmt if not requested
         if not self.label:
-            self.label = self.name
+            self.label = self.dataset.name
         if not self.fmt:
             self._fmt = "o"
 
     @property
     def xvalues_to_plot(self):
         if self.xrange:
-            return self.xvalues[self.__get_indices_from_xrange()]
-        return self.xvalues
+            return self.dataset.xvalues[self.__get_indices_from_xrange()]
+        return self.dataset.xvalues
 
     @property
     def yvalues_to_plot(self):
         if self.xrange:
-            return self.yvalues[self.__get_indices_from_xrange()]
-        return self.yvalues
+            return self.dataset.yvalues[self.__get_indices_from_xrange()]
+        return self.dataset.yvalues
 
     @property
     def xerr_to_plot(self):
         if self.xrange:
-            return self.xerr[self.__get_indices_from_xrange()]
-        return self.xerr
+            return self.dataset.xerr[self.__get_indices_from_xrange()]
+        return self.dataset.xerr
 
     @property
     def yerr_to_plot(self):
         if self.xrange:
-            return self.yerr[self.__get_indices_from_xrange()]
-        return self.yerr
+            return self.dataset.yerr[self.__get_indices_from_xrange()]
+        return self.dataset.yerr
 
     @classmethod
     def from_xy_dataset(cls, dataset, **kwargs):
@@ -139,7 +120,7 @@ class XYDataSetOnPlot(dts.XYDataSet, XYObjectOnPlot):
         return dataset
 
     def __get_indices_from_xrange(self):
-        return (self.xrange[0] <= self.xvalues) & (self.xvalues < self.xrange[1])
+        return (self.xrange[0] <= self.dataset.xvalues) & (self.dataset.xvalues < self.xrange[1])
 
 
 class FunctionOnPlot(XYObjectOnPlot):
@@ -192,6 +173,29 @@ class FunctionOnPlot(XYObjectOnPlot):
         return errors if errors.size else np.empty(0)
 
 
+class XYFitResultOnPlot(ObjectOnPlot):
+    """Wrapper for an XYFitResult to be plotted"""
+
+    def __init__(self, result, **kwargs):
+        # initialize object
+        ObjectOnPlot.__init__(self, **kwargs)
+        self.fit_result = result
+
+        xrange = result.xrange if result.xrange else (min(result.dataset.xvalues), max(result.dataset.xvalues))
+        self.func_on_plot = FunctionOnPlot(result.fit_function, xrange=xrange, **kwargs)
+        self.residuals_on_plot = XYDataSetOnPlot(result.dataset.xdata, result.residuals, **kwargs)
+
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, new_color: str):
+        self._color = new_color
+        self.func_on_plot.color = new_color
+        self.residuals_on_plot.color = new_color
+
+
 class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):
     """Represents a histogram to be drawn on a plot"""
 
@@ -205,50 +209,3 @@ class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):
         array.__class__ = cls
         ObjectOnPlot.__init__(array, **kwargs)
         return array
-
-
-def _try_function_on_plot(*args, **kwargs):
-    """Helper function which tries to create a FunctionOnPlot with the provided arguments"""
-
-    func = kwargs.pop("func", args[0] if args and callable(args[0]) else None)
-    # if there's a second argument, assume that is is the fmt string
-    fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
-
-    return FunctionOnPlot(func, fmt=fmt, **kwargs) if func else None
-
-
-def _try_data_set_on_plot(*args, **kwargs):
-    """Helper function which tries to create a XYDataSetOnPlot with an existing XYDataSet"""
-
-    dataset = kwargs.pop("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
-    fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
-
-    return XYDataSetOnPlot.from_xy_dataset(dataset, fmt=fmt) if dataset else None
-
-
-def _try_xdata_and_y_data(*args, **kwargs):
-    """Helper function which tries to create an XYDataSetOnPlot with xdata and ydata"""
-
-    xdata = kwargs.pop("xdata", args[0] if len(args) >= 2 and isinstance(args[0], Iterable) else np.empty(0))
-    ydata = kwargs.pop("ydata", args[1] if len(args) >= 2 and isinstance(args[1], Iterable) else np.empty(0))
-    fmt = kwargs.pop("fmt", args[2] if len(args) >= 3 and isinstance(args[2], str) else "")
-
-    # wrapping data in numpy array objects
-    if isinstance(xdata, list):
-        xdata = np.asarray(xdata)
-    if isinstance(ydata, list):
-        ydata = np.asarray(ydata)
-
-    return XYDataSetOnPlot(xdata, ydata, fmt=fmt, **kwargs) if xdata.size and ydata.size else None
-
-
-def _try_histogram_on_plot(*args, **kwargs):
-    """Helper function which tries to create a HistogramOnPlot with the arguments provided"""
-
-    data = kwargs.pop("data", args[0] if args and isinstance(args[0], (np.ndarray, list)) else np.empty(0))
-    if isinstance(data, dts.ExperimentalValueArray):
-        return HistogramOnPlot.from_value_array(data, **kwargs)
-    if (isinstance(data, list) and data) or (isinstance(data, np.ndarray) and data.size):
-        return HistogramOnPlot(data, *args, **kwargs)
-
-    return None

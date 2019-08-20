@@ -27,14 +27,15 @@ class FitModel(Enum):
 class XYFitResult:
     """Stores the results of a curve fit"""
 
-    def __init__(self, dataset, model, fit_func, res_func, res_params, pcorr):
+    def __init__(self, **kwargs):
         """Constructor for an XYFitResult object"""
 
-        self._dataset = dataset
-        self._model_name = model
-        self._fit_func = fit_func
-        self._result_func = res_func
-        self._result_params = res_params
+        self._dataset = kwargs.pop("dataset")
+        self._model_name = kwargs.pop("model")
+        self._fit_func = kwargs.pop("fit_func")
+        self._result_func = kwargs.pop("res_func")
+        self._result_params = kwargs.pop("res_params")
+        self._xrange = kwargs.pop("xrange")
 
         y_fit_res = self.fit_function(self.dataset.xdata)
         y_err = self.dataset.ydata - y_fit_res
@@ -44,9 +45,9 @@ class XYFitResult:
 
         self._residuals = y_err
         self._chi2 = chi2
-        self._ndof = len(y_fit_res) - len(res_params) - 1
+        self._ndof = len(y_fit_res) - len(self._result_params) - 1
 
-        self._pcorr = pcorr
+        self._pcorr = kwargs.pop("pcorr")
 
     def __getitem__(self, index):
         return self._result_params[index]
@@ -90,6 +91,11 @@ class XYFitResult:
     def ndof(self) -> int:
         """The degree of freedom of this fit function"""
         return self._ndof
+
+    @property
+    def xrange(self) -> tuple:
+        """The xrange of the fit"""
+        return self._xrange
 
 
 def fit(*args, **kwargs) -> XYFitResult:
@@ -178,19 +184,18 @@ def _fit_to_xy_dataset(dataset, model, **kwargs) -> XYFitResult:  # pylint:disab
     # wrap the result function
     result_func = _combine_fit_func_and_fit_params(fit_func, params)
 
-    return XYFitResult(dataset, model_name, fit_func, result_func, params, _cov2corr(pcov))
+    return XYFitResult(dataset=dataset, model=model_name, fit_func=fit_func, res_func=result_func,
+                       res_params=params, pcorr=_cov2corr(pcov), xrange=xrange)
 
 
 def _cov2corr(pcov):
     """Return a correlation matrix given a covariance matrix."""
-
     std = np.sqrt(np.diag(pcov))
     return pcov / np.outer(std, std)
 
 
 def _polynomial_fit(xdata_to_fit, ydata_to_fit, degrees, yerr):
     """perform a polynomial fit with numpy.polyfit"""
-
     # noinspection PyTupleAssignmentBalance
     popt, v_matrix = np.polyfit(xdata_to_fit.values, ydata_to_fit.values, degrees, cov=True, w=1 / yerr)
     pcov = np.flipud(np.fliplr(v_matrix))

@@ -70,3 +70,4 @@ PLOT_STYLE = "plot_style"
 
 # miscellaneous
 DEFAULT = "default"
+AUTO = "auto"
