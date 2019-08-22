@@ -19,8 +19,8 @@ setup(
         'Programming Language :: Python',
     ],
     install_requires=['numpy', 'matplotlib', 'scipy', 'IPython'],
-    extra_require={
-        'dev': ['pylint'],
-        'test': ['pytest']
+    extras_require={
+        'dev': ['pylint', 'pytest'],
+        'doc': ['jupyterlab', 'sphinx', 'nbsphinx', 'nbsphinx_link', 'sphinx_autodoc_typehints', 'sphinx_rtd_theme']
     }
 )
