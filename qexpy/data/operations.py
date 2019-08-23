@@ -277,7 +277,7 @@ def cot(x):
 @vectorize
 def cotd(x):
     """cot of x in degrees"""
-    return cotd(x / 180 * np.pi)
+    return cot(x / 180 * np.pi)
 
 
 @vectorize
