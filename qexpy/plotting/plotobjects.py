@@ -102,12 +102,14 @@ class XYDataSetOnPlot(XYObjectOnPlot):
 
     @property
     def xerr_to_plot(self):
+        """the array of x-value uncertainties to show up on plot"""
         if self.xrange:
             return self.dataset.xerr[self.__get_indices_from_xrange()]
         return self.dataset.xerr
 
     @property
     def yerr_to_plot(self):
+        """the array of y-value uncertainties to show up on plot"""
         if self.xrange:
             return self.dataset.yerr[self.__get_indices_from_xrange()]
         return self.dataset.yerr
@@ -166,6 +168,7 @@ class FunctionOnPlot(XYObjectOnPlot):
 
     @property
     def yerr_to_plot(self) -> np.ndarray:
+        """The array of y-value uncertainties to show up on plot"""
         if not self.xrange:
             raise InvalidRequestError("The domain of this function cannot be found.")
         result = self.func(self.xvalues_to_plot)
