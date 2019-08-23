@@ -18,7 +18,7 @@ import numpy as np
 import qexpy.utils.utils as utils
 import qexpy.utils.units as units
 import qexpy.settings.literals as lit
-import qexpy.settings.settings as settings
+import qexpy.settings as sts
 from qexpy.utils.exceptions import InvalidArgumentTypeError
 
 from . import data  # pylint: disable=cyclic-import
@@ -77,7 +77,7 @@ def get_monte_carlo_propagated_value_and_error(formula: "data.Formula") -> "data
 
     """
 
-    sample_size = settings.get_monte_carlo_sample_size()
+    sample_size = sts.get_settings().monte_carlo_sample_size
 
     def __generate_offset_matrix(measurements: List["data.MeasuredValue"]):
         """Generates offsets from mean for each measurement
@@ -137,7 +137,7 @@ def get_monte_carlo_propagated_value_and_error(formula: "data.Formula") -> "data
     # check the quality of the result data
     if isinstance(result_data_set, np.ndarray):
         result_data_set = result_data_set[np.isfinite(result_data_set)]  # remove undefined values
-    if len(result_data_set) / settings.get_monte_carlo_sample_size() < 0.9:
+    if len(result_data_set) / sts.get_settings().monte_carlo_sample_size < 0.9:
         # if over 10% of the results calculated is invalid
         warnings.warn("\nOver 10 percent of the random data generated for the Monte Carlo simulation falls outside the"
                       "\ndomain on which the function is defined. Check the uncertainty or the standard deviation of "

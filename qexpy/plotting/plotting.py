@@ -15,6 +15,8 @@ import qexpy.fitting.fitting as ft
 import qexpy.plotting.plot_utils as utils
 import qexpy.plotting.plotobjects as plo
 
+from qexpy.settings import get_settings
+
 
 class Plot:
     """The data structure used for a plot"""
@@ -34,7 +36,8 @@ class Plot:
         self._plot_settings = {
             lit.LEGEND: False,
             lit.ERROR_BAR: False,
-            lit.PLOT_STYLE: lit.DEFAULT
+            lit.RESIDUALS: False,
+            lit.PLOT_STYLE: lit.DEFAULT,
         }
         self._color_palette = ["C{}".format(idx) for idx in range(20)]
         self._xrange = ()
@@ -141,8 +144,7 @@ class Plot:
         if obj:
             result = ft.fit(obj.dataset, *args, **kwargs)
             color = kwargs.pop("color", obj.color)
-            obj = self.__create_object_on_plot(result, color=color, **kwargs)
-            self._objects.append(obj)
+            self._objects.append(self.__create_object_on_plot(result, color=color, **kwargs))
         else:
             raise InvalidRequestError("There is not data set in this plot to be fitted.")
 
@@ -156,8 +158,14 @@ class Plot:
         """Add or remove error bars from plot"""
         self._plot_settings[lit.ERROR_BAR] = new_setting
 
+    def residuals(self, new_setting=True):
+        """Add or remove subplot to show residuals"""
+        self._plot_settings[lit.RESIDUALS] = new_setting
+
     def show(self):
         """Draws the plot to output"""
+
+        main_ax, res_ax = self.__setup_figure_and_subplots()
 
         # set the xrange of functions to plot using the range of existing data sets
         for obj in self._objects:
@@ -165,14 +173,20 @@ class Plot:
                 obj.xrange = self.xrange
 
         for obj in self._objects:
-            _draw_object_on_plot(obj, errorbar=self._plot_settings[lit.ERROR_BAR])
+            _draw_object_on_plot(main_ax, res_ax, obj, errorbar=self._plot_settings[lit.ERROR_BAR])
 
-        plt.title(self.title)
-        plt.xlabel(self.xlabel)
-        plt.ylabel(self.ylabel)
+        main_ax.set_title(self.title)
+        main_ax.set_xlabel(self.xlabel)
+        main_ax.set_ylabel(self.ylabel)
+        main_ax.grid()
+
+        if res_ax:
+            res_ax.set_xlabel(self.xlabel)
+            res_ax.set_ylabel("residuals")
+            res_ax.grid()
 
         if self._plot_settings[lit.LEGEND]:
-            plt.legend()  # show legend if requested
+            main_ax.legend()  # show legend if requested
 
         plt.show()
 
@@ -205,11 +219,11 @@ class Plot:
             obj.color = color if color else dataset.color if dataset else self._color_palette.pop(0)
             return obj
 
-        for test in [_try_function_on_plot, _try_data_set_on_plot, _try_xdata_and_y_data]:
-            obj = test(*args, **kwargs)
-            if obj:
-                obj.color = color if color else self._color_palette.pop(0)
-                return obj
+        try_funcs = [_try_function_on_plot, _try_data_set_on_plot, _try_xdata_and_y_data]
+        obj = next((_obj for _obj in (test(*args, **kwargs) for test in try_funcs) if _obj), None)
+        if obj:
+            obj.color = color if color else self._color_palette.pop(0)
+            return obj
 
         raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
 
@@ -223,6 +237,28 @@ class Plot:
             raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
 
         return obj
+
+    def __setup_figure_and_subplots(self) -> (plt.Axes, plt.Axes):
+        """Create the mpl figure and subplots"""
+
+        has_residuals = self._plot_settings[lit.RESIDUALS]
+
+        width, height = get_settings().plot_dimensions
+
+        if has_residuals:
+            height = height * 1.5
+
+        figure = plt.figure(figsize=(width, height), constrained_layout=True)
+
+        if has_residuals:
+            gs = figure.add_gridspec(3, 1)
+            main_ax = figure.add_subplot(gs[:-1, :])
+            res_ax = figure.add_subplot(gs[-1:, :])
+        else:
+            main_ax = figure.add_subplot()
+            res_ax = None
+
+        return main_ax, res_ax
 
 
 def plot(*args, **kwargs) -> Plot:
@@ -272,35 +308,37 @@ def new_plot():
     Plot.current_plot_buffer = Plot()
 
 
-def _draw_object_on_plot(obj: plo.ObjectOnPlot, errorbar):
+def _draw_object_on_plot(main_ax: plt.Axes, res_ax: plt.Axes, obj: plo.ObjectOnPlot, errorbar):
     """Helper method that draws an ObjectOnPlot to the output"""
 
     if isinstance(obj, plo.HistogramOnPlot):
-        plt.hist(obj.values, **obj.kwargs)
+        main_ax.hist(obj.values, **obj.kwargs)
     elif isinstance(obj, plo.XYObjectOnPlot) and not errorbar:
         kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
-        plt.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, color=obj.color, label=obj.label, **kwargs)
+        main_ax.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, color=obj.color, label=obj.label, **kwargs)
     elif isinstance(obj, plo.XYDataSetOnPlot):
         kwargs = utils.extract_plt_errorbar_arguments(obj.kwargs)
-        plt.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
-                     fmt=obj.fmt, color=obj.color, label=obj.label, **kwargs)
+        main_ax.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
+                         fmt=obj.fmt, color=obj.color, label=obj.label, **kwargs)
     elif isinstance(obj, plo.FunctionOnPlot):
         xvalues = obj.xvalues_to_plot
         yvalues = obj.yvalues_to_plot
         kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
-        plt.plot(xvalues, yvalues, obj.fmt, color=obj.color, label=obj.label, **kwargs)
+        main_ax.plot(xvalues, yvalues, obj.fmt, color=obj.color, label=obj.label, **kwargs)
         yerr = obj.yerr_to_plot
         if yerr.size > 0:
-            _plot_error_band(xvalues, yvalues, yerr, obj.color)
+            _plot_error_band(main_ax, xvalues, yvalues, yerr, obj.color)
     elif isinstance(obj, plo.XYFitResultOnPlot):
-        _draw_object_on_plot(obj.func_on_plot, errorbar)
+        _draw_object_on_plot(main_ax, res_ax, obj.func_on_plot, errorbar)
+        if res_ax:
+            _draw_object_on_plot(res_ax, main_ax, obj.residuals_on_plot, errorbar)
 
 
-def _plot_error_band(xvalues, yvalues, yerr, color):
+def _plot_error_band(ax: plt.Axes, xvalues, yvalues, yerr, color):
     """Adds an error band to plot around a set of x-y values"""
     max_vals = yvalues + yerr
     min_vals = yvalues - yerr
-    plt.fill_between(xvalues, min_vals, max_vals, interpolate=True, edgecolor='none', color=color, alpha=0.3, zorder=0)
+    ax.fill_between(xvalues, min_vals, max_vals, interpolate=True, edgecolor='none', color=color, alpha=0.3, zorder=0)
 
 
 def __get_plot_obj():

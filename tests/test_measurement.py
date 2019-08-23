@@ -10,16 +10,18 @@ import pytest
 import numpy as np
 import qexpy as q
 
+settings = q.get_settings()
+
 
 class TestMeasuredValue:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        q.reset_default_configuration()
+        settings.reset()
 
     def test_record_measurement_with_no_uncertainty(self):
         measurement = q.Measurement(12.34, unit="m", name="test")
-        q.set_sig_figs_for_value(4)
+        settings.set_sig_figs_for_value(4)
         assert measurement.value == 12.34
         assert measurement.error == 0
         assert measurement.relative_error == 0
@@ -50,7 +52,7 @@ class TestRepeatedlyMeasuredValue:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        q.reset_default_configuration()
+        settings.reset()
 
     def test_record_repeated_measurements(self):
         # create value from repeated measurements
@@ -63,7 +65,7 @@ class TestRepeatedlyMeasuredValue:
         assert measurement.error_on_mean == pytest.approx(0.5773502691896258)
         assert measurement.error == pytest.approx(0.5773502691896258)
         measurement.use_std_for_uncertainty()
-        q.set_sig_figs_for_error(2)
+        settings.set_sig_figs_for_error(2)
         assert measurement.error == 1
         assert str(measurement) == "test = 10.0 +/- 1.0 [m]"
 
@@ -106,7 +108,7 @@ class TestRepeatedlyMeasuredValue:
         assert a.propagated_error == 0.09950371902099892
         a.use_error_weighted_mean_as_value()
         a.use_propagated_error_for_uncertainty()
-        q.set_sig_figs_for_error(4)
+        settings.set_sig_figs_for_error(4)
         assert str(a) == "10.00990 +/- 0.09950"
 
 
@@ -114,7 +116,7 @@ class TestMeasurementArray:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        q.reset_default_configuration()
+        settings.reset()
 
     def test_record_measurement_array(self):
         a = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit="m", name="length")

@@ -20,8 +20,9 @@ import qexpy.data.operations as op
 import qexpy.settings.literals as lit
 import qexpy.utils.units as units
 import qexpy.utils.printing as printing
-import qexpy.settings.settings as settings
 from qexpy.utils.exceptions import InvalidArgumentTypeError, UndefinedOperationError
+
+import qexpy.settings as sts
 
 # a simple structure for a value-error pair
 ValueWithError = collections.namedtuple("ValueWithError", "value, error")
@@ -61,6 +62,8 @@ class ExperimentalValue(abc.ABC):
 
     Examples:
         >>> import qexpy as q
+        >>> settings = q.get_settings()  # get a reference of the settings instance
+
         >>> a = q.Measurement(302, 5) # the standard way to initialize an ExperimentalValue
 
         >>> # The ExperimentalValue object has the following basic properties
@@ -88,9 +91,9 @@ class ExperimentalValue(abc.ABC):
         force = 300 +/- 20 [kg⋅m^2⋅s^-2]
 
         >>> # You can also specify how you want the values or the units to be printed
-        >>> q.set_print_style("scientific")
-        >>> q.set_unit_style("fraction")
-        >>> q.set_sig_figs_for_error(2)
+        >>> settings.print_style = "scientific"
+        >>> settings.unit_style = "fraction"
+        >>> settings.set_sig_figs_for_error(2)
         >>> print(a)
         force = (3.03 +/- 0.15) * 10^2 [kg⋅m^2/s^2]
 
@@ -281,6 +284,7 @@ class MeasuredValue(ExperimentalValue):
 
     Examples:
         >>> import qexpy as q
+        >>> settings = q.get_settings()
 
         >>> # You can create a measurement with a value and an uncertainty
         >>> a = q.Measurement(12, 1)
@@ -300,8 +304,8 @@ class MeasuredValue(ExperimentalValue):
         >>> # For repeated measurements, simply pass an array into the constructor as data, and the
         >>> # average will be taken as the center value for this measurement, with the error on the
         >>> # mean as the uncertainty.
-        >>> q.reset_default_configuration()
-        >>> q.set_sig_figs_for_error(4)
+        >>> settings.reset()
+        >>> settings.set_sig_figs_for_error(4)
         >>> d = q.Measurement([5.6, 4.8, 6.1, 4.9, 5.1])
         >>> print(d)
         5.3000 +/- 0.5431
@@ -469,7 +473,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         >>> # You can choose which statistical properties to be used as the value/error as usual
         >>> a.use_error_weighted_mean_as_value()
         >>> a.use_propagated_error_for_uncertainty()
-        >>> q.set_sig_figs_for_error(4)
+        >>> q.get_settings().set_sig_figs_for_error(4)
         >>> print(a)
         10.00990 +/- 0.09950
 
@@ -614,7 +618,7 @@ class DerivedValue(ExperimentalValue):
         1.4454463754287323
 
         >>> # By default, the standard derivative method is used, but we can change it ourselves
-        >>> q.set_error_method("monte-carlo") # this applies to all values in this session
+        >>> q.get_settings().error_method = "monte-carlo"  # this applies to all values in this session
         >>> result.value
         18.03203135268583
         >>> result.error
@@ -630,7 +634,7 @@ class DerivedValue(ExperimentalValue):
 
     """
 
-    def __init__(self, formula: Formula, error_method: settings.ErrorMethod = None):
+    def __init__(self, formula: Formula, error_method: sts.ErrorMethod = None):
 
         # set default error method for this value
         if error_method:
@@ -639,7 +643,7 @@ class DerivedValue(ExperimentalValue):
         else:
             # use global default if not specified
             self._is_error_method_specified = False
-            self._error_method = settings.get_error_method()
+            self._error_method = sts.get_settings().error_method
 
         # The _formula attribute is the core of a DerivedValue object. It is the formula by which this
         # value is derived. It is stored as a namedtuple with two fields: "operator" and "operands"
@@ -685,7 +689,7 @@ class DerivedValue(ExperimentalValue):
         self.__class__ = MeasuredValue  # casting it to MeasuredValue
 
     @property
-    def error_method(self) -> settings.ErrorMethod:
+    def error_method(self) -> sts.ErrorMethod:
         """The default error method used for this value
 
         QExPy currently supports two different methods of error propagation, the derivative method, and
@@ -694,15 +698,15 @@ class DerivedValue(ExperimentalValue):
         if it is different from the global default.
 
         """
-        return self._error_method if self._is_error_method_specified else settings.get_error_method()
+        return self._error_method if self._is_error_method_specified else sts.get_settings().error_method
 
     @error_method.setter
-    def error_method(self, new_error_method: Union[settings.ErrorMethod, str]):
+    def error_method(self, new_error_method: Union[sts.ErrorMethod, str]):
         """Sets the default error method of this value"""
-        if isinstance(new_error_method, settings.ErrorMethod):
+        if isinstance(new_error_method, sts.ErrorMethod):
             self._error_method = new_error_method
         elif new_error_method in [lit.MONTE_CARLO_PROPAGATED, lit.DERIVATIVE_PROPAGATED]:
-            self._error_method = settings.ErrorMethod(new_error_method)
+            self._error_method = sts.ErrorMethod(new_error_method)
         else:
             raise ValueError("The error methods supported are derivative, min-max, and monte carlo.\n"
                              "These values are found under the enum settings.ErrorMethod")
@@ -765,9 +769,9 @@ class DerivedValue(ExperimentalValue):
         error_method = self.error_method
 
         # calculate the values if not present
-        if error_method == settings.ErrorMethod.DERIVATIVE and lit.DERIVATIVE_PROPAGATED not in self._values:
+        if error_method == sts.ErrorMethod.DERIVATIVE and lit.DERIVATIVE_PROPAGATED not in self._values:
             self._values[lit.DERIVATIVE_PROPAGATED] = op.get_derivative_propagated_value_and_error(self._formula)
-        elif error_method == settings.ErrorMethod.MONTE_CARLO and lit.MONTE_CARLO_PROPAGATED not in self._values:
+        elif error_method == sts.ErrorMethod.MONTE_CARLO and lit.MONTE_CARLO_PROPAGATED not in self._values:
             self._values[lit.MONTE_CARLO_PROPAGATED] = op.get_monte_carlo_propagated_value_and_error(self._formula)
 
         return self._values[error_method.value]
