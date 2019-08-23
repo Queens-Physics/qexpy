@@ -8,7 +8,7 @@ figures, and common conventions for writing values and uncertainties
 
 import math as m
 from typing import Callable
-import qexpy.settings.settings as settings
+from qexpy.settings import get_settings, PrintStyle, SigFigMode
 
 
 def _default_print(value: float, error: float, latex=False) -> str:
@@ -96,20 +96,20 @@ def __round_values_to_sig_figs(value: float, error: float) -> tuple:
 
     """
 
-    sig_fig_mode = settings.get_sig_fig_mode()
-    sig_fig_value = settings.get_sig_fig_value()
+    sig_fig_mode = get_settings().sig_fig_mode
+    sig_fig_value = get_settings().sig_fig_value
 
     def is_valid(number):
         return not m.isinf(number) and not m.isnan(number) and number != 0
 
     # check any of the inputs are invalid for the following calculations
-    if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR] and not is_valid(error):
+    if sig_fig_mode in [SigFigMode.AUTOMATIC, SigFigMode.ERROR] and not is_valid(error):
         return value, error  # do no rounding if the error is 0 or invalid
-    if sig_fig_mode == settings.SigFigMode.VALUE and value == 0:
+    if sig_fig_mode == SigFigMode.VALUE and value == 0:
         return value, error
 
     # first find the back-off value for rounding
-    if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR]:
+    if sig_fig_mode in [SigFigMode.AUTOMATIC, SigFigMode.ERROR]:
         order_of_error = m.floor(m.log10(error))
         back_off = 10 ** (order_of_error - sig_fig_value + 1)
     else:
@@ -142,14 +142,14 @@ def __find_number_of_decimals(value: float, error: float) -> int:
 
     """
 
-    sig_fig_mode = settings.get_sig_fig_mode()
-    sig_fig_value = settings.get_sig_fig_value()
+    sig_fig_mode = get_settings().sig_fig_mode
+    sig_fig_value = get_settings().sig_fig_value
 
     def is_valid(number):
         return not m.isinf(number) and not m.isnan(number) and number != 0
 
     # check if the current number of significant figures satisfy the settings
-    if sig_fig_mode in [settings.SigFigMode.AUTOMATIC, settings.SigFigMode.ERROR]:
+    if sig_fig_mode in [SigFigMode.AUTOMATIC, SigFigMode.ERROR]:
         order = m.floor(m.log10(error)) if is_valid(error) else m.floor(m.log10(value))
     else:
         order = m.floor(m.log10(value)) if value != 0 else 1
@@ -168,9 +168,9 @@ def get_printer() -> Callable[[float, float], str]:
         returns the string representation of the value-error pair
 
     """
-    print_style = settings.get_print_style()
-    if print_style == settings.PrintStyle.SCIENTIFIC:
+    print_style = get_settings().print_style
+    if print_style == PrintStyle.SCIENTIFIC:
         return _scientific_print
-    if print_style == settings.PrintStyle.LATEX:
+    if print_style == PrintStyle.LATEX:
         return _latex_print
     return _default_print

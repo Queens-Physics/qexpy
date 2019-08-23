@@ -12,12 +12,14 @@ import numbers
 
 import qexpy.data.datasets
 
+settings = q.get_settings()
+
 
 class TestArithmetic:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        q.reset_default_configuration()
+        settings.reset()
 
     def test_value_comparison(self):
         a = q.Measurement(4, 0.5, unit="m")
@@ -29,8 +31,8 @@ class TestArithmetic:
         assert 10 == b
 
     def test_elementary_operations(self):
-        q.set_unit_style(q.UnitStyle.FRACTION)
-        q.set_sig_figs_for_error(2)
+        settings.unit_style = q.UnitStyle.FRACTION
+        settings.set_sig_figs_for_error(2)
 
         a = q.Measurement(4, 0.5, unit="m")
         b = q.Measurement(10, 2, unit="m")
@@ -94,7 +96,7 @@ class TestFunctions:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        q.reset_default_configuration()
+        settings.reset()
 
     def test_simple_functions(self):
         a = q.Measurement(5, 0.5)

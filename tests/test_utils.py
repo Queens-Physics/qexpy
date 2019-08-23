@@ -10,14 +10,17 @@ import pytest
 import qexpy.utils.printing as printing
 import qexpy.utils.units as units
 import qexpy.utils.utils as utils
-import qexpy.settings.settings as settings
+
+import qexpy as q
+
+settings = q.get_settings()
 
 
 class TestUtils:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        settings.reset_default_configuration()
+        settings.reset()
 
     def test_count_sig_figs(self):
         assert utils.count_significant_figures(1.23) == 3
@@ -59,7 +62,7 @@ class TestUtils:
         assert units.construct_unit_string(units_for_idk_what) == "kg⋅m^2"
         assert units.construct_unit_string(units_for_another_idk_what) == "kg^-1⋅s^-2"
         # for fraction style printing
-        settings.set_unit_style(settings.UnitStyle.FRACTION)
+        settings.unit_style = q.UnitStyle.FRACTION
         assert units.construct_unit_string(units_for_newton) == "kg⋅m^2/s^2"
         assert units.construct_unit_string(units_for_henry) == "kg⋅m^2/(s^2⋅A^2)"
         assert units.construct_unit_string(units_for_idk_what) == "kg⋅m^2"
@@ -101,7 +104,7 @@ class TestPrinter:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        settings.reset_default_configuration()
+        settings.reset()
 
     def test_default_print(self):
         # printing in default format

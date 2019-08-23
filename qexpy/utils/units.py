@@ -4,8 +4,9 @@ import re
 import collections
 import warnings
 from typing import Dict, List, Union
-import qexpy.settings.settings as settings
 import qexpy.settings.literals as lit
+
+from qexpy.settings import get_settings, UnitStyle
 
 DOT_STRING = "⋅"
 
@@ -26,9 +27,9 @@ def construct_unit_string(units: Dict[str, int]) -> str:
     """
 
     unit_string = ""
-    if settings.get_unit_style() == settings.UnitStyle.EXPONENTS:
+    if get_settings().unit_style == UnitStyle.EXPONENTS:
         unit_string = __construct_unit_string_as_fraction(units)
-    elif settings.get_unit_style() == settings.UnitStyle.FRACTION:
+    elif get_settings().unit_style == UnitStyle.FRACTION:
         unit_string = __construct_unit_string_with_exponents(units)
     return unit_string
 

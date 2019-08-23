@@ -7,12 +7,14 @@ This file contains tests for fitting a function to a data set.
 import pytest
 import qexpy as q
 
+settings = q.get_settings()
+
 
 class TestFitting:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        q.reset_default_configuration()
+        settings.reset()
 
     def test_poly_fit(self):
         """unit tests for polynomial fit functions"""

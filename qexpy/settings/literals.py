@@ -66,7 +66,9 @@ YUNIT = "yunit"
 
 LEGEND = "legend"
 ERROR_BAR = "error_bar"
+RESIDUALS = "residuals"
 PLOT_STYLE = "plot_style"
+PLOT_DIMENSIONS = "plot_dimensions"
 
 # miscellaneous
 DEFAULT = "default"

@@ -9,12 +9,14 @@ as correlated values, raw measurements as well as derived values.
 import pytest
 import qexpy as q
 
+settings = q.get_settings()
+
 
 class TestErrorPropagation:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        q.reset_default_configuration()
+        settings.reset()
 
     def test_derivative_error_propagation(self):
         a = q.Measurement(5, 0.2)
@@ -54,7 +56,7 @@ class TestErrorPropagation:
         assert result.error == pytest.approx(1.4483184455244065)
 
     def test_monte_carlo_error_propagation(self):
-        q.set_error_method(q.ErrorMethod.MONTE_CARLO)
+        settings.error_method = q.ErrorMethod.MONTE_CARLO
         a = q.Measurement(5, 0.2)
         b = q.Measurement(4, 0.1)
         c = q.Measurement(6.3, 0.5)
@@ -67,7 +69,7 @@ class TestErrorPropagation:
         assert result.error == pytest.approx(1.4454463754287323, 1e-1)
 
     def test_monte_carlo_error_propagation_for_correlated_values(self):
-        q.set_error_method(q.ErrorMethod.MONTE_CARLO)
+        settings.error_method = q.ErrorMethod.MONTE_CARLO
         a = q.Measurement(5, 0.2)
         b = q.Measurement(4, 0.1)
         c = q.Measurement(6.3, 0.5)
