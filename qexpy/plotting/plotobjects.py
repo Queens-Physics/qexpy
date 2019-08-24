@@ -40,6 +40,15 @@ class ObjectOnPlot(abc.ABC):
         self._color = new_color
 
 
+class FitTarget(abc.ABC):  # pylint: disable=too-few-public-methods
+    """Interface for anything to which a fit can be applied"""
+
+    @property
+    @abc.abstractmethod
+    def fit_target_dataset(self) -> dts.XYDataSet:
+        """The target dataset instance to apply the fit to"""
+
+
 class XYObjectOnPlot(ObjectOnPlot):
     """A container for objects with x and y values to be drawn on a plot"""
 
@@ -73,14 +82,16 @@ class XYObjectOnPlot(ObjectOnPlot):
         self._xrange = new_range
 
 
-class XYDataSetOnPlot(XYObjectOnPlot):
+class XYDataSetOnPlot(XYObjectOnPlot, FitTarget):
     """A wrapper for an XYDataSet to be plotted"""
 
-    def __init__(self, xdata, ydata, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
         # call super constructors
         XYObjectOnPlot.__init__(self, *args, **kwargs)
-        self.dataset = dts.XYDataSet(xdata, ydata, **kwargs)
+
+        # set the data set object
+        self.dataset = args[0] if args and isinstance(args[0], dts.XYDataSet) else dts.XYDataSet(*args, **kwargs)
 
         # set default label and fmt if not requested
         if not self.label:
@@ -114,12 +125,9 @@ class XYDataSetOnPlot(XYObjectOnPlot):
             return self.dataset.yerr[self.__get_indices_from_xrange()]
         return self.dataset.yerr
 
-    @classmethod
-    def from_xy_dataset(cls, dataset, **kwargs):
-        """Wraps a regular XYDataSet object in a XYDataSetOnPlot object"""
-        dataset.__class__ = cls
-        XYObjectOnPlot.__init__(dataset, **kwargs)
-        return dataset
+    @property
+    def fit_target_dataset(self) -> dts.XYDataSet:
+        return self.dataset
 
     def __get_indices_from_xrange(self):
         return (self.xrange[0] <= self.dataset.xvalues) & (self.dataset.xvalues < self.xrange[1])
@@ -198,13 +206,24 @@ class XYFitResultOnPlot(ObjectOnPlot):
         self.func_on_plot.color = new_color
         self.residuals_on_plot.color = new_color
 
+    @property
+    def dataset(self) -> dts.XYDataSet:
+        """The dataset that the fit is associated with"""
+        return self.fit_result.dataset
 
-class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):
+
+class HistogramOnPlot(ObjectOnPlot, FitTarget):
     """Represents a histogram to be drawn on a plot"""
 
     def __init__(self, *args, **kwargs):
-        ObjectOnPlot.__init__(self, *args, **kwargs)
-        dts.ExperimentalValueArray.__init__(self, **kwargs)
+        ObjectOnPlot.__init__(self, **kwargs)
+        self.samples = dts.ExperimentalValueArray(*args, **kwargs)
+        self.n, self.bin_edges = np.histogram(self.samples.values, **self.kwargs)
+
+    @property
+    def sample_values(self):
+        """The values of the samples in this histogram"""
+        return self.samples.values
 
     @classmethod
     def from_value_array(cls, array, **kwargs):
@@ -212,3 +231,8 @@ class HistogramOnPlot(dts.ExperimentalValueArray, ObjectOnPlot):
         array.__class__ = cls
         ObjectOnPlot.__init__(array, **kwargs)
         return array
+
+    @property
+    def fit_target_dataset(self) -> dts.XYDataSet:
+        xvalues = [(self.bin_edges[i] + self.bin_edges[i + 1]) / 2 for i in range(len(self.bin_edges) - 1)]
+        return dts.XYDataSet(xvalues, self.n, name="histogram")

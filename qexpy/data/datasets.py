@@ -115,8 +115,7 @@ class ExperimentalValueArray(np.ndarray):
 
         # initialize raw data and its corresponding uncertainties
         if not isinstance(data, utils.ARRAY_TYPES):
-            raise InvalidArgumentTypeError("creating MeasurementArray",
-                                           got=[data], expected="a list or real numbers")
+            raise InvalidArgumentTypeError("creating MeasurementArray", got=[data], expected="a list of real numbers")
         measurements = np.asarray(data)
 
         error = kwargs.pop("error", args[0] if args else 0)
@@ -125,7 +124,7 @@ class ExperimentalValueArray(np.ndarray):
         if relative_error and error:
             raise IllegalArgumentError("You either specify the absolute error or the relative error, not both.")
 
-        error = 0 if not error else error
+        error = 0 if error is None else error
 
         if relative_error:
             error_array = float(relative_error) * measurements
