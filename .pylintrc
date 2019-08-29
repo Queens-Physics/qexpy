@@ -7,7 +7,7 @@ extension-pkg-whitelist=
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=venv,tests
+ignore=CVS,venv
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
@@ -139,9 +139,8 @@ disable=print-statement,
         deprecated-sys-function,
         exception-escape,
         comprehension-escape,
-        global-statement,
-        unused-argument,
-        too-many-lines
+        wrong-import-order,
+        ungrouped-imports
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -222,8 +221,7 @@ spelling-store-unknown-words=no
 
 # List of note tags to take in consideration, separated by a comma.
 notes=FIXME,
-      XXX
-
+      XXX,
 
 
 [TYPECHECK]
@@ -324,7 +322,7 @@ indent-after-paren=4
 indent-string='    '
 
 # Maximum number of characters on a single line.
-max-line-length=120
+max-line-length=95
 
 # Maximum number of lines in a module.
 max-module-lines=1000
@@ -423,15 +421,15 @@ good-names=i,
            ex,
            Run,
            _,
-           x,
-           e,
-           pi,
-           pm,
            x0,
            dx,
-           ax,
-           fig,
-           gs
+           pm,
+           pi,
+           e,
+           x,
+           n,
+           gs,
+           ax
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
@@ -476,6 +474,14 @@ variable-naming-style=snake_case
 # Regular expression matching correct variable names. Overrides variable-
 # naming-style.
 #variable-rgx=
+
+
+[STRING]
+
+# This flag controls whether the implicit-str-concat-in-sequence should
+# generate a warning on implicit string concatenation in sequences defined over
+# several lines.
+check-str-concat-over-line-jumps=no
 
 
 [IMPORTS]
@@ -526,12 +532,8 @@ exclude-protected=_asdict,
                   _source,
                   _make,
                   _id,
-                  _units,
-                  _register,
-                  _correlations,
                   _formula,
-                  _in_notebook,
-                  _mpl_output_notebook
+                  _unit
 
 # List of valid names for the first argument in a class method.
 valid-classmethod-first-arg=cls
@@ -543,10 +545,10 @@ valid-metaclass-classmethod-first-arg=cls
 [DESIGN]
 
 # Maximum number of arguments for function / method.
-max-args=10
+max-args=5
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes=15
+max-attributes=7
 
 # Maximum number of boolean expressions in an if statement.
 max-bool-expr=5
@@ -576,5 +578,6 @@ min-public-methods=2
 [EXCEPTIONS]
 
 # Exceptions that will emit a warning when being caught. Defaults to
-# "Exception".
-overgeneral-exceptions=Exception
+# "BaseException, Exception".
+overgeneral-exceptions=BaseException,
+                       Exception

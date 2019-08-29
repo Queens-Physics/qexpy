@@ -1,35 +1,29 @@
-"""This file contains definitions of some internal exceptions for QExPy"""
+"""Definitions for internal exceptions in QExPy"""
 
 
 class QExPyBaseError(Exception):
-    """This is the base error type for QExPy"""
+    """The base error type for QExPy"""
 
 
 class IllegalArgumentError(QExPyBaseError):
-    """Exception for general invalid arguments"""
+    """Exception for invalid arguments"""
 
 
-class InvalidRequestError(QExPyBaseError):
-    """Exception for undefined behaviours"""
+class UndefinedActionError(QExPyBaseError):
+    """Exception for undefined system states or function calls"""
 
 
-class InvalidArgumentTypeError(IllegalArgumentError):
-    """Exception thrown for invalid function arguments"""
-
-    def __init__(self, objective, got, expected=""):
-        message = "Invalid argument type for {}: \"{}\"".format(objective, type(got))
-        if expected:
-            message += ", expected: {}".format(expected)
-        super().__init__(message)
-
-
-class UndefinedOperationError(QExPyBaseError):
-    """Exception thrown for undefined operations"""
+class UndefinedOperationError(UndefinedActionError):
+    """Exception for undefined arithmetic operations between values"""
 
     def __init__(self, operation, got, expected=""):
+        """Defines the standard format for the error message"""
+
         if isinstance(got, list):
-            got = " and ".join("\"{}\"".format(type(x)) for x in got)
-        message = "Operation \"{}\" is undefined with operands of type(s) {}".format(operation, got)
+            got_type = " and ".join("\"{}\"".format(type(x)) for x in got)
+        else:
+            got_type = type(got)
+        message = "Operation \"{}\" is undefined with operands of type(s) {}."
         if expected:
-            message += ", expected: {}".format(expected)
-        super().__init__(message)
+            message += " Expected: {}".format(expected)
+        super().__init__(message.format(operation, got_type))

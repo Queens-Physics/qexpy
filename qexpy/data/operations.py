@@ -1,304 +1,308 @@
-"""Operations for ExperimentalValue objects
-
-This module implements operations with ExperimentalValue objects. This includes basic arithmetic
-operations and some basic math functions. Error propagation is implemented for all operations.
-This file also contains helper methods for operations with ExperimentalValue objects
-
-"""
+"""Defines arithmetic and math operations with ExperimentalValue objects"""
 
 import itertools
 import warnings
-import functools
-from typing import Set, Dict, Union, List
-from numbers import Real
-from uuid import UUID
-
 import numpy as np
 
-import qexpy.utils.utils as utils
-import qexpy.utils.units as units
-import qexpy.settings.literals as lit
-import qexpy.settings as sts
-from qexpy.utils.exceptions import InvalidArgumentTypeError
+from typing import Dict, Callable, List, Set, Generator
+from numbers import Real
+from qexpy.utils import UndefinedOperationError
+from uuid import UUID
 
-from . import data  # pylint: disable=cyclic-import
+import qexpy.utils as utils
+import qexpy.settings as sts
+import qexpy.settings.literals as lit
+
+import qexpy.data.data as dt  # pylint: disable=cyclic-import
 
 pi, e = np.pi, np.e
 
 
-def differentiate(formula: "data.Formula", variable: "data.ExperimentalValue") -> float:
+def differentiate(formula: "dt.Formula", variable: "dt.ExperimentalValue") -> float:
     """Find the derivative of a formula with respect to a variable"""
-    return _differentiator(formula.operator)(variable, *formula.operands)
+    return __differentiator(formula.operator)(variable, *formula.operands)
 
 
-def get_derivative_propagated_value_and_error(formula: "data.Formula") -> "data.ValueWithError":
-    """Executes an operation with propagated results using the general method
+def get_derivative_propagated_value_and_error(formula: "dt.Formula") -> "dt.ValueWithError":
+    """Executes an operation with propagated results using the derivative method
 
-    All error propagation is done with the raw measurements from which this formula is derived.
-    This implementation avoids intermediate values, which improves speed.
+    This is also known as the method of adding quadratures. It also takes into account the
+    covariance between measurements if they are specified. It is only valid when the relative
+    uncertainties in the quantities are small (less than ~10%)
 
     """
 
-    # execute the operation
-    result_value = evaluate_formula(formula)
+    # Execute the operation
+    result_value = __evaluate_formula(formula)
 
-    # find measurements that this formula is derived from
-    source_measurement_ids = _find_source_measurements(formula)  # type: Set[UUID]
-    source_measurements = list(data.get_variable_by_id(_id) for _id in source_measurement_ids)
+    # Find measurements that this formula is derived from
+    source_meas_ids = __find_source_measurement_ids(formula)  # type: Set[UUID]
+    source_measurements = list(dt.get_variable_by_id(_id) for _id in source_meas_ids)
 
-    # add the quadrature terms
-    quadratures = map(lambda x: (x.error * differentiate(formula, x)) ** 2, source_measurements)
-    sum_of_quadratures = sum(quadratures)
+    # Find the quadrature terms
+    quads = map(lambda x: (x.error * differentiate(formula, x)) ** 2, source_measurements)
 
-    # handle covariance between measurements
-    sum_of_covariance_terms = 0
-    for combination in itertools.combinations(source_measurements, 2):
-        var1, var2 = combination  # type: data.MeasuredValue
-        covariance = data.get_covariance(var1, var2)
-        if covariance != 0:
-            # the covariance term is the covariance multiplied by partial derivatives of both operands
-            sum_of_covariance_terms += 2 * covariance * differentiate(formula, var1) * differentiate(formula, var2)
+    # Handle covariance between measurements
+    covariance_terms = __find_cov_terms(formula, source_measurements)
 
-    result_error = np.sqrt(sum_of_quadratures + sum_of_covariance_terms)
+    # Calculate the result
+    result_error = np.sqrt(sum(quads) + sum(covariance_terms))
     if result_error < 0:
-        warnings.warn("\nThe error propagated for the given operation is negative. This is likely to be incorrect!\n"
-                      "Check your values, maybe you have unphysical covariance.")
+        warnings.warn(
+            "The error propagated for the given operation is negative. This is likely to be "
+            "incorrect! Check your values, maybe you have unphysical covariance.")
 
-    return data.ValueWithError(result_value, result_error)
+    return dt.ValueWithError(result_value, result_error)
 
 
-def get_monte_carlo_propagated_value_and_error(formula: "data.Formula") -> "data.ValueWithError":
-    """Calculates the value and error using the Monte Carlo method
+def get_monte_carlo_propagated_value_and_error(formula: "dt.Formula") -> "dt.ValueWithError":
+    """Executes an operation with propagated results using the Monte-Carlo method
 
-    For each original measurement that the formula is derived from, a random normally distributed data
-    set is generated with the mean and standard deviation of that measurement. For each sample, the given
-    formula is evaluated with the set of simulated measurements. The mean and standard deviation of the
-    set of calculated results is returned as the value/error pair.
+    For each original measurement that the formula is derived from, generate a normally
+    distributed random data set with the mean and standard deviation of that measurement.
+    Evaluate the formula with each sample. The mean and standard deviation of the results
+    are returned as the value and propagated error.
 
     """
 
     sample_size = sts.get_settings().monte_carlo_sample_size
 
-    def __generate_offset_matrix(measurements: List["data.MeasuredValue"]):
-        """Generates offsets from mean for each measurement
-
-        Each random data set generated has 0 mean and unit variance. They will be multiplied by the
-        desired standard deviation plus the mean of each measurement to produce the final random data
-        set. The reason for this procedure is to apply covariance if applicable.
-
-        The covariance is applied to the set of samples using the Chelosky algorithm. The covariance
-        matrix is constructed, and the Chelosky decomposition of the covariance matrix is calculated.
-        The Chelosky decomposition can then be used to correlate the vector of random samples with 0
-        mean and unit variance.
-
-        Args:
-            measurements (list): a set of the source measurements to simulate
-
-        Returns:
-            A N row times M column matrix where N is the number of measurements to simulate and M is
-            the requested sample size for Monte Carlo simulations. Each row of this matrix is an array
-            of random values with 0 mean and unit variance
-
-        """
-        raw_offset_matrix = np.vstack([np.random.normal(0, 1, sample_size) for _ in measurements])
-        offset_matrix = _correlate_random_samples(measurements, raw_offset_matrix)
-        return offset_matrix
-
     def __generate_random_data_set(measurement_id: UUID, offsets: np.ndarray):
         """Generate random simulated measurements for each MeasuredValue
 
-        This method simply applies the desired mean and standard deviation to the random sample set with
-        0 mean and unit variance generated by __generate_offset_matrix defined above.
+        This method simply applies the desired mean and standard deviation to the random
+        sample set with 0 mean and unit variance
 
         """
-        measurement = data.get_variable_by_id(measurement_id)
-        std = measurement.std if isinstance(measurement, data.RepeatedlyMeasuredValue) else measurement.error
+        measurement = dt.get_variable_by_id(measurement_id)
+
+        # The error is used here instead of std even in the case of repeatedly measured
+        # values, because the value used is the mean of all measurements, not the value
+        # of any single measurement, thus it is more accurate.
+        std = measurement.error
+
         center_value = measurement.value
         return offsets * std + center_value
 
-    source_measurement_ids = _find_source_measurements(formula)  # type: Set[UUID]
+    def __generate_offset_matrix(measurements):
+        """Generates offsets from mean for each measurement
 
-    # noinspection PyTypeChecker
-    source_measurements = list(
-        data.get_variable_by_id(_id) for _id in source_measurement_ids)  # type: List[data.MeasuredValue]
+        Each sample set generated has 0 mean and unit variance. Then covariance is applied
+        to the set of samples using the Chelosky algorithm.
 
-    # a dictionary object where each source measurement is assigned a set of normally distributed values
-    # with the mean and standard deviation of the measurement's center value and uncertainty.
-    data_sets = {}  # type: Dict[UUID, utils.ARRAY_TYPES]
+        Args:
+            measurements (List[dt.ExperimentalValue]): a set of measurements to simulate
 
-    # first generate a matrix of random samples with 0 mean and unit variance, correlated if applicable
+        Returns:
+            A N row times M column matrix where N is the number of measurements to simulate
+            and M is the requested sample size for Monte Carlo simulations. Each row of this
+            matrix is an array of random values with 0 mean and unit variance
+
+        """
+        offset_matrix = np.vstack([np.random.normal(0, 1, sample_size) for _ in measurements])
+        offset_matrix = __correlate_random_samples(measurements, offset_matrix)
+        return offset_matrix
+
+    def __correlate_random_samples(variables, sample_vector):
+        """Uses the Chelosky algorithm to add correlation to random samples
+
+        This method finds the Chelosky decomposition of the correlation matrix of the given
+        list of measurements, then applies it to the sample vector.
+
+        The sample vector is a list of random samples, each entry correspond to each variable
+        passed in. Each random sample, corresponding to each entry, is an array of random
+        numbers with 0 mean and unit variance.
+
+        Args:
+            variables (List[dt.ExperimentalValue]): the source measurements
+            sample_vector (np.ndarray): the list of random samples to apply correlation to
+
+        Returns:
+            The same list sample vector with correlation applied
+
+        """
+        corr_matrix = np.array(
+            [[dt.get_correlation(row, col) for col in variables] for row in variables])
+        if np.count_nonzero(corr_matrix - np.diag(np.diagonal(corr_matrix))) == 0:
+            return sample_vector  # if no correlations are present
+        try:
+            chelosky_decomposition = np.linalg.cholesky(corr_matrix)
+            result_vector = np.dot(chelosky_decomposition, sample_vector)
+            return result_vector
+        except np.linalg.linalg.LinAlgError:
+            warnings.warn(
+                "Fail to generate a physical correlation matrix for the values provided, "
+                "using uncorrelated samples instead. Please check that the covariance or "
+                "correlation factors assigned to the measurements are physical.")
+            return sample_vector
+
+    # Find measurements that this formula is derived from
+    source_meas_ids = __find_source_measurement_ids(formula)  # type: Set[UUID]
+    source_measurements = list(dt.get_variable_by_id(_id) for _id in source_meas_ids)
+
+    # Each source measurement is assigned a set of normally distributed values with the mean
+    # and standard deviation of the measurement's center value and uncertainty.
+    data_sets = {}  # type: Dict[UUID, np.ndarray]
+
+    # First generate a sample matrix with 0 mean and unit variance, correlated if applicable
     sample_set = __generate_offset_matrix(source_measurements)
-    for _id, sample in zip(source_measurement_ids, sample_set):
-        # then apply each sample to the desired mean and standard deviation of the measurement
+    for _id, sample in zip(source_meas_ids, sample_set):
+        # Apply each sample to the desired mean and standard deviation of the measurement
         data_sets[_id] = __generate_random_data_set(_id, sample)
 
-    result_data_set = evaluate_formula(formula, data_sets)
+    result_data_set = __evaluate_formula(formula, data_sets)
 
-    # check the quality of the result data
+    # Check the quality of the result data
     if isinstance(result_data_set, np.ndarray):
-        result_data_set = result_data_set[np.isfinite(result_data_set)]  # remove undefined values
+        # First remove undefined values
+        result_data_set = result_data_set[np.isfinite(result_data_set)]
+
     if len(result_data_set) / sts.get_settings().monte_carlo_sample_size < 0.9:
-        # if over 10% of the results calculated is invalid
-        warnings.warn("\nOver 10 percent of the random data generated for the Monte Carlo simulation falls outside the"
-                      "\ndomain on which the function is defined. Check the uncertainty or the standard deviation of "
-                      "\nthe measurements passed in, it is possible that the domain of this function is too narrow "
-                      "\ncompared to the standard deviation of the measurements. Consider choosing a different error "
-                      "\nmethod for this value.")
+        # If over 10% of the results calculated are invalid
+        warnings.warn(
+            "Over 10 percent of the random samples generated for the Monte Carlo simulation "
+            "falls outside the domain on which the function is defined. Check the error or "
+            "the standard deviation of the measurements passed in, it is possible that the "
+            "domain of this function is too narrow compared to the standard deviation of "
+            "the measurements. Consider choosing a different error method for this value.")
 
     # use the standard deviation as the uncertainty and mean as the center value
-    return data.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
+    return dt.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
 
 
-def execute(operator: str, *operands: Union[Real, "data.ExperimentalValue"]):
-    """Execute an operation
+def wrap_in_experimental_value(operand) -> "dt.ExperimentalValue":
+    """Wraps a variable in an ExperimentalValue object
 
-    For functions such as sqrt, sin, cos, ..., if a regular number is passed in, a regular
-    number should be returned instead of a Constant object.
+    Wraps single numbers in a Constant, number pairs in a MeasuredValue. If the argument
+    is already an ExperimentalValue instance, return directly. If the
 
     """
-    if all(isinstance(x, Real) for x in operands):
-        # if all operands involved are just numbers, return the value as a number
-        return OPERATIONS[operator](*operands)
-
-    try:
-        # wrap all operands in ExperimentalValue objects
-        values = list(data.wrap_operand(x) for x in operands)
-    except TypeError:
-        raise InvalidArgumentTypeError("{}()".format(operator), operands, "real numbers or QExPy defined values")
-
-    # else construct a DerivedValue object
-    return data.DerivedValue(data.Formula(operator, list(values)))
+    if isinstance(operand, Real):
+        return dt.Constant(operand)
+    if isinstance(operand, dt.ExperimentalValue):
+        return operand
+    if isinstance(operand, tuple) and len(operand) == 2:
+        return dt.MeasuredValue(operand[0], operand[1])
+    raise TypeError("Cannot parse a {} into an ExperimentalValue".format(type(operand)))
 
 
-def propagate_units(formula: "data.Formula") -> Dict[str, int]:
+def propagate_units(formula: "dt.Formula") -> Dict[str, dict]:
     """Calculate the correct units for the formula"""
 
     operator = formula.operator
     operands = formula.operands
 
-    # if one of the operands is a non-constant value with units unknown, the units of the result
-    # of this operation should also stay unknown
-    if any(not isinstance(operand, data.Constant) and not operand._units for operand in operands):
-        return {}
+    if all(operand._unit or isinstance(operand, dt.Constant) for operand in operands):
+        return utils.operate_with_units(operator, *(operand._unit for operand in operands))
 
-    return units.operate_with_units(operator, *(operand._units for operand in operands))
-
-
-def vectorize(func):
-    """vectorize a function if inputs are arrays"""
-
-    @functools.wraps(func)
-    def wrapper_vectorize(*args):
-        if any(isinstance(arg, utils.ARRAY_TYPES) for arg in args):
-            return np.vectorize(func)(*args)
-        return func(*args)
-
-    return wrapper_vectorize
+    # If there are non-constant values with unknown units, the units of the final result
+    # should also stay unknown. This is to avoid getting non-physical units.
+    return {}
 
 
-@vectorize
+@utils.vectorize
 def sqrt(x):
     """square root"""
-    return execute(lit.SQRT, x)
+    return __execute(lit.SQRT, x)
 
 
-@vectorize
+@utils.vectorize
 def exp(x):
     """e raised to the power of x"""
-    return execute(lit.EXP, x)
+    return __execute(lit.EXP, x)
 
 
-@vectorize
+@utils.vectorize
 def sin(x):
     """sine of x in rad"""
-    return execute(lit.SIN, x)
+    return __execute(lit.SIN, x)
 
 
-@vectorize
+@utils.vectorize
 def sind(x):
     """sine of x in degrees"""
     return sin(x / 180 * np.pi)
 
 
-@vectorize
+@utils.vectorize
 def cos(x):
     """cosine of x in rad"""
-    return execute(lit.COS, x)
+    return __execute(lit.COS, x)
 
 
-@vectorize
+@utils.vectorize
 def cosd(x):
     """cosine of x in degrees"""
     return cos(x / 180 * np.pi)
 
 
-@vectorize
+@utils.vectorize
 def tan(x):
     """tan of x in rad"""
-    return execute(lit.TAN, x)
+    return __execute(lit.TAN, x)
 
 
-@vectorize
+@utils.vectorize
 def tand(x):
     """tan of x in degrees"""
     return tan(x / 180 * np.pi)
 
 
-@vectorize
+@utils.vectorize
 def sec(x):
     """sec of x in rad"""
-    return execute(lit.SEC, x)
+    return __execute(lit.SEC, x)
 
 
-@vectorize
+@utils.vectorize
 def secd(x):
     """sec of x in degrees"""
     return sec(x / 180 * np.pi)
 
 
-@vectorize
+@utils.vectorize
 def csc(x):
     """csc of x in rad"""
-    return execute(lit.CSC, x)
+    return __execute(lit.CSC, x)
 
 
-@vectorize
+@utils.vectorize
 def cscd(x):
     """csc of x in degrees"""
     return csc(x / 180 * np.pi)
 
 
-@vectorize
+@utils.vectorize
 def cot(x):
     """cot of x in rad"""
-    return execute(lit.COT, x)
+    return __execute(lit.COT, x)
 
 
-@vectorize
+@utils.vectorize
 def cotd(x):
     """cot of x in degrees"""
-    return cotd(x / 180 * np.pi)
+    return cot(x / 180 * np.pi)
 
 
-@vectorize
+@utils.vectorize
 def asin(x):
     """arcsine of x"""
-    return execute(lit.ASIN, x)
+    return __execute(lit.ASIN, x)
 
 
-@vectorize
+@utils.vectorize
 def acos(x):
     """arccos of x"""
-    return execute(lit.ACOS, x)
+    return __execute(lit.ACOS, x)
 
 
-@vectorize
+@utils.vectorize
 def atan(x):
     """arctan of x"""
-    return execute(lit.ATAN, x)
+    return __execute(lit.ATAN, x)
 
 
-@vectorize
+@utils.vectorize
 def log(*args):
     """log with a base and power
 
@@ -307,105 +311,98 @@ def log(*args):
 
     """
     if len(args) == 2:
-        return execute(lit.LOG, args[0], args[1])
+        return __execute(lit.LOG, args[0], args[1])
     if len(args) == 1:
-        return execute(lit.LN, args[0])
+        return __execute(lit.LN, args[0])
     raise TypeError("Invalid number of arguments for log().")
 
 
-@vectorize
+@utils.vectorize
 def log10(x):
     """log with base 10 for a value"""
-    return execute(lit.LOG10, x)
+    return __execute(lit.LOG10, x)
 
 
-def evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None) -> Union[np.ndarray, float]:
+def __evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None):
     """Evaluates a Formula with original values of measurements or sample values
 
-    This method has an option of passing in a "samples" parameter where the value for each
-    MeasuredValue can be specified. The keys of this dictionary object are the unique IDs of
-    the values. This feature is used for Monte Carlo simulations where a formula needs to be
-    evaluated for a large set of values
-
-    The "sample" of a measurement can either be a single number or an np.ndarray. In the latter
-    case, the return value will also be an np.ndarray. This improves the computing speed
-    significantly because it takes advantage of numpy's vectorization of the arrays
+    This function evaluates the formula with the original measurements by default. If a set
+    of samples are passed in, the formula will be evaluated with the sample values.
 
     Args:
-        formula (Union[data.Formula, data.ExperimentalValue])
-        samples (Dict[UUID, np.ndarray])
+        formula (Union[dt.Formula, dt.ExperimentalValue]): the formula to be evaluated
+        samples (Dict): an np.ndarray of samples assigned to each source measurements's ID.
 
     """
     np.seterr(all="ignore")  # ignore runtime warnings
-    if samples is not None and isinstance(formula, data.MeasuredValue) and formula._id in samples:
-        # use the value in the sample instead of its original value if specified
+    if samples and isinstance(formula, dt.MeasuredValue) and formula._id in samples:
+        # Use the value in the sample instead of its original value if specified
         return samples[formula._id]
-    if isinstance(formula, data.DerivedValue):
-        return evaluate_formula(formula._formula, samples)
-    if isinstance(formula, (data.MeasuredValue, data.Constant)):
+    if isinstance(formula, dt.DerivedValue):
+        return __evaluate_formula(formula._formula, samples)
+    if isinstance(formula, (dt.MeasuredValue, dt.Constant)):
         return formula.value
     if isinstance(formula, Real):
         return float(formula)
-    if isinstance(formula, data.Formula):
-        operands = (evaluate_formula(variable, samples) for variable in formula.operands)
+    if isinstance(formula, dt.Formula):
+        operands = (__evaluate_formula(variable, samples) for variable in formula.operands)
         result = OPERATIONS[formula.operator](*operands)
         return result
     return 0
 
 
-def _correlate_random_samples(variables: List["data.MeasuredValue"], sample_vector: np.ndarray):
-    """Uses the Chelosky Decomposition algorithm to correlate samples for the Monte Carlo method
+def __find_source_measurement_ids(formula) -> Set[UUID]:
+    """Find IDs of all measurements that the given formula is derived from"""
 
-    This method finds the Chelosky decomposition of the correlation matrix of the given list of measurements,
-    then applies it to the sample vector. This adds correlation to the samples.
-
-    The sample vector is a list of random samples, each entry correspond to each variable passed in. Each
-    random sample corresponding each entry is a list of random numbers with unit variance and 0 mean. The
-    result will later be applied the desired mean and std of the variables in a Monte Carlo simulation
-
-    """
-    correlation_matrix = np.array([[data.get_correlation(row, col) for col in variables] for row in variables])
-    if np.count_nonzero(correlation_matrix - np.diag(np.diagonal(correlation_matrix))) == 0:
-        return sample_vector  # if no correlations are there
-    try:
-        chelosky_decomposition = np.linalg.cholesky(correlation_matrix)
-        result_vector = np.dot(chelosky_decomposition, sample_vector)
-        return result_vector
-    except np.linalg.linalg.LinAlgError:
-        warnings.warn("\nFail to generate a physical correlation matrix for the values provided, using uncorrelated "
-                      "\nsamples for this simulation. Please check that the correlation or covariance factors you"
-                      "\nhave given to the measurements are physical. ")
-        return sample_vector
-
-
-def _find_source_measurements(formula: Union["data.Formula", "data.ExperimentalValue"]) -> Set[UUID]:
-    """Returns a set of IDs for MeasuredValue objects that the given formula is derived from"""
-
-    if isinstance(formula, data.Formula):
-        source_measurements = set()
-        for operand in formula.operands:
-            source_measurements.update(_find_source_measurements(operand))
-        return source_measurements
-    if isinstance(formula, data.MeasuredValue):
+    if isinstance(formula, dt.Formula):
+        return set.union(
+            *(__find_source_measurement_ids(operand) for operand in formula.operands))
+    if isinstance(formula, dt.MeasuredValue):
         return {formula._id}
-    if isinstance(formula, data.DerivedValue):
-        return _find_source_measurements(formula._formula)
+    if isinstance(formula, dt.DerivedValue):
+        return __find_source_measurement_ids(formula._formula)
     return set()
 
 
-def _differentiator(operator: str):
+def __find_cov_terms(formula: "dt.Formula", source_measurements: List) -> Generator:
+    """Finds the contributing covariance terms for the quadrature method"""
+    for var1, var2 in itertools.combinations(source_measurements, 2):
+        cov = dt.get_covariance(var1, var2)
+        if cov != 0:
+            yield 2 * cov * differentiate(formula, var1) * differentiate(formula, var2)
+
+
+def __execute(operator: str, *operands) -> "dt.DerivedValue":
+    """Execute a math function on numbers or ExperimentalValue instances"""
+
+    # For functions such as sqrt, sin, cos, ..., if a simple real number is passed in, a
+    # simple real number should be returned instead of a Constant object.
+    if all(isinstance(x, Real) for x in operands):
+        return OPERATIONS[operator](*operands)
+
+    try:
+        # wrap all operands in ExperimentalValue objects
+        values = list(wrap_in_experimental_value(x) for x in operands)
+    except TypeError:
+        raise UndefinedOperationError(operator, operands, "real numbers")
+
+    # Construct a DerivedValue object with the operator and operands
+    return dt.DerivedValue(dt.Formula(operator, list(values)))
+
+
+def __differentiator(operator: str) -> Callable:
     """Gets the derivative formula for an operator
 
-    The differentiator is a lambda function calculates the derivative of an expression with
-    respect to a target value. The first argument is a reference to the target value, and the
-    rest of the arguments are the operands for this operation
+    The differentiator is a lambda function that calculates the derivative of an expression
+    with respect to a target value. The first argument is a reference to the target value,
+    and the rest of the arguments are the operands for this operation.
 
     Usage:
         differentiator("MUL")(x, a, b) would return the derivative of the expression "a * b"
         with respect to the value x
 
     Args:
-        operator (str): the operator of this expression (use string literals to avoid typos)
+        operator (str): the operator of this expression
 
     """
     return DIFFERENTIATORS[operator]
@@ -434,28 +431,28 @@ OPERATIONS = {
     lit.LN: np.log
 }
 
-# the usage of the differentiators are documented under the method differentiator
 DIFFERENTIATORS = {
-    lit.NEG: lambda other, x: -x.derivative(other),
-    lit.ADD: lambda other, a, b: a.derivative(other) + b.derivative(other),
-    lit.SUB: lambda other, a, b: a.derivative(other) - b.derivative(other),
-    lit.MUL: lambda other, a, b: a.derivative(other) * b.value + b.derivative(other) * a.value,
-    lit.DIV: lambda other, a, b: (b.value * a.derivative(other) - a.value * b.derivative(other)) / (b.value ** 2),
-    lit.SQRT: lambda other, x: 1 / 2 / np.sqrt(x.value) * x.derivative(other),
-    lit.EXP: lambda other, x: np.exp(x.value) * x.derivative(other),
-    lit.SIN: lambda other, x: np.cos(x.value) * x.derivative(other),
-    lit.COS: lambda other, x: -np.sin(x.value) * x.derivative(other),
-    lit.TAN: lambda other, x: 1 / (np.cos(x.value)) ** 2 * x.derivative(other),
-    lit.ASIN: lambda other, x: 1 / np.sqrt(1 - x.value ** 2) * x.derivative(other),
-    lit.ACOS: lambda other, x: -1 / np.sqrt(1 - x.value ** 2) * x.derivative(other),
-    lit.ATAN: lambda other, x: 1 / (1 + x.value ** 2) * x.derivative(other),
-    lit.SEC: lambda other, x: np.tan(x.value) / np.cos(x.value) * x.derivative(other),
-    lit.CSC: lambda other, x: -1 / (np.tan(x.value) * np.sin(x.value)) * x.derivative(other),
-    lit.COT: lambda other, x: -1 / (np.sin(x.value) ** 2) * x.derivative(other),
-    lit.POW: lambda other, x, a: x.value ** (a.value - 1) * (
-        a.value * x.derivative(other) + x.value * np.log(x.value) * a.derivative(other)),
-    lit.LOG: lambda other, base, x: ((np.log(base.value) * x.derivative(other) / x.value) - (
-        base.derivative(other) * np.log(x.value) / base.value)) / (np.log(base.value) ** 2),
-    lit.LOG10: lambda other, x: x.derivative(other) / (np.log(10) * x.value),
-    lit.LN: lambda other, x: x.derivative(other) / x.value
+    lit.NEG: lambda o, x: -x.derivative(o),
+    lit.ADD: lambda o, a, b: a.derivative(o) + b.derivative(o),
+    lit.SUB: lambda o, a, b: a.derivative(o) - b.derivative(o),
+    lit.MUL: lambda o, a, b: a.derivative(o) * b.value + b.derivative(o) * a.value,
+    lit.DIV: lambda o, a, b: (b.value * a.derivative(o) - a.value * b.derivative(o)) / (
+        b.value ** 2),
+    lit.SQRT: lambda o, x: 1 / 2 / np.sqrt(x.value) * x.derivative(o),
+    lit.EXP: lambda o, x: np.exp(x.value) * x.derivative(o),
+    lit.SIN: lambda o, x: np.cos(x.value) * x.derivative(o),
+    lit.COS: lambda o, x: -np.sin(x.value) * x.derivative(o),
+    lit.TAN: lambda o, x: 1 / (np.cos(x.value)) ** 2 * x.derivative(o),
+    lit.ASIN: lambda o, x: 1 / np.sqrt(1 - x.value ** 2) * x.derivative(o),
+    lit.ACOS: lambda o, x: -1 / np.sqrt(1 - x.value ** 2) * x.derivative(o),
+    lit.ATAN: lambda o, x: 1 / (1 + x.value ** 2) * x.derivative(o),
+    lit.SEC: lambda o, x: np.tan(x.value) / np.cos(x.value) * x.derivative(o),
+    lit.CSC: lambda o, x: -1 / (np.tan(x.value) * np.sin(x.value)) * x.derivative(o),
+    lit.COT: lambda o, x: -1 / (np.sin(x.value) ** 2) * x.derivative(o),
+    lit.POW: lambda o, x, a: x.value ** (a.value - 1) * (
+        a.value * x.derivative(o) + x.value * np.log(x.value) * a.derivative(o)),
+    lit.LOG: lambda o, b, x: ((np.log(b.value) * x.derivative(o) / x.value) - (
+        b.derivative(o) * np.log(x.value) / b.value)) / (np.log(b.value) ** 2),
+    lit.LOG10: lambda o, x: x.derivative(o) / (np.log(10) * x.value),
+    lit.LN: lambda o, x: x.derivative(o) / x.value
 }

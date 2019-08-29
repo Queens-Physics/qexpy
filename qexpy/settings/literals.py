@@ -1,8 +1,7 @@
 """String literals for common settings
 
-It is highly recommended for developers to use and update the constants in this file
-for accessing entries of some common dictionary objects. This improves readability
-and prevents typos
+It is highly recommended that developers use and update the constants in this file, which can
+be used when accessing common dictionary entries. This improves readability.
 
 """
 
@@ -25,6 +24,13 @@ SIG_FIGS = "significant_figures"
 SIG_FIG_MODE = "mode"
 SIG_FIG_VALUE = "value"
 MONTE_CARLO_SAMPLE_SIZE = "monte_carlo_sample_size"
+
+LATEX = "latex"
+SCIENTIFIC = "scientific"
+FRACTION = "fraction"
+EXPONENTS = "exponents"
+SET_TO_VALUE = "set_to_value"
+SET_TO_ERROR = "set_to_error"
 
 # operators
 OPERATOR = "operator"

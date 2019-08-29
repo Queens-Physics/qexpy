@@ -1,39 +1,35 @@
-"""Holds all global configuration variables and Enums for user options
-
-This file contains configurations and flags for user settings including
-plot settings and error propagation settings
-
-"""
+"""Holds all global configurations and Enum types for common options"""
 
 from enum import Enum
 from typing import Union
-from . import literals as lit
+
+from qexpy.settings import literals as lit
 
 
 class ErrorMethod(Enum):
     """Preferred method of error propagation"""
-    DERIVATIVE = "derivative"
-    MONTE_CARLO = "monte-carlo"
+    DERIVATIVE = lit.DERIVATIVE_PROPAGATED
+    MONTE_CARLO = lit.MONTE_CARLO_PROPAGATED
 
 
 class PrintStyle(Enum):
     """Preferred format for the string representation of values"""
-    DEFAULT = "default"
-    LATEX = "latex"
-    SCIENTIFIC = "scientific"
+    DEFAULT = lit.DEFAULT
+    LATEX = lit.LATEX
+    SCIENTIFIC = lit.SCIENTIFIC
 
 
 class UnitStyle(Enum):
     """Preferred format for the string representation of units"""
-    FRACTION = "fraction"
-    EXPONENTS = "exponents"
+    FRACTION = lit.FRACTION
+    EXPONENTS = lit.EXPONENTS
 
 
 class SigFigMode(Enum):
     """Preferred method to choose number of significant figures"""
-    AUTOMATIC = "automatic"
-    VALUE = "value"
-    ERROR = "error"
+    AUTOMATIC = lit.AUTO
+    VALUE = lit.SET_TO_VALUE
+    ERROR = lit.SET_TO_ERROR
 
 
 class Settings:
@@ -63,10 +59,10 @@ class Settings:
 
     @property
     def error_method(self) -> ErrorMethod:
-        """ErrorMethod: the preferred error method for derived values
+        """ErrorMethod: The preferred error method for derived values
 
         There are three possible error methods, keep in mind that all three methods are used
-        to calculate the values behind the scene.
+        to calculate the values behind the scene. The options are found under q.ErrorMethod
 
         """
         return self.__config[lit.ERROR_METHOD]
@@ -78,57 +74,55 @@ class Settings:
         elif new_method in [lit.MONTE_CARLO_PROPAGATED, lit.DERIVATIVE_PROPAGATED]:
             self.__config[lit.ERROR_METHOD] = ErrorMethod(new_method)
         else:
-            raise ValueError("The error methods supported are derivative, min-max, and monte carlo.\n"
-                             "These options can be found under the enum q.ErrorMethod")
+            raise ValueError("Invalid error method!")
 
     @property
     def print_style(self) -> PrintStyle:
-        """PrintStyle: format of the value strings for ExperimentalValues
+        """PrintStyle: The preferred format to display a value with an uncertainty
 
-        The three available formats are default, latex, and scientific.
+        The three available formats are default, latex, and scientific. The options are found
+        under q.PrintStyle
 
         """
         return self.__config[lit.PRINT_STYLE]
 
     @print_style.setter
-    def print_style(self, new_style: Union[PrintStyle, str]):
-        if isinstance(new_style, PrintStyle):
-            self.__config[lit.PRINT_STYLE] = new_style
-        elif isinstance(new_style, str) and new_style in ["default", "latex", "scientific"]:
-            self.__config[lit.PRINT_STYLE] = PrintStyle(new_style)
+    def print_style(self, style: Union[PrintStyle, str]):
+        if isinstance(style, PrintStyle):
+            self.__config[lit.PRINT_STYLE] = style
+        elif isinstance(style, str) and style in [lit.DEFAULT, lit.LATEX, lit.SCIENTIFIC]:
+            self.__config[lit.PRINT_STYLE] = PrintStyle(style)
         else:
-            raise ValueError("The print styles supported are default, latex, and scientific.\n"
-                             "These values are found under the enum q.PrintStyle")
+            raise ValueError("Invalid print style!")
 
     @property
     def unit_style(self) -> UnitStyle:
-        """UnitStyle: The format used to present units
+        """UnitStyle: The preferred format to display a unit string
 
-        The unit style can be either "fraction" or "exponents. Fraction style is the more intuitive
-        way of showing units, looks like kg*m^2/s^2, whereas the exponent style shows the same unit
-        as kg^1m^2s^-2
+        The supported unit styles are "fraction" and "exponents. Fraction style is the more
+        intuitive way of showing units, looks like kg*m^2/s^2, whereas the exponent style
+        shows the same unit as kg^1m^2s^-2, which is more accurate and less ambiguous.
 
         """
         return self.__config[lit.UNIT_STYLE]
 
     @unit_style.setter
-    def unit_style(self, new_style: Union[UnitStyle, str]):
-        if isinstance(new_style, UnitStyle):
-            self.__config[lit.UNIT_STYLE] = new_style
-        elif isinstance(new_style, str) and new_style in ["fraction", "exponents"]:
-            self.__config[lit.UNIT_STYLE] = UnitStyle(new_style)
+    def unit_style(self, style: Union[UnitStyle, str]):
+        if isinstance(style, UnitStyle):
+            self.__config[lit.UNIT_STYLE] = style
+        elif isinstance(style, str) and style in [lit.FRACTION, lit.EXPONENTS]:
+            self.__config[lit.UNIT_STYLE] = UnitStyle(style)
         else:
-            raise ValueError("The unit style can be either exponents or fractions. \n"
-                             "The values can be found under the enum q.UnitStyle")
+            raise ValueError("Invalid unit style!")
 
     @property
     def sig_fig_mode(self) -> SigFigMode:
         """SigFigMode: The standard for choosing number of significant figures
 
-        The significant figure mode can be either VALUE or ERROR. When the mode is VALUE, the
-        value of the quantity will be displayed with the specified number of significant figures,
-        and the uncertainty will be displayed to match the number of decimal places of the value,
-        and vice versa.
+        Supported modes are VALUE and ERROR. When the mode is VALUE, the center value of the
+        quantity will be displayed with the specified number of significant figures, and the
+        uncertainty will be displayed to match the number of decimal places of the value, and
+        vice versa for the ERROR mode.
 
         """
         return self.__config[lit.SIG_FIGS][lit.SIG_FIG_MODE]
@@ -165,7 +159,7 @@ class Settings:
         if isinstance(size, int) and size > 0:
             self.__config[lit.MONTE_CARLO_SAMPLE_SIZE] = size
         else:
-            raise ValueError("The sample size of the Monte Carlo simulation has to be a positive integer")
+            raise ValueError("The sample size has to be a positive integer")
 
     @property
     def plot_dimensions(self) -> (float, float):
@@ -229,3 +223,8 @@ def set_sig_figs_for_error(new_sig_figs: int):
 def set_monte_carlo_sample_size(size: int):
     """Sets the number of samples for a Monte Carlo simulation"""
     get_settings().monte_carlo_sample_size = size
+
+
+def set_plot_dimensions(new_dimensions: (float, float)):
+    """Sets the default dimensions of a plot"""
+    get_settings().plot_dimensions = new_dimensions

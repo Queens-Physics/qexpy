@@ -1,84 +1,80 @@
-"""Unit tests for error propagation
-
-This file contains tests for error propagation. Both the derivative method and the Monte Carlo
-method are tested in this module. Error propagation is tested for independent values as well
-as correlated values, raw measurements as well as derived values.
-
-"""
+"""Unit tests for error propagation"""
 
 import pytest
 import qexpy as q
+from qexpy.data.data import ExperimentalValue
 
-settings = q.get_settings()
+
+@pytest.fixture()
+def data():
+    test_data = {
+        "var1": q.Measurement(5, 0.2),
+        "var2": q.Measurement(4, 0.1),
+        "var3": q.Measurement(6.3, 0.5),
+        "var4": q.Measurement(7.2, 0.5)
+    }
+    yield test_data
 
 
 class TestErrorPropagation:
+    """Tests methods of error propagation"""
 
     @pytest.fixture(autouse=True)
-    def reset_environment(self):
-        settings.reset()
+    def reset_environment(self):  # pylint: disable=no-data-use
+        """Resets all default configurations"""
+        q.get_settings().reset()
+        ExperimentalValue._correlations = {}  # pylint: disable=protected-access
 
-    def test_derivative_error_propagation(self):
-        a = q.Measurement(5, 0.2)
-        b = q.Measurement(4, 0.1)
-        c = q.Measurement(6.3, 0.5)
-        d = q.Measurement(7.2, 0.5)
-        result = c * d - b / a
-        assert result.value == 44.56
-        assert result.error == pytest.approx(4.783714456361291)
-        result = q.sqrt(c) * d - b / q.exp(a)
-        assert result.value == pytest.approx(18.04490478513969)
-        assert result.error == pytest.approx(1.4454463754287323)
+    def test_error_propagation(self, data):
+        """Tests error propagation for regular values"""
 
-        # test proper error propagation for self involved operations
-        result = a * b - b * a
-        assert result.value == 0
-        assert result.error == 0
-        result = 2 * (a + b) - 2 * a - b - b
-        assert result.value == 0
-        assert result.error == 0
-        result = 2 * a / b * b - a - a
-        assert result.value == 0
-        assert result.error == 0
-
-    def test_derivative_error_propagation_for_correlated_values(self):
-        a = q.Measurement(5, 0.2)
-        b = q.Measurement(4, 0.1)
-        c = q.Measurement(6.3, 0.5)
-        d = q.Measurement(7.2, 0.5)
-        q.set_covariance(a, c, 0.09)
-        q.set_covariance(b, d, -0.04)
-        result = c * d - b / a
-        assert result.value == 44.56
-        assert result.error == pytest.approx(4.81581602638639)
-        result = q.sqrt(c) * d - b / q.exp(a)
-        assert result.value == pytest.approx(18.04490478513969)
-        assert result.error == pytest.approx(1.4483184455244065)
-
-    def test_monte_carlo_error_propagation(self):
-        settings.error_method = q.ErrorMethod.MONTE_CARLO
-        a = q.Measurement(5, 0.2)
-        b = q.Measurement(4, 0.1)
-        c = q.Measurement(6.3, 0.5)
-        d = q.Measurement(7.2, 0.5)
-        result = c * d - b / a
+        result = data["var3"] * data["var4"] - data["var2"] / data["var1"]
+        q.set_error_method(q.ErrorMethod.DERIVATIVE)
         assert result.value == pytest.approx(44.56, 1e-1)
         assert result.error == pytest.approx(4.783714456361291, 1e-1)
-        result = q.sqrt(c) * d - b / q.exp(a)
-        assert result.value == pytest.approx(18.04490478513969, 1e-1)
-        assert result.error == pytest.approx(1.4454463754287323, 1e-1)
+        q.set_error_method(q.ErrorMethod.MONTE_CARLO)
+        assert result.value == pytest.approx(44.56, 1e-1)
+        assert result.error == pytest.approx(4.783714456361291, 1e-1)
 
-    def test_monte_carlo_error_propagation_for_correlated_values(self):
-        settings.error_method = q.ErrorMethod.MONTE_CARLO
-        a = q.Measurement(5, 0.2)
-        b = q.Measurement(4, 0.1)
-        c = q.Measurement(6.3, 0.5)
-        d = q.Measurement(7.2, 0.5)
-        q.set_covariance(a, c, 0.09)
-        q.set_covariance(b, d, -0.04)
-        result = c * d - b / a
+        result = q.sqrt(data["var3"]) * data["var4"] - data["var2"] / q.exp(data["var1"])
+        q.set_error_method(q.ErrorMethod.DERIVATIVE)
+        assert result.value == pytest.approx(18.04490478513969, 1e-1)
+        assert result.error == pytest.approx(1.4454463754287326, 1e-1)
+        q.set_error_method(q.ErrorMethod.MONTE_CARLO)
+        assert result.value == pytest.approx(18.04490478513969, 1e-1)
+        assert result.error == pytest.approx(1.4454463754287326, 1e-1)
+
+        # test proper error propagation for data involved operations
+        q.set_error_method(q.ErrorMethod.DERIVATIVE)
+        result = data["var1"] * data["var2"] - data["var2"] * data["var1"]
+        assert result.value == 0
+        assert result.error == 0
+        result = 2 * (
+            data["var1"] + data["var2"]) - 2 * data["var1"] - data["var2"] - data["var2"]
+        assert result.value == 0
+        assert result.error == 0
+        result = 2 * data["var1"] / data["var2"] * data["var2"] - data["var1"] - data["var1"]
+        assert result.value == 0
+        assert result.error == 0
+
+    def test_error_propagation_for_correlated_values(self, data):
+        """Test the error propagation on correlated values"""
+
+        q.set_covariance(data["var1"], data["var3"], 0.09)
+        q.set_covariance(data["var2"], data["var4"], -0.04)
+
+        result = data["var3"] * data["var4"] - data["var2"] / data["var1"]
+        q.set_error_method(q.ErrorMethod.DERIVATIVE)
         assert result.value == pytest.approx(44.56, 5e-2)
         assert result.error == pytest.approx(4.81581602638639, 5e-2)
-        result = q.sqrt(c) * d - b / q.exp(a)
+        q.set_error_method(q.ErrorMethod.MONTE_CARLO)
+        assert result.value == pytest.approx(44.56, 5e-2)
+        assert result.error == pytest.approx(4.81581602638639, 5e-2)
+
+        result = q.sqrt(data["var3"]) * data["var4"] - data["var2"] / q.exp(data["var1"])
+        q.set_error_method(q.ErrorMethod.DERIVATIVE)
+        assert result.value == pytest.approx(18.04490478513969, 5e-2)
+        assert result.error == pytest.approx(1.4483184455244065, 5e-2)
+        q.set_error_method(q.ErrorMethod.MONTE_CARLO)
         assert result.value == pytest.approx(18.04490478513969, 5e-2)
         assert result.error == pytest.approx(1.4483184455244065, 5e-2)

@@ -1,7 +1,7 @@
-"""This module contains the data structure and operations for experimental values"""
+"""This package contains the data structures and operations for experimental values"""
 
 from .data import MeasuredValue as Measurement
-from .datasets import ExperimentalValueArray as MeasurementArray
-from .datasets import XYDataSet
-from .data import set_covariance, get_covariance, set_correlation, get_correlation
-from .operations import sqrt, exp, sin, cos, tan, asin, acos, atan, csc, sec, cot, log, log10, sind, cosd, tand, pi, e
+from .datasets import ExperimentalValueArray as MeasurementArray, XYDataSet
+from .data import get_covariance, set_covariance, get_correlation, set_correlation
+from .operations import sqrt, exp, sin, sind, cos, cosd, tan, tand, sec, secd, cot, cotd, \
+    csc, cscd, asin, acos, atan, log, log10, pi, e
