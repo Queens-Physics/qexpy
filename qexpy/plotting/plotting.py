@@ -1,21 +1,18 @@
 """This file contains function definitions for plotting"""
 
-import inspect
 import re
-from typing import List
-from collections.abc import Iterable
-
-import numpy as np
+import inspect
 import matplotlib.pyplot as plt
 
-from qexpy.utils.exceptions import InvalidArgumentTypeError, InvalidRequestError, IllegalArgumentError
-import qexpy.data.datasets as dts
-import qexpy.settings.literals as lit
-import qexpy.fitting.fitting as ft
-import qexpy.plotting.plot_utils as utils
-import qexpy.plotting.plotobjects as plo
+from typing import List
+from qexpy.utils.exceptions import IllegalArgumentError, UndefinedActionError
+from qexpy.plotting.plotobjects import ObjectOnPlot, XYObjectOnPlot, XYDataSetOnPlot, \
+    FunctionOnPlot, XYFitResultOnPlot, HistogramOnPlot, FitTarget, ObjectWithRange
 
-from qexpy.settings import get_settings
+import qexpy.utils as utils
+import qexpy.fitting as ft
+import qexpy.settings as sts
+import qexpy.settings.literals as lit
 
 
 class Plot:
@@ -25,7 +22,7 @@ class Plot:
     current_plot_buffer = None  # type: Plot
 
     def __init__(self):
-        self._objects = []  # type: List[plo.ObjectOnPlot]
+        self._objects = []  # type: List[ObjectOnPlot]
         self._plot_info = {
             lit.TITLE: "",
             lit.XNAME: "",
@@ -33,7 +30,7 @@ class Plot:
             lit.XUNIT: "",
             lit.YUNIT: ""
         }
-        self._plot_settings = {
+        self.plot_settings = {
             lit.LEGEND: False,
             lit.ERROR_BAR: False,
             lit.RESIDUALS: False,
@@ -41,6 +38,88 @@ class Plot:
         }
         self._color_palette = ["C{}".format(idx) for idx in range(20)]
         self._xrange = ()
+        self.main_ax = None
+        self.res_ax = None
+
+    def plot(self, *args, **kwargs):
+        """Adds a data set or function to plot"""
+        new_obj = self.__create_object_on_plot(*args, **kwargs)
+        self._objects.append(new_obj)
+
+    def hist(self, *args, **kwargs):
+        """Adds a histogram to plot"""
+
+        new_obj = HistogramOnPlot(*args, **kwargs)
+
+        # add color to the histogram
+        color = kwargs.pop("color", self._color_palette.pop(0))
+        new_obj.color = color
+
+        self._objects.append(new_obj)
+
+        return new_obj.n, new_obj.bin_edges
+
+    def fit(self, *args, **kwargs):
+        """Plots a curve fit to the last data set added to the figure"""
+
+        fit_targets = list(_obj for _obj in self._objects if isinstance(_obj, FitTarget))
+        target = next(reversed(fit_targets), None)
+
+        if not target:
+            raise UndefinedActionError("There is no dataset in this plot to be fitted.")
+
+        result = ft.fit(target.fit_target_dataset, *args, **kwargs)
+        color = kwargs.pop(
+            "color", target.color if isinstance(target, ObjectOnPlot) else "")
+        obj = self.__create_object_on_plot(result, color=color, **kwargs)
+
+        if isinstance(target, HistogramOnPlot) and isinstance(obj, XYFitResultOnPlot):
+            target.kwargs["alpha"] = 0.8
+            obj.func_on_plot.plot_kwargs["lw"] = 2
+
+        self._objects.append(obj)
+        return result
+
+    def show(self):
+        """Draws the plot to output"""
+
+        self.__setup_figure_and_subplots()
+
+        # set the xrange of functions to plot using the range of existing data sets
+        xrange = self.xrange
+        for obj in self._objects:
+            if isinstance(obj, FunctionOnPlot) and not obj.xrange_specified:
+                obj.xrange = xrange
+
+        for obj in self._objects:
+            obj.show(self.main_ax, self)
+
+        self.main_ax.set_title(self.title)
+        self.main_ax.set_xlabel(self.xlabel)
+        self.main_ax.set_ylabel(self.ylabel)
+        self.main_ax.grid()
+
+        if self.res_ax:
+            self.res_ax.set_xlabel(self.xlabel)
+            self.res_ax.set_ylabel("residuals")
+            self.res_ax.grid()
+
+        if self.plot_settings[lit.LEGEND]:
+            self.main_ax.legend()  # show legend if requested
+
+        plt.show()
+
+    def legend(self, new_setting=True):
+        """Add or remove legend to plot"""
+        self.plot_settings[lit.LEGEND] = new_setting
+
+    def error_bars(self, new_setting=True):
+        """Add or remove error bars from plot"""
+        self.plot_settings[lit.ERROR_BAR] = new_setting
+
+    def residuals(self, new_setting=True):
+        """Add or remove subplot to show residuals"""
+        self.plot_settings[lit.RESIDUALS] = new_setting
 
     @property
     def title(self) -> str:
@@ -50,52 +129,64 @@ class Plot:
     @title.setter
     def title(self, new_title: str):
         if not isinstance(new_title, str):
-            raise InvalidArgumentTypeError("plot title", got=new_title, expected="string")
+            raise TypeError("The new title is not a string!")
         self._plot_info[lit.TITLE] = new_title
 
     @property
     def xname(self) -> str:
         """str: The name of the x data, which will appear as x label"""
-        return self.__get_plot_info_or_extract_from_datasets(lit.XNAME, lit.XNAME, lit.YNAME)
+        if self._plot_info[lit.XNAME]:
+            return self._plot_info[lit.XNAME]
+        xy_objects = (obj for obj in self._objects if isinstance(obj, XYObjectOnPlot))
+        return next((obj.xname for obj in xy_objects if obj.xname), "")
 
     @xname.setter
-    def xname(self, new_label: str):
-        if not isinstance(new_label, str):
-            raise InvalidArgumentTypeError("plot label", got=new_label, expected="string")
-        self._plot_info[lit.XNAME] = new_label
+    def xname(self, name):
+        if not isinstance(name, str):
+            raise TypeError("Cannot set xname to \"{}\"".format(type(name)))
+        self._plot_info[lit.XNAME] = name
 
     @property
     def yname(self) -> str:
-        """str: The name of the y data, which will appear as the y axis label"""
-        return self.__get_plot_info_or_extract_from_datasets(lit.YNAME, lit.XNAME, lit.YNAME)
+        """str: The name of the y data, which will appear as y label"""
+        if self._plot_info[lit.YNAME]:
+            return self._plot_info[lit.YNAME]
+        xy_objects = (obj for obj in self._objects if isinstance(obj, XYObjectOnPlot))
+        return next((obj.yname for obj in xy_objects if obj.yname), "")
 
     @yname.setter
-    def yname(self, new_label: str):
-        if not isinstance(new_label, str):
-            raise InvalidArgumentTypeError("plot label", got=new_label, expected="string")
-        self._plot_info[lit.YNAME] = new_label
+    def yname(self, name):
+        if not isinstance(name, str):
+            raise TypeError("Cannot set yname to \"{}\"".format(type(name)))
+        self._plot_info[lit.YNAME] = name
 
     @property
     def xunit(self) -> str:
-        """str: The name of the x data, which will appear as x label"""
-        return self.__get_plot_info_or_extract_from_datasets(lit.XUNIT, lit.XUNIT, lit.YUNIT)
+        """str: The unit of the x data, which will appear on the x label"""
+        if self._plot_info[lit.XUNIT]:
+            return self._plot_info[lit.XUNIT]
+        xy_objects = (obj for obj in self._objects if isinstance(obj, XYObjectOnPlot))
+        return next((obj.xunit for obj in xy_objects if obj.xunit), "")
 
     @xunit.setter
-    def xunit(self, new_unit: str):
-        if not isinstance(new_unit, str):
-            raise InvalidArgumentTypeError("plot unit", got=new_unit, expected="string")
-        self._plot_info[lit.XUNIT] = new_unit
+    def xunit(self, unit):
+        if not isinstance(unit, str):
+            raise TypeError("Cannot set xunit to \"{}\"".format(type(unit)))
+        self._plot_info[lit.XUNIT] = unit
 
     @property
     def yunit(self) -> str:
-        """str: The name of the x data, which will appear as x label"""
-        return self.__get_plot_info_or_extract_from_datasets(lit.YUNIT, lit.XUNIT, lit.YUNIT)
+        """str: The unit of the y data, which will appear on the y label"""
+        if self._plot_info[lit.YUNIT]:
+            return self._plot_info[lit.YUNIT]
+        xy_objects = (obj for obj in self._objects if isinstance(obj, XYObjectOnPlot))
+        return next((obj.yunit for obj in xy_objects if obj.yunit), "")
 
     @yunit.setter
-    def yunit(self, new_unit: str):
-        if not isinstance(new_unit, str):
-            raise InvalidArgumentTypeError("plot unit", got=new_unit, expected="string")
-        self._plot_info[lit.YUNIT] = new_unit
+    def yunit(self, unit):
+        if not isinstance(unit, str):
+            raise TypeError("Cannot set yunit to \"{}\"".format(type(unit)))
+        self._plot_info[lit.YUNIT] = unit
 
     @property
     def xlabel(self) -> str:
@@ -108,11 +199,12 @@ class Plot:
         return self.yname + "[{}]".format(self.yunit) if self.yunit else ""
 
     @property
-    def xrange(self) -> tuple:
-        """tuple: The x-value domain of this plot"""
+    def xrange(self) -> (float, float):
+        """(float, float): The x-value domain of this plot"""
         if not self._xrange:
-            low_bound = min(min(obj.xvalues_to_plot) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
-            high_bound = max(max(obj.xvalues_to_plot) for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
+            objs = list(obj for obj in self._objects if isinstance(obj, ObjectWithRange))
+            low_bound = min(obj.xrange[0] for obj in objs if obj.xrange)
+            high_bound = max(obj.xrange[1] for obj in objs if obj.xrange)
             return low_bound, high_bound
         return self._xrange
 
@@ -121,133 +213,47 @@ class Plot:
         utils.validate_xrange(new_range)
         self._xrange = new_range
 
-    def plot(self, *args, **kwargs):
-        """Adds a data set or function to plot"""
-        new_obj = self.__create_object_on_plot(*args, **kwargs)
-        self._objects.append(new_obj)
-
-    def hist(self, *args, **kwargs) -> tuple:
-        """Adds a histogram to plot"""
-
-        # first add the object to plot
-        obj = self.__create_histogram_on_plot(*args, **kwargs)
-        self._objects.append(obj)
-
-        return obj.n, obj.bin_edges
-
-    def fit(self, *args, **kwargs):
-        """Plots a curve fit to the last data set added to the figure"""
-
-        obj = next((_obj for _obj in reversed(self._objects) if isinstance(_obj, plo.FitTarget)), None)
-
-        if not obj:
-            raise InvalidRequestError("There is not data set in this plot to be fitted.")
-
-        result = ft.fit(obj.fit_target_dataset, *args, **kwargs)
-        color = kwargs.pop("color", obj.color) if isinstance(obj, plo.ObjectOnPlot) else ""
-        fit_obj = self.__create_object_on_plot(result, color=color, **kwargs)
-
-        if isinstance(obj, plo.HistogramOnPlot) and isinstance(fit_obj, plo.XYFitResultOnPlot):
-            obj.kwargs["alpha"] = 0.8
-            fit_obj.func_on_plot.kwargs["lw"] = 2
-
-        self._objects.append(fit_obj)
-        return result
-
-    def legend(self, new_setting=True):
-        """Add or remove legend to plot"""
-        self._plot_settings[lit.LEGEND] = new_setting
-
-    def error_bars(self, new_setting=True):
-        """Add or remove error bars from plot"""
-        self._plot_settings[lit.ERROR_BAR] = new_setting
-
-    def residuals(self, new_setting=True):
-        """Add or remove subplot to show residuals"""
-        self._plot_settings[lit.RESIDUALS] = new_setting
-
-    def show(self):
-        """Draws the plot to output"""
-
-        main_ax, res_ax = self.__setup_figure_and_subplots()
-
-        # set the xrange of functions to plot using the range of existing data sets
-        for obj in self._objects:
-            if isinstance(obj, plo.FunctionOnPlot) and not obj.xrange_specified:
-                obj.xrange = self.xrange
-
-        for obj in self._objects:
-            _draw_object_on_plot(main_ax, res_ax, obj, errorbar=self._plot_settings[lit.ERROR_BAR])
-
-        main_ax.set_title(self.title)
-        main_ax.set_xlabel(self.xlabel)
-        main_ax.set_ylabel(self.ylabel)
-        main_ax.grid()
-
-        if res_ax:
-            res_ax.set_xlabel(self.xlabel)
-            res_ax.set_ylabel("residuals")
-            res_ax.grid()
-
-        if self._plot_settings[lit.LEGEND]:
-            main_ax.legend()  # show legend if requested
-
-        plt.show()
-
-    def __get_plot_info_or_extract_from_datasets(self, axis: str, reference_x_axis: str, other_axis: str):
-        """Helper method to get info from datasets for plot"""
-
-        if self._plot_info[axis]:
-            # use the user specified label if there is one
-            return self._plot_info[axis]
-
-        # else find the first data set and use the name of the data set as the label
-        data_sets_in_plot = (obj.dataset for obj in self._objects if isinstance(obj, plo.XYDataSetOnPlot))
-
-        data_set = next(data_sets_in_plot, None)
-        info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis) if data_set else ""
-        while data_set and not info_str:
-            data_set = next(data_sets_in_plot, None)
-            info_str = getattr(data_set, axis if axis == reference_x_axis else other_axis) if data_set else ""
-
-        return info_str if data_set and info_str else ""
-
-    def __create_object_on_plot(self, *args, **kwargs) -> "plo.ObjectOnPlot":
-        """Factory method that chooses the appropriate ObjectOnPlot to create with the arguments"""
+    def __create_object_on_plot(self, *args, **kwargs) -> "ObjectOnPlot":
+        """Factory method for creating ObjectOnPlot instances"""
 
         color = kwargs.pop("color", None)
+        obj = None
 
-        obj = _try_fit_result_on_plot(*args, **kwargs)
-        if obj:
+        try:
+            obj = XYFitResultOnPlot(*args, **kwargs)
+
+            # find if the data set related to the fit is on the plot and get its color
             dataset = next((_obj for _obj in self._objects if obj.dataset == _obj), None)
-            obj.color = color if color else dataset.color if dataset else self._color_palette.pop(0)
-            return obj
+            if not color:
+                color = dataset.color if dataset else ""
 
-        try_funcs = [_try_function_on_plot, _try_data_set_on_plot, _try_xdata_and_y_data]
-        obj = next((_obj for _obj in (test(*args, **kwargs) for test in try_funcs) if _obj), None)
-        if obj:
-            obj.color = color if color else self._color_palette.pop(0)
-            return obj
+        except IllegalArgumentError:
+            pass
 
-        raise IllegalArgumentError("Invalid combination of arguments for creating an object on plot.")
+        try:
+            obj = FunctionOnPlot(*args, **kwargs)
+        except IllegalArgumentError:
+            pass
 
-    def __create_histogram_on_plot(self, *args, **kwargs) -> "plo.HistogramOnPlot":
-        """Factory method that creates a histogram object to be plotted"""
+        try:
+            obj = XYDataSetOnPlot(*args, **kwargs)
+        except IllegalArgumentError:
+            pass
 
-        color = kwargs.pop("color", self._color_palette.pop(0))
-        obj = _try_histogram_on_plot(*args, color=color, **kwargs)
-
+        # check if an object is actually created
         if not obj:
-            raise IllegalArgumentError("Invalid combination of arguments for creating a histogram on plot.")
+            raise IllegalArgumentError("Invalid combination of arguments for plotting.")
 
+        # add color to the object and return
+        obj.color = color if color else self._color_palette.pop(0)
         return obj
 
-    def __setup_figure_and_subplots(self) -> (plt.Axes, plt.Axes):
+    def __setup_figure_and_subplots(self):
         """Create the mpl figure and subplots"""
 
-        has_residuals = self._plot_settings[lit.RESIDUALS]
+        has_residuals = self.plot_settings[lit.RESIDUALS]
 
-        width, height = get_settings().plot_dimensions
+        width, height = sts.get_settings().plot_dimensions
 
         if has_residuals:
             height = height * 1.5
@@ -262,7 +268,7 @@ class Plot:
             main_ax = figure.add_subplot()
             res_ax = None
 
-        return main_ax, res_ax
+        self.main_ax, self.res_ax = main_ax, res_ax
 
 
 def plot(*args, **kwargs) -> Plot:
@@ -312,39 +318,6 @@ def new_plot():
     Plot.current_plot_buffer = Plot()
 
 
-def _draw_object_on_plot(main_ax: plt.Axes, res_ax: plt.Axes, obj: plo.ObjectOnPlot, errorbar):
-    """Helper method that draws an ObjectOnPlot to the output"""
-
-    if isinstance(obj, plo.HistogramOnPlot):
-        main_ax.hist(obj.sample_values, **obj.kwargs)
-    elif isinstance(obj, plo.XYObjectOnPlot) and not errorbar:
-        kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
-        main_ax.plot(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.fmt, color=obj.color, label=obj.label, **kwargs)
-    elif isinstance(obj, plo.XYDataSetOnPlot):
-        kwargs = utils.extract_plt_errorbar_arguments(obj.kwargs)
-        main_ax.errorbar(obj.xvalues_to_plot, obj.yvalues_to_plot, obj.yerr_to_plot, obj.xerr_to_plot,
-                         fmt=obj.fmt, color=obj.color, label=obj.label, **kwargs)
-    elif isinstance(obj, plo.FunctionOnPlot):
-        xvalues = obj.xvalues_to_plot
-        yvalues = obj.yvalues_to_plot
-        kwargs = utils.extract_plt_plot_arguments(obj.kwargs)
-        main_ax.plot(xvalues, yvalues, obj.fmt, color=obj.color, label=obj.label, **kwargs)
-        yerr = obj.yerr_to_plot
-        if yerr.size > 0:
-            _plot_error_band(main_ax, xvalues, yvalues, yerr, obj.color)
-    elif isinstance(obj, plo.XYFitResultOnPlot):
-        _draw_object_on_plot(main_ax, res_ax, obj.func_on_plot, errorbar)
-        if res_ax:
-            _draw_object_on_plot(res_ax, main_ax, obj.residuals_on_plot, errorbar)
-
-
-def _plot_error_band(ax: plt.Axes, xvalues, yvalues, yerr, color):
-    """Adds an error band to plot around a set of x-y values"""
-    max_vals = yvalues + yerr
-    min_vals = yvalues - yerr
-    ax.fill_between(xvalues, min_vals, max_vals, interpolate=True, edgecolor='none', color=color, alpha=0.3, zorder=0)
-
-
 def __get_plot_obj():
     """Helper function that gets the appropriate Plot instance to draw on"""
 
@@ -357,8 +330,8 @@ def __get_plot_obj():
     code_context = frame_stack[2].code_context[0]
     is_return_value_assigned = re.match(r"[\w+ ,]*=", code_context) is not None
 
-    # if this function call is assigned to a variable, create new Plot instance, else, the objects
-    # passed into this function call will be drawn on the latest created Plot instance
+    # If this function call is assigned to a variable, create new Plot instance, else, the
+    # objects passed into this function call will be drawn on the latest created Plot
     if is_return_value_assigned:
         plot_obj = Plot()
         Plot.current_plot_buffer = plot_obj
@@ -366,58 +339,3 @@ def __get_plot_obj():
         plot_obj = Plot.current_plot_buffer
 
     return plot_obj
-
-
-def _try_function_on_plot(*args, **kwargs):
-    """Helper function which tries to create a FunctionOnPlot with the provided arguments"""
-
-    func = kwargs.pop("func", args[0] if args and callable(args[0]) else None)
-    # if there's a second argument, assume that is is the fmt string
-    fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
-
-    return plo.FunctionOnPlot(func, fmt=fmt, **kwargs) if func else None
-
-
-def _try_fit_result_on_plot(*args, **kwargs) -> "plo.XYFitResultOnPlot":
-    """Helper function that tries to plot an XYFitResult to plot"""
-
-    fit = args[0] if args and isinstance(args[0], ft.XYFitResult) else None
-    return plo.XYFitResultOnPlot(fit, **kwargs) if fit else None
-
-
-def _try_data_set_on_plot(*args, **kwargs) -> "plo.XYDataSetOnPlot":
-    """Helper function which tries to create a XYDataSetOnPlot with an existing XYDataSet"""
-
-    dataset = kwargs.pop("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
-    fmt = kwargs.pop("fmt", args[1] if len(args) > 1 and isinstance(args[1], str) else "")
-
-    return plo.XYDataSetOnPlot(dataset, fmt=fmt, **kwargs) if dataset else None
-
-
-def _try_xdata_and_y_data(*args, **kwargs) -> "plo.XYDataSetOnPlot":
-    """Helper function which tries to create an XYDataSetOnPlot with xdata and ydata"""
-
-    xdata = kwargs.pop("xdata", args[0] if len(args) >= 2 and isinstance(args[0], Iterable) else np.empty(0))
-    ydata = kwargs.pop("ydata", args[1] if len(args) >= 2 and isinstance(args[1], Iterable) else np.empty(0))
-    fmt = kwargs.pop("fmt", args[2] if len(args) >= 3 and isinstance(args[2], str) else "")
-
-    # wrapping data in numpy array objects
-    if isinstance(xdata, list):
-        xdata = np.asarray(xdata)
-    if isinstance(ydata, list):
-        ydata = np.asarray(ydata)
-
-    return plo.XYDataSetOnPlot(xdata, ydata, fmt=fmt, **kwargs) if xdata.size and ydata.size else None
-
-
-def _try_histogram_on_plot(*args, **kwargs):
-    """Helper function which tries to create a HistogramOnPlot with the arguments provided"""
-
-    data = kwargs.pop("data", args[0] if args and isinstance(args[0], (np.ndarray, list)) else np.empty(0))
-
-    if isinstance(data, dts.ExperimentalValueArray):
-        return plo.HistogramOnPlot.from_value_array(data, **kwargs)
-    if (isinstance(data, list) and data) or (isinstance(data, np.ndarray) and data.size):
-        return plo.HistogramOnPlot(data, **kwargs)
-
-    return None

@@ -7,14 +7,12 @@ This file contains tests for fitting a function to a data set.
 import pytest
 import qexpy as q
 
-settings = q.get_settings()
-
 
 class TestFitting:
 
     @pytest.fixture(autouse=True)
     def reset_environment(self):
-        settings.reset()
+        q.get_settings().reset()
 
     def test_poly_fit(self):
         """unit tests for polynomial fit functions"""
@@ -31,18 +29,18 @@ class TestFitting:
         assert result.ndof == 7
         print(result)
 
-        result = q.fit(xdata=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                       ydata=[3.86, 8.80, 16.11, 24.6, 35.71, 48.75, 64, 81.15, 99.72, 120.94],
-                       xerr=0.5, yerr=0.5, model=q.FitModel.QUADRATIC)
-        assert str(result[0]) == "1.004 +/- 0.009"
-        assert str(result[1]) == "2.0 +/- 0.1"
-        assert str(result[2]) == "0.9 +/- 0.2"
+        result = q.fit(xdata=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], xerr=0.5,
+                       ydata=[3.86, 8.80, 16.11, 24.6, 35.71, 48.75, 64,
+                              81.15, 99.72, 120.94], yerr=0.5, model=q.FitModel.QUADRATIC)
+        assert str(result[0]) == "a = 1.004 +/- 0.009"
+        assert str(result[1]) == "b = 2.0 +/- 0.1"
+        assert str(result[2]) == "c = 0.9 +/- 0.2"
         assert result.chi_squared == 1.1335539393939595
         assert result.ndof == 6
 
         xdata = q.MeasurementArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], error=0.5)
-        ydata = q.MeasurementArray([3.89, 18.01, 58.02, 135.92, 264.01, 453.99, 718.02, 1067.98, 1516.01, 2074],
-                                   error=0.5)
+        ydata = q.MeasurementArray([3.89, 18.01, 58.02, 135.92, 264.01, 453.99, 718.02,
+                                    1067.98, 1516.01, 2074], error=0.5)
         result = q.fit(xdata, ydata, model=q.FitModel.POLYNOMIAL, degree=3)
         assert pytest.approx(2, result[0])
         assert pytest.approx(9.882, result[1])

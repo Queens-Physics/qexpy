@@ -1,28 +1,26 @@
 """This module contains curve fitting functions"""
 
-from typing import List, Callable, Tuple, Union
-from enum import Enum
 import inspect
-from inspect import Parameter
-
-import functools
 import numpy as np
 import scipy.optimize as opt
-import qexpy.settings.literals as lit
-import qexpy.data.data as data
-import qexpy.data.operations as op
+
+from typing import Callable, List
+from inspect import Parameter
+from collections import namedtuple
+from qexpy.fitting.fit_utils import FitModelInfo, FitParamConstraints
+from qexpy.utils.exceptions import IllegalArgumentError
+
+import qexpy.data.data as dt
 import qexpy.data.datasets as dts
-import qexpy.utils.utils as utils
-from qexpy.utils.exceptions import InvalidArgumentTypeError, IllegalArgumentError
+import qexpy.settings.literals as lit
+import qexpy.utils as utils
+import qexpy.fitting.fit_utils as fut
 
+# container for the raw outputs of a fit
+RawFitResults = namedtuple("RawFitResults", "popt, perr, pcov")
 
-class FitModel(Enum):
-    """Some preset fit models"""
-    LINEAR = "linear"
-    QUADRATIC = "quadratic"
-    POLYNOMIAL = "polynomial"
-    GAUSSIAN = "gaussian"
-    EXPONENTIAL = "exponential"
+# container for fit results
+FitResults = namedtuple("FitResults", "func, params, residuals, chi2, pcorr")
 
 
 class XYFitResult:
@@ -32,36 +30,37 @@ class XYFitResult:
         """Constructor for an XYFitResult object"""
 
         self._dataset = kwargs.pop("dataset")
-        self._model_name = kwargs.pop("model")
-        self._fit_func = kwargs.pop("fit_func")
-        self._result_func = kwargs.pop("res_func")
-        self._result_params = kwargs.pop("res_params")
+        self._model = kwargs.pop("model")
         self._xrange = kwargs.pop("xrange")
 
-        y_fit_res = self.fit_function(self.dataset.xdata)
-        y_err = self.dataset.ydata - y_fit_res
+        result_func = kwargs.pop("res_func")
+        result_params = kwargs.pop("res_params")
+        pcorr = kwargs.pop("pcorr")
 
-        valid_residual_error_pairs = filter(lambda errors: errors[1] != 0, zip(y_err, self.dataset.yerr))
-        chi2 = sum((res.value / err) ** 2 for res, err in valid_residual_error_pairs)
+        y_fit_res = result_func(self._dataset.xdata)
+        self._ndof = len(y_fit_res) - len(result_params) - 1
 
-        self._residuals = y_err
-        self._chi2 = chi2
-        self._ndof = len(y_fit_res) - len(self._result_params) - 1
+        y_err = self._dataset.ydata - y_fit_res
 
-        self._pcorr = kwargs.pop("pcorr")
+        chi2 = sum(
+            (res.value / err) ** 2 for res, err in zip(y_err, self._dataset.yerr) if err != 0)
+
+        self._result = FitResults(result_func, result_params, y_err, chi2, pcorr)
 
     def __getitem__(self, index):
-        return self._result_params[index]
+        return self._result.params[index]
 
     def __str__(self):
         header = "----------------- Fit Results -------------------"
-        fit_type = "Fit of {} to {}\n".format(self._dataset.name, self._model_name)
-        result_param_values = map(str, self._result_params)
-        result_params = "Result Parameter List: \n" + ",\n".join(result_param_values) + "\n"
-        correlation_matrix = "Correlation Matrix: \n" + np.array_str(self._pcorr, precision=3) + "\n"
-        chi2_ndof = "chi2/ndof = {:.2f}/{}\n".format(self._chi2, self._ndof)
+        fit_type = "Fit of {} to {}\n".format(self._dataset.name, self._model.name)
+        res_params = map(str, self._result.params)
+        res_param_str = "Result Parameter List: \n{}\n".format(",\n".join(res_params))
+        corr_matrix = np.array_str(self._result.pcorr, precision=3)
+        corr_matrix_str = "Correlation Matrix: \n{}\n".format(corr_matrix)
+        chi2_ndof = "chi2/ndof = {:.2f}/{}\n".format(self._result.chi2, self._ndof)
         ending = "----------------- End Fit Results -------------------"
-        return "\n".join([header, fit_type, result_params, correlation_matrix, chi2_ndof, ending])
+        return "\n".join(
+            [header, fit_type, res_param_str, corr_matrix_str, chi2_ndof, ending])
 
     @property
     def dataset(self) -> "dts.XYDataSet":
@@ -71,22 +70,22 @@ class XYFitResult:
     @property
     def fit_function(self) -> Callable:
         """The function that fits to this data set"""
-        return self._result_func
+        return self._result.func
 
     @property
-    def params(self) -> List[str]:
+    def params(self) -> List:
         """The fit parameters of the fit function"""
-        return self._result_params
+        return self._result.params
 
     @property
     def residuals(self) -> List:
         """The residuals of the fit"""
-        return self._residuals
+        return self._result.residuals
 
     @property
-    def chi_squared(self) -> "data.DerivedValue":
+    def chi_squared(self) -> "dt.DerivedValue":
         """The goodness of fit represented as chi^2"""
-        return self._chi2
+        return self._result.chi2
 
     @property
     def ndof(self) -> int:
@@ -94,26 +93,26 @@ class XYFitResult:
         return self._ndof
 
     @property
-    def xrange(self) -> tuple:
+    def xrange(self) -> (float, float):
         """The xrange of the fit"""
         return self._xrange
 
 
-def fit(*args, **kwargs) -> XYFitResult:
-    """Perform a fit for an xy data set
+def fit(*args, **kwargs):
+    """Perform a fit to a data set
 
-    The fit function is very versatile. It can be called on an XYDataSet object, two lists, or
-    two MeasurementArray objects. QExPy provides 5 builtin fit models, which includes linear fit,
-    quadratic fit, general polynomial fit, gaussian fit, and exponential fit. The user can also
-    pass in a custom function they wish to fit their dataset on. For non-polynomial fit functions,
-    the user would usually need to pass in an array of guesses for the parameters.
+    The fit function can be called on an XYDataSet object, or two arrays or MeasurementArray
+    objects. QExPy provides 5 builtin fit models, which includes linear fit, quadratic fit,
+    general polynomial fit, gaussian fit, and exponential fit. The user can also pass in a
+    custom function they wish to fit their dataset on. For non-polynomial fit functions, the
+    user would usually need to pass in an array of guesses for the parameters.
 
     Args:
         *args: An XYDataSet object or two arrays to be fitted.
 
     Keyword Args:
         model: the fit model given as the string or enum representation of a pre-set model
-            or a callable function as a custom fit model
+            or a custom callable function with parameters
         xrange (tuple|list): a pair of numbers indicating the domain of the function
         degrees (int): the degree of the polynomial if polynomial fit were chosen
         parguess (list): initial guess for the parameters
@@ -126,80 +125,78 @@ def fit(*args, **kwargs) -> XYFitResult:
         yerr: the uncertainty on the ydata
 
     Returns:
-        an XYFitResult object
+        result (XYFitResult): the result of the fit
 
     """
 
-    functions_to_try = [__try_fit_to_xy_dataset, __try_fit_to_xdata_and_ydata]
+    result = __try_fit_to_xy_dataset(*args, **kwargs)
+    if result:
+        return result
 
-    result = next((res for res in map(lambda func: func(*args, **kwargs), functions_to_try) if res), None)
+    result = __try_fit_to_xdata_and_ydata(*args, **kwargs)
+    if result:
+        return result
 
-    if not result:
-        raise IllegalArgumentError("Unable to execute fit. Please make sure the arguments provided are correct.")
-
-    return result
+    raise IllegalArgumentError(
+        "Unable to execute fit. Please make sure the arguments provided are correct.")
 
 
-def fit_to_xy_dataset(dataset, model, **kwargs) -> XYFitResult:  # pylint:disable=too-many-locals
-    """Perform a fit on an XYDataSet"""
+def fit_to_xy_dataset(dataset: dts.XYDataSet, model, **kwargs):
+    """Perform a fit on an XYDataSet object"""
 
-    model_name, fit_func = __wrap_fit_func(model)
-    num_of_params, has_variable = __check_fit_func_and_get_number_of_params(fit_func)
+    fit_model = fut.prepare_fit_model(model)
 
-    if model_name == lit.POLY:
-        # default degree of polynomial is 3 because for degree 2 polynomials,
-        # a quadratic fit would've been chosen
-        num_of_params = kwargs.get("degrees", 3) + 1
+    if fit_model.name == lit.POLY:
+        # By default, the degree of a polynomial fit model is 3, because if it were 2, the
+        # quadratic fit model would've been chosen. The number of parameters is the degree
+        # of the fit model plus one. (e.g. a degree-1, or linear fit, has 2 params)
+        new_constraints = FitParamConstraints(kwargs.get("degrees", 3) + 1, False, False)
+        fit_model = FitModelInfo(fit_model.name, fit_model.func, new_constraints)
 
-    parguess = kwargs.get("parguess", None)
-    __check_type_and_len_of_params(num_of_params, has_variable, parguess, "parguess")
-
-    if parguess:
-        num_of_params = len(parguess)
-
-    parnames = kwargs.get("parnames", __get_param_names(model, num_of_params))
-    __check_type_and_len_of_params(num_of_params, has_variable, parnames, "parnames")
-    parunits = kwargs.get("parunits", [""] * num_of_params)
-    __check_type_and_len_of_params(num_of_params, has_variable, parunits, "parunits")
+    param_info, fit_model = fut.prepare_param_info(fit_model, **kwargs)
 
     xrange = kwargs.get("xrange", None)
-
-    xdata_to_fit = dataset.xdata
-    ydata_to_fit = dataset.ydata
-
-    if xrange:
-        if isinstance(xrange, (tuple, list)) and len(xrange) == 2 and xrange[0] < xrange[1]:
-            indices = (xrange[0] <= dataset.xdata) & (dataset.xdata < xrange[1])
-            xdata_to_fit = dataset.xdata[indices]
-            ydata_to_fit = dataset.ydata[indices]
-        else:
-            raise ValueError("invalid fit range for xdata: {}".format(xrange))
-
-    yerr = ydata_to_fit.errors if any(err > 0 for err in ydata_to_fit.errors) else None
-
-    if model_name == lit.POLY:
-        popt, perr, pcov = __polynomial_fit(xdata_to_fit, ydata_to_fit, num_of_params - 1, yerr)
+    if xrange and utils.validate_xrange(xrange):
+        x_to_fit = dataset.xdata[(xrange[0] <= dataset.xdata) & (dataset.xdata < xrange[1])]
+        y_to_fit = dataset.ydata[(xrange[0] <= dataset.xdata) & (dataset.xdata < xrange[1])]
     else:
-        popt, perr, pcov = __curve_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr)
+        x_to_fit = dataset.xdata
+        y_to_fit = dataset.ydata
+
+    yerr = y_to_fit.errors if any(err > 0 for err in y_to_fit.errors) else None
+
+    if fit_model.name == lit.POLY:
+        raw_res = __polynomial_fit(
+            x_to_fit, y_to_fit, fit_model.param_constraints.length - 1, yerr)
+    else:
+        raw_res = __curve_fit(
+            fit_model.func, x_to_fit, y_to_fit, param_info.parguess, yerr)
 
     # wrap the parameters in MeasuredValue objects
-    params = [data.MeasuredValue(param, err, unit=parunit, name=name)
-              for param, err, parunit, name in zip(popt, perr, parunits, parnames)]
+    def wrap_param_in_measurements():
+        par_res = zip(raw_res.popt, raw_res.perr, param_info.parunits, param_info.parnames)
+        for param, err, unit, name in par_res:
+            yield dt.MeasuredValue(param, err, unit=unit, name=name)
 
-    # wrap the result function
-    result_func = __combine_fit_func_and_fit_params(fit_func, params)
+    params = list(wrap_param_in_measurements())
 
-    return XYFitResult(dataset=dataset, model=model_name, fit_func=fit_func, res_func=result_func,
-                       res_params=params, pcorr=__cov2corr(pcov), xrange=xrange)
+    # wrap the result function with the params
+    result_func = __combine_fit_func_and_fit_params(fit_model.func, params)
+
+    return XYFitResult(dataset=dataset, model=fit_model, res_func=result_func,
+                       res_params=params, pcorr=utils.cov2corr(raw_res.pcov), xrange=xrange)
 
 
 def __try_fit_to_xy_dataset(*args, **kwargs):
     """Helper function to parse the inputs to a call to fit() for a single XYDataSet"""
 
-    dataset = kwargs.pop("dataset", args[0] if args and isinstance(args[0], dts.XYDataSet) else None)
+    dataset = kwargs.pop("dataset", args[0] if args else None)
     model = kwargs.pop("model", args[1] if len(args) > 1 else None)
 
-    return fit_to_xy_dataset(dataset, model, **kwargs) if dataset and model else None
+    if isinstance(dataset, dts.XYDataSet) and model:
+        return fit_to_xy_dataset(dataset, model, **kwargs)
+
+    return None
 
 
 def __try_fit_to_xdata_and_ydata(*args, **kwargs):
@@ -216,131 +213,48 @@ def __try_fit_to_xdata_and_ydata(*args, **kwargs):
         ydata = np.asarray(ydata) if isinstance(ydata, list) else np.empty(0)
 
     if xdata.size and ydata.size and model:
-        dataset = dts.XYDataSet(xdata, ydata, **kwargs)
-        return fit_to_xy_dataset(dataset, model, **kwargs)
+        return fit_to_xy_dataset(dts.XYDataSet(xdata, ydata, **kwargs), model, **kwargs)
 
     return None
 
 
-def __wrap_fit_func(model: Union[str, FitModel, Callable]) -> Tuple[str, Callable]:
-    """gets the callable fit function for a model
+def __polynomial_fit(xdata, ydata, degrees, yerr) -> RawFitResults:
+    """perform a polynomial fit with numpy.polyfit"""
 
-    Args:
-        model: the name of a pre-set model as a string or enum, or a callable fit function
-
-    Returns:
-        the name of the fit model and the callable fit function
-
-    """
-
-    if isinstance(model, str) and model in FITTERS:
-        return model, FITTERS[model]
-    if isinstance(model, FitModel):
-        return model.value, FITTERS[model.value]
-    if callable(model):
-        return "custom", model
-
-    raise TypeError("model function should be one of the presets or a custom function in the form: "
-                    "def model(x, *pars) where \"pars\" is the fit parameters")
+    popt, v_matrix = np.polyfit(xdata.values, ydata.values, degrees, cov=True, w=1 / yerr)
+    pcov = np.flipud(np.fliplr(v_matrix))
+    perr = np.sqrt(np.diag(pcov))
+    return RawFitResults(popt, perr, pcov)
 
 
-def __check_fit_func_and_get_number_of_params(func: Callable) -> Tuple[int, bool]:
-    """checks the validity of a fit function and figure out the expected number of arguments
+def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
+    """perform a regular curve fit with scipy.optimize.curve_fit"""
 
-    Args:
-        func: the fit function to be checked
+    try:
+        popt, pcov = opt.curve_fit(
+            fit_func, xdata.values, ydata.values, p0=parguess, sigma=yerr)
 
-    Returns:
-        The number of parameters for this fit function, and a flag indicating if the number
-        of parameters is variable
+        # adjust the fit by factoring in the uncertainty on x
+        if any(err > 0 for err in xdata.errors):
+            func = __combine_fit_func_and_fit_params(fit_func, popt)
+            adjusted_yerr = np.sqrt(
+                yerr ** 2 + xdata.errors * utils.numerical_derivative(func, xdata.errors))
 
-    """
+            # re-calculate the fit with adjusted uncertainties for ydata
+            popt, pcov = opt.curve_fit(
+                fit_func, xdata.values, ydata.values, p0=parguess, sigma=adjusted_yerr)
 
-    parameters = inspect.signature(func).parameters
+    except RuntimeError:
 
-    if any(param.kind in [Parameter.KEYWORD_ONLY, Parameter.VAR_KEYWORD] for param in parameters.values()):
-        raise ValueError("The fit function should not have keyword arguments")
+        # Re-write the error message so that it can be more easily understood by the user
+        raise RuntimeError(
+            "Fit could not converge. Please check that the fit model is well defined, and "
+            "that the parameter guess as well as the y-errors are appropriate.")
 
-    param_list = list(param for param in parameters.values())
+    # The error on the parameters
+    perr = np.sqrt(np.diag(pcov))
 
-    # if the last parameter is variable positional, the actual number of parameters may be higher
-    has_variable = param_list[-1].kind == Parameter.VAR_POSITIONAL
-
-    # the first argument of the fit function is the variable, only the rest are parameters
-    param_count = len(param_list) - 1
-
-    if param_count == 0:
-        raise IllegalArgumentError("The number of parameters in the given fit model is 0, there is nothing to fit.")
-
-    return param_count, has_variable
-
-
-def __check_type_and_len_of_params(nr_of_params: int, variable: bool, provided: List, info_type: str):
-    """helper function to check the validity of parameter guess and names
-
-    Args:
-        nr_of_params: the expected number of parameters
-        variable: if the number of parameters is variable
-        provided: the input to validate. e.g. "parname", "parguess", ...
-        info_type: the name of the input
-
-    Raises:
-        InvalidArgumentTypeError if the input is of an invalid type
-        ValueError if the number of parameter associated properties are wrong
-
-    """
-
-    if not provided:
-        return  # skip if the argument is not provided
-
-    if not isinstance(provided, (list, tuple)):
-        raise InvalidArgumentTypeError(info_type, got=provided, expected="list or tuple")
-
-    if len(provided) != nr_of_params or (variable and len(provided) < nr_of_params):
-        message = "Length of {} doesn't match the number of parameters of the fit function. Got: {}, Expected: {}{}"
-        raise ValueError(message.format(info_type, len(provided), nr_of_params, " or higher." if variable else ""))
-
-
-def __get_param_names(model: Union[str, FitModel, Callable], num_of_params: int) -> List:
-    """gets the name of fit parameters for a model if applicable"""
-
-    fitter = model if isinstance(model, str) else model.value if isinstance(model, FitModel) else ""
-
-    default_parnames = {
-        lit.GAUSS: ["normalization", "mean", "std"],
-        lit.EXPO: ["amplitude", "decay constant"],
-        lit.LIN: ["slope", "intercept"]
-    }
-
-    if fitter in default_parnames:
-        return default_parnames.get(fitter)
-
-    if inspect.isfunction(model):
-        par_names = __get_param_names_from_signature(model, num_of_params)
-        if par_names:
-            return par_names
-
-    return [""] * num_of_params
-
-
-def __get_param_names_from_signature(func: Callable, nr_of_params: int) -> List:
-    """Inspect the signature of the custom function for parameter names"""
-
-    # get all arguments to the function except for the first one (the variable)
-    params = list(inspect.signature(func).parameters.values())[1:]
-
-    # the last parameter could be variable, so we process the rest of the parameters first
-    param_names = list(param.name for param in params[:-1])
-
-    # now process the last parameter
-    if params[-1].kind == Parameter.VAR_POSITIONAL:
-        last_params = list("{}_{}".format(params[-1].name, idx) for idx in range(nr_of_params - len(param_names)))
-    else:
-        last_params = [params[-1]]
-
-    param_names.extend(last_params)
-
-    return param_names
+    return RawFitResults(popt, perr, pcov)
 
 
 def __combine_fit_func_and_fit_params(func: Callable, params) -> Callable:
@@ -348,61 +262,9 @@ def __combine_fit_func_and_fit_params(func: Callable, params) -> Callable:
 
     result_func = np.vectorize(lambda x: func(x, *params))
 
-    # change signature of the function to match the actual signature
-    sig = inspect.signature(result_func).replace(parameters=[Parameter("x", Parameter.POSITIONAL_ONLY)])
-    result_func.__signature__ = sig
+    # Change signature of the function to match the actual signature
+    sig = inspect.signature(result_func)
+    new_sig = sig.replace(parameters=[Parameter("x", Parameter.POSITIONAL_ONLY)])
+    result_func.__signature__ = new_sig
 
     return result_func
-
-
-def __polynomial_fit(xdata_to_fit, ydata_to_fit, degrees, yerr):
-    """perform a polynomial fit with numpy.polyfit"""
-    # noinspection PyTupleAssignmentBalance
-    popt, v_matrix = np.polyfit(xdata_to_fit.values, ydata_to_fit.values, degrees, cov=True, w=1 / yerr)
-    pcov = np.flipud(np.fliplr(v_matrix))
-    perr = np.sqrt(np.diag(pcov))
-    return popt, perr, pcov
-
-
-def __curve_fit(fit_func, xdata_to_fit, ydata_to_fit, parguess, yerr):
-    """perform a regular curve fit with scipy.optimize.curve_fit"""
-
-    try:
-        popt, pcov = opt.curve_fit(fit_func, xdata_to_fit.values, ydata_to_fit.values, p0=parguess, sigma=yerr)
-
-        # adjust the fit by factoring in the uncertainty on x
-        if any(err > 0 for err in xdata_to_fit.errors):
-            tmp_func = __combine_fit_func_and_fit_params(fit_func, popt)
-            adjusted_yerr = np.sqrt(
-                yerr ** 2 + xdata_to_fit.errors * utils.numerical_derivative(tmp_func, xdata_to_fit.errors))
-
-            # re-calculate the fit with adjusted uncertainties for ydata
-            popt, pcov = opt.curve_fit(fit_func, xdata_to_fit.values, ydata_to_fit.values, p0=parguess,
-                                       sigma=adjusted_yerr)
-
-    except RuntimeError:
-
-        # re-write the error message so that it can be more easily understood by the user
-        raise RuntimeError("Fit could not converge. Please check that the fit model is defined, "
-                           "and that the parameter guess and y errors are appropriate")
-
-    # the error on the parameters
-    perr = np.sqrt(np.diag(pcov))
-
-    return popt, perr, pcov
-
-
-def __cov2corr(pcov):
-    """Return a correlation matrix given a covariance matrix."""
-    std = np.sqrt(np.diag(pcov))
-    return pcov / np.outer(std, std)
-
-
-FITTERS = {
-    lit.LIN: lambda x, a, b: a * x + b,
-    lit.QUAD: lambda x, a, b, c: a * x ** 2 + b * x + c,
-    lit.POLY: lambda x, *coeffs: functools.reduce(lambda a, b: a * x + b, reversed(coeffs)),
-    lit.EXPO: lambda x, c, a: c * op.exp(-a * x),
-    lit.GAUSS: lambda x, norm, mean, std: norm / op.sqrt(2 * op.pi * std ** 2) * op.exp(
-        -1 / 2 * (x - mean) ** 2 / std ** 2)
-}

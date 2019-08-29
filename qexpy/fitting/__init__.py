@@ -1,4 +1,4 @@
-"""This package contains curve fitting functions"""
+"""This package contains fitting functions for data sets"""
 
-from .fitting import FitModel
+from .fit_utils import FitModel
 from .fitting import fit

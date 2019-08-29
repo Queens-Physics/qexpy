@@ -1,92 +1,43 @@
-"""Internal module used to parse units"""
+"""Internal module used for unit parsing and propagation"""
 
 import re
-import collections
 import warnings
+
 from typing import Dict, List, Union
+from collections import namedtuple
+from qexpy.settings import UnitStyle
+
+import qexpy.settings as sts
 import qexpy.settings.literals as lit
 
-from qexpy.settings import get_settings, UnitStyle
-
+# The standard character used in a dot multiply expression
 DOT_STRING = "⋅"
 
-# structure for an expression tree used to parse units
-Expression = collections.namedtuple("Expression", "operator, left, right")
-
-
-def construct_unit_string(units: Dict[str, int]) -> str:
-    """Constructs a string from a dictionary object of units
-
-    Args:
-        units (dict): the unit dictionary object where the powers are mapped to their
-            corresponding unit strings
-
-    Returns:
-        the string representation of the units
-
-    """
-
-    unit_string = ""
-    if get_settings().unit_style == UnitStyle.EXPONENTS:
-        unit_string = __construct_unit_string_as_fraction(units)
-    elif get_settings().unit_style == UnitStyle.FRACTION:
-        unit_string = __construct_unit_string_with_exponents(units)
-    return unit_string
-
-
-def __construct_unit_string_as_fraction(units: Dict[str, int]) -> str:
-    """Prints out units like kg⋅m^2⋅s^-2"""
-    unit_strings = []
-    for unit, power in units.items():
-        if power == 1:
-            # for power of 1 or -1, do not print the exponent as it's implied
-            unit_strings.append("{}".format(unit))
-        elif power != 0:
-            unit_strings.append("{}^{}".format(unit, power))
-    return DOT_STRING.join(unit_strings)
-
-
-def __construct_unit_string_with_exponents(units: Dict[str, int]) -> str:
-    """Prints out units like kg⋅m^2/s^3"""
-    numerator_units = []
-    denominator_units = []
-    for unit, power in units.items():
-        if power == 1:
-            numerator_units.append("{}".format(unit))
-        elif power == -1:
-            denominator_units.append("{}".format(unit))
-        elif power < 0:
-            denominator_units.append("{}^{}".format(unit, -power))
-        elif power > 0:
-            numerator_units.append("{}^{}".format(unit, power))
-    numerator_string = DOT_STRING.join(numerator_units)
-    denominator_string = DOT_STRING.join(denominator_units)
-    if not numerator_units:
-        # if fraction style is enforced, print as 1/... if all exponents are negative
-        numerator_string = "1"
-    if not denominator_units:
-        return numerator_string
-    if len(denominator_units) > 1:
-        # for multiple units in the denominator, use brackets to avoid ambiguity
-        return "{}/({})".format(numerator_string, denominator_string)
-    return "{}/{}".format(numerator_string, denominator_string)
+# A sub-tree in a binary expression tree representing a unit expression. The "operator" is
+# the root node of the sub-tree, and the "left" and "right" points to the two branches. The
+# leaf nodes of a unit expression tree are either unit strings or their powers.
+Expression = namedtuple("Expression", "operator, left, right")
 
 
 def parse_units(unit_string: str) -> Dict[str, int]:
-    """Parses a unit string into a dictionary object
+    """Decodes the string representation of a set of units
 
-    The keys of the return object will be the separate unit strings, and the values
-    for each entry is the exponent on that unit. This method is implemented with an
-    abstract syntax tree (AST).
+    This function parses the unit string into a binary expression tree, evaluate the tree to
+    find all units present in the string and their powers, which is then stored in a Python
+    dictionary object.
+
+    The units are parsed to the following rules:
+        1. Expressions enclosed in brackets are evaluated first
+        2. A unit with its power (e.g. "m^2") is considered a whole
+        3. Expressions connected with implicit multiplication are seen as in brackets.
+
+    For example, "kg*m^2/s^2A^2" would be decoded to: {"kg": 1, "m": 2, "s": -2, "A": -2}
 
     Args:
-        unit_string (str): the unit string to be parsed
+        unit_string (str): The string to be parsed
 
     Returns:
-        the dictionary object that stores information about the units
-
-    TODO:
-        add support for non-integer exponents on units? maybe?
+        A dictionary object that stores the power of each unit in the expression
 
     """
     tokens = __parse_unit_string_to_list(unit_string)
@@ -94,68 +45,88 @@ def parse_units(unit_string: str) -> Dict[str, int]:
     return __evaluate_unit_tree(ast)
 
 
+def construct_unit_string(units: Dict[str, int]) -> str:
+    """Constructs the string representation of a set of units
+
+    Units can be displayed in two different formats: Fraction and Exponents. The function
+    retrieves the global settings for unit styles and construct the string accordingly.
+
+    Args:
+        units (dict): A dictionary object representing a set of units
+
+    Returns:
+        The string representation of the units
+
+    """
+    unit_string = ""
+    if sts.get_settings().unit_style == UnitStyle.FRACTION:
+        unit_string = __construct_unit_string_as_fraction(units)
+    if sts.get_settings().unit_style == UnitStyle.EXPONENTS:
+        unit_string = __construct_unit_string_with_exponents(units)
+    return unit_string
+
+
+def operate_with_units(operator, *operands):
+    """perform an operation with two sets of units"""
+    # TODO: implement unit propagation for non-linear operations
+    result = UNIT_OPERATIONS[operator](*operands) if operator in UNIT_OPERATIONS else {}
+    # filter for non-zero values
+    return {unit: count for unit, count in result.items() if count != 0}
+
+
 def __parse_unit_string_to_list(unit_string: str) -> List[Union[str, List]]:
-    """Transforms a raw unit string into a list of tokens
+    """Parse a unit string into a list of tokens
 
-    For example, kg*m/s^2A^2 would be converted into the following list of tokens:
-    ["kg", "*", "m", "/", [["s", "^", "2"], "*", ["A", "^", "2"]]]
-
-    This list is later on used to construct the abstract syntax tree
+    A token can be a single unit, an operator such as "*" or "/" or "^", a number indicating
+    the power of a unit, or a list of tokens grouped together. For example, kg*m/s^2A^2 would
+    be parsed into: ["kg", "*", "m", "/", [["s", "^", "2"], "*", ["A", "^", "2"]]]
 
     """
 
-    raw_tokens_list = []  # the raw list of tokens
-    tokens_list = []  # the final list of tokens
+    raw_tokens_list = []  # The raw list of tokens
+    tokens_list = []  # The final list of tokens
 
-    # The following regex patterns matches the individual tokens in a unit string
-    # "[a-zA-Z]+(\^[0-9]+)*" matches any individual unit strings or ones with exponents
-    # "\).*?\)" matches any bracket enclosed expressions
-    # "/" and "\*" are the division and multiplication signs
     token_pattern = re.compile(r"[a-zA-Z]+(\^-?[0-9]+)?|/|\*|\(.*?\)")
-    bracket_pattern = re.compile(r"\(.*?\)")
+    bracket_enclosed_expression_pattern = re.compile(r"\(.*?\)")
     unit_with_exponent_pattern = re.compile(r"[a-zA-Z]+\^-?[0-9]+")
     operator_pattern = re.compile(r"[/*]")
 
-    # check if the input is valid using regex
+    # Check if the input only consists of valid token strings
     if not re.fullmatch(r"({})+".format(token_pattern.pattern), unit_string):
         raise ValueError("\"{}\" is not a valid unit".format(unit_string))
 
-    # for every token found, process it and append it to the list
+    # For every token found, process it and append it to the list
     for result in token_pattern.finditer(unit_string):
         token = result.group()
-        if bracket_pattern.fullmatch(token):
-            # if the token is a bracket enclosed expression, recursively parse the content of
+        if bracket_enclosed_expression_pattern.fullmatch(token):
+            # If the token is a bracket enclosed expression, recursively parse the content of
             # that bracket and append it to the tokens list as a list
-            raw_tokens_list.append(__parse_unit_string_to_list(token[1:len(token) - 1]))
+            raw_tokens_list.append(__parse_unit_string_to_list(token[1:-1]))
         elif unit_with_exponent_pattern.fullmatch(token):
-            # append a unit with exponent pattern as a list because it should be seen as a whole
-            exponent_sign_index = token.find("^")
-            raw_tokens_list.append([token[:exponent_sign_index], "^", token[exponent_sign_index + 1:]])
+            # Group a unit with exponent together and append to the list as a whole
+            unit_and_exponent = token.split("^")
+            raw_tokens_list.append([unit_and_exponent[0], "^", unit_and_exponent[1]])
         else:
-            # during this stage, all tokens are appended in order, no grouping has happened yet
-            # unless there is an explicit bracket, for expressions such as "s^2A^2", implicit
-            # multiplications signs still need to be added, and this expression should also be
-            # seen as enclosed by brackets so that it's considered as one
             raw_tokens_list.append(token)
 
-    # the following flag indicates if there is a preceding operator in the list of tokens, if
-    # not, an implicit multiplication sign needs to be added, and this token should be grouped
-    # with the previous one. This value starts as True because the first item in the list does
-    # not need any preceding operators
+    # At this stage, except for when an explicit bracket is present, no grouping of tokens
+    # has occurred yet. The following code checks for expressions connected with implicit
+    # multiplication, and groups them together (also adding a multiplication operator). The
+    # following flag keeps track of if there is an operator present between the current token
+    # and the last expression being processed, if not, assume implicit multiplication.
     preceding_operator_exists = True
 
-    # process the raw token list, add implicit brackets or multiplication signs if needed
     for token in raw_tokens_list:
         if preceding_operator_exists:
             tokens_list.append(token)
             preceding_operator_exists = False
         elif isinstance(token, str) and operator_pattern.fullmatch(token):
-            # if an actual operator is found
             tokens_list.append(token)
             preceding_operator_exists = True
         else:
+            # When there is no preceding operator, and the current token is not an operator,
+            # add multiplication sign, and group this item with the previous one.
             last_token = tokens_list.pop()
-            # add implicit multiplication sign and group this item with the previous one
             tokens_list.append([last_token, "*", token])
             preceding_operator_exists = False
 
@@ -163,23 +134,15 @@ def __parse_unit_string_to_list(unit_string: str) -> List[Union[str, List]]:
 
 
 def __construct_expression_tree_with_list(tokens: List[Union[str, List]]) -> Expression:
-    """Construct an abstract syntax tree from a list of tokens
+    """Build a binary expression tree with a list of tokens
 
-    This method will return a named tuple object that represents an expression tree.
-    The "operator" in the named tuple object is the node, and the "left" and "right"
-    operands are the two branches stemming from the node. The operands can be a simple
-    unit string, which represents a leaf, or a dictionary object, which would be the
-    root of a sub-tree. This tree can be traversed using in-order to recreate the unit
-    expression.
-
-    The algorithm to construct the tree is called recursive descent, which made use of
-    two stacks. The operator stack and the operand stack. For each new token, if the
-    token is an operator, it is compared with the current top of the operator stack.
-    The operator stack is maintained so that the top of the stack always has higher
-    priority compared to the rest of the stack. If the current top has higher priority
-    compared to the operator being processed, it is popped from the stack, used to build
-    a sub-tree with the top two operands in the operand stack, and re-pushed into the
-    operand stack.
+    The algorithm to construct the tree is called recursive descent, which made use of two
+    stacks. The operator stack and the operand stack. For each new token, if the token is an
+    operator, it is compared with the current top of the operator stack. The operator stack
+    is maintained so that the top of the stack has higher priority in order of operations
+    compared to the rest of the stack. If the current top has higher priority compared to the
+    operator being processed, it is popped from the stack, used to build a sub-tree with the
+    top two operands in the operand stack, and pushed into the operand stack.
 
     For details regarding this algorithm, see the reference below.
 
@@ -187,9 +150,20 @@ def __construct_expression_tree_with_list(tokens: List[Union[str, List]]) -> Exp
         Parsing Expressions by Recursive Descent - Theodore Norvell (C) 1999
         https://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
 
+    Args:
+        tokens (list): The list of tokens to process.
+
+    Returns:
+        The expression tree representing the set of units. For more details regarding the
+        structure of the tree, see top of this file where the Expression type is defined.
+
     """
+
+    # Initialize the two stacks
     operand_stack = []  # type: List[Union[Expression, str]]
     operator_stack = ["base"]  # type: List[str]
+
+    # Define the order of operations
     precedence = {
         "base": 0,
         "*": 1,
@@ -201,34 +175,44 @@ def __construct_expression_tree_with_list(tokens: List[Union[str, List]]) -> Exp
         right = operand_stack.pop()
         left = operand_stack.pop()
         operator = operator_stack.pop()
-        expression = Expression(operator, left, right)
-        operand_stack.append(expression)
+        operand_stack.append(Expression(operator, left, right))
 
-    # push all tokens into the two stacks, make sub-trees if necessary
+    # Push all tokens into the two stacks, make sub-trees if necessary
     for token in tokens:
-        top_of_operators = operator_stack[len(operator_stack) - 1]
+        top_of_operators = operator_stack[-1]
         if isinstance(token, list):
+            # Recursively make sub-tree with grouped expressions
             operand_stack.append(__construct_expression_tree_with_list(token))
         elif token in precedence and precedence[token] > precedence[top_of_operators]:
-            operator_stack.append(token)
+            operator_stack.append(token)  # Push the higher priority operator on top
         elif token in precedence and precedence[token] <= precedence[top_of_operators]:
+            # If an operator with lower precedence is being processed, make a sub-tree
+            # with the current top of the operator stack and push it to the operands.
             __construct_sub_tree_and_push_to_operand_stack()
-            operator_stack.append(token)
+            operator_stack.append(token)  # This operator becomes the new top
         else:
             operand_stack.append(token)
 
-    # create the final tree from all the tokens and sub-trees
+    # Create the final tree from all the tokens and sub-trees left in the stacks
     while len(operator_stack) > 1:
         __construct_sub_tree_and_push_to_operand_stack()
 
     return operand_stack[0] if operand_stack else Expression("", "", "")
 
 
-def __evaluate_unit_tree(tree: Union[Expression, str]) -> dict:
-    """Construct unit dictionary object from an expression tree"""
+def __evaluate_unit_tree(tree: Expression) -> Dict[str, int]:
+    """Construct a unit dictionary object from an expression tree
+
+    Args:
+        tree (Expression): the expression tree to be evaluated
+
+    Returns:
+        All units in the tree and their powers stored in a dictionary object
+
+    """
     units = {}
     if isinstance(tree, Expression) and tree.operator == "^":
-        # when a unit with an exponent is found, add it to the dictionary object
+        # When a unit with an exponent is found, add it to the dictionary object
         units[tree.left] = int(tree.right)
     elif isinstance(tree, Expression) and tree.operator in ["*", "/"]:
         for unit, exponent in __evaluate_unit_tree(tree.left).items():
@@ -242,23 +226,57 @@ def __evaluate_unit_tree(tree: Union[Expression, str]) -> dict:
     return units
 
 
-def operate_with_units(operator, *operands):
-    """perform an operation with two sets of units"""
-    # TODO: implement unit propagation for non-linear operations
-    return UNIT_OPERATIONS[operator](*operands) if operator in UNIT_OPERATIONS else {}
+def __construct_unit_string_as_fraction(units: Dict[str, int]) -> str:
+    """Construct a unit string in the fraction format"""
+
+    numerator_units = []
+    denominator_units = []
+    for unit, power in units.items():
+        if power == 1:
+            numerator_units.append("{}".format(unit))
+        elif power == -1:
+            denominator_units.append("{}".format(unit))
+        elif power < 0:
+            denominator_units.append("{}^{}".format(unit, -power))
+        elif power > 0:
+            numerator_units.append("{}^{}".format(unit, power))
+
+    numerator_string = DOT_STRING.join(numerator_units) if numerator_units else "1"
+    denominator_string = DOT_STRING.join(denominator_units)
+
+    if not denominator_units:
+        return numerator_string if numerator_units else ""
+    if len(denominator_units) > 1:
+        # For multiple units in the denominator, use brackets to avoid ambiguity
+        return "{}/({})".format(numerator_string, denominator_string)
+
+    return "{}/{}".format(numerator_string, denominator_string)
 
 
-def _add_and_sub(units_var1, units_var2):
-    from copy import deepcopy
+def __construct_unit_string_with_exponents(units: Dict[str, int]) -> str:
+    """Construct a unit string in the exponent format"""
+    unit_strings = []
+    for unit, power in units.items():
+        if power == 1:
+            # For power of 1, do not print the exponent as it's implied
+            unit_strings.append("{}".format(unit))
+        elif power != 0:
+            # Ignore 0 powers if present (they shouldn't be)
+            unit_strings.append("{}^{}".format(unit, power))
+    return DOT_STRING.join(unit_strings)
+
+
+def __add_and_sub(units_var1, units_var2):
     if units_var1 and units_var2 and units_var1 != units_var2:
-        warnings.warn("You're trying to add/subtract two values with mismatching units, returning empty unit")
+        warnings.warn("You're trying to add/subtract two values with mismatching units.")
         return {}
-    if not units_var1:
+    from copy import deepcopy
+    if not units_var1:  # If any of the two units are empty, use the other one
         return deepcopy(units_var2)
     return deepcopy(units_var1)
 
 
-def _mul(units_var1, units_var2):
+def __mul(units_var1, units_var2):
     units = {}
     for unit, exponent in units_var1.items():
         __update_unit_exponent_count_in_dict(units, unit, exponent)
@@ -267,7 +285,7 @@ def _mul(units_var1, units_var2):
     return units
 
 
-def _div(units_var1, units_var2):
+def __div(units_var1, units_var2):
     units = {}
     for unit, exponent in units_var1.items():
         __update_unit_exponent_count_in_dict(units, unit, exponent)
@@ -276,13 +294,14 @@ def _div(units_var1, units_var2):
     return units
 
 
-def __update_unit_exponent_count_in_dict(unit_dict, unit_string, count):
-    unit_dict[unit_string] = (0 if unit_string not in unit_dict else unit_dict[unit_string]) + count
+def __update_unit_exponent_count_in_dict(unit_dict, unit_string, change):
+    current_count = 0 if unit_string not in unit_dict else unit_dict[unit_string]
+    unit_dict[unit_string] = current_count + change
 
 
 UNIT_OPERATIONS = {
-    lit.ADD: _add_and_sub,
-    lit.SUB: _add_and_sub,
-    lit.MUL: _mul,
-    lit.DIV: _div
+    lit.ADD: __add_and_sub,
+    lit.SUB: __add_and_sub,
+    lit.MUL: __mul,
+    lit.DIV: __div
 }
