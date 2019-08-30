@@ -723,11 +723,8 @@ class DerivedValue(ExperimentalValue):
     def __init__(self, formula: Formula):
         """Constructor for a DerivedValue"""
 
-        # Flag indicating if this object is set to use an error method that might not be
-        # the same as in the global configurations.
-        self._is_error_method_specified = False
-
-        self._error_method = sts.get_settings().error_method
+        # The error method used for error propagation of this value
+        self._error_method = sts.ErrorMethod.AUTO
 
         # The expression tree representing how this value is derived.
         self._formula = formula
@@ -802,9 +799,9 @@ class DerivedValue(ExperimentalValue):
         be different from the global settings.
 
         """
-        if self._is_error_method_specified:
-            return self._error_method
-        return sts.get_settings().error_method
+        if self._error_method == sts.ErrorMethod.AUTO:
+            return sts.get_settings().error_method
+        return self._error_method
 
     @error_method.setter
     def error_method(self, new_error_method: Union[sts.ErrorMethod, str]):
@@ -814,11 +811,10 @@ class DerivedValue(ExperimentalValue):
             self._error_method = sts.ErrorMethod(new_error_method)
         else:
             raise ValueError("Invalid error method!")
-        self._is_error_method_specified = True
 
     def reset_error_method(self):
         """Resets the default error method for this value to follow the global settings"""
-        self._is_error_method_specified = False
+        self._error_method = sts.ErrorMethod.AUTO
 
     def recalculate(self):
         """Recalculates the value

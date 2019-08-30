@@ -10,6 +10,7 @@ class ErrorMethod(Enum):
     """Preferred method of error propagation"""
     DERIVATIVE = lit.DERIVATIVE_PROPAGATED
     MONTE_CARLO = lit.MONTE_CARLO_PROPAGATED
+    AUTO = lit.AUTO
 
 
 class PrintStyle(Enum):
