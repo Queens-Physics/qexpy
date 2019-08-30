@@ -165,7 +165,7 @@ def fit_to_xy_dataset(dataset: dts.XYDataSet, model, **kwargs):
 
     yerr = y_to_fit.errors if any(err > 0 for err in y_to_fit.errors) else None
 
-    if fit_model.name == lit.POLY:
+    if fit_model.name in [lit.POLY, lit.LIN, lit.QUAD]:
         raw_res = __polynomial_fit(
             x_to_fit, y_to_fit, fit_model.param_constraints.length - 1, yerr)
     else:
@@ -221,8 +221,7 @@ def __try_fit_to_xdata_and_ydata(*args, **kwargs):
 def __polynomial_fit(xdata, ydata, degrees, yerr) -> RawFitResults:
     """perform a polynomial fit with numpy.polyfit"""
 
-    popt, v_matrix = np.polyfit(xdata.values, ydata.values, degrees, cov=True, w=1 / yerr)
-    pcov = np.flipud(np.fliplr(v_matrix))
+    popt, pcov = np.polyfit(xdata.values, ydata.values, degrees, cov=True, w=1 / yerr)
     perr = np.sqrt(np.diag(pcov))
     return RawFitResults(popt, perr, pcov)
 
@@ -260,7 +259,7 @@ def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
 def __combine_fit_func_and_fit_params(func: Callable, params) -> Callable:
     """wraps a function with params to a function of x"""
 
-    result_func = np.vectorize(lambda x: func(x, *params))
+    result_func = utils.vectorize(lambda x: func(x, *params))
 
     # Change signature of the function to match the actual signature
     sig = inspect.signature(result_func)
