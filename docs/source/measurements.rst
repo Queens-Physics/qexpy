@@ -4,7 +4,6 @@ The Measurement Object
 
 To record values with an uncertainty, we use the :py:class:`.MeasuredValue` object. It is a child class of :py:class:`.ExperimentalValue`, so it inherits all attributes and methods from the :py:class:`.ExperimentalValue` class.
 
-.. autoclass:: qexpy.data.Measurement
 .. autoclass:: qexpy.data.data.MeasuredValue
 
 Repeated Measurements
@@ -31,6 +30,7 @@ Methods
 .. automethod:: qexpy.data.data.RepeatedlyMeasuredValue.use_error_on_mean_for_uncertainty
 .. automethod:: qexpy.data.data.RepeatedlyMeasuredValue.use_error_weighted_mean_as_value
 .. automethod:: qexpy.data.data.RepeatedlyMeasuredValue.use_propagated_error_for_uncertainty
+.. automethod:: qexpy.data.data.RepeatedlyMeasuredValue.show_histogram
 
 Correlated Measurements
 =======================
@@ -42,7 +42,7 @@ Sometimes in experiments, two measured quantities can be correlated, and this co
 .. autofunction:: qexpy.data.data.set_covariance
 .. autofunction:: qexpy.data.data.get_covariance
 
-There are also shortcuts to the above methods implemented in :py:class:`.MeasuredValue`.
+There are also shortcuts to the above methods implemented in :py:class:`.ExperimentalValue`.
 
 .. automethod:: qexpy.data.data.MeasuredValue.set_correlation
 .. automethod:: qexpy.data.data.MeasuredValue.get_correlation
