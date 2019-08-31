@@ -93,13 +93,6 @@ class ExperimentalValue(ABC):
     def __init__(self, unit: str = "", name: str = "", save=True):
         """Constructor for ExperimentalValue"""
 
-        # Stores the value/uncertainty pairs. Each ExperimentalValue may have multiple sets
-        # of values and uncertainties, each corresponding to how the value is obtained. User
-        # recorded values are stored under the key "recorded", and calculated values are
-        # stored under "derivative" and "monte_carlo", which indicates the method of error
-        # propagation used to calculate this value and propagate uncertainties.
-        self._values = {}  # type: Dict[str, ValueWithError]
-
         # Stores each unit string and their powers.
         if unit is not None and not isinstance(unit, str):
             raise TypeError("The unit provided is not a string!")
@@ -318,11 +311,11 @@ class Constant(ExperimentalValue):
 
     def __init__(self, value, **kwargs):
         super().__init__(**kwargs)
-        self._values[lit.RECORDED] = ValueWithError(value, 0)
+        self._value_error = ValueWithError(value, 0)
 
     @property
     def value(self) -> float:
-        return self._values[lit.RECORDED].value
+        return self._value_error.value
 
     @property
     def error(self) -> float:
@@ -344,8 +337,8 @@ class MeasuredValue(ExperimentalValue):
     interface. On the top level of this package, this Class is imported as "Measurement".
 
     Args:
-        data (Real|list): The center value of the measurement
-        error (Real|list): The uncertainty on value
+        data (float|list): The center value of the measurement
+        error (float|list): The uncertainty on value
 
     Keyword Args:
         unit (str): The unit of this value
@@ -368,23 +361,21 @@ class MeasuredValue(ExperimentalValue):
         unit = kwargs.get("unit", "")
         name = kwargs.get("name", "")
         super().__init__(unit, name, save=True)
-        value_error = ValueWithError(float(data), float(error) if error else 0.0)
-        self._values[lit.RECORDED] = value_error
+        self._value, self._error = float(data), float(error) if error else 0.0
 
     @property
     def value(self) -> float:
-        return self._values[lit.RECORDED].value
+        return self._value
 
     @value.setter
     def value(self, new_value: Real):
         if not isinstance(new_value, Real):
             raise TypeError("Cannot assign a {} to the value!".format(type(new_value)))
-        value_error = ValueWithError(new_value, self._values[lit.RECORDED].error)
-        self._values[lit.RECORDED] = value_error
+        self._value = new_value
 
     @property
     def error(self) -> float:
-        return self._values[lit.RECORDED].error
+        return self._error
 
     @error.setter
     def error(self, new_error: Real):
@@ -392,8 +383,7 @@ class MeasuredValue(ExperimentalValue):
             raise TypeError("Cannot assign a {} to the error!".format(type(new_error)))
         if new_error < 0:
             raise ValueError("The error must be a positive real number!")
-        value_error = ValueWithError(self._values[lit.RECORDED].value, new_error)
-        self._values[lit.RECORDED] = value_error
+        self._error = new_error
 
     @property
     def relative_error(self) -> float:
@@ -406,7 +396,7 @@ class MeasuredValue(ExperimentalValue):
         if relative_error < 0:
             raise ValueError("The error must be a positive real number!")
         new_error = self.value * float(relative_error)
-        self._values[lit.RECORDED] = ValueWithError(self.value, new_error)
+        self._error = new_error
 
     def derivative(self, other: "ExperimentalValue") -> float:
         if not isinstance(other, ExperimentalValue):
@@ -578,8 +568,8 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         super().__init__(self._mean, self._error_on_mean, **kwargs)
 
     @property
-    def value(self) -> float:
-        return self._values[lit.RECORDED].value
+    def value(self):
+        return self._value
 
     @value.setter
     def value(self, new_value: Real):
@@ -589,8 +579,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         self.__class__ = MeasuredValue
         if not isinstance(new_value, Real):
             raise ValueError("Cannot assign a {} to the value!".format(type(new_value)))
-        value_error = ValueWithError(new_value, self._values[lit.RECORDED].error)
-        self._values[lit.RECORDED] = value_error
+        self._value = new_value
 
     @property
     def raw_data(self) -> np.ndarray:
@@ -625,27 +614,23 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
     def use_std_for_uncertainty(self):
         """Sets the uncertainty of this value to the standard deviation"""
-        value = self._values[lit.RECORDED]
-        self._values[lit.RECORDED] = ValueWithError(value.value, self._std)
+        self._error = self._std
 
     def use_error_on_mean_for_uncertainty(self):
         """Sets the uncertainty of this value to the error on the mean"""
-        value = self._values[lit.RECORDED]
-        self._values[lit.RECORDED] = ValueWithError(value.value, self._error_on_mean)
+        self._error = self._error_on_mean
 
     def use_error_weighted_mean_as_value(self):
         """Sets the value of this object to the error weighted mean"""
-        value = self._values[lit.RECORDED]
         error_weighted_mean = self.error_weighted_mean
         if not np.isnan(error_weighted_mean):
-            self._values[lit.RECORDED] = ValueWithError(error_weighted_mean, value.error)
+            self._value = error_weighted_mean
 
     def use_propagated_error_for_uncertainty(self):
         """Sets the uncertainty of this object to the weight propagated error"""
-        value = self._values[lit.RECORDED]
         propagated_error = self.propagated_error
         if not np.isnan(propagated_error):
-            self._values[lit.RECORDED] = ValueWithError(value.value, propagated_error)
+            self._error = propagated_error
 
     def set_covariance(self, other: "ExperimentalValue", cov: float = None):
         """Sets the covariance of this value with another value"""
@@ -738,14 +723,17 @@ class DerivedValue(ExperimentalValue):
     def __init__(self, formula: Formula):
         """Constructor for a DerivedValue"""
 
-        # Flag indicating if this object is set to use an error method that might not be
-        # the same as in the global configurations.
-        self._is_error_method_specified = False
-
-        self._error_method = sts.get_settings().error_method
+        # The error method used for error propagation of this value
+        self._error_method = sts.ErrorMethod.AUTO
 
         # The expression tree representing how this value is derived.
         self._formula = formula
+
+        # Stores the value/uncertainty pairs. Each DerivedValue may have multiple sets of
+        # values and uncertainties, each corresponding to how the value is obtained. The two
+        # options are "derivative" and "monte_carlo", which indicates the method of error
+        # propagation used to calculate this value and propagate uncertainties.
+        self._values = {}  # type: Dict[str, ValueWithError]
 
         super().__init__(save=True)
 
@@ -762,8 +750,9 @@ class DerivedValue(ExperimentalValue):
         warnings.warn(
             "You are trying to override the calculated value of a derived quantity. This "
             "value is casted to a regular Measurement")
+        error = self.error
         self.__class__ = MeasuredValue  # casting it to MeasuredValue
-        self._values = {lit.RECORDED: ValueWithError(new_value, self.error)}
+        self.value, self.error = new_value, error
 
     @property
     def error(self) -> float:
@@ -778,8 +767,9 @@ class DerivedValue(ExperimentalValue):
         warnings.warn(
             "You are trying to override the propagated error of a derived quantity. This "
             "value is casted to a regular Measurement")
+        value = self.value
         self.__class__ = MeasuredValue  # casting it to MeasuredValue
-        self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}
+        self.value, self.error = value, new_error
 
     @property
     def relative_error(self) -> float:
@@ -795,8 +785,9 @@ class DerivedValue(ExperimentalValue):
         warnings.warn(
             "You are trying to override the propagated relative error of a derived quantity."
             " This value is casted to a regular Measurement")
+        value = self.value
         self.__class__ = MeasuredValue  # casting it to MeasuredValue
-        self._values = {lit.RECORDED: ValueWithError(self.value, new_error)}
+        self.value, self.error = value, new_error
 
     @property
     def error_method(self) -> sts.ErrorMethod:
@@ -808,9 +799,9 @@ class DerivedValue(ExperimentalValue):
         be different from the global settings.
 
         """
-        if self._is_error_method_specified:
-            return self._error_method
-        return sts.get_settings().error_method
+        if self._error_method == sts.ErrorMethod.AUTO:
+            return sts.get_settings().error_method
+        return self._error_method
 
     @error_method.setter
     def error_method(self, new_error_method: Union[sts.ErrorMethod, str]):
@@ -820,11 +811,10 @@ class DerivedValue(ExperimentalValue):
             self._error_method = sts.ErrorMethod(new_error_method)
         else:
             raise ValueError("Invalid error method!")
-        self._is_error_method_specified = True
 
     def reset_error_method(self):
         """Resets the default error method for this value to follow the global settings"""
-        self._is_error_method_specified = False
+        self._error_method = sts.ErrorMethod.AUTO
 
     def recalculate(self):
         """Recalculates the value

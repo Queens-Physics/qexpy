@@ -6,10 +6,8 @@ be used when accessing common dictionary entries. This improves readability.
 """
 
 # value types
-RECORDED = "recorded"
 DERIVATIVE_PROPAGATED = "derivative"
 MONTE_CARLO_PROPAGATED = "monte-carlo"
-CONSTANT = "constant"
 
 # data fields
 COVARIANCE = "covariance"

@@ -19,3 +19,8 @@ Methods
 -------
 
 .. automethod:: qexpy.data.data.ExperimentalValue.derivative
+.. automethod:: qexpy.data.data.ExperimentalValue.get_covariance
+.. automethod:: qexpy.data.data.ExperimentalValue.set_covariance
+.. automethod:: qexpy.data.data.ExperimentalValue.get_correlation
+.. automethod:: qexpy.data.data.ExperimentalValue.set_correlation
+

@@ -408,6 +408,23 @@ def __differentiator(operator: str) -> Callable:
     return DIFFERENTIATORS[operator]
 
 
+def __pow_differentiator(o, x, a):
+    """The differentiator for a power function is a little more complicated
+
+    This is added because the derivative of f(x)^g(x) includes a term that involves taking
+    the log of f(x). This should not be necessary if g(x) is a constant. In some cases where
+    f(x) is smaller than 0, the log would return nan, which makes the entire expression nan.
+    This should not need to happen if d/dx of g(x) is 0, which should eliminate the nan term.
+    Since in Python nan * 0 returns nan instead of 0, this helper function is written so that
+    this can happen.
+
+    """
+    leading = x.value ** (a.value - 1)
+    first = a.value * x.derivative(o)
+    second = x.value * np.log(x.value) * a.derivative(o) if a.derivative(o) != 0 else 0
+    return leading * (first + second)
+
+
 OPERATIONS = {
     lit.NEG: lambda x: -x,
     lit.ADD: lambda a, b: a + b,
@@ -449,8 +466,7 @@ DIFFERENTIATORS = {
     lit.SEC: lambda o, x: np.tan(x.value) / np.cos(x.value) * x.derivative(o),
     lit.CSC: lambda o, x: -1 / (np.tan(x.value) * np.sin(x.value)) * x.derivative(o),
     lit.COT: lambda o, x: -1 / (np.sin(x.value) ** 2) * x.derivative(o),
-    lit.POW: lambda o, x, a: x.value ** (a.value - 1) * (
-        a.value * x.derivative(o) + x.value * np.log(x.value) * a.derivative(o)),
+    lit.POW: __pow_differentiator,  # see function definition and comment above
     lit.LOG: lambda o, b, x: ((np.log(b.value) * x.derivative(o) / x.value) - (
         b.derivative(o) * np.log(x.value) / b.value)) / (np.log(b.value) ** 2),
     lit.LOG10: lambda o, x: x.derivative(o) / (np.log(10) * x.value),

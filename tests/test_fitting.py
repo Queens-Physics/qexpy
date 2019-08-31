@@ -35,7 +35,7 @@ class TestFitting:
         assert str(result[0]) == "a = 1.004 +/- 0.009"
         assert str(result[1]) == "b = 2.0 +/- 0.1"
         assert str(result[2]) == "c = 0.9 +/- 0.2"
-        assert result.chi_squared == 1.1335539393939595
+        assert result.chi_squared == 1.13355393939395
         assert result.ndof == 6
 
         xdata = q.MeasurementArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], error=0.5)

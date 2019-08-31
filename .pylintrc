@@ -429,7 +429,9 @@ good-names=i,
            x,
            n,
            gs,
-           ax
+           ax,
+           o,
+           a
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no

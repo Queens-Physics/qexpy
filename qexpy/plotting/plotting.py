@@ -222,21 +222,22 @@ class Plot:
         try:
             obj = XYFitResultOnPlot(*args, **kwargs)
 
-            # find if the data set related to the fit is on the plot and get its color
-            dataset = next((_obj for _obj in self._objects if obj.dataset == _obj), None)
-            if not color:
-                color = dataset.color if dataset else ""
+            # The color of an XYFitResult will be dynamically determined at show time unless
+            # explicitly specified by the user. No selecting from the color palette just yet.
+            obj.color = color
 
         except IllegalArgumentError:
             pass
 
         try:
             obj = FunctionOnPlot(*args, **kwargs)
+            obj.color = color if color else self._color_palette.pop(0)
         except IllegalArgumentError:
             pass
 
         try:
             obj = XYDataSetOnPlot(*args, **kwargs)
+            obj.color = color if color else self._color_palette.pop(0)
         except IllegalArgumentError:
             pass
 
@@ -244,8 +245,6 @@ class Plot:
         if not obj:
             raise IllegalArgumentError("Invalid combination of arguments for plotting.")
 
-        # add color to the object and return
-        obj.color = color if color else self._color_palette.pop(0)
         return obj
 
     def __setup_figure_and_subplots(self):

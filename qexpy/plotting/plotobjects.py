@@ -51,6 +51,8 @@ class ObjectOnPlot(ABC):
 
     @color.setter
     def color(self, new_color: str):
+        if not new_color:
+            return
         if not isinstance(new_color, str):
             raise TypeError("The color has to be a string.")
         self._color = new_color
@@ -117,12 +119,12 @@ class XYObjectOnPlot(ObjectOnPlot, ObjectWithRange):
 
     @property
     @abstractmethod
-    def xvalues_to_plot(self) -> np.ndarray:
+    def xvalues(self) -> np.ndarray:
         """The array of x-values to be plotted"""
 
     @property
     @abstractmethod
-    def yvalues_to_plot(self) -> np.ndarray:
+    def yvalues(self) -> np.ndarray:
         """The array of y-values to be plotted"""
 
     @property
@@ -179,13 +181,12 @@ class XYDataSetOnPlot(XYObjectOnPlot, FitTarget):
     def show(self, ax: Axes, plot: "plt.Plot"):
         if not plot.plot_settings[lit.ERROR_BAR]:
             ax.plot(
-                self.xvalues_to_plot, self.yvalues_to_plot, self.fmt, color=self.color,
+                self.xvalues, self.yvalues, self.fmt, color=self.color,
                 label=self.label, **self.plot_kwargs)
         else:
             ax.errorbar(
-                self.xvalues_to_plot, self.yvalues_to_plot, self.yerr_to_plot,
-                self.xerr_to_plot, fmt=self.fmt, color=self.color, label=self.label,
-                **self.plot_kwargs, **self.err_kwargs)
+                self.xvalues, self.yvalues, self.yerr, self.xerr, fmt=self.fmt,
+                color=self.color, label=self.label, **self.plot_kwargs, **self.err_kwargs)
 
     @property
     def xrange(self) -> (float, float):
@@ -195,26 +196,26 @@ class XYDataSetOnPlot(XYObjectOnPlot, FitTarget):
         return self._xrange
 
     @property
-    def xvalues_to_plot(self):
+    def xvalues(self):
         if self._xrange:
             return self.dataset.xvalues[self.__get_indices_from_xrange()]
         return self.dataset.xvalues
 
     @property
-    def yvalues_to_plot(self):
+    def yvalues(self):
         if self._xrange:
             return self.dataset.yvalues[self.__get_indices_from_xrange()]
         return self.dataset.yvalues
 
     @property
-    def xerr_to_plot(self):
+    def xerr(self):
         """the array of x-value uncertainties to show up on plot"""
         if self._xrange:
             return self.dataset.xerr[self.__get_indices_from_xrange()]
         return self.dataset.xerr
 
     @property
-    def yerr_to_plot(self):
+    def yerr(self):
         """the array of y-value uncertainties to show up on plot"""
         if self._xrange:
             return self.dataset.yerr[self.__get_indices_from_xrange()]
@@ -280,13 +281,13 @@ class FunctionOnPlot(XYObjectOnPlot):
         return self.func(*args, **kwargs)
 
     def show(self, ax: Axes, plot: "plt.Plot"):
-        xvalues = self.xvalues_to_plot
-        yvalues = self.yvalues_to_plot
+        xvalues = self.xvalues
+        yvalues = self.yvalues
         ax.plot(
             xvalues, yvalues, self.fmt if self.fmt else "-", color=self.color,
             label=self.label, **self.plot_kwargs)
-        yerr = self.yerr_to_plot
-        if yerr.size > 0:
+        yerr = self.yerr
+        if yerr.size > 0 and plot.plot_settings[lit.ERROR_BAR]:
             max_vals = yvalues + yerr
             min_vals = yvalues - yerr
             ax.fill_between(
@@ -294,26 +295,26 @@ class FunctionOnPlot(XYObjectOnPlot):
                 alpha=0.3, interpolate=True, zorder=0)
 
     @property
-    def xvalues_to_plot(self) -> np.ndarray:
+    def xvalues(self) -> np.ndarray:
         if not self.xrange:
             raise UndefinedActionError("The domain of this function cannot be found.")
         return np.linspace(self.xrange[0], self.xrange[1], 100)
 
     @property
-    def yvalues_to_plot(self) -> np.ndarray:
+    def yvalues(self) -> np.ndarray:
         if not self.xrange:
             raise UndefinedActionError("The domain of this function cannot be found.")
-        result = self.func(self.xvalues_to_plot)
+        result = self.func(self.xvalues)
         simplified_result = list(
             res.value if isinstance(res, dt.DerivedValue) else res for res in result)
         return np.asarray(simplified_result)
 
     @property
-    def yerr_to_plot(self) -> np.ndarray:
+    def yerr(self) -> np.ndarray:
         """The array of y-value uncertainties to show up on plot"""
         if not self.xrange:
             raise UndefinedActionError("The domain of this function cannot be found.")
-        result = self.func(self.xvalues_to_plot)
+        result = self.func(self.xvalues)
         errors = np.asarray(
             list(res.error if isinstance(res, dt.DerivedValue) else 0 for res in result))
         return errors if errors.size else np.empty(0)
@@ -342,7 +343,13 @@ class XYFitResultOnPlot(ObjectOnPlot):
         self.residuals_on_plot = XYDataSetOnPlot(
             result.dataset.xdata, result.residuals, **kwargs)
 
+    # pylint: disable=protected-access
     def show(self, ax: Axes, plot: "plt.Plot"):
+        if not self.color:
+            datasets = (obj for obj in plot._objects if isinstance(obj, XYDataSetOnPlot))
+            color = next((
+                obj.color for obj in datasets if obj.dataset == self.fit_result.dataset), "")
+            self.color = color if color else plot._color_palette.pop(0)
         self.func_on_plot.show(ax, plot)
         if plot.res_ax:
             self.residuals_on_plot.show(plot.res_ax, plot)
@@ -353,6 +360,8 @@ class XYFitResultOnPlot(ObjectOnPlot):
 
     @color.setter
     def color(self, new_color: str):
+        if not new_color:
+            return
         if not isinstance(new_color, str):
             raise TypeError("The color has to be a string.")
         self._color = new_color
