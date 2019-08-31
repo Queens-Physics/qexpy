@@ -51,6 +51,8 @@ class ObjectOnPlot(ABC):
 
     @color.setter
     def color(self, new_color: str):
+        if not new_color:
+            return
         if not isinstance(new_color, str):
             raise TypeError("The color has to be a string.")
         self._color = new_color
@@ -341,7 +343,13 @@ class XYFitResultOnPlot(ObjectOnPlot):
         self.residuals_on_plot = XYDataSetOnPlot(
             result.dataset.xdata, result.residuals, **kwargs)
 
+    # pylint: disable=protected-access
     def show(self, ax: Axes, plot: "plt.Plot"):
+        if not self.color:
+            datasets = (obj for obj in plot._objects if isinstance(obj, XYDataSetOnPlot))
+            color = next((
+                obj.color for obj in datasets if obj.dataset == self.fit_result.dataset), "")
+            self.color = color if color else plot._color_palette.pop(0)
         self.func_on_plot.show(ax, plot)
         if plot.res_ax:
             self.residuals_on_plot.show(plot.res_ax, plot)
@@ -352,6 +360,8 @@ class XYFitResultOnPlot(ObjectOnPlot):
 
     @color.setter
     def color(self, new_color: str):
+        if not new_color:
+            return
         if not isinstance(new_color, str):
             raise TypeError("The color has to be a string.")
         self._color = new_color

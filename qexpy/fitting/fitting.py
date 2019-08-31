@@ -58,7 +58,7 @@ class XYFitResult:
         corr_matrix = np.array_str(self._result.pcorr, precision=3)
         corr_matrix_str = "Correlation Matrix: \n{}\n".format(corr_matrix)
         chi2_ndof = "chi2/ndof = {:.2f}/{}\n".format(self._result.chi2, self._ndof)
-        ending = "----------------- End Fit Results -------------------"
+        ending = "--------------- End Fit Results -----------------"
         return "\n".join(
             [header, fit_type, res_param_str, corr_matrix_str, chi2_ndof, ending])
 
@@ -112,7 +112,8 @@ def fit(*args, **kwargs):
 
     Keyword Args:
         model: the fit model given as the string or enum representation of a pre-set model
-            or a custom callable function with parameters
+            or a custom callable function with parameters. Available pre-set models include:
+            "linear", "quadratic", "polynomial", "exponential", "gaussian"
         xrange (tuple|list): a pair of numbers indicating the domain of the function
         degrees (int): the degree of the polynomial if polynomial fit were chosen
         parguess (list): initial guess for the parameters
