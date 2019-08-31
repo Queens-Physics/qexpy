@@ -42,10 +42,10 @@ class TestFitting:
         ydata = q.MeasurementArray([3.89, 18.01, 58.02, 135.92, 264.01, 453.99, 718.02,
                                     1067.98, 1516.01, 2074], error=0.5)
         result = q.fit(xdata, ydata, model=q.FitModel.POLYNOMIAL, degree=3)
-        assert pytest.approx(2, result[0])
-        assert pytest.approx(9.882, result[1])
-        assert pytest.approx(-2.928, result[2])
-        assert pytest.approx(3.86, result[3])
+        assert result[0].value == pytest.approx(2, 1e-1)
+        assert result[1].value == pytest.approx(0.9882, 1e-1)
+        assert result[2].value == pytest.approx(-2.928, 1e-1)
+        assert result[3].value == pytest.approx(3.86, 1e-1)
 
     def test_gaussian_fit(self):
         """unit test for gaussian fit function"""

@@ -222,7 +222,8 @@ def __try_fit_to_xdata_and_ydata(*args, **kwargs):
 def __polynomial_fit(xdata, ydata, degrees, yerr) -> RawFitResults:
     """perform a polynomial fit with numpy.polyfit"""
 
-    popt, pcov = np.polyfit(xdata.values, ydata.values, degrees, cov=True, w=1 / yerr)
+    weights = 1 / yerr if yerr is not None else None
+    popt, pcov = np.polyfit(xdata.values, ydata.values, degrees, cov=True, w=weights)
     perr = np.sqrt(np.diag(pcov))
     return RawFitResults(popt, perr, pcov)
 
