@@ -318,9 +318,6 @@ def hist(*args, **kwargs) -> tuple:
     Args:
         *args: the ExperimentalValueArray or arguments that creates an ExperimentalValueArray
 
-    Keyword Args:
-        The same keyword arguments as the pyplot.hist function
-
     See Also:
         `hist() <https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist.html>`_
 
