@@ -32,6 +32,23 @@ def get_derivative_propagated_value_and_error(formula: "dt.Formula") -> "dt.Valu
 
     """
 
+    def __find_cov_terms(_formula: "dt.Formula", _measurements: List) -> Generator:
+        """Finds the contributing covariance terms for the quadrature method"""
+        for var1, var2 in itertools.combinations(_measurements, 2):
+            corr = dt.get_correlation(var1, var2)
+            # Re-calculate the covariance between two measurements, because in the case of
+            # repeated measurements, sometimes the covariance is calculated from the raw
+            # measurement array, which is closely coupled with the standard deviation of the
+            # raw samples. This is misleading because with repeated measurements, we use the
+            # error on the mean, not the standard deviation of the raw measurements, as the
+            # uncertainty on the quantity. Essentially, with repeatedly measured values, we
+            # are ignoring the array of raw measurements, and treating its value and error
+            # as the mean and standard deviation just like we would with any other single
+            # measurements. This would make the most physical sense.
+            cov = corr * var1.error * var2.error
+            if cov != 0:
+                yield 2 * cov * differentiate(_formula, var1) * differentiate(_formula, var2)
+
     # Execute the operation
     result_value = __evaluate_formula(formula)
 
@@ -362,14 +379,6 @@ def __find_source_measurement_ids(formula) -> Set[UUID]:
     if isinstance(formula, dt.DerivedValue):
         return __find_source_measurement_ids(formula._formula)
     return set()
-
-
-def __find_cov_terms(formula: "dt.Formula", source_measurements: List) -> Generator:
-    """Finds the contributing covariance terms for the quadrature method"""
-    for var1, var2 in itertools.combinations(source_measurements, 2):
-        cov = dt.get_covariance(var1, var2)
-        if cov != 0:
-            yield 2 * cov * differentiate(formula, var1) * differentiate(formula, var2)
 
 
 def __execute(operator: str, *operands) -> "dt.DerivedValue":

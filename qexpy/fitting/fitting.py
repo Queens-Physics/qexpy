@@ -4,7 +4,7 @@ import inspect
 import numpy as np
 import scipy.optimize as opt
 
-from typing import Callable, List
+from typing import Callable
 from inspect import Parameter
 from collections import namedtuple
 from qexpy.fitting.fit_utils import FitModelInfo, FitParamConstraints

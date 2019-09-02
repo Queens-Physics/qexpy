@@ -11,7 +11,11 @@ def data():
         "var1": q.Measurement(5, 0.2),
         "var2": q.Measurement(4, 0.1),
         "var3": q.Measurement(6.3, 0.5),
-        "var4": q.Measurement(7.2, 0.5)
+        "var4": q.Measurement(7.2, 0.5),
+        "var5": q.Measurement([399.3, 404.6, 394.6, 396.3, 399.6,
+                               404.9, 387.4, 404.9, 398.2, 407.2]),
+        "var6": q.Measurement([193.2, 205.1, 192.6, 194.2, 196.6,
+                               201, 184.7, 215.2, 203.6, 207.8])
     }
     yield test_data
 
@@ -78,3 +82,14 @@ class TestErrorPropagation:
         q.set_error_method(q.ErrorMethod.MONTE_CARLO)
         assert result.value == pytest.approx(18.04490478513969, 5e-2)
         assert result.error == pytest.approx(1.4483184455244065, 5e-2)
+
+    def test_error_propagation_for_repeatedly_measured_correlated_values(self, data):
+        """Tests correlated error propagation for repeatedly measured values"""
+
+        q.set_covariance(data["var5"], data["var6"])
+
+        result = data["var5"] + data["var6"]
+        assert result.error == pytest.approx(4.54, 1e-1)
+
+        q.set_error_method(q.ErrorMethod.MONTE_CARLO)
+        assert result.error == pytest.approx(4.54, 1e-1)
