@@ -27,7 +27,7 @@ class TestUtils:
         """Tests the covariance calculation functionality"""
         arr_x = [1.2, 3.2, 2.3, 1.2, 1.9]
         arr_y = [2.2, 1.2, 2.5, 2.6, 1.0]
-        assert utils.calculate_covariance(arr_x, arr_y) == pytest.approx(np.cov(arr_x, arr_y))
+        assert utils.calculate_covariance(arr_x, arr_y) == np.cov(arr_x, arr_y)[0][1]
 
 
 @pytest.fixture()

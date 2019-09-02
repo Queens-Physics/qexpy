@@ -217,35 +217,28 @@ class Plot:
         """Factory method for creating ObjectOnPlot instances"""
 
         color = kwargs.pop("color", None)
-        obj = None
 
         try:
-            obj = XYFitResultOnPlot(*args, **kwargs)
-
             # The color of an XYFitResult will be dynamically determined at show time unless
             # explicitly specified by the user. No selecting from the color palette just yet.
-            obj.color = color
-
+            return XYFitResultOnPlot(*args, color=color, **kwargs)
         except IllegalArgumentError:
             pass
 
         try:
-            obj = FunctionOnPlot(*args, **kwargs)
-            obj.color = color if color else self._color_palette.pop(0)
+            color = color if color else self._color_palette.pop(0)
+            return FunctionOnPlot(*args, color=color, **kwargs)
         except IllegalArgumentError:
             pass
 
         try:
-            obj = XYDataSetOnPlot(*args, **kwargs)
-            obj.color = color if color else self._color_palette.pop(0)
+            color = color if color else self._color_palette.pop(0)
+            return XYDataSetOnPlot(*args, color=color, **kwargs)
         except IllegalArgumentError:
             pass
 
-        # check if an object is actually created
-        if not obj:
-            raise IllegalArgumentError("Invalid combination of arguments for plotting.")
-
-        return obj
+        # if everything has failed
+        raise IllegalArgumentError("Invalid combination of arguments for plotting.")
 
     def __setup_figure_and_subplots(self):
         """Create the mpl figure and subplots"""
@@ -321,20 +314,5 @@ def __get_plot_obj():
     """Helper function that gets the appropriate Plot instance to draw on"""
 
     # initialize buffer if not initialized
-    if not Plot.current_plot_buffer:
-        Plot.current_plot_buffer = Plot()
-
-    # first check the line which calls this function
-    frame_stack = inspect.getouterframes(inspect.currentframe())
-    code_context = frame_stack[2].code_context[0]
-    is_return_value_assigned = re.match(r"[\w+ ,]*=", code_context) is not None
-
-    # If this function call is assigned to a variable, create new Plot instance, else, the
-    # objects passed into this function call will be drawn on the latest created Plot
-    if is_return_value_assigned:
-        plot_obj = Plot()
-        Plot.current_plot_buffer = plot_obj
-    else:
-        plot_obj = Plot.current_plot_buffer
-
-    return plot_obj
+    Plot.current_plot_buffer = Plot()
+    return Plot.current_plot_buffer

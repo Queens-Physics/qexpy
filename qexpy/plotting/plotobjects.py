@@ -189,10 +189,9 @@ class XYDataSetOnPlot(XYObjectOnPlot, FitTarget):
                 color=self.color, label=self.label, **self.plot_kwargs, **self.err_kwargs)
 
     @property
-    def xrange(self) -> (float, float):
-        """The range of values to be plotted"""
+    def xrange(self):
         if not self._xrange:
-            return min(self.dataset.xvalues), max(self.dataset.yvalues)
+            return min(self.dataset.xvalues), max(self.dataset.xvalues)
         return self._xrange
 
     @property
