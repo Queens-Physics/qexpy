@@ -21,13 +21,13 @@ class TestUtils:
     def test_numerical_derivative(self):  # pylint: disable=no-self-use
         """Tests the numerical derivative functionality"""
         func = lambda x: x ** 2 + np.sin(x)
-        assert pytest.approx(utils.numerical_derivative(func, q.pi), 2 * q.pi - 1)
+        assert utils.numerical_derivative(func, q.pi) == pytest.approx(2 * q.pi - 1)
 
     def test_calculate_covariance(self):  # pylint: disable=no-self-use
         """Tests the covariance calculation functionality"""
         arr_x = [1.2, 3.2, 2.3, 1.2, 1.9]
         arr_y = [2.2, 1.2, 2.5, 2.6, 1.0]
-        assert pytest.approx(utils.calculate_covariance(arr_x, arr_y), np.cov(arr_x, arr_y))
+        assert utils.calculate_covariance(arr_x, arr_y) == np.cov(arr_x, arr_y)[0][1]
 
 
 @pytest.fixture()

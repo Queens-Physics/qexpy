@@ -37,7 +37,7 @@ Correlation = namedtuple("Correlation", "correlation, covariance")
 
 
 class ExperimentalValue(ABC):
-    """Base class for objects with a value and an uncertainty
+    """Base class for quantities with a value and an uncertainty
 
     The ExperimentalValue is a container for an individual quantity involved in an experiment
     and subsequent data analysis. Each quantity has a value and an uncertainty (error), and
@@ -119,29 +119,29 @@ class ExperimentalValue(ABC):
 
     @property
     @abstractmethod
-    def value(self) -> float:
+    def value(self):
         """float: The center value of this quantity"""
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def error(self) -> float:
+    def error(self):
         """float: The uncertainty of this quantity"""
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def relative_error(self) -> float:
+    def relative_error(self):
         """float: The ratio of the uncertainty to its center value"""
         raise NotImplementedError
 
     @property
-    def std(self) -> float:
+    def std(self):
         """float: The standard deviation of this quantity"""
         return self.error  # usually the standard deviation is the error
 
     @property
-    def name(self) -> str:
+    def name(self):
         """str: The name of this quantity"""
         return self._name
 
@@ -152,7 +152,7 @@ class ExperimentalValue(ABC):
         self._name = new_name
 
     @property
-    def unit(self) -> str:
+    def unit(self):
         """str: The unit of this quantity"""
         return utils.construct_unit_string(self._unit) if self._unit else ""
 
@@ -330,15 +330,15 @@ class Constant(ExperimentalValue):
 
 
 class MeasuredValue(ExperimentalValue):
-    """Container for user-recorded values with uncertainties, alias: Measurement
+    """Container for user-recorded values with uncertainties
 
     The MeasuredValue represents a single measurement recorded in an experiment. This class
     is given an alias "Measurement" for backward compatibility and for a more intuitive user
-    interface. On the top level of this package, this Class is imported as "Measurement".
+    interface. On the top level of this package, this class is imported as "Measurement".
 
     Args:
-        data (float|list): The center value of the measurement
-        error (float|list): The uncertainty on value
+        data (Real|List): The center value of the measurement
+        error (Real|List): The uncertainty on the value
 
     Keyword Args:
         unit (str): The unit of this value
@@ -364,7 +364,7 @@ class MeasuredValue(ExperimentalValue):
         self._value, self._error = float(data), float(error) if error else 0.0
 
     @property
-    def value(self) -> float:
+    def value(self):
         return self._value
 
     @value.setter
@@ -374,7 +374,7 @@ class MeasuredValue(ExperimentalValue):
         self._value = new_value
 
     @property
-    def error(self) -> float:
+    def error(self):
         return self._error
 
     @error.setter
@@ -386,7 +386,7 @@ class MeasuredValue(ExperimentalValue):
         self._error = new_error
 
     @property
-    def relative_error(self) -> float:
+    def relative_error(self):
         return self.error / self.value if self.value != 0 else 0.
 
     @relative_error.setter
@@ -495,16 +495,12 @@ class MeasuredValue(ExperimentalValue):
 class RepeatedlyMeasuredValue(MeasuredValue):
     """Container for a MeasuredValue recorded as an array of repeated measurements
 
-    This Class is not to be instantiated directly. It will be created if an array of values
-    is passed into Measurement. By default, the mean of the array of measurements is used
-    as the value of this quantity, and the standard error (error on the mean) is used as the
-    uncertainty. This is because the reason for taking multiple measurements is usually to
-    minimize the uncertainty, not to find out the uncertainty on a single measurement (which
-    is what the standard deviation is).
-
-    See Also:
-        :py:class:`.MeasuredValue`
-        :py:class:`.ExperimentalValueArray`
+    This class is instantiated if an array of values is used to record a Measurement of a
+    single quantity with repeated takes. By default, the mean of the array is used as the
+    value of this quantity, and the standard error (error on the mean) is the uncertainty.
+    The reason for this choice is because the reason for taking multiple measurements is
+    usually to minimize the uncertainty on the quantity, not to find out the uncertainty on
+    a single measurement (which is what standard deviation is).
 
     Examples:
         >>> import qexpy as q
@@ -582,33 +578,33 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         self._value = new_value
 
     @property
-    def raw_data(self) -> np.ndarray:
-        """The raw data that was used to generate this measurement"""
+    def raw_data(self):
+        """np.ndarray: The raw data that was used to generate this measurement"""
         return self._raw_data.values if all(
             x.error == 0 for x in self._raw_data) else self._raw_data
 
     @property
-    def std(self) -> float:
+    def std(self):
         """float: The standard deviation of the raw data"""
         return self._std
 
     @property
-    def error_on_mean(self) -> float:
+    def error_on_mean(self):
         """float: The error on the mean or the standard error"""
         return self._error_on_mean
 
     @property
-    def mean(self) -> float:
+    def mean(self):
         """float: The mean of raw measurements"""
         return self._mean
 
     @property
-    def error_weighted_mean(self) -> float:
+    def error_weighted_mean(self):
         """float: Error weighted mean if individual errors are specified"""
         return self._raw_data.error_weighted_mean()
 
     @property
-    def propagated_error(self) -> float:
+    def propagated_error(self):
         """float: Error propagated with errors passed in if present"""
         return self._raw_data.propagated_error()
 
@@ -666,7 +662,13 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         super().set_correlation(other, corr)
 
     def show_histogram(self, **kwargs) -> tuple:
-        """Plots the raw measurement data in a histogram"""
+        """Plots the raw measurement data in a histogram
+
+        See Also:
+            This works the same as the :py:func:`~qexpy.fitting.fitting.hist` function in
+            the plotting module of QExPy
+
+        """
         import qexpy.plotting as plt  # pylint:disable=cyclic-import
         values, bins, figure = plt.hist(self.raw_data, **kwargs)
         figure.show()
@@ -874,6 +876,9 @@ def get_covariance(var1: ExperimentalValue, var2: ExperimentalValue) -> float:
     Returns:
         The covariance between var1 and var2
 
+    See Also:
+        :py:func:`ExperimentalValue.get_covariance`
+
     """
 
     if any(not isinstance(var, ExperimentalValue) for var in [var1, var2]):
@@ -924,6 +929,9 @@ def get_correlation(var1: ExperimentalValue, var2: ExperimentalValue) -> float:
     Returns:
         The correlation factor between var1 and var2
 
+    See Also:
+        :py:func:`ExperimentalValue.get_correlation`
+
     """
 
     if any(not isinstance(var, ExperimentalValue) for var in [var1, var2]):
@@ -945,7 +953,6 @@ def set_correlation(var1: MeasuredValue, var2: MeasuredValue, corr: Real = None)
 
     See Also:
         :py:func:`ExperimentalValue.set_correlation`
-        :py:func:`.set_covariance`
 
     """
     if any(not isinstance(var, ExperimentalValue) for var in [var1, var2]):

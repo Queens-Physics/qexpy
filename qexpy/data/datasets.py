@@ -161,7 +161,7 @@ class ExperimentalValueArray(np.ndarray):
             measurement.name = "{}_{}".format(name, index) if name else ""
 
     @property
-    def name(self) -> str:
+    def name(self):
         """str: Name of this array of values
 
         A name can be given to this data set, and each measurement within this list will be
@@ -179,7 +179,7 @@ class ExperimentalValueArray(np.ndarray):
             measurement.name = "{}_{}".format(new_name, index)
 
     @property
-    def unit(self) -> str:
+    def unit(self):
         """str: The unit of this array of values
 
         It is assumed that the set of data that constitutes one ExperimentalValueArray have
@@ -199,13 +199,13 @@ class ExperimentalValueArray(np.ndarray):
             data._unit = new_unit
 
     @property
-    def values(self) -> np.ndarray:
-        """An array consisting of the center values of each item"""
+    def values(self):
+        """np.ndarray: An array consisting of the center values of each item"""
         return np.asarray(list(data.value for data in self))
 
     @property
-    def errors(self) -> np.ndarray:
-        """An array consisting of the uncertainties of each item"""
+    def errors(self):
+        """np.ndarray: An array consisting of the uncertainties of each item"""
         return np.asarray(list(data.error for data in self))
 
     def append(self, value) -> "ExperimentalValueArray":
@@ -389,8 +389,8 @@ class XYDataSet:
         self.ydata = ydata  # type: ExperimentalValueArray
 
     @property
-    def name(self) -> str:
-        """The name of this data set"""
+    def name(self):
+        """str: The name of this data set"""
         return self._name if self._name else "XY Dataset"
 
     @name.setter
@@ -400,7 +400,7 @@ class XYDataSet:
         self._name = new_name
 
     @property
-    def xvalues(self) -> np.ndarray:
+    def xvalues(self):
         """np.ndarray: The values of the x data set"""
         return self.xdata.values
 
@@ -410,7 +410,7 @@ class XYDataSet:
         return self.xdata.errors
 
     @property
-    def yvalues(self) -> np.ndarray:
+    def yvalues(self):
         """np.ndarray: The values of the y data set"""
         return self.ydata.values
 
@@ -420,7 +420,7 @@ class XYDataSet:
         return self.ydata.errors
 
     @property
-    def xname(self) -> str:
+    def xname(self):
         """str: Name of the xdata set"""
         return self.xdata.name
 
@@ -431,7 +431,7 @@ class XYDataSet:
         self.xdata.name = name
 
     @property
-    def xunit(self) -> str:
+    def xunit(self):
         """str: Unit of the xdata set"""
         return self.xdata.unit
 
@@ -442,7 +442,7 @@ class XYDataSet:
         self.xdata.unit = unit
 
     @property
-    def yname(self) -> str:
+    def yname(self):
         """str: Name of the ydata set"""
         return self.ydata.name
 
@@ -453,7 +453,7 @@ class XYDataSet:
         self.ydata.name = name
 
     @property
-    def yunit(self) -> str:
+    def yunit(self):
         """str: Unit of the ydata set"""
         return self.ydata.unit
 
@@ -467,7 +467,7 @@ class XYDataSet:
         """Fits the current dataset to a model
 
         See Also:
-            :py:func:`.qexpy.fitting.fit`
+            The fit function in the fitting module of QExPy
 
         """
         import qexpy.fitting as fitting  # pylint: disable=cyclic-import
