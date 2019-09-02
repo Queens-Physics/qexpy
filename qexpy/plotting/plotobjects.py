@@ -40,13 +40,13 @@ class ObjectOnPlot(ABC):
         self.label = label
 
     @property
-    def fmt(self) -> str:
-        """The format string to be used in PyPlot"""
+    def fmt(self):
+        """str: The format string to be used in PyPlot"""
         return self._fmt
 
     @property
-    def color(self) -> str:
-        """The color of the object"""
+    def color(self):
+        """str: The color of the object"""
         return self._color
 
     @color.setter
@@ -67,8 +67,8 @@ class FitTarget(ABC):  # pylint: disable=too-few-public-methods
 
     @property
     @abstractmethod
-    def fit_target_dataset(self) -> dts.XYDataSet:
-        """The target dataset instance to apply the fit to"""
+    def fit_target_dataset(self):
+        """dts.XYDataSet: The target dataset instance to apply the fit to"""
 
 
 class ObjectWithRange(ABC):  # pylint: disable=too-few-public-methods
@@ -76,8 +76,8 @@ class ObjectWithRange(ABC):  # pylint: disable=too-few-public-methods
 
     @property
     @abstractmethod
-    def xrange(self) -> (float, float):
-        """The xrange of the object"""
+    def xrange(self):
+        """tuple: The xrange of the object"""
 
 
 class XYObjectOnPlot(ObjectOnPlot, ObjectWithRange):
@@ -119,17 +119,17 @@ class XYObjectOnPlot(ObjectOnPlot, ObjectWithRange):
 
     @property
     @abstractmethod
-    def xvalues(self) -> np.ndarray:
-        """The array of x-values to be plotted"""
+    def xvalues(self):
+        """np.ndarray: The array of x-values to be plotted"""
 
     @property
     @abstractmethod
-    def yvalues(self) -> np.ndarray:
-        """The array of y-values to be plotted"""
+    def yvalues(self):
+        """np.ndarray: The array of y-values to be plotted"""
 
     @property
-    def xrange(self) -> (float, float):
-        """The range of values to be plotted"""
+    def xrange(self):
+        """tuple: The range of values to be plotted"""
         return self._xrange
 
     @xrange.setter
@@ -140,22 +140,22 @@ class XYObjectOnPlot(ObjectOnPlot, ObjectWithRange):
 
     @property
     def xname(self):
-        """The name of the x-axis"""
+        """str: The name of the x-axis"""
         return self._xname
 
     @property
     def xunit(self):
-        """The unit of the x-axis"""
+        """str: The unit of the x-axis"""
         return self._xunit
 
     @property
     def yname(self):
-        """The name of the x-axis"""
+        """str: The name of the x-axis"""
         return self._yname
 
     @property
     def yunit(self):
-        """The unit of the x-axis"""
+        """str: The unit of the x-axis"""
         return self._yunit
 
 
@@ -208,14 +208,14 @@ class XYDataSetOnPlot(XYObjectOnPlot, FitTarget):
 
     @property
     def xerr(self):
-        """the array of x-value uncertainties to show up on plot"""
+        """np.ndarray: the array of x-value uncertainties to show up on plot"""
         if self._xrange:
             return self.dataset.xerr[self.__get_indices_from_xrange()]
         return self.dataset.xerr
 
     @property
     def yerr(self):
-        """the array of y-value uncertainties to show up on plot"""
+        """np.ndarray: the array of y-value uncertainties to show up on plot"""
         if self._xrange:
             return self.dataset.yerr[self.__get_indices_from_xrange()]
         return self.dataset.yerr
@@ -294,13 +294,13 @@ class FunctionOnPlot(XYObjectOnPlot):
                 alpha=0.3, interpolate=True, zorder=0)
 
     @property
-    def xvalues(self) -> np.ndarray:
+    def xvalues(self):
         if not self.xrange:
             raise UndefinedActionError("The domain of this function cannot be found.")
         return np.linspace(self.xrange[0], self.xrange[1], 100)
 
     @property
-    def yvalues(self) -> np.ndarray:
+    def yvalues(self):
         if not self.xrange:
             raise UndefinedActionError("The domain of this function cannot be found.")
         result = self.func(self.xvalues)
@@ -309,7 +309,7 @@ class FunctionOnPlot(XYObjectOnPlot):
         return np.asarray(simplified_result)
 
     @property
-    def yerr(self) -> np.ndarray:
+    def yerr(self):
         """The array of y-value uncertainties to show up on plot"""
         if not self.xrange:
             raise UndefinedActionError("The domain of this function cannot be found.")
@@ -368,8 +368,8 @@ class XYFitResultOnPlot(ObjectOnPlot):
         self.residuals_on_plot.color = new_color
 
     @property
-    def dataset(self) -> dts.XYDataSet:
-        """The dataset that the fit is associated with"""
+    def dataset(self):
+        """dts.XYDataSet: The dataset that the fit is associated with"""
         return self.fit_result.dataset
 
 
@@ -398,7 +398,7 @@ class HistogramOnPlot(ObjectOnPlot, FitTarget, ObjectWithRange):
 
     @property
     def sample_values(self):
-        """The values of the samples in this histogram"""
+        """np.ndarray: The values of the samples in this histogram"""
         return self.samples.values
 
     @property
@@ -409,7 +409,6 @@ class HistogramOnPlot(ObjectOnPlot, FitTarget, ObjectWithRange):
 
     @property
     def xrange(self) -> (float, float):
-        """The range of values to be plotted"""
         return self._xrange
 
 

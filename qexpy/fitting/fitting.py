@@ -63,42 +63,42 @@ class XYFitResult:
             [header, fit_type, res_param_str, corr_matrix_str, chi2_ndof, ending])
 
     @property
-    def dataset(self) -> "dts.XYDataSet":
-        """The dataset used for this fit"""
+    def dataset(self):
+        """dts.XYDataSet: The dataset used for this fit"""
         return self._dataset
 
     @property
-    def fit_function(self) -> Callable:
-        """The function that fits to this data set"""
+    def fit_function(self):
+        """Callable: The function that fits to this data set"""
         return self._result.func
 
     @property
-    def params(self) -> List:
-        """The fit parameters of the fit function"""
+    def params(self):
+        """List[dt.ExperimentalValue]: The fit parameters of the fit function"""
         return self._result.params
 
     @property
-    def residuals(self) -> List:
-        """The residuals of the fit"""
+    def residuals(self):
+        """dts.ExperimentalValueArray: The residuals of the fit"""
         return self._result.residuals
 
     @property
-    def chi_squared(self) -> "dt.DerivedValue":
-        """The goodness of fit represented as chi^2"""
+    def chi_squared(self):
+        """dt.ExperimentalValue: The goodness of fit represented as chi^2"""
         return self._result.chi2
 
     @property
-    def ndof(self) -> int:
-        """The degree of freedom of this fit function"""
+    def ndof(self):
+        """int: The degree of freedom of this fit function"""
         return self._ndof
 
     @property
-    def xrange(self) -> (float, float):
-        """The xrange of the fit"""
+    def xrange(self):
+        """tuple: The xrange of the fit"""
         return self._xrange
 
 
-def fit(*args, **kwargs):
+def fit(*args, **kwargs) -> XYFitResult:
     """Perform a fit to a data set
 
     The fit function can be called on an XYDataSet object, or two arrays or MeasurementArray
@@ -126,7 +126,10 @@ def fit(*args, **kwargs):
         yerr: the uncertainty on the ydata
 
     Returns:
-        result (XYFitResult): the result of the fit
+        XYFitResult: the result of the fit
+
+    See Also:
+        :py:class:`~qexpy.data.XYDataSet`
 
     """
 
@@ -142,7 +145,7 @@ def fit(*args, **kwargs):
         "Unable to execute fit. Please make sure the arguments provided are correct.")
 
 
-def fit_to_xy_dataset(dataset: dts.XYDataSet, model, **kwargs):
+def fit_to_xy_dataset(dataset: dts.XYDataSet, model, **kwargs) -> XYFitResult:
     """Perform a fit on an XYDataSet object"""
 
     fit_model = fut.prepare_fit_model(model)
