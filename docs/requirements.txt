@@ -1,0 +1,6 @@
+jupyterlab
+sphinx
+nbsphinx
+nbsphinx_link
+sphinx_autodoc_typehints
+sphinx_rtd_theme
