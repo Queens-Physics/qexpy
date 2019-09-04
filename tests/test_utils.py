@@ -6,6 +6,7 @@ import numpy as np
 import qexpy as q
 import qexpy.settings.literals as lit
 import qexpy.utils as utils
+from collections import OrderedDict
 
 
 class TestUtils:
@@ -35,11 +36,12 @@ class TestUtils:
 @pytest.fixture()
 def resource():
     test_units = {
-        "units_for_watt": {"kg": 1, "m": 2, "s": -2},
-        "units_for_henry": {"kg": 1, "m": 2, "s": -2, "A": -2},
-        "units_super_complicated": {"kg": 4, "m": 2, "L": -3, "Pa": 1, "s": -2, "A": -2},
-        "units_numerator_only": {"kg": 1, "m": 2},
-        "units_denominator_only": {"kg": -1, "s": -2}
+        "units_for_watt": OrderedDict([("kg", 1), ("m", 2), ("s", -2)]),
+        "units_for_henry": OrderedDict([("kg", 1), ("m", 2), ("s", -2), ("A", -2)]),
+        "units_super_complicated": OrderedDict(
+            [("kg", 4), ("m", 2), ("L", -3), ("Pa", 1), ("s", -2), ("A", -2)]),
+        "units_numerator_only": OrderedDict([("kg", 1), ("m", 2)]),
+        "units_denominator_only": OrderedDict([("kg", -1), ("s", -2)])
     }
     yield test_units
 
@@ -55,19 +57,19 @@ class TestUnits:
     def test_parse_units(self, resource):
         """Tests parsing unit strings into dictionaries"""
 
-        units_for_watt = resource["units_for_watt"]
+        units_for_watt = dict(resource["units_for_watt"])
         assert utils.parse_units("kg*m^2/s^2") == units_for_watt
         assert utils.parse_units("kg^1m^2s^-2") == units_for_watt
         assert utils.parse_units("kg^1*m^2/s^2") == units_for_watt
         assert utils.parse_units("kg^1m^2/s^2") == units_for_watt
 
-        units_for_henry = resource["units_for_henry"]
+        units_for_henry = dict(resource["units_for_henry"])
         assert utils.parse_units("kg*m^2/(s^2*A^2)") == units_for_henry
         assert utils.parse_units("kg^1m^2s^-2A^-2") == units_for_henry
         assert utils.parse_units("m^2kg/s^2A^2") == units_for_henry
         assert utils.parse_units("kg/s^2A^2*m^2") == units_for_henry
 
-        units_super_complicated = resource["units_super_complicated"]
+        units_super_complicated = dict(resource["units_super_complicated"])
         assert utils.parse_units("m^2kg^4/s^2A^2L^3*Pa") == units_super_complicated
         assert utils.parse_units("kg^4m^2*Pa/(s^2A^2*L^3)") == units_super_complicated
 
