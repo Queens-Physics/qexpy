@@ -188,7 +188,7 @@ class TestMeasuredValueArray:
         array = q.MeasurementArray([1, 2, 3, 4, 5], 0.5, unit="m", name="length")
         assert np.sum(array) == 15
         assert array.mean() == 3
-        assert array.std() == 1.5811388300841898
+        assert array.std() == pytest.approx(1.5811388300841898, 1e-10)
         assert array.unit == "m"
         assert array.name == "length"
 
@@ -202,7 +202,7 @@ class TestMeasuredValueArray:
         array = q.MeasurementArray([1, 2, 3, 4, 5], [0.1, 0.2, 0.3, 0.4, 0.5])
         assert np.sum(array) == 15
         assert array.mean() == 3
-        assert array.std() == 1.5811388300841898
+        assert array.std() == pytest.approx(1.5811388300841898, 1e-10)
 
         second = array[1]
         assert second.value == 2

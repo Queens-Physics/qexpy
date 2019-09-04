@@ -26,7 +26,7 @@ class TestFitting:
         result = xydata.fit("linear")
         assert str(result[0]) == "slope = 0.98 +/- 0.04"
         assert str(result[1]) == "intercept = -0.1 +/- 0.3"
-        assert result.chi_squared == 4.751515151515154
+        assert result.chi_squared == pytest.approx(4.75151515151515, 1e-10)
         assert result.ndof == 7
         print(result)
 
@@ -36,7 +36,7 @@ class TestFitting:
         assert str(result[0]) == "a = 1.004 +/- 0.009"
         assert str(result[1]) == "b = 2.0 +/- 0.1"
         assert str(result[2]) == "c = 0.9 +/- 0.2"
-        assert result.chi_squared == 1.13355393939395
+        assert result.chi_squared == pytest.approx(1.13355393939395, 1e-10)
         assert result.ndof == 6
 
         xdata = q.MeasurementArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], error=0.5)
@@ -75,5 +75,5 @@ class TestFitting:
         result = xydata.fit(model, parguess=[1, 1], parnames=["a", "b"], parunits=["m", "kg"])
         assert str(result[0]) == "a = 5.1 +/- 0.2 [m]"
         assert str(result[1]) == "b = 0.501 +/- 0.009 [kg]"
-        assert result.chi_squared == 5.533370644202178
+        assert result.chi_squared == pytest.approx(5.533370644202178, 1e-10)
         assert result.ndof == 17
