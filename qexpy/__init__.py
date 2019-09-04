@@ -44,9 +44,6 @@ from .data import sqrt, exp, sin, sind, cos, cosd, tan, tand, sec, secd, cot, co
 
 from .fitting import fit, FitModel
 
-from .plotting import plot, hist, new_plot, get_plot
-from .plotting import show as show_plot
-
 # Check the python interpreter version
 if sys.version_info[0] < 3:
     raise ImportError(
