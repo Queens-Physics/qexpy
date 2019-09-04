@@ -64,7 +64,7 @@ class TestArithmetic:
         e = f * d
         assert e.value == 40
         assert e.error == pytest.approx(9.433981132056603)
-        assert str(e) == "40.0 +/- 9.4 [kg⋅m^2/s^2]"
+        assert str(e) == "40.0 +/- 9.4 [kg⋅m^2/s^2]" or str(e) == "40.0 +/- 9.4 [m^2⋅kg/s^2]"
 
         e1 = f * 2
         assert e1.value == 8
