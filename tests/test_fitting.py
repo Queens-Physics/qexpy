@@ -4,6 +4,7 @@ This file contains tests for fitting a function to a data set.
 
 """
 
+import os
 import pytest
 import qexpy as q
 
@@ -49,7 +50,9 @@ class TestFitting:
 
     def test_gaussian_fit(self):
         """unit test for gaussian fit function"""
-        data = q.load_data_from_file("./resources/data_for_test_gaussian_fit.csv")
+        curr_path = os.path.abspath(os.path.dirname(__file__))
+        filename = os.path.join(curr_path, "./resources/data_for_test_gaussian_fit.csv")
+        data = q.load_data_from_file(filename)
         xydata = q.XYDataSet(xdata=data[0], ydata=data[1], yerr=0.5)
 
         result = xydata.fit("gaussian", parguess=[55, 20, 4])
@@ -61,7 +64,9 @@ class TestFitting:
     def test_custom_fit(self):
         """unit test for custom fit functions"""
 
-        data = q.load_data_from_file("./resources/data_for_test_custom_fit.csv")
+        curr_path = os.path.abspath(os.path.dirname(__file__))
+        filename = os.path.join(curr_path, "./resources/data_for_test_custom_fit.csv")
+        data = q.load_data_from_file(filename)
         xydata = q.XYDataSet(xdata=data[0], ydata=data[1], yerr=1)
 
         def model(x, a, b):

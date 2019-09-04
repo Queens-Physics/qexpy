@@ -1,7 +1,7 @@
 """Test for utility methods"""
 
 import pytest
-
+import os
 import numpy as np
 import qexpy as q
 import qexpy.settings.literals as lit
@@ -13,7 +13,9 @@ class TestUtils:
 
     def test_load_data_from_file(self):  # pylint: disable=no-self-use
         """Tests function that loads data from a file"""
-        data = utils.load_data_from_file("./resources/data_for_test_load_data.csv")
+        curr_path = os.path.abspath(os.path.dirname(__file__))
+        filename = os.path.join(curr_path, "./resources/data_for_test_load_data.csv")
+        data = q.load_data_from_file(filename)
         assert len(data) == 4
         for data_set in data:
             assert len(data_set) == 30
