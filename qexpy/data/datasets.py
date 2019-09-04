@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import math as m
 
-from typing import List
+from typing import List  # pylint: disable=unused-import
 from numbers import Real
 from qexpy.utils import IllegalArgumentError
 
