@@ -12,7 +12,8 @@ import qexpy.data.data as dt
 import qexpy.utils as utils
 import qexpy.settings.literals as lit
 import qexpy.data.datasets as dts
-import qexpy.plotting.plotting as plt  # pylint: disable=cyclic-import,unused-import
+
+from . import plotting as plt  # pylint: disable=cyclic-import,unused-import
 
 
 class ObjectOnPlot(ABC):

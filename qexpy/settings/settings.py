@@ -3,7 +3,7 @@
 from enum import Enum
 from typing import Union
 
-from qexpy.settings import literals as lit
+from . import literals as lit
 
 
 class ErrorMethod(Enum):

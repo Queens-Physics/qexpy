@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 
 from typing import List
 from qexpy.utils.exceptions import IllegalArgumentError, UndefinedActionError
-from qexpy.plotting.plotobjects import ObjectOnPlot, XYObjectOnPlot, XYDataSetOnPlot, \
-    FunctionOnPlot, XYFitResultOnPlot, HistogramOnPlot, FitTarget, ObjectWithRange
+from .plotobjects import ObjectOnPlot, XYObjectOnPlot, XYDataSetOnPlot, FunctionOnPlot, \
+    XYFitResultOnPlot, HistogramOnPlot, FitTarget, ObjectWithRange
 
 import qexpy.utils as utils
 import qexpy.fitting as ft

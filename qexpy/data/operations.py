@@ -13,7 +13,7 @@ import qexpy.utils as utils
 import qexpy.settings as sts
 import qexpy.settings.literals as lit
 
-import qexpy.data.data as dt  # pylint: disable=cyclic-import
+from . import data as dt  # pylint: disable=cyclic-import
 
 pi, e = np.pi, np.e
 

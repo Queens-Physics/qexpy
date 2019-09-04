@@ -20,7 +20,7 @@ import qexpy.utils as utils
 import qexpy.settings as sts
 import qexpy.settings.literals as lit
 
-import qexpy.data.operations as op
+from . import operations as op
 
 ARRAY_TYPES = list, np.ndarray
 
@@ -548,7 +548,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
             raise ValueError("The lengths of uncertainties and data do not match")
 
         # pylint: disable=cyclic-import
-        from qexpy.data.datasets import ExperimentalValueArray
+        from .datasets import ExperimentalValueArray
 
         # Initialize raw data and its uncertainties. Internally, the raw data is implemented
         # as an ExperimentalValueArray. However, in principle, the ExperimentalValueArray

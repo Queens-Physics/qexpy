@@ -9,7 +9,8 @@ import math as m
 from typing import List
 from numbers import Real
 from qexpy.utils import IllegalArgumentError
-from qexpy.data.data import ExperimentalValue, MeasuredValue
+
+from .data import ExperimentalValue, MeasuredValue
 
 import qexpy.utils as utils
 

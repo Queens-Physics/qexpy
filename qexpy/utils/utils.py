@@ -6,7 +6,7 @@ import numpy as np
 
 from typing import Callable
 from numbers import Real
-from qexpy.utils.exceptions import UndefinedOperationError
+from .exceptions import UndefinedOperationError
 
 
 def check_operand_type(operation):
