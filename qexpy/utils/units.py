@@ -4,7 +4,7 @@ import re
 import warnings
 
 from typing import Dict, List, Union
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from qexpy.settings import UnitStyle
 
 import qexpy.settings as sts
@@ -210,7 +210,7 @@ def __evaluate_unit_tree(tree: Expression) -> Dict[str, int]:
         All units in the tree and their powers stored in a dictionary object
 
     """
-    units = {}
+    units = OrderedDict()
     if isinstance(tree, Expression) and tree.operator == "^":
         # When a unit with an exponent is found, add it to the dictionary object
         units[tree.left] = int(tree.right)
@@ -269,7 +269,7 @@ def __construct_unit_string_with_exponents(units: Dict[str, int]) -> str:
 def __add_and_sub(units_var1, units_var2):
     if units_var1 and units_var2 and units_var1 != units_var2:
         warnings.warn("You're trying to add/subtract two values with mismatching units.")
-        return {}
+        return OrderedDict()
     from copy import deepcopy
     if not units_var1:  # If any of the two units are empty, use the other one
         return deepcopy(units_var2)
@@ -277,7 +277,7 @@ def __add_and_sub(units_var1, units_var2):
 
 
 def __mul(units_var1, units_var2):
-    units = {}
+    units = OrderedDict()
     for unit, exponent in units_var1.items():
         __update_unit_exponent_count_in_dict(units, unit, exponent)
     for unit, exponent in units_var2.items():
@@ -286,7 +286,7 @@ def __mul(units_var1, units_var2):
 
 
 def __div(units_var1, units_var2):
-    units = {}
+    units = OrderedDict()
     for unit, exponent in units_var1.items():
         __update_unit_exponent_count_in_dict(units, unit, exponent)
     for unit, exponent in units_var2.items():
