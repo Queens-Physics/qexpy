@@ -6,6 +6,7 @@ import numpy as np
 
 from typing import Dict, Callable, List, Set, Generator
 from numbers import Real
+
 from qexpy.utils import UndefinedOperationError
 from uuid import UUID
 
@@ -14,8 +15,12 @@ import qexpy.settings as sts
 import qexpy.settings.literals as lit
 
 from . import data as dt  # pylint: disable=cyclic-import
+from . import datasets as dts  # pylint: disable=cyclic-import
+from . import utils as dut
 
 pi, e = np.pi, np.e
+
+ARRAY_TYPES = np.ndarray, list
 
 
 def differentiate(formula: "dt.Formula", variable: "dt.ExperimentalValue") -> float:
@@ -96,10 +101,10 @@ def get_monte_carlo_propagated_value_and_error(formula: "dt.Formula") -> "dt.Val
         # The error is used here instead of std even in the case of repeatedly measured
         # values, because the value used is the mean of all measurements, not the value
         # of any single measurement, thus it is more accurate.
-        std = measurement.error
+        _std = measurement.error
 
         center_value = measurement.value
-        return offsets * std + center_value
+        return offsets * _std + center_value
 
     def __generate_offset_matrix(measurements):
         """Generates offsets from mean for each measurement
@@ -185,22 +190,6 @@ def get_monte_carlo_propagated_value_and_error(formula: "dt.Formula") -> "dt.Val
 
     # use the standard deviation as the uncertainty and mean as the center value
     return dt.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
-
-
-def wrap_in_experimental_value(operand) -> "dt.ExperimentalValue":
-    """Wraps a variable in an ExperimentalValue object
-
-    Wraps single numbers in a Constant, number pairs in a MeasuredValue. If the argument
-    is already an ExperimentalValue instance, return directly. If the
-
-    """
-    if isinstance(operand, Real):
-        return dt.Constant(operand)
-    if isinstance(operand, dt.ExperimentalValue):
-        return operand
-    if isinstance(operand, tuple) and len(operand) == 2:
-        return dt.MeasuredValue(operand[0], operand[1])
-    raise TypeError("Cannot parse a {} into an ExperimentalValue".format(type(operand)))
 
 
 def propagate_units(formula: "dt.Formula") -> Dict[str, dict]:
@@ -340,6 +329,27 @@ def log10(x):
     return __execute(lit.LOG10, x)
 
 
+def mean(array):
+    """The mean of an array"""
+    if isinstance(array, dts.ExperimentalValueArray):
+        return array.mean()
+    return np.mean(array)
+
+
+def sum_(array):  # avoid built-in function "sum"
+    """The sum of an array"""
+    if isinstance(array, dts.ExperimentalValueArray):
+        return array.sum()
+    return np.sum(array)
+
+
+def std(array):
+    """The standard deviation of an array"""
+    if isinstance(array, dts.ExperimentalValueArray):
+        return array.std()
+    return np.std(array)
+
+
 def __evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None):
     """Evaluates a Formula with original values of measurements or sample values
 
@@ -391,7 +401,7 @@ def __execute(operator: str, *operands) -> "dt.DerivedValue":
 
     try:
         # wrap all operands in ExperimentalValue objects
-        values = list(wrap_in_experimental_value(x) for x in operands)
+        values = list(dut.wrap_in_experimental_value(x) for x in operands)
     except TypeError:
         raise UndefinedOperationError(operator, operands, "real numbers")
 

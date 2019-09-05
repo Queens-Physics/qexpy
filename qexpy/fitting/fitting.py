@@ -8,14 +8,14 @@ from typing import Callable
 from inspect import Parameter
 from collections import namedtuple
 from qexpy.utils.exceptions import IllegalArgumentError
-from .fit_utils import FitModelInfo, FitParamConstraints
+from .utils import FitModelInfo, FitParamConstraints
 
 import qexpy.data.data as dt
 import qexpy.data.datasets as dts
 import qexpy.settings.literals as lit
 import qexpy.utils as utils
 
-from . import fit_utils as fut
+from . import utils as fut
 
 # container for the raw outputs of a fit
 RawFitResults = namedtuple("RawFitResults", "popt, perr, pcov")

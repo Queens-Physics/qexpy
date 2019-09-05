@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 from numbers import Real
 from collections import namedtuple
+
 from qexpy.utils import IllegalArgumentError, UndefinedActionError
 
 import qexpy.utils as utils
@@ -21,6 +22,7 @@ import qexpy.settings as sts
 import qexpy.settings.literals as lit
 
 from . import operations as op
+from . import utils as dut
 
 ARRAY_TYPES = list, np.ndarray
 
@@ -164,66 +166,71 @@ class ExperimentalValue(ABC):
 
     @utils.check_operand_type("==")
     def __eq__(self, other):
-        return self.value == op.wrap_in_experimental_value(other).value
+        return self.value == dut.wrap_in_experimental_value(other).value
 
     def __neg__(self):
         return DerivedValue(Formula(lit.NEG, [self]))
 
     @utils.check_operand_type(">")
     def __gt__(self, other):
-        return self.value > op.wrap_in_experimental_value(other).value
+        return self.value > dut.wrap_in_experimental_value(other).value
 
     @utils.check_operand_type(">=")
     def __ge__(self, other):
-        return self.value >= op.wrap_in_experimental_value(other).value
+        return self.value >= dut.wrap_in_experimental_value(other).value
 
     @utils.check_operand_type("<")
     def __lt__(self, other):
-        return self.value < op.wrap_in_experimental_value(other).value
+        return self.value < dut.wrap_in_experimental_value(other).value
 
     @utils.check_operand_type("<=")
     def __le__(self, other):
-        return self.value <= op.wrap_in_experimental_value(other).value
+        return self.value <= dut.wrap_in_experimental_value(other).value
 
     @utils.check_operand_type("pow")
     def __pow__(self, power):
-        return DerivedValue(Formula(lit.POW, [self, op.wrap_in_experimental_value(power)]))
+        return DerivedValue(Formula(lit.POW, [self, dut.wrap_in_experimental_value(power)]))
 
     @utils.check_operand_type("pow")
     def __rpow__(self, other):
-        return DerivedValue(Formula(lit.POW, [op.wrap_in_experimental_value(other), self]))
+        return DerivedValue(Formula(lit.POW, [
+            dut.wrap_in_experimental_value(other), self]))
 
     @utils.check_operand_type("+")
     def __add__(self, other):
-        return DerivedValue(Formula(lit.ADD, [self, op.wrap_in_experimental_value(other)]))
+        return DerivedValue(Formula(lit.ADD, [self, dut.wrap_in_experimental_value(other)]))
 
     @utils.check_operand_type("+")
     def __radd__(self, other):
-        return DerivedValue(Formula(lit.ADD, [op.wrap_in_experimental_value(other), self]))
+        return DerivedValue(Formula(lit.ADD, [
+            dut.wrap_in_experimental_value(other), self]))
 
     @utils.check_operand_type("-")
     def __sub__(self, other):
-        return DerivedValue(Formula(lit.SUB, [self, op.wrap_in_experimental_value(other)]))
+        return DerivedValue(Formula(lit.SUB, [self, dut.wrap_in_experimental_value(other)]))
 
     @utils.check_operand_type("-")
     def __rsub__(self, other):
-        return DerivedValue(Formula(lit.SUB, [op.wrap_in_experimental_value(other), self]))
+        return DerivedValue(Formula(lit.SUB, [
+            dut.wrap_in_experimental_value(other), self]))
 
     @utils.check_operand_type("*")
     def __mul__(self, other):
-        return DerivedValue(Formula(lit.MUL, [self, op.wrap_in_experimental_value(other)]))
+        return DerivedValue(Formula(lit.MUL, [self, dut.wrap_in_experimental_value(other)]))
 
     @utils.check_operand_type("*")
     def __rmul__(self, other):
-        return DerivedValue(Formula(lit.MUL, [op.wrap_in_experimental_value(other), self]))
+        return DerivedValue(Formula(lit.MUL, [
+            dut.wrap_in_experimental_value(other), self]))
 
     @utils.check_operand_type("/")
     def __truediv__(self, other):
-        return DerivedValue(Formula(lit.DIV, [self, op.wrap_in_experimental_value(other)]))
+        return DerivedValue(Formula(lit.DIV, [self, dut.wrap_in_experimental_value(other)]))
 
     @utils.check_operand_type("/")
     def __rtruediv__(self, other):
-        return DerivedValue(Formula(lit.DIV, [op.wrap_in_experimental_value(other), self]))
+        return DerivedValue(Formula(lit.DIV, [
+            dut.wrap_in_experimental_value(other), self]))
 
     @abstractmethod
     def derivative(self, other: "ExperimentalValue") -> float:

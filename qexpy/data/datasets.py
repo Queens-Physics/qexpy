@@ -8,9 +8,11 @@ import math as m
 
 from typing import List  # pylint: disable=unused-import
 from numbers import Real
+
 from qexpy.utils import IllegalArgumentError
 
-from .data import ExperimentalValue, MeasuredValue
+from . import data as dt
+from . import utils as dut
 
 import qexpy.utils as utils
 
@@ -127,13 +129,13 @@ class ExperimentalValueArray(np.ndarray):
 
         error_array = _get_error_array_helper(data, error, relative_error)
 
-        measurements = list(
-            MeasuredValue(val, err, **kwargs) for val, err in zip(data, error_array))
-        for index, meas in enumerate(measurements):
+        values = list(
+            dt.MeasuredValue(val, err, **kwargs) for val, err in zip(data, error_array))
+        for index, meas in enumerate(values):
             meas.name = "{}_{}".format(meas.name, index) if meas.name else ""
 
         # Initialize the instance to a numpy.ndarray
-        obj = np.asarray(measurements, dtype=ExperimentalValue).view(ExperimentalValueArray)
+        obj = np.asarray(values, dtype=dt.ExperimentalValue).view(ExperimentalValueArray)
 
         # Added so that subclasses of this are of the correct type
         obj.__class__ = cls
@@ -147,11 +149,12 @@ class ExperimentalValueArray(np.ndarray):
         return "{}[ {} ]{}".format(name, value_errors, unit)
 
     def __setitem__(self, key, value):
-        super().__setitem__(key, self.__wrap_in_measurement(value))
+        super().__setitem__(
+            key, dut.wrap_in_measurement(value, unit=self.unit, name=self.name))
 
     def __array_finalize__(self, obj):
         """wrap up array initialization"""
-        if obj is None or not (self.shape and isinstance(self[0], ExperimentalValue)):
+        if obj is None or not (self.shape and isinstance(self[0], dt.ExperimentalValue)):
             return  # Skip if this is not a regular array of ExperimentalValue objects
         if hasattr(obj, "name"):
             name = getattr(obj, "name", "")
@@ -221,13 +224,7 @@ class ExperimentalValueArray(np.ndarray):
             The new ExperimentalValueArray instance
 
         """
-        if isinstance(value, ExperimentalValueArray):
-            pass  # don't do anything if the new value is already a ExperimentalValueArray
-        elif isinstance(value, ARRAY_TYPES):
-            value = list(self.__wrap_in_measurement(value) for value in value)
-        else:
-            value = self.__wrap_in_measurement(value)
-        # Append new value and cast to ExperimentalValueArray
+        value = dut.wrap_in_value_array(value, unit=self.unit, name=self.name)
         result = np.append(self, value).view(ExperimentalValueArray)
         for index, measurement in enumerate(result):
             measurement.name = "{}_{}".format(self.name, index)
@@ -246,12 +243,7 @@ class ExperimentalValueArray(np.ndarray):
             The new ExperimentalValueArray instance
 
         """
-        if isinstance(value, ExperimentalValueArray):
-            pass  # don't do anything if the new value is already a ExperimentalValueArray
-        elif isinstance(value, ARRAY_TYPES):
-            value = list(self.__wrap_in_measurement(value) for value in value)
-        else:
-            value = self.__wrap_in_measurement(value)
+        value = dut.wrap_in_value_array(value, unit=self.unit, name=self.name)
         result = np.insert(self, index, value).view(ExperimentalValueArray)
         for idx, measurement in enumerate(result):
             measurement.name = "{}_{}".format(self.name, idx)
@@ -272,22 +264,22 @@ class ExperimentalValueArray(np.ndarray):
             measurement.name = "{}_{}".format(self.name, idx)
         return result
 
-    def mean(self, **_) -> MeasuredValue:
+    def mean(self, **_) -> "dt.ExperimentalValue":
         """The mean of the array"""
         result = np.mean(self.values)
         error = self.error_on_mean()
         name = "mean of {}".format(self.name) if self.name else ""
-        return MeasuredValue(float(result), error, unit=self.unit, name=name)
+        return dt.MeasuredValue(float(result), error, unit=self.unit, name=name)
 
     def std(self, ddof=1, **_) -> float:
         """The standard deviation of this array"""
         return float(np.std(self.values, ddof=ddof))
 
-    def sum(self, **_) -> MeasuredValue:
+    def sum(self, **_) -> "dt.ExperimentalValue":
         """The sum of the array"""
         result = np.sum(self.values)
         error = np.sqrt(np.sum(self.errors ** 2))
-        return MeasuredValue(float(result), float(error), unit=self.unit, name=self.name)
+        return dt.MeasuredValue(float(result), float(error), unit=self.unit, name=self.name)
 
     def error_on_mean(self) -> float:
         """The error on the mean of this array"""
@@ -310,19 +302,6 @@ class ExperimentalValueArray(np.ndarray):
             return np.nan
         weights = np.asarray(list(1 / (err ** 2) for err in self.errors))
         return 1 / np.sqrt(np.sum(weights))
-
-    def __wrap_in_measurement(self, value) -> "ExperimentalValue":
-        """Wraps a value in a Measurement object"""
-
-        if isinstance(value, Real):
-            return MeasuredValue(value, 0, unit=self.unit, name=self.name)
-        if isinstance(value, tuple) and len(value) == 2:
-            return MeasuredValue(*value, unit=self.unit, name=self.name)
-        if isinstance(value, ExperimentalValue):
-            return value
-
-        raise ValueError(
-            "Elements of a MeasurementArray must be convertible to an ExperimentalValue")
 
 
 class XYDataSet:
