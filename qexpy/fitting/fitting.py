@@ -282,5 +282,9 @@ def __correlate_fit_params(params, corr):
     """Apply correlation to the list of parameters with the covariance matrix"""
 
     for index1, param1 in enumerate(params):
+        if param1.error == 0:
+            continue
         for index2, param2 in enumerate(params[index1 + 1:]):
+            if param2.error == 0:
+                continue
             param1.set_covariance(param2, corr[index1][index2 + index1 + 1])
