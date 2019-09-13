@@ -77,7 +77,7 @@ def get_derivative_propagated_value_and_error(formula: "dt.Formula") -> "dt.Valu
     return dt.ValueWithError(result_value, result_error)
 
 
-def get_monte_carlo_propagated_value_and_error(formula: "dt.Formula") -> "dt.ValueWithError":
+def get_monte_carlo_propagated_value_and_error(formula: "dt.Formula") -> tuple:
     """Executes an operation with propagated results using the Monte-Carlo method
 
     For each original measurement that the formula is derived from, generate a normally
@@ -189,7 +189,10 @@ def get_monte_carlo_propagated_value_and_error(formula: "dt.Formula") -> "dt.Val
             "the measurements. Consider choosing a different error method for this value.")
 
     # use the standard deviation as the uncertainty and mean as the center value
-    return dt.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
+    val_err = dt.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
+
+    # return result as well as the result data set
+    return val_err, result_data_set
 
 
 def propagate_units(formula: "dt.Formula") -> Dict[str, dict]:

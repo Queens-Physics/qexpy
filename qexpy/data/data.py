@@ -682,7 +682,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         return values, bins, figure
 
 
-class DerivedValue(ExperimentalValue):
+class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attributes
     """Result of calculations performed with ExperimentalValue instances
 
     This class is automatically instantiated when the user performs calculations with other
@@ -743,6 +743,9 @@ class DerivedValue(ExperimentalValue):
         # options are "derivative" and "monte_carlo", which indicates the method of error
         # propagation used to calculate this value and propagate uncertainties.
         self._values = {}  # type: Dict[str, ValueWithError]
+
+        # stores the result samples from a monte carlo error propagation
+        self._mc_samples = np.empty(0)
 
         super().__init__(save=True)
 
@@ -858,6 +861,15 @@ class DerivedValue(ExperimentalValue):
                 "You can only find derivative with respect to another ExperimentalValue")
         return 1 if self._id == other._id else op.differentiate(self._formula, other)
 
+    def show_error_contributions(self):
+        """Displays measurements' contribution to the final uncertainty"""
+
+    def show_mc_histogram(self):
+        """Display the histogram of Monte Carlo simulated results"""
+        import matplotlib.pyplot as plt
+        plt.hist(self._mc_samples, bins=100)
+        plt.show()
+
     def __get_value_error_pair(self) -> ValueWithError:
         """Gets the value-error pair for the current specified error method"""
 
@@ -868,8 +880,8 @@ class DerivedValue(ExperimentalValue):
             value_error = op.get_derivative_propagated_value_and_error(self._formula)
             self._values[lit.DERIVATIVE] = value_error
         elif error_method == lit.MONTE_CARLO not in self._values:
-            value_error = op.get_monte_carlo_propagated_value_and_error(self._formula)
-            self._values[lit.MONTE_CARLO] = value_error
+            result, samples = op.get_monte_carlo_propagated_value_and_error(self._formula)
+            self._values[lit.MONTE_CARLO], self._mc_samples = result, samples
 
         return self._values[error_method]
 

@@ -6,3 +6,9 @@ from .utils import numerical_derivative, calculate_covariance, cov2corr
 from .exceptions import IllegalArgumentError, UndefinedActionError, UndefinedOperationError
 from .units import parse_units, construct_unit_string, operate_with_units
 from .printing import get_printer
+
+import sys
+import IPython
+
+if "ipykernel" in sys.modules:
+    IPython.get_ipython().magic("matplotlib inline")
