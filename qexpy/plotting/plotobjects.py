@@ -263,6 +263,10 @@ class FunctionOnPlot(XYObjectOnPlot):
 
         self.pars = kwargs.pop("pars", [])
 
+        self._error_method = kwargs.pop("error_method", None)
+
+        self._ydata = None  # buffer for calculated y data
+
         parameters = inspect.signature(func).parameters
         if len(parameters) > 1 and not self.pars:
             raise ValueError(
@@ -295,28 +299,47 @@ class FunctionOnPlot(XYObjectOnPlot):
                 alpha=0.3, interpolate=True, zorder=0)
 
     @property
+    def xrange(self):
+        return self._xrange
+
+    @xrange.setter
+    def xrange(self, new_range: tuple):
+        if new_range:
+            utils.validate_xrange(new_range)
+        self._xrange = new_range
+        self._ydata = None  # clear y data since it would need to be re-calculated
+
+    @property
     def xvalues(self):
         if not self.xrange:
             raise UndefinedActionError("The domain of this function cannot be found.")
         return np.linspace(self.xrange[0], self.xrange[1], 100)
 
     @property
-    def yvalues(self):
+    def ydata(self):
+        """The raw y data of the function"""
+        if self._ydata:
+            return self._ydata
         if not self.xrange:
             raise UndefinedActionError("The domain of this function cannot be found.")
         result = self.func(self.xvalues)
+        derived_values = (res for res in result if isinstance(res, dt.DerivedValue))
+        if self._error_method:
+            for value in derived_values:
+                value.error_method = self._error_method
+        return result
+
+    @property
+    def yvalues(self):
         simplified_result = list(
-            res.value if isinstance(res, dt.DerivedValue) else res for res in result)
+            res.value if isinstance(res, dt.DerivedValue) else res for res in self.ydata)
         return np.asarray(simplified_result)
 
     @property
     def yerr(self):
         """The array of y-value uncertainties to show up on plot"""
-        if not self.xrange:
-            raise UndefinedActionError("The domain of this function cannot be found.")
-        result = self.func(self.xvalues)
-        errors = np.asarray(
-            list(res.error if isinstance(res, dt.DerivedValue) else 0 for res in result))
+        errors = np.asarray(list(
+            res.error if isinstance(res, dt.DerivedValue) else 0 for res in self.ydata))
         return errors if errors.size else np.empty(0)
 
 
@@ -339,7 +362,8 @@ class XYFitResultOnPlot(ObjectOnPlot):
         xrange = result.xrange if result.xrange else (
             min(result.dataset.xvalues), max(result.dataset.xvalues))
 
-        self.func_on_plot = FunctionOnPlot(result.fit_function, xrange=xrange, **kwargs)
+        self.func_on_plot = FunctionOnPlot(
+            result.fit_function, xrange=xrange, error_method=lit.MONTE_CARLO, **kwargs)
         self.residuals_on_plot = XYDataSetOnPlot(
             result.dataset.xdata, result.residuals, **kwargs)
 

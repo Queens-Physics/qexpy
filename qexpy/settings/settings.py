@@ -8,8 +8,8 @@ from . import literals as lit
 
 class ErrorMethod(Enum):
     """Preferred method of error propagation"""
-    DERIVATIVE = lit.DERIVATIVE_PROPAGATED
-    MONTE_CARLO = lit.MONTE_CARLO_PROPAGATED
+    DERIVATIVE = lit.DERIVATIVE
+    MONTE_CARLO = lit.MONTE_CARLO
     AUTO = lit.AUTO
 
 
@@ -52,7 +52,7 @@ class Settings:
             lit.UNIT_STYLE: UnitStyle.EXPONENTS,
             lit.SIG_FIGS: {
                 lit.SIG_FIG_MODE: SigFigMode.AUTOMATIC,
-                lit.SIG_FIG_VALUE: 1
+                lit.SIG_FIG_VALUE: 2
             },
             lit.MONTE_CARLO_SAMPLE_SIZE: 10000,
             lit.PLOT_DIMENSIONS: (6.4, 4.8)
@@ -72,7 +72,7 @@ class Settings:
     def error_method(self, new_method: Union[ErrorMethod, str]):
         if isinstance(new_method, ErrorMethod):
             self.__config[lit.ERROR_METHOD] = new_method
-        elif new_method in [lit.MONTE_CARLO_PROPAGATED, lit.DERIVATIVE_PROPAGATED]:
+        elif new_method in [lit.MONTE_CARLO, lit.DERIVATIVE]:
             self.__config[lit.ERROR_METHOD] = ErrorMethod(new_method)
         else:
             raise ValueError("Invalid error method!")

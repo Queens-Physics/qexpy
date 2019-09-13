@@ -6,8 +6,8 @@ be used when accessing common dictionary entries. This improves readability.
 """
 
 # value types
-DERIVATIVE_PROPAGATED = "derivative"
-MONTE_CARLO_PROPAGATED = "monte-carlo"
+DERIVATIVE = "derivative"
+MONTE_CARLO = "monte-carlo"
 
 # data fields
 COVARIANCE = "covariance"
