@@ -263,7 +263,7 @@ class FunctionOnPlot(XYObjectOnPlot):
 
         self.pars = kwargs.pop("pars", [])
 
-        self._error_method = kwargs.pop("error_method", None)
+        self.error_method = kwargs.pop("error_method", None)
 
         self._ydata = None  # buffer for calculated y data
 
@@ -324,18 +324,20 @@ class FunctionOnPlot(XYObjectOnPlot):
             raise UndefinedActionError("The domain of this function cannot be found.")
         result = self.func(self.xvalues)
         derived_values = (res for res in result if isinstance(res, dt.DerivedValue))
-        if self._error_method:
+        if self.error_method:
             for value in derived_values:
-                value.error_method = self._error_method
+                value.error_method = self.error_method
         return result
 
     @property
+    @utils.use_mc_sample_size(10000)
     def yvalues(self):
         simplified_result = list(
             res.value if isinstance(res, dt.DerivedValue) else res for res in self.ydata)
         return np.asarray(simplified_result)
 
     @property
+    @utils.use_mc_sample_size(10000)
     def yerr(self):
         """The array of y-value uncertainties to show up on plot"""
         errors = np.asarray(list(

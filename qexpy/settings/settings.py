@@ -54,7 +54,7 @@ class Settings:
                 lit.SIG_FIG_MODE: SigFigMode.AUTOMATIC,
                 lit.SIG_FIG_VALUE: 2
             },
-            lit.MONTE_CARLO_SAMPLE_SIZE: 10000,
+            lit.MONTE_CARLO_SAMPLE_SIZE: 100000,
             lit.PLOT_DIMENSIONS: (6.4, 4.8)
         }
 
