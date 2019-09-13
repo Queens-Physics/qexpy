@@ -816,7 +816,7 @@ class DerivedValue(ExperimentalValue):
     def error_method(self, new_error_method: Union[sts.ErrorMethod, str]):
         if isinstance(new_error_method, sts.ErrorMethod):
             self._error_method = new_error_method
-        elif new_error_method in [lit.MONTE_CARLO_PROPAGATED, lit.DERIVATIVE_PROPAGATED]:
+        elif new_error_method in [lit.MONTE_CARLO, lit.DERIVATIVE]:
             self._error_method = sts.ErrorMethod(new_error_method)
         else:
             raise ValueError("Invalid error method!")
@@ -864,12 +864,12 @@ class DerivedValue(ExperimentalValue):
         error_method = self.error_method.value
 
         # calculate the values if not present
-        if error_method == lit.DERIVATIVE_PROPAGATED not in self._values:
+        if error_method == lit.DERIVATIVE not in self._values:
             value_error = op.get_derivative_propagated_value_and_error(self._formula)
-            self._values[lit.DERIVATIVE_PROPAGATED] = value_error
-        elif error_method == lit.MONTE_CARLO_PROPAGATED not in self._values:
+            self._values[lit.DERIVATIVE] = value_error
+        elif error_method == lit.MONTE_CARLO not in self._values:
             value_error = op.get_monte_carlo_propagated_value_and_error(self._formula)
-            self._values[lit.MONTE_CARLO_PROPAGATED] = value_error
+            self._values[lit.MONTE_CARLO] = value_error
 
         return self._values[error_method]
 

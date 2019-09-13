@@ -185,11 +185,14 @@ def fit_to_xy_dataset(dataset: dts.XYDataSet, model, **kwargs) -> XYFitResult:
 
     params = list(wrap_param_in_measurements())
 
+    pcorr = utils.cov2corr(raw_res.pcov)
+    __correlate_fit_params(params, raw_res.pcov)
+
     # wrap the result function with the params
     result_func = __combine_fit_func_and_fit_params(fit_model.func, params)
 
     return XYFitResult(dataset=dataset, model=fit_model, res_func=result_func,
-                       res_params=params, pcorr=utils.cov2corr(raw_res.pcov), xrange=xrange)
+                       res_params=params, pcorr=pcorr, xrange=xrange)
 
 
 def __try_fit_to_xy_dataset(*args, **kwargs):
@@ -273,3 +276,11 @@ def __combine_fit_func_and_fit_params(func: Callable, params) -> Callable:
     result_func.__signature__ = new_sig
 
     return result_func
+
+
+def __correlate_fit_params(params, corr):
+    """Apply correlation to the list of parameters with the covariance matrix"""
+
+    for index1, param1 in enumerate(params):
+        for index2, param2 in enumerate(params[index1 + 1:]):
+            param1.set_covariance(param2, corr[index1][index2 + index1 + 1])

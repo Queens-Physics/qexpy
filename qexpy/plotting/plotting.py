@@ -30,7 +30,7 @@ class Plot:
         }
         self.plot_settings = {
             lit.LEGEND: False,
-            lit.ERROR_BAR: False,
+            lit.ERROR_BAR: True,
             lit.RESIDUALS: False,
             lit.PLOT_STYLE: lit.DEFAULT,
         }
