@@ -4,6 +4,7 @@ import itertools
 import warnings
 import numpy as np
 
+from abc import ABC, abstractmethod
 from typing import Dict, Callable, List, Set, Generator
 from numbers import Real
 
@@ -23,20 +24,66 @@ pi, e = np.pi, np.e
 ARRAY_TYPES = np.ndarray, list
 
 
-def differentiate(formula: "dt.Formula", variable: "dt.ExperimentalValue") -> float:
-    """Find the derivative of a formula with respect to a variable"""
-    return __differentiator(formula.operator)(variable, *formula.operands)
+class Evaluator(ABC):
+    """Used to calculate the value and uncertainty of a derived value"""
+
+    @abstractmethod
+    def evaluate(self, formula: "dt.Formula") -> "dt.ValueWithError":
+        """Evaluates a formula with the proper error method"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def clear(self):
+        """Clears the buffered results in this evaluator"""
 
 
-def get_derivative_propagated_value_and_error(formula: "dt.Formula") -> "dt.ValueWithError":
-    """Executes an operation with propagated results using the derivative method
+class DerivativeEvaluator(Evaluator):
+    """The calculator that uses the derivative method to propagate errors"""
 
-    This is also known as the method of adding quadratures. It also takes into account the
-    covariance between measurements if they are specified. It is only valid when the relative
-    uncertainties in the quantities are small (less than ~10%)
+    def __init__(self):
+        self.result = ()  # type: dt.ValueWithError
 
-    """
+    def evaluate(self, formula: "dt.Formula") -> "dt.ValueWithError":
+        if not self.result:
+            self.result = self.__evaluate(formula)
+        return self.result
 
+    def clear(self):
+        self.result = ()
+
+    @staticmethod
+    def __evaluate(formula: "dt.Formula"):
+        """Executes an operation with propagated results using the derivative method
+
+        This is also known as the method of adding quadratures. It also takes into account
+        the covariance between measurements if they are specified. It is only valid when the
+        relative uncertainties in the quantities are small (less than ~10%)
+
+        """
+
+        # Execute the operation
+        result_value = _evaluate_formula(formula)
+
+        # Find measurements that this formula is derived from
+        source_meas_ids = _find_source_measurement_ids(formula)  # type: Set[UUID]
+        source_measurements = list(dt.get_variable_by_id(_id) for _id in source_meas_ids)
+
+        # Find the quadrature terms
+        quads = map(lambda x: (x.error * differentiate(formula, x)) ** 2, source_measurements)
+
+        # Handle covariance between measurements
+        covariance_terms = DerivativeEvaluator.__find_cov_terms(formula, source_measurements)
+
+        # Calculate the result
+        result_error = np.sqrt(sum(quads) + sum(covariance_terms))
+        if result_error < 0:
+            warnings.warn(
+                "The error propagated for the given operation is negative. This is likely "
+                "to be incorrect! Check your values, maybe you have unphysical covariance.")
+
+        return dt.ValueWithError(result_value, result_error)
+
+    @staticmethod
     def __find_cov_terms(_formula: "dt.Formula", _measurements: List) -> Generator:
         """Finds the contributing covariance terms for the quadrature method"""
         for var1, var2 in itertools.combinations(_measurements, 2):
@@ -54,145 +101,109 @@ def get_derivative_propagated_value_and_error(formula: "dt.Formula") -> "dt.Valu
             if cov != 0:
                 yield 2 * cov * differentiate(_formula, var1) * differentiate(_formula, var2)
 
-    # Execute the operation
-    result_value = __evaluate_formula(formula)
 
-    # Find measurements that this formula is derived from
-    source_meas_ids = __find_source_measurement_ids(formula)  # type: Set[UUID]
-    source_measurements = list(dt.get_variable_by_id(_id) for _id in source_meas_ids)
+class MonteCarloEvaluator(Evaluator):
+    """The calculator that uses the Monte Carlo method to propagate errors"""
 
-    # Find the quadrature terms
-    quads = map(lambda x: (x.error * differentiate(formula, x)) ** 2, source_measurements)
+    def __init__(self):
+        self.samples = np.empty(0)
+        self.__values = {}
+        self.settings = dut.MonteCarloSettings(self)
 
-    # Handle covariance between measurements
-    covariance_terms = __find_cov_terms(formula, source_measurements)
+    def evaluate(self, formula: "dt.Formula") -> "dt.ValueWithError":
 
-    # Calculate the result
-    result_error = np.sqrt(sum(quads) + sum(covariance_terms))
-    if result_error < 0:
-        warnings.warn(
-            "The error propagated for the given operation is negative. This is likely to be "
-            "incorrect! Check your values, maybe you have unphysical covariance.")
+        if not self.samples.size:
+            self.samples = self.__compute_samples(formula)
 
-    return dt.ValueWithError(result_value, result_error)
+        error_method = self.settings.strategy
 
+        if error_method == lit.MC_MEAN_AND_STD not in self.__values:
+            result = dt.ValueWithError(np.mean(self.samples), np.std(self.samples, ddof=1))
+            self.__values[error_method] = result
 
-def get_monte_carlo_propagated_value_and_error(formula: "dt.Formula") -> tuple:
-    """Executes an operation with propagated results using the Monte-Carlo method
+        if error_method == lit.MC_MODE_AND_CONFIDENCE not in self.__values:
+            n, bins = np.histogram(self.samples, bins=100)
+            value, error = utils.find_mode_and_uncertainty(n, bins, self.settings.confidence)
+            self.__values[error_method] = dt.ValueWithError(value, error)
 
-    For each original measurement that the formula is derived from, generate a normally
-    distributed random data set with the mean and standard deviation of that measurement.
-    Evaluate the formula with each sample. The mean and standard deviation of the results
-    are returned as the value and propagated error.
+        return self.__values[error_method]
 
-    """
+    def clear(self):
+        self.samples = np.empty(0)
+        self.__values = {}
 
-    sample_size = sts.get_settings().monte_carlo_sample_size
+    def show_histogram(self, bins=100, **kwargs):
+        """Shows the distribution of the Monte Carlo simulated samples"""
 
-    def __generate_random_data_set(measurement_id: UUID, offsets: np.ndarray):
-        """Generate random simulated measurements for each MeasuredValue
+        import matplotlib.pyplot as plt
+        n, edges, _ = plt.hist(self.samples, bins=bins, **kwargs)
 
-        This method simply applies the desired mean and standard deviation to the random
-        sample set with 0 mean and unit variance
+        if self.settings.strategy == lit.MC_MODE_AND_CONFIDENCE:
+            value, error = utils.find_mode_and_uncertainty(n, edges, self.settings.confidence)
+            value_label = "mode = {:.2f}".format(value)
+            plt.title("MC with {:.1f}% confidence".format(self.settings.confidence * 100))
+        else:
+            value, error = np.mean(self.samples), np.std(self.samples, ddof=1)
+            value_label = "mean = {:.2f}".format(value)
+            plt.title("MC highlighting mean and standard deviation")
 
-        """
-        measurement = dt.get_variable_by_id(measurement_id)
+        plt.plot([value, value], [0, max(n)], "r", label=value_label)
 
-        # The error is used here instead of std even in the case of repeatedly measured
-        # values, because the value used is the mean of all measurements, not the value
-        # of any single measurement, thus it is more accurate.
-        _std = measurement.error
+        low, high = value - error, value + error
+        plt.plot([low, low], [0, max(n)], "r--", label="low bound = {:.2f}".format(low))
+        plt.plot([high, high], [0, max(n)], "r--", label="high bound = {:.2f}".format(high))
 
-        center_value = measurement.value
-        return offsets * _std + center_value
+        plt.legend()
+        plt.show()
 
-    def __generate_offset_matrix(measurements):
-        """Generates offsets from mean for each measurement
+    def __compute_samples(self, formula: "dt.Formula") -> np.ndarray:
+        """Executes an operation with propagated results using the Monte-Carlo method
 
-        Each sample set generated has 0 mean and unit variance. Then covariance is applied
-        to the set of samples using the Chelosky algorithm.
-
-        Args:
-            measurements (List[dt.ExperimentalValue]): a set of measurements to simulate
-
-        Returns:
-            A N row times M column matrix where N is the number of measurements to simulate
-            and M is the requested sample size for Monte Carlo simulations. Each row of this
-            matrix is an array of random values with 0 mean and unit variance
+        For each original measurement that the formula is derived from, generate a normally
+        distributed random data set with the mean and standard deviation of that measurement.
+        Evaluate the formula with each sample, and return the final sample set
 
         """
-        offset_matrix = np.vstack([np.random.normal(0, 1, sample_size) for _ in measurements])
-        offset_matrix = __correlate_random_samples(measurements, offset_matrix)
-        return offset_matrix
 
-    def __correlate_random_samples(variables, sample_vector):
-        """Uses the Chelosky algorithm to add correlation to random samples
+        sample_size = self.settings.sample_size
 
-        This method finds the Chelosky decomposition of the correlation matrix of the given
-        list of measurements, then applies it to the sample vector.
+        # Find measurements that this formula is derived from
+        source_meas_ids = _find_source_measurement_ids(formula)  # type: Set[UUID]
+        source_measurements = list(dt.get_variable_by_id(_id) for _id in source_meas_ids)
 
-        The sample vector is a list of random samples, each entry correspond to each variable
-        passed in. Each random sample, corresponding to each entry, is an array of random
-        numbers with 0 mean and unit variance.
+        # Each source measurement is assigned a set of normally distributed values with the
+        # mean and standard deviation of the measurement's center value and uncertainty.
+        data_sets = {}  # type: Dict[UUID, np.ndarray]
 
-        Args:
-            variables (List[dt.ExperimentalValue]): the source measurements
-            sample_vector (np.ndarray): the list of random samples to apply correlation to
+        # Generate a sample matrix with 0 mean and unit variance, correlated if applicable
+        sample_set = dut.generate_offset_matrix(source_measurements, sample_size)
+        for _id, sample in zip(source_meas_ids, sample_set):
+            # Apply each sample to the desired mean and standard deviation of the measurement
+            data_sets[_id] = _generate_random_data_set(_id, sample)
 
-        Returns:
-            The same list sample vector with correlation applied
+        result_data_set = _evaluate_formula(formula, data_sets)
 
-        """
-        corr_matrix = np.array(
-            [[dt.get_correlation(row, col) for col in variables] for row in variables])
-        if np.count_nonzero(corr_matrix - np.diag(np.diagonal(corr_matrix))) == 0:
-            return sample_vector  # if no correlations are present
-        try:
-            chelosky_decomposition = np.linalg.cholesky(corr_matrix)
-            result_vector = np.dot(chelosky_decomposition, sample_vector)
-            return result_vector
-        except np.linalg.linalg.LinAlgError:
+        # Check the quality of the result data
+        if isinstance(result_data_set, np.ndarray):
+            # First remove undefined values
+            result_data_set = result_data_set[np.isfinite(result_data_set)]
+
+        if len(result_data_set) / sts.get_settings().monte_carlo_sample_size < 0.9:
+            # If over 10% of the results calculated are invalid
             warnings.warn(
-                "Fail to generate a physical correlation matrix for the values provided, "
-                "using uncorrelated samples instead. Please check that the covariance or "
-                "correlation factors assigned to the measurements are physical.")
-            return sample_vector
+                "Over 10 percent of the random samples generated for the Monte Carlo "
+                "simulation falls outside the domain on which the function is defined. "
+                "Check the error or the standard deviation of the measurements passed in, "
+                "it is possible that the domain of this function is too narrow compared to "
+                "the standard deviation of the measurements.")
 
-    # Find measurements that this formula is derived from
-    source_meas_ids = __find_source_measurement_ids(formula)  # type: Set[UUID]
-    source_measurements = list(dt.get_variable_by_id(_id) for _id in source_meas_ids)
+        # return the result data set
+        return result_data_set
 
-    # Each source measurement is assigned a set of normally distributed values with the mean
-    # and standard deviation of the measurement's center value and uncertainty.
-    data_sets = {}  # type: Dict[UUID, np.ndarray]
 
-    # First generate a sample matrix with 0 mean and unit variance, correlated if applicable
-    sample_set = __generate_offset_matrix(source_measurements)
-    for _id, sample in zip(source_meas_ids, sample_set):
-        # Apply each sample to the desired mean and standard deviation of the measurement
-        data_sets[_id] = __generate_random_data_set(_id, sample)
-
-    result_data_set = __evaluate_formula(formula, data_sets)
-
-    # Check the quality of the result data
-    if isinstance(result_data_set, np.ndarray):
-        # First remove undefined values
-        result_data_set = result_data_set[np.isfinite(result_data_set)]
-
-    if len(result_data_set) / sts.get_settings().monte_carlo_sample_size < 0.9:
-        # If over 10% of the results calculated are invalid
-        warnings.warn(
-            "Over 10 percent of the random samples generated for the Monte Carlo simulation "
-            "falls outside the domain on which the function is defined. Check the error or "
-            "the standard deviation of the measurements passed in, it is possible that the "
-            "domain of this function is too narrow compared to the standard deviation of "
-            "the measurements. Consider choosing a different error method for this value.")
-
-    # use the standard deviation as the uncertainty and mean as the center value
-    val_err = dt.ValueWithError(np.mean(result_data_set), np.std(result_data_set, ddof=1))
-
-    # return result as well as the result data set
-    return val_err, result_data_set
+def differentiate(formula: "dt.Formula", variable: "dt.ExperimentalValue") -> float:
+    """Find the derivative of a formula with respect to a variable"""
+    return __differentiator(formula.operator)(variable, *formula.operands)
 
 
 def propagate_units(formula: "dt.Formula") -> Dict[str, dict]:
@@ -212,19 +223,19 @@ def propagate_units(formula: "dt.Formula") -> Dict[str, dict]:
 @utils.vectorize
 def sqrt(x):
     """square root"""
-    return __execute(lit.SQRT, x)
+    return _execute(lit.SQRT, x)
 
 
 @utils.vectorize
 def exp(x):
     """e raised to the power of x"""
-    return __execute(lit.EXP, x)
+    return _execute(lit.EXP, x)
 
 
 @utils.vectorize
 def sin(x):
     """sine of x in rad"""
-    return __execute(lit.SIN, x)
+    return _execute(lit.SIN, x)
 
 
 @utils.vectorize
@@ -236,7 +247,7 @@ def sind(x):
 @utils.vectorize
 def cos(x):
     """cosine of x in rad"""
-    return __execute(lit.COS, x)
+    return _execute(lit.COS, x)
 
 
 @utils.vectorize
@@ -248,7 +259,7 @@ def cosd(x):
 @utils.vectorize
 def tan(x):
     """tan of x in rad"""
-    return __execute(lit.TAN, x)
+    return _execute(lit.TAN, x)
 
 
 @utils.vectorize
@@ -260,7 +271,7 @@ def tand(x):
 @utils.vectorize
 def sec(x):
     """sec of x in rad"""
-    return __execute(lit.SEC, x)
+    return _execute(lit.SEC, x)
 
 
 @utils.vectorize
@@ -272,7 +283,7 @@ def secd(x):
 @utils.vectorize
 def csc(x):
     """csc of x in rad"""
-    return __execute(lit.CSC, x)
+    return _execute(lit.CSC, x)
 
 
 @utils.vectorize
@@ -284,7 +295,7 @@ def cscd(x):
 @utils.vectorize
 def cot(x):
     """cot of x in rad"""
-    return __execute(lit.COT, x)
+    return _execute(lit.COT, x)
 
 
 @utils.vectorize
@@ -296,19 +307,19 @@ def cotd(x):
 @utils.vectorize
 def asin(x):
     """arcsine of x"""
-    return __execute(lit.ASIN, x)
+    return _execute(lit.ASIN, x)
 
 
 @utils.vectorize
 def acos(x):
     """arccos of x"""
-    return __execute(lit.ACOS, x)
+    return _execute(lit.ACOS, x)
 
 
 @utils.vectorize
 def atan(x):
     """arctan of x"""
-    return __execute(lit.ATAN, x)
+    return _execute(lit.ATAN, x)
 
 
 @utils.vectorize
@@ -320,16 +331,16 @@ def log(*args):
 
     """
     if len(args) == 2:
-        return __execute(lit.LOG, args[0], args[1])
+        return _execute(lit.LOG, args[0], args[1])
     if len(args) == 1:
-        return __execute(lit.LN, args[0])
+        return _execute(lit.LN, args[0])
     raise TypeError("Invalid number of arguments for log().")
 
 
 @utils.vectorize
 def log10(x):
     """log with base 10 for a value"""
-    return __execute(lit.LOG10, x)
+    return _execute(lit.LOG10, x)
 
 
 def mean(array):
@@ -353,7 +364,7 @@ def std(array):
     return np.std(array)
 
 
-def __evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None):
+def _evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None):
     """Evaluates a Formula with original values of measurements or sample values
 
     This function evaluates the formula with the original measurements by default. If a set
@@ -369,32 +380,51 @@ def __evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None):
         # Use the value in the sample instead of its original value if specified
         return samples[formula._id]
     if isinstance(formula, dt.DerivedValue):
-        return __evaluate_formula(formula._formula, samples)
+        return _evaluate_formula(formula._formula, samples)
     if isinstance(formula, (dt.MeasuredValue, dt.Constant)):
         return formula.value
     if isinstance(formula, Real):
         return float(formula)
     if isinstance(formula, dt.Formula):
-        operands = (__evaluate_formula(variable, samples) for variable in formula.operands)
+        operands = (_evaluate_formula(variable, samples) for variable in formula.operands)
         result = OPERATIONS[formula.operator](*operands)
         return result
     return 0
 
 
-def __find_source_measurement_ids(formula) -> Set[UUID]:
+def _find_source_measurement_ids(formula) -> Set[UUID]:
     """Find IDs of all measurements that the given formula is derived from"""
 
     if isinstance(formula, dt.Formula):
         return set.union(
-            *(__find_source_measurement_ids(operand) for operand in formula.operands))
+            *(_find_source_measurement_ids(operand) for operand in formula.operands))
     if isinstance(formula, dt.MeasuredValue):
         return {formula._id}
     if isinstance(formula, dt.DerivedValue):
-        return __find_source_measurement_ids(formula._formula)
+        return _find_source_measurement_ids(formula._formula)
     return set()
 
 
-def __execute(operator: str, *operands) -> "dt.DerivedValue":
+def _generate_random_data_set(measurement_id: UUID, offsets: np.ndarray):
+    """Generate random simulated measurements for each MeasuredValue
+
+    This method simply applies the desired mean and standard deviation to the random
+    sample set with 0 mean and unit variance
+
+    """
+
+    measurement = dt.get_variable_by_id(measurement_id)
+
+    # The error is used here instead of std even in the case of repeatedly measured values,
+    # because the value used is the mean of all measurements, not the value of any single
+    # measurement, thus it is more accurate.
+    _std = measurement.error
+
+    center_value = measurement.value
+    return offsets * _std + center_value
+
+
+def _execute(operator: str, *operands) -> "dt.DerivedValue":
     """Execute a math function on numbers or ExperimentalValue instances"""
 
     # For functions such as sqrt, sin, cos, ..., if a simple real number is passed in, a

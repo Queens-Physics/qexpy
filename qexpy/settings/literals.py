@@ -5,9 +5,13 @@ be used when accessing common dictionary entries. This improves readability.
 
 """
 
-# value types
+# value types for error propagation
 DERIVATIVE = "derivative"
 MONTE_CARLO = "monte-carlo"
+MC_MEAN_AND_STD = "monte-carlo-mean-and-std"
+MC_MODE_AND_CONFIDENCE = "monte-carlo-mode_and_confidence"
+MONTE_CARLO_STRATEGY = "mc-strategy"
+MONTE_CARLO_CONFIDENCE = "confidence"
 
 # data fields
 COVARIANCE = "covariance"

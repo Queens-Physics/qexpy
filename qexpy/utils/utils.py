@@ -98,6 +98,21 @@ def cov2corr(pcov: np.ndarray) -> np.ndarray:
     return pcov / np.outer(std, std)
 
 
+def find_mode_and_uncertainty(n, bins, confidence) -> (float, float):
+    """Find the mode and uncertainty with a confidence of a histogram distribution"""
+    number_of_samples = sum(n)
+    max_idx = n.argmax()
+    value = (bins[max_idx] + bins[max_idx + 1]) / 2
+    count = n[max_idx]
+    low_idx, high_idx = max_idx, max_idx
+    while count < confidence * number_of_samples:
+        low_idx -= 1
+        high_idx += 1
+        count += n[low_idx] + n[high_idx]
+    error = (bins[high_idx] + bins[high_idx + 1]) / 2 - value
+    return value, error
+
+
 def load_data_from_file(filepath: str, delimiter=",") -> np.ndarray:
     """Reads arrays of data from a file
 

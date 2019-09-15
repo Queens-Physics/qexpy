@@ -682,7 +682,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         return values, bins, figure
 
 
-class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attributes
+class DerivedValue(ExperimentalValue):
     """Result of calculations performed with ExperimentalValue instances
 
     This class is automatically instantiated when the user performs calculations with other
@@ -733,26 +733,23 @@ class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attr
         """Constructor for a DerivedValue"""
 
         # The error method used for error propagation of this value
-        self._error_method = sts.ErrorMethod.AUTO
+        self.__error_method = sts.ErrorMethod.AUTO  # type: sts.ErrorMethod
 
         # The expression tree representing how this value is derived.
-        self._formula = formula
+        self._formula = formula  # type: Formula
 
-        # Stores the value/uncertainty pairs. Each DerivedValue may have multiple sets of
-        # values and uncertainties, each corresponding to how the value is obtained. The two
-        # options are "derivative" and "monte_carlo", which indicates the method of error
-        # propagation used to calculate this value and propagate uncertainties.
-        self._values = {}  # type: Dict[str, ValueWithError]
-
-        # stores the result samples from a monte carlo error propagation
-        self._mc_samples = np.empty(0)
+        # The objects used to evaluate the formula with the appropriate error methods
+        self.__evaluators = {
+            lit.DERIVATIVE: op.DerivativeEvaluator(),
+            lit.MONTE_CARLO: op.MonteCarloEvaluator()
+        }  # type: Dict[str, op.Evaluator]
 
         super().__init__(save=True)
 
         self._unit = op.propagate_units(formula)
 
     @property
-    def value(self) -> float:
+    def value(self):
         return self.__get_value_error_pair().value
 
     @value.setter
@@ -767,7 +764,7 @@ class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attr
         self.value, self.error = new_value, error
 
     @property
-    def error(self) -> float:
+    def error(self):
         return self.__get_value_error_pair().error
 
     @error.setter
@@ -784,7 +781,7 @@ class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attr
         self.value, self.error = value, new_error
 
     @property
-    def relative_error(self) -> float:
+    def relative_error(self):
         return self.error / self.value if self.value != 0 else 0.
 
     @relative_error.setter
@@ -802,8 +799,8 @@ class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attr
         self.value, self.error = value, new_error
 
     @property
-    def error_method(self) -> sts.ErrorMethod:
-        """The default error method used for this value
+    def error_method(self):
+        """sts.ErrorMethod: The default error method used for this value
 
         QExPy currently supports two different methods of error propagation, the derivative
         method, and the Monte-Carlo method. The user can change the global default which
@@ -811,22 +808,29 @@ class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attr
         be different from the global settings.
 
         """
-        if self._error_method == sts.ErrorMethod.AUTO:
+        if self.__error_method == sts.ErrorMethod.AUTO:
             return sts.get_settings().error_method
-        return self._error_method
+        return self.__error_method
 
     @error_method.setter
     def error_method(self, new_error_method: Union[sts.ErrorMethod, str]):
         if isinstance(new_error_method, sts.ErrorMethod):
-            self._error_method = new_error_method
+            self.__error_method = new_error_method
         elif new_error_method in [lit.MONTE_CARLO, lit.DERIVATIVE]:
-            self._error_method = sts.ErrorMethod(new_error_method)
+            self.__error_method = sts.ErrorMethod(new_error_method)
         else:
             raise ValueError("Invalid error method!")
 
+    def mc_get_settings(self) -> dut.MonteCarloSettings:
+        """Gets the settings object for Monte Carlo customizations"""
+        evaluator = self.__evaluators[lit.MONTE_CARLO]
+        if not isinstance(evaluator, op.MonteCarloEvaluator):
+            raise Exception("Wrong evaluator type!")
+        return evaluator.settings
+
     def reset_error_method(self):
         """Resets the default error method for this value to follow the global settings"""
-        self._error_method = sts.ErrorMethod.AUTO
+        self.__error_method = sts.ErrorMethod.AUTO
 
     def recalculate(self):
         """Recalculates the value
@@ -853,7 +857,8 @@ class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attr
             DerivedValue(12.0 +/- 0.2)
 
         """
-        self._values = {}
+        for evaluator in self.__evaluators.values():
+            evaluator.clear()
 
     def derivative(self, other: ExperimentalValue) -> float:
         if not isinstance(other, ExperimentalValue):
@@ -864,26 +869,17 @@ class DerivedValue(ExperimentalValue):  # pylint: disable=too-many-instance-attr
     def show_error_contributions(self):
         """Displays measurements' contribution to the final uncertainty"""
 
-    def show_mc_histogram(self):
+    def mc_show_histogram(self, bins=100, **kwargs):
         """Display the histogram of Monte Carlo simulated results"""
-        import matplotlib.pyplot as plt
-        plt.hist(self._mc_samples, bins=100)
-        plt.show()
+        evaluator = self.__evaluators[lit.MONTE_CARLO]
+        if not isinstance(evaluator, op.MonteCarloEvaluator):
+            raise Exception("Wrong evaluator type!")
+        evaluator.show_histogram(bins=bins, **kwargs)
 
     def __get_value_error_pair(self) -> ValueWithError:
         """Gets the value-error pair for the current specified error method"""
-
         error_method = self.error_method.value
-
-        # calculate the values if not present
-        if error_method == lit.DERIVATIVE not in self._values:
-            value_error = op.get_derivative_propagated_value_and_error(self._formula)
-            self._values[lit.DERIVATIVE] = value_error
-        elif error_method == lit.MONTE_CARLO not in self._values:
-            result, samples = op.get_monte_carlo_propagated_value_and_error(self._formula)
-            self._values[lit.MONTE_CARLO], self._mc_samples = result, samples
-
-        return self._values[error_method]
+        return self.__evaluators[error_method].evaluate(self._formula)
 
 
 def get_covariance(var1: ExperimentalValue, var2: ExperimentalValue) -> float:
