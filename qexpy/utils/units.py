@@ -6,6 +6,7 @@ import warnings
 from typing import Dict, List, Union
 from collections import namedtuple, OrderedDict
 from qexpy.settings import UnitStyle
+from copy import deepcopy
 
 import qexpy.settings as sts
 import qexpy.settings.literals as lit
@@ -19,7 +20,7 @@ DOT_STRING = "⋅"
 Expression = namedtuple("Expression", "operator, left, right")
 
 
-def parse_units(unit_string: str) -> Dict[str, int]:
+def parse_unit_string(unit_string: str) -> Dict[str, int]:
     """Decodes the string representation of a set of units
 
     This function parses the unit string into a binary expression tree, evaluate the tree to
@@ -28,8 +29,8 @@ def parse_units(unit_string: str) -> Dict[str, int]:
 
     The units are parsed to the following rules:
         1. Expressions enclosed in brackets are evaluated first
-        2. A unit with its power (e.g. "m^2") is considered a whole
-        3. Expressions connected with implicit multiplication are seen as in brackets.
+        2. A unit with its power (e.g. "m^2") are always evaluated together
+        3. Expressions connected with implicit multiplication are evaluated together
 
     For example, "kg*m^2/s^2A^2" would be decoded to: {"kg": 1, "m": 2, "s": -2, "A": -2}
 
@@ -266,11 +267,14 @@ def __construct_unit_string_with_exponents(units: Dict[str, int]) -> str:
     return DOT_STRING.join(unit_strings)
 
 
+def __neg(units):
+    return deepcopy(units)
+
+
 def __add_and_sub(units_var1, units_var2):
     if units_var1 and units_var2 and units_var1 != units_var2:
         warnings.warn("You're trying to add/subtract two values with mismatching units.")
         return OrderedDict()
-    from copy import deepcopy
     if not units_var1:  # If any of the two units are empty, use the other one
         return deepcopy(units_var2)
     return deepcopy(units_var1)
@@ -294,14 +298,23 @@ def __div(units_var1, units_var2):
     return units
 
 
+def __sqrt(units):
+    new_units = OrderedDict()
+    for unit, exponent in units.items():
+        new_units[unit] = exponent / 2
+    return new_units
+
+
 def __update_unit_exponent_count_in_dict(unit_dict, unit_string, change):
     current_count = 0 if unit_string not in unit_dict else unit_dict[unit_string]
     unit_dict[unit_string] = current_count + change
 
 
 UNIT_OPERATIONS = {
+    lit.NEG: __neg,
     lit.ADD: __add_and_sub,
     lit.SUB: __add_and_sub,
     lit.MUL: __mul,
-    lit.DIV: __div
+    lit.DIV: __div,
+    lit.SQRT: __sqrt
 }

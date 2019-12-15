@@ -16,6 +16,7 @@ from numbers import Real
 from collections import namedtuple
 
 from qexpy.utils import IllegalArgumentError, UndefinedActionError
+from qexpy.settings import ErrorMethod
 
 import qexpy.utils as utils
 import qexpy.settings as sts
@@ -98,7 +99,7 @@ class ExperimentalValue(ABC):
         # Stores each unit string and their powers.
         if unit is not None and not isinstance(unit, str):
             raise TypeError("The unit provided is not a string!")
-        self._unit = utils.parse_units(unit) if unit else {}  # type: Dict[str, int]
+        self._unit = utils.parse_unit_string(unit) if unit else {}  # type: Dict[str, int]
 
         # The name of this quantity if given
         if name is not None and not isinstance(name, str):
@@ -162,7 +163,7 @@ class ExperimentalValue(ABC):
     def unit(self, new_unit: str):
         if not isinstance(new_unit, str):
             raise TypeError("Cannot set unit of a value to \"{}\"".format(type(new_unit)))
-        self._unit = utils.parse_units(new_unit) if new_unit else {}
+        self._unit = utils.parse_unit_string(new_unit) if new_unit else {}
 
     @utils.check_operand_type("==")
     def __eq__(self, other):
@@ -733,7 +734,7 @@ class DerivedValue(ExperimentalValue):
         """Constructor for a DerivedValue"""
 
         # The error method used for error propagation of this value
-        self.__error_method = sts.ErrorMethod.AUTO  # type: sts.ErrorMethod
+        self.__error_method = ErrorMethod.AUTO  # type: ErrorMethod
 
         # The expression tree representing how this value is derived.
         self._formula = formula  # type: Formula
@@ -800,7 +801,7 @@ class DerivedValue(ExperimentalValue):
 
     @property
     def error_method(self):
-        """sts.ErrorMethod: The default error method used for this value
+        """ErrorMethod: The default error method used for this value
 
         QExPy currently supports two different methods of error propagation, the derivative
         method, and the Monte-Carlo method. The user can change the global default which
@@ -808,29 +809,32 @@ class DerivedValue(ExperimentalValue):
         be different from the global settings.
 
         """
-        if self.__error_method == sts.ErrorMethod.AUTO:
+        if self.__error_method == ErrorMethod.AUTO:
             return sts.get_settings().error_method
         return self.__error_method
 
     @error_method.setter
-    def error_method(self, new_error_method: Union[sts.ErrorMethod, str]):
-        if isinstance(new_error_method, sts.ErrorMethod):
+    def error_method(self, new_error_method: Union[ErrorMethod, str]):
+        if isinstance(new_error_method, ErrorMethod):
             self.__error_method = new_error_method
         elif new_error_method in [lit.MONTE_CARLO, lit.DERIVATIVE]:
-            self.__error_method = sts.ErrorMethod(new_error_method)
+            self.__error_method = ErrorMethod(new_error_method)
         else:
             raise ValueError("Invalid error method!")
 
-    def mc_get_settings(self) -> dut.MonteCarloSettings:
-        """Gets the settings object for Monte Carlo customizations"""
+    @property
+    def mc(self) -> dut.MonteCarloSettings:
+        """The settings object for customizing Monte Carlo error propagation"""
         evaluator = self.__evaluators[lit.MONTE_CARLO]
         if not isinstance(evaluator, op.MonteCarloEvaluator):
             raise Exception("Wrong evaluator type!")
+        if not evaluator.raw_samples.size:
+            evaluator.evaluate(self._formula)
         return evaluator.settings
 
     def reset_error_method(self):
         """Resets the default error method for this value to follow the global settings"""
-        self.__error_method = sts.ErrorMethod.AUTO
+        self.__error_method = ErrorMethod.AUTO
 
     def recalculate(self):
         """Recalculates the value
@@ -865,16 +869,6 @@ class DerivedValue(ExperimentalValue):
             raise IllegalArgumentError(
                 "You can only find derivative with respect to another ExperimentalValue")
         return 1 if self._id == other._id else op.differentiate(self._formula, other)
-
-    def show_error_contributions(self):
-        """Displays measurements' contribution to the final uncertainty"""
-
-    def mc_show_histogram(self, bins=100, **kwargs):
-        """Display the histogram of Monte Carlo simulated results"""
-        evaluator = self.__evaluators[lit.MONTE_CARLO]
-        if not isinstance(evaluator, op.MonteCarloEvaluator):
-            raise Exception("Wrong evaluator type!")
-        evaluator.show_histogram(bins=bins, **kwargs)
 
     def __get_value_error_pair(self) -> ValueWithError:
         """Gets the value-error pair for the current specified error method"""

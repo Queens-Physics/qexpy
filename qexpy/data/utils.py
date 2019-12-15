@@ -9,6 +9,7 @@ from . import data as dt, datasets as dts  # pylint: disable=cyclic-import
 
 import qexpy.settings.literals as lit
 import qexpy.settings as sts
+import qexpy.utils as utils
 
 ARRAY_TYPES = np.ndarray, list
 
@@ -21,11 +22,12 @@ class MonteCarloSettings:
         self.__settings = {
             lit.MONTE_CARLO_SAMPLE_SIZE: 0,
             lit.MONTE_CARLO_STRATEGY: lit.MC_MEAN_AND_STD,
-            lit.MONTE_CARLO_CONFIDENCE: 0.68
+            lit.MONTE_CARLO_CONFIDENCE: 0.68,
+            lit.XRANGE: ()
         }
 
     @property
-    def sample_size(self) -> int:
+    def sample_size(self):
         """int: The Monte Carlo sample size"""
         default_size = sts.get_settings().monte_carlo_sample_size
         set_size = self.__settings[lit.MONTE_CARLO_SAMPLE_SIZE]
@@ -49,13 +51,51 @@ class MonteCarloSettings:
             raise ValueError("The MC confidence level has to be a number between 0 and 1")
         self.__settings[lit.MONTE_CARLO_CONFIDENCE] = new_level
 
-    def use_mode_with_confidence(self):
-        """Sets the strategy to mode and uncertainty from confidence coverage"""
+    @property
+    def xrange(self):
+        """tuple: The x-range of the simulation
+
+        This is really the y-range, which means it's the range of the y-values to show,
+        but also this is the x-range of the histogram.
+
+        """
+        return self.__settings[lit.XRANGE]
+
+    def set_xrange(self, *args):
+        """set the range for the monte carlo simulation"""
+        if not args:
+            self.__settings[lit.XRANGE] = ()
+        new_range = (args[0], args[1]) if len(args) > 1 else args
+        if utils.validate_xrange(new_range):
+            self.__settings[lit.XRANGE] = new_range
+        self.__evaluator.values = {}
+
+    def use_mode_with_confidence(self, confidence=None):
+        """Use the mode of the distribution with a confidence coverage for this value"""
         self.strategy = lit.MC_MODE_AND_CONFIDENCE
+        if confidence:
+            self.confidence = confidence
 
     def use_mean_and_std(self):
-        """Sets the strategy to use mean and std of the distribution"""
+        """Use the mean and std of the distribution for this value"""
         self.strategy = lit.MC_MEAN_AND_STD
+
+    def use_custom_value_and_error(self, value, error):
+        """Manually set the value and uncertainty for this quantity
+
+        Sometimes when the distribution is not typical, and you wish to see for yourself what
+        the best approach is to choose the center value and uncertainty for this quantity,
+        use this method to manually set these values.
+
+        """
+        self.strategy = lit.MC_CUSTOM
+        if not isinstance(value, Real):
+            raise TypeError("Cannot assign a {} to the value!".format(type(value)))
+        if not isinstance(error, Real):
+            raise TypeError("Cannot assign a {} to the error!".format(type(error)))
+        if error < 0:
+            raise ValueError("The error must be a positive real number!")
+        self.__evaluator.values[self.strategy] = (value, error)
 
     @property
     def strategy(self):
@@ -67,6 +107,20 @@ class MonteCarloSettings:
         if new_strategy not in [lit.MC_MEAN_AND_STD, lit.MC_MODE_AND_CONFIDENCE]:
             raise ValueError("Invalid strategy string")
         self.__settings[lit.MONTE_CARLO_STRATEGY] = new_strategy
+
+    def show_histogram(self, bins=100, **kwargs):
+        """Shows the distribution of the Monte Carlo simulated samples"""
+        self.__evaluator.show_histogram(bins, **kwargs)
+
+    def samples(self):
+        """The raw samples generated in the Monte Carlo simulation
+
+        Sometimes when the distribution is not typical, you might wish to do your own analysis
+        with the raw samples generated in the Monte Carlo simulation. This method allows you
+        to access a copy of the raw data.
+
+        """
+        return self.__evaluator.raw_samples.copy()
 
 
 def generate_offset_matrix(measurements, sample_size):
