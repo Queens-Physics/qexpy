@@ -140,7 +140,8 @@ disable=print-statement,
         exception-escape,
         comprehension-escape,
         wrong-import-order,
-        ungrouped-imports
+        ungrouped-imports,
+        import-outside-toplevel
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -431,7 +432,8 @@ good-names=i,
            gs,
            ax,
            o,
-           a
+           a,
+           mc
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no

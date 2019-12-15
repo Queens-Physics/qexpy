@@ -198,7 +198,7 @@ class ExperimentalValueArray(np.ndarray):
             raise TypeError("Cannot set dataset unit to \"{}\"!".format(type(unit_string)))
         if not unit_string:
             return
-        new_unit = utils.parse_units(unit_string)
+        new_unit = utils.parse_unit_string(unit_string)
         for data in self:
             data._unit = new_unit
 
@@ -264,18 +264,18 @@ class ExperimentalValueArray(np.ndarray):
             measurement.name = "{}_{}".format(self.name, idx)
         return result
 
-    def mean(self, **_) -> "dt.ExperimentalValue":
+    def mean(self, **_) -> "dt.ExperimentalValue":  # pylint:disable=arguments-differ
         """The mean of the array"""
         result = np.mean(self.values)
         error = self.error_on_mean()
         name = "mean of {}".format(self.name) if self.name else ""
         return dt.MeasuredValue(float(result), error, unit=self.unit, name=name)
 
-    def std(self, ddof=1, **_) -> float:
+    def std(self, ddof=1, **_) -> float:  # pylint:disable=arguments-differ
         """The standard deviation of this array"""
         return float(np.std(self.values, ddof=ddof))
 
-    def sum(self, **_) -> "dt.ExperimentalValue":
+    def sum(self, **_) -> "dt.ExperimentalValue":  # pylint:disable=arguments-differ
         """The sum of the array"""
         result = np.sum(self.values)
         error = np.sqrt(np.sum(self.errors ** 2))

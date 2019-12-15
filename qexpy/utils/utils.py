@@ -1,6 +1,7 @@
 """Miscellaneous utility functions"""
 
 import functools
+import csv
 
 import numpy as np
 
@@ -128,7 +129,6 @@ def load_data_from_file(filepath: str, delimiter=",") -> np.ndarray:
         A 2-dimensional np.ndarray where each array is a column in the file
 
     """
-    import csv
     with open(filepath, newline='') as openfile:
         reader = csv.reader(openfile, delimiter=delimiter)
         # read file into array of rows

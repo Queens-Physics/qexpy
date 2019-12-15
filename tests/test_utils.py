@@ -58,20 +58,20 @@ class TestUnits:
         """Tests parsing unit strings into dictionaries"""
 
         units_for_watt = dict(resource["units_for_watt"])
-        assert utils.parse_units("kg*m^2/s^2") == units_for_watt
-        assert utils.parse_units("kg^1m^2s^-2") == units_for_watt
-        assert utils.parse_units("kg^1*m^2/s^2") == units_for_watt
-        assert utils.parse_units("kg^1m^2/s^2") == units_for_watt
+        assert utils.parse_unit_string("kg*m^2/s^2") == units_for_watt
+        assert utils.parse_unit_string("kg^1m^2s^-2") == units_for_watt
+        assert utils.parse_unit_string("kg^1*m^2/s^2") == units_for_watt
+        assert utils.parse_unit_string("kg^1m^2/s^2") == units_for_watt
 
         units_for_henry = dict(resource["units_for_henry"])
-        assert utils.parse_units("kg*m^2/(s^2*A^2)") == units_for_henry
-        assert utils.parse_units("kg^1m^2s^-2A^-2") == units_for_henry
-        assert utils.parse_units("m^2kg/s^2A^2") == units_for_henry
-        assert utils.parse_units("kg/s^2A^2*m^2") == units_for_henry
+        assert utils.parse_unit_string("kg*m^2/(s^2*A^2)") == units_for_henry
+        assert utils.parse_unit_string("kg^1m^2s^-2A^-2") == units_for_henry
+        assert utils.parse_unit_string("m^2kg/s^2A^2") == units_for_henry
+        assert utils.parse_unit_string("kg/s^2A^2*m^2") == units_for_henry
 
         units_super_complicated = dict(resource["units_super_complicated"])
-        assert utils.parse_units("m^2kg^4/s^2A^2L^3*Pa") == units_super_complicated
-        assert utils.parse_units("kg^4m^2*Pa/(s^2A^2*L^3)") == units_super_complicated
+        assert utils.parse_unit_string("m^2kg^4/s^2A^2L^3*Pa") == units_super_complicated
+        assert utils.parse_unit_string("kg^4m^2*Pa/(s^2A^2*L^3)") == units_super_complicated
 
     def test_construct_unit_string(self, resource):
         """Tests constructing unit strings from dictionaries"""

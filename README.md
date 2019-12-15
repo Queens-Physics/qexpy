@@ -8,7 +8,7 @@ QExPy (Queen’s Experimental Physics) is a python 3 package designed to facilit
 
 ## Getting Started
 
-To install the package, type the following command in your terminal or [Anaconda](https://www.anaconda.com/distribution/#download-section) shell.
+To install the package, type the following command in your terminal or [Anaconda](https://www.anaconda.com/distribution/#download-section) shell. 
 
 ```sh
 $ pip install qexpy
@@ -16,25 +16,16 @@ $ pip install qexpy
 
 ## Usage
 
+It's recommanded to use this package in the Jupyter Notebook environment.
+
 ```python
 import qexpy as q
 ```
 
 ## Contributing
 
-With a local clone of this repository, if you wish to do development work, run the following command in the project root directory.
+With a local clone of this repository, if you wish to do development work, run the `make prep` in the project root directory. This will install pytest which we use for testing, and pylint which we use to control code quality, as well as necessary packages for generating documentation.
 
-```sh
-$ pip install .[dev]
-```
+Before submitting any change, you should run `make test` in the project root directory to make sure that your code matches all code style requirements and passes all unit tests.
 
-This will install pytest which we use for testing, and pylint which we use to control code quality. If you wish to participate in documenting the package, use the following command.
-
-```sh
-$ pip install .[dev,doc]
-```
-
-Before submitting any change, you should:
-
-- Run `pytest -v --durations=0` in the test directory to execute all unit tests.
-- Run `pylint qexpy` in the project root directory to make sure that your code matches the code stype requirements.
+Documentation for this package is located in the docs directory. Run `make docs` in the project root directory to build the full documentation. The html page will open after the build is complete.

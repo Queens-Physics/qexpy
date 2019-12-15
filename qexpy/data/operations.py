@@ -35,6 +35,7 @@ class Evaluator(ABC):
     @abstractmethod
     def clear(self):
         """Clears the buffered results in this evaluator"""
+        raise NotImplementedError
 
 
 class DerivativeEvaluator(Evaluator):
@@ -106,44 +107,60 @@ class MonteCarloEvaluator(Evaluator):
     """The calculator that uses the Monte Carlo method to propagate errors"""
 
     def __init__(self):
-        self.samples = np.empty(0)
-        self.__values = {}
+        self.raw_samples = np.empty(0)
+        self.values = {}
         self.settings = dut.MonteCarloSettings(self)
+
+    @property
+    def samples(self):
+        """np.ndarray: the raw samples of this simulation"""
+        if not self.settings.xrange:
+            return self.raw_samples
+        xrange = self.settings.xrange
+        return np.ma.masked_outside(self.raw_samples, xrange[0], xrange[1], copy=False)
 
     def evaluate(self, formula: "dt.Formula") -> "dt.ValueWithError":
 
-        if not self.samples.size:
-            self.samples = self.__compute_samples(formula)
+        if not self.raw_samples.size:
+            self.raw_samples = self.__compute_samples(formula)
 
         error_method = self.settings.strategy
 
-        if error_method == lit.MC_MEAN_AND_STD not in self.__values:
-            result = dt.ValueWithError(np.mean(self.samples), np.std(self.samples, ddof=1))
-            self.__values[error_method] = result
+        if error_method == lit.MC_CUSTOM not in self.values:
+            error_method = self.settings.strategy = lit.MC_MEAN_AND_STD
 
-        if error_method == lit.MC_MODE_AND_CONFIDENCE not in self.__values:
+        if error_method == lit.MC_MEAN_AND_STD not in self.values:
+            result = dt.ValueWithError(np.mean(self.samples), np.std(self.samples, ddof=1))
+            self.values[error_method] = result
+
+        if error_method == lit.MC_MODE_AND_CONFIDENCE not in self.values:
             n, bins = np.histogram(self.samples, bins=100)
             value, error = utils.find_mode_and_uncertainty(n, bins, self.settings.confidence)
-            self.__values[error_method] = dt.ValueWithError(value, error)
+            self.values[error_method] = dt.ValueWithError(value, error)
 
-        return self.__values[error_method]
+        return self.values[error_method]
 
     def clear(self):
-        self.samples = np.empty(0)
-        self.__values = {}
+        self.raw_samples = np.empty(0)
+        self.values = {}
 
     def show_histogram(self, bins=100, **kwargs):
         """Shows the distribution of the Monte Carlo simulated samples"""
 
+        samples = self.samples
+        if "range" in kwargs:
+            xrange = kwargs.pop('range')
+            samples = np.ma.masked_outside(samples, xrange[0], xrange[1], copy=False)
+
         import matplotlib.pyplot as plt
-        n, edges, _ = plt.hist(self.samples, bins=bins, **kwargs)
+        n, edges, _ = plt.hist(samples, bins=bins, **kwargs)
 
         if self.settings.strategy == lit.MC_MODE_AND_CONFIDENCE:
             value, error = utils.find_mode_and_uncertainty(n, edges, self.settings.confidence)
             value_label = "mode = {:.2f}".format(value)
             plt.title("MC with {:.1f}% confidence".format(self.settings.confidence * 100))
         else:
-            value, error = np.mean(self.samples), np.std(self.samples, ddof=1)
+            value, error = np.mean(samples), np.std(samples, ddof=1)
             value_label = "mean = {:.2f}".format(value)
             plt.title("MC highlighting mean and standard deviation")
 

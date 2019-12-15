@@ -275,7 +275,7 @@ class FunctionOnPlot(XYObjectOnPlot):
         if len(parameters) == 1:
             self.func = func
         elif len(parameters) > 1:
-            self.func = lambda x: func(x, *self.pars)
+            self.func = lambda x: func(x, *self.pars)  # pylint:disable=not-callable
         else:
             raise ValueError("The function supplied does not have an x-variable.")
 
