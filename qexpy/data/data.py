@@ -9,6 +9,7 @@ propagation and other features (such as unit propagation) built-in.
 import uuid
 import warnings
 import numpy as np
+import matplotlib.pyplot as plt
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Union
@@ -677,8 +678,8 @@ class RepeatedlyMeasuredValue(MeasuredValue):
             the plotting module of QExPy
 
         """
-        import qexpy.plotting as plt  # pylint:disable=cyclic-import
-        values, bins, figure = plt.hist(self.raw_data, **kwargs)
+        import qexpy.plotting as qplt  # pylint:disable=cyclic-import
+        values, bins, figure = qplt.hist(self.raw_data, **kwargs)
         figure.show()
         return values, bins, figure
 
@@ -823,13 +824,12 @@ class DerivedValue(ExperimentalValue):
             raise ValueError("Invalid error method!")
 
     @property
-    def mc(self) -> dut.MonteCarloSettings:
-        """The settings object for customizing Monte Carlo error propagation"""
+    def mc(self):
+        """dut.MonteCarloSettings: The settings object for customizing Monte Carlo"""
         evaluator = self.__evaluators[lit.MONTE_CARLO]
         if not isinstance(evaluator, op.MonteCarloEvaluator):
             raise Exception("Wrong evaluator type!")
-        if not evaluator.raw_samples.size:
-            evaluator.evaluate(self._formula)
+        evaluator.evaluate(self._formula)
         return evaluator.settings
 
     def reset_error_method(self):
@@ -872,13 +872,16 @@ class DerivedValue(ExperimentalValue):
 
     def show_error_contributions(self):
         """Displays measurements' contribution to the final uncertainty"""
-
-    def mc_show_histogram(self, bins=100, **kwargs):
-        """Display the histogram of Monte Carlo simulated results"""
-        evaluator = self.__evaluators[lit.MONTE_CARLO]
-        if not isinstance(evaluator, op.MonteCarloEvaluator):
-            raise Exception("Wrong evaluator type!")
-        evaluator.show_histogram(bins=bins, **kwargs)
+        evaluator = self.__evaluators[lit.DERIVATIVE]
+        if not isinstance(evaluator, op.DerivativeEvaluator):
+            raise Exception("wrong evaluator type!")
+        evaluator.evaluate(self._formula)
+        measurements, contributions = evaluator.measurements, evaluator.error_contributions
+        names = list(var.name if var.name else "var_{}".format(idx)
+                     for idx, var in enumerate(measurements))
+        plt.bar(list(range(len(measurements))), contributions, tick_label=names)
+        plt.title("Error Contributions")
+        plt.show()
 
     def __get_value_error_pair(self) -> ValueWithError:
         """Gets the value-error pair for the current specified error method"""

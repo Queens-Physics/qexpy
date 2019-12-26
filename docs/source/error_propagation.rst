@@ -23,6 +23,7 @@ Methods
 
 .. automethod:: qexpy.data.data.DerivedValue.reset_error_method
 .. automethod:: qexpy.data.data.DerivedValue.recalculate
+.. automethod:: qexpy.data.data.DerivedValue.show_error_contributions
 
 The MonteCarloSettings Object
 =============================

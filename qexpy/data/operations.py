@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Callable, List, Set, Generator
 from numbers import Real
 
-from qexpy.utils import UndefinedOperationError
+from qexpy.utils import UndefinedOperationError, UndefinedActionError
 from uuid import UUID
 
 import qexpy.utils as utils
@@ -43,6 +43,8 @@ class DerivativeEvaluator(Evaluator):
 
     def __init__(self):
         self.result = ()  # type: dt.ValueWithError
+        self.measurements = []
+        self.error_contributions = []
 
     def evaluate(self, formula: "dt.Formula") -> "dt.ValueWithError":
         if not self.result:
@@ -51,9 +53,10 @@ class DerivativeEvaluator(Evaluator):
 
     def clear(self):
         self.result = ()
+        self.measurements = []
+        self.error_contributions = []
 
-    @staticmethod
-    def __evaluate(formula: "dt.Formula"):
+    def __evaluate(self, formula: "dt.Formula"):
         """Executes an operation with propagated results using the derivative method
 
         This is also known as the method of adding quadratures. It also takes into account
@@ -67,20 +70,31 @@ class DerivativeEvaluator(Evaluator):
 
         # Find measurements that this formula is derived from
         source_meas_ids = _find_source_measurement_ids(formula)  # type: Set[UUID]
-        source_measurements = list(dt.get_variable_by_id(_id) for _id in source_meas_ids)
+        sources = list(dt.get_variable_by_id(_id) for _id in source_meas_ids)
+
+        # record source measurements
+        self.measurements = sources
 
         # Find the quadrature terms
-        quads = map(lambda x: (x.error * differentiate(formula, x)) ** 2, source_measurements)
+        quads = list(map(lambda x: (x.error * differentiate(formula, x)) ** 2, sources))
 
         # Handle covariance between measurements
-        covariance_terms = DerivativeEvaluator.__find_cov_terms(formula, source_measurements)
+        covariance_terms = DerivativeEvaluator.__find_cov_terms(formula, sources)
 
         # Calculate the result
-        result_error = np.sqrt(sum(quads) + sum(covariance_terms))
-        if result_error < 0:
-            warnings.warn(
+        result_sums = sum(quads) + sum(covariance_terms)
+        if result_sums < 0:
+            raise UndefinedActionError(
                 "The error propagated for the given operation is negative. This is likely "
                 "to be incorrect! Check your values, maybe you have unphysical covariance.")
+
+        # record error contributions
+        if result_sums > 0:
+            self.error_contributions = np.array([quad / result_sums for quad in quads])
+        else:
+            self.error_contributions = np.zeros(len(quads))
+
+        result_error = np.sqrt(result_sums)
 
         return dt.ValueWithError(result_value, result_error)
 
