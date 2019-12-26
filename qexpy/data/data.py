@@ -9,7 +9,6 @@ propagation and other features (such as unit propagation) built-in.
 import uuid
 import warnings
 import numpy as np
-import matplotlib.pyplot as plt
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Union
@@ -872,6 +871,7 @@ class DerivedValue(ExperimentalValue):
 
     def show_error_contributions(self):
         """Displays measurements' contribution to the final uncertainty"""
+        import matplotlib.pyplot as plt
         evaluator = self.__evaluators[lit.DERIVATIVE]
         if not isinstance(evaluator, op.DerivativeEvaluator):
             raise Exception("wrong evaluator type!")
