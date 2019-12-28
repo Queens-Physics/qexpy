@@ -1,5 +1,6 @@
 """Holds all global configurations and Enum types for common options"""
 
+import functools
 from enum import Enum
 from typing import Union
 
@@ -229,3 +230,29 @@ def set_monte_carlo_sample_size(size: int):
 def set_plot_dimensions(new_dimensions: (float, float)):
     """Sets the default dimensions of a plot"""
     get_settings().plot_dimensions = new_dimensions
+
+
+def use_mc_sample_size(size: int):
+    """Wrapper decorator that temporarily sets the monte carlo sample size"""
+
+    def set_monte_carlo_sample_size_wrapper(func):
+        """Inner wrapper decorator"""
+
+        @functools.wraps(func)
+        def inner_wrapper(*args):
+            # preserve the original sample size and set the sample size to new value
+            temp_size = get_settings().monte_carlo_sample_size
+            set_monte_carlo_sample_size(size)
+
+            # run the function
+            result = func(*args)
+
+            # restores the original sample size
+            set_monte_carlo_sample_size(temp_size)
+
+            # return function output
+            return result
+
+        return inner_wrapper
+
+    return set_monte_carlo_sample_size_wrapper

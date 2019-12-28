@@ -9,8 +9,6 @@ from typing import Callable
 from numbers import Real
 from .exceptions import UndefinedOperationError
 
-import qexpy.settings as sts
-
 
 def check_operand_type(operation):
     """wrapper decorator for undefined operation error reporting"""
@@ -34,37 +32,13 @@ def vectorize(func):
 
     @functools.wraps(func)
     def wrapper_vectorize(*args):
-        if any(isinstance(arg, (list, np.ndarray)) for arg in args):
+        if any(isinstance(arg, np.ndarray) for arg in args):
             return np.vectorize(func)(*args)
+        if any(isinstance(arg, list) for arg in args):
+            return np.vectorize(func)(*args).tolist()
         return func(*args)
 
     return wrapper_vectorize
-
-
-def use_mc_sample_size(size: int):
-    """Wrapper decorator that temporarily sets the monte carlo sample size"""
-
-    def set_monte_carlo_sample_size_wrapper(func):
-        """Inner wrapper decorator"""
-
-        @functools.wraps(func)
-        def inner_wrapper(*args):
-            # preserve the original sample size and set the sample size to new value
-            temp_size = sts.get_settings().monte_carlo_sample_size
-            sts.set_monte_carlo_sample_size(size)
-
-            # run the function
-            result = func(*args)
-
-            # restores the original sample size
-            sts.set_monte_carlo_sample_size(temp_size)
-
-            # return function output
-            return result
-
-        return inner_wrapper
-
-    return set_monte_carlo_sample_size_wrapper
 
 
 def validate_xrange(xrange):
@@ -73,6 +47,9 @@ def validate_xrange(xrange):
     if not isinstance(xrange, (tuple, list)) or len(xrange) != 2:
         raise TypeError("The \"xrange\" should be a list or tuple of length 2")
 
+    if any(not isinstance(value, Real) for value in xrange):
+        raise TypeError("The \"xrange\" must be real numbers")
+
     if xrange[0] > xrange[1]:
         raise ValueError("The low bound of xrange is higher than the high bound")
 
@@ -80,7 +57,7 @@ def validate_xrange(xrange):
 
 
 @vectorize
-def numerical_derivative(function: Callable, x0: Real, dx=1e-10):
+def numerical_derivative(function: Callable, x0: Real, dx=1e-5):
     """Calculates the numerical derivative of a function with respect to x at x0"""
     return (function(x0 + dx) - function(x0 - dx)) / (2 * dx)
 

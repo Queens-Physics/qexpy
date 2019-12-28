@@ -83,8 +83,6 @@ def __scientific_printer(value: float, error: float, latex=False) -> str:
     decimals = __find_number_of_decimals(converted_value, converted_error)
 
     # Construct the string to return
-    if decimals == 0:
-        return "({} {} {}) * 10^{}".format(converted_value, pm, converted_error, order)
     value_string = "{:.{num}f}".format(converted_value, num=decimals)
     error_string = "{:.{num}f}".format(converted_error, num=decimals) if error != 0 else "0"
     return "({} {} {}) * 10^{}".format(value_string, pm, error_string, order)
@@ -169,7 +167,7 @@ def __find_number_of_decimals(value: float, error: float) -> int:
     if sig_fig_mode in [SigFigMode.AUTOMATIC, SigFigMode.ERROR]:
         order = m.floor(m.log10(error)) if is_valid(error) else m.floor(m.log10(value))
     else:
-        order = m.floor(m.log10(value)) if is_valid(value) else 1
+        order = m.floor(m.log10(value)) if is_valid(value) else m.floor(m.log10(error))
 
     number_of_decimals = - order + sig_fig_value - 1
     return number_of_decimals if number_of_decimals > 0 else 0

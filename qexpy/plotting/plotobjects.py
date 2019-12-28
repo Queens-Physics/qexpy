@@ -10,6 +10,7 @@ from qexpy.fitting.fitting import XYFitResult
 
 import qexpy.data.data as dt
 import qexpy.utils as utils
+import qexpy.settings.settings as sts
 import qexpy.settings.literals as lit
 import qexpy.data.datasets as dts
 
@@ -330,14 +331,14 @@ class FunctionOnPlot(XYObjectOnPlot):
         return result
 
     @property
-    @utils.use_mc_sample_size(10000)
+    @sts.use_mc_sample_size(10000)
     def yvalues(self):
         simplified_result = list(
             res.value if isinstance(res, dt.DerivedValue) else res for res in self.ydata)
         return np.asarray(simplified_result)
 
     @property
-    @utils.use_mc_sample_size(10000)
+    @sts.use_mc_sample_size(10000)
     def yerr(self):
         """The array of y-value uncertainties to show up on plot"""
         errors = np.asarray(list(
