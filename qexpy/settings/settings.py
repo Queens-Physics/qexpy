@@ -170,9 +170,9 @@ class Settings:
 
     @plot_dimensions.setter
     def plot_dimensions(self, new_dimensions: (float, float)):
-        if not isinstance(new_dimensions, tuple) and len(new_dimensions) != 2:
+        if not isinstance(new_dimensions, tuple) or len(new_dimensions) != 2:
             raise ValueError("The plot dimensions must be a tuple with two entries")
-        if any(not isinstance(num, (int, float)) for num in new_dimensions):
+        if any(not isinstance(num, (int, float)) or num <= 0 for num in new_dimensions):
             raise ValueError("The dimensions of the plot must be numeric")
         self.__config[lit.PLOT_DIMENSIONS] = new_dimensions
 
