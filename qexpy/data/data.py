@@ -124,19 +124,16 @@ class ExperimentalValue(ABC):
     @abstractmethod
     def value(self):
         """float: The center value of this quantity"""
-        raise NotImplementedError
 
     @property
     @abstractmethod
     def error(self):
         """float: The uncertainty of this quantity"""
-        raise NotImplementedError
 
     @property
     @abstractmethod
     def relative_error(self):
         """float: The ratio of the uncertainty to its center value"""
-        raise NotImplementedError
 
     @property
     def std(self):
@@ -245,7 +242,6 @@ class ExperimentalValue(ABC):
             other (ExperimentalValue): the target for finding the derivative
 
         """
-        raise NotImplementedError
 
     # pylint: disable=no-self-use,unused-argument
     def get_covariance(self, other: "ExperimentalValue") -> float:
@@ -318,7 +314,7 @@ class Constant(ExperimentalValue):
     """A value with no uncertainty"""
 
     def __init__(self, value, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(**kwargs, save=False)
         self._value_error = ValueWithError(value, 0)
 
     @property
@@ -439,7 +435,7 @@ class MeasuredValue(ExperimentalValue):
         if not isinstance(other, ExperimentalValue):
             raise IllegalArgumentError("Cannot set covariance for non-QExPy defined values")
         if not isinstance(other, MeasuredValue):
-            return  # only covariance between measurements is supported.
+            raise IllegalArgumentError("Only covariance between measurements is supported.")
 
         if self.std == 0 or other.std == 0:
             raise ArithmeticError("Cannot set covariance for values with 0 errors")
@@ -481,7 +477,7 @@ class MeasuredValue(ExperimentalValue):
         if not isinstance(other, ExperimentalValue):
             raise IllegalArgumentError("Cannot set correlation for non-QExPy defined values")
         if not isinstance(other, MeasuredValue):
-            return  # only correlation between measurements is supported.
+            raise IllegalArgumentError("Only covariance between measurements is supported.")
 
         if self.std == 0 or other.std == 0:
             raise ArithmeticError("Cannot set correlation for values with 0 errors")
@@ -577,12 +573,12 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
     @value.setter
     def value(self, new_value: Real):
+        if not isinstance(new_value, Real):
+            raise TypeError("Cannot assign a {} to the value!".format(type(new_value)))
         warnings.warn(
             "You are trying to override the value calculated from an array of repeated "
             "measurements. This value is now considered a single Measurement.")
         self.__class__ = MeasuredValue
-        if not isinstance(new_value, Real):
-            raise ValueError("Cannot assign a {} to the value!".format(type(new_value)))
         self._value = new_value
 
     @property
@@ -642,9 +638,9 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         if not isinstance(other, ExperimentalValue):
             raise IllegalArgumentError("Cannot set covariance for non-QExPy defined values")
         if not isinstance(other, MeasuredValue):
-            return  # only covariance between measurements is supported.
+            raise IllegalArgumentError("Only covariance between measurements is supported.")
 
-        if not cov and isinstance(other, RepeatedlyMeasuredValue):
+        if cov is None and isinstance(other, RepeatedlyMeasuredValue):
             try:
                 cov = utils.calculate_covariance(self.raw_data, other.raw_data)
             except ValueError:
@@ -658,9 +654,9 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         if not isinstance(other, ExperimentalValue):
             raise IllegalArgumentError("Cannot set correlation for non-QExPy defined values")
         if not isinstance(other, MeasuredValue):
-            return  # only correlation between measurements is supported.
+            raise IllegalArgumentError("Only covariance between measurements is supported.")
 
-        if not corr and isinstance(other, RepeatedlyMeasuredValue):
+        if corr is None and isinstance(other, RepeatedlyMeasuredValue):
             try:
                 cov = utils.calculate_covariance(self.raw_data, other.raw_data)
                 corr = cov / (self.std * other.std)
@@ -677,8 +673,8 @@ class RepeatedlyMeasuredValue(MeasuredValue):
             the plotting module of QExPy
 
         """
-        import qexpy.plotting as qplt  # pylint:disable=cyclic-import
-        values, bins, figure = qplt.hist(self.raw_data, **kwargs)
+        import qexpy.plotting as plotting  # pylint:disable=cyclic-import
+        values, bins, figure = plotting.hist(self.raw_data, **kwargs)
         figure.show()
         return values, bins, figure
 
