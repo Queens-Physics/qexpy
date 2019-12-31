@@ -53,7 +53,7 @@ class Settings:
             lit.UNIT_STYLE: UnitStyle.EXPONENTS,
             lit.SIG_FIGS: {
                 lit.SIG_FIG_MODE: SigFigMode.AUTOMATIC,
-                lit.SIG_FIG_VALUE: 2
+                lit.SIG_FIG_VALUE: 1
             },
             lit.MONTE_CARLO_SAMPLE_SIZE: 100000,
             lit.PLOT_DIMENSIONS: (6.4, 4.8)

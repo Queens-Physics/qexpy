@@ -90,9 +90,9 @@ class MonteCarloSettings:
         """
         self.strategy = lit.MC_CUSTOM
         if not isinstance(value, Real):
-            raise TypeError("Cannot assign a {} to the value!".format(type(value)))
+            raise TypeError("Cannot assign a {} to the value!".format(type(value).__name__))
         if not isinstance(error, Real):
-            raise TypeError("Cannot assign a {} to the error!".format(type(error)))
+            raise TypeError("Cannot assign a {} to the error!".format(type(error).__name__))
         if error < 0:
             raise ValueError("The error must be a positive real number!")
         self.__evaluator.values[self.strategy] = (value, error)
@@ -196,7 +196,8 @@ def wrap_in_experimental_value(operand) -> "dt.ExperimentalValue":
         return operand
     if isinstance(operand, tuple) and len(operand) == 2:
         return dt.MeasuredValue(operand[0], operand[1])
-    raise TypeError("Cannot parse a {} into an ExperimentalValue".format(type(operand)))
+    raise TypeError(
+        "Cannot parse a {} into an ExperimentalValue".format(type(operand).__name__))
 
 
 def wrap_in_measurement(value, **kwargs) -> "dt.ExperimentalValue":
@@ -207,6 +208,10 @@ def wrap_in_measurement(value, **kwargs) -> "dt.ExperimentalValue":
     if isinstance(value, tuple) and len(value) == 2:
         return dt.MeasuredValue(*value, **kwargs)
     if isinstance(value, dt.ExperimentalValue):
+        if "name" in kwargs:
+            value.name = kwargs.get("name")
+        if "unit" in kwargs:
+            value.unit = kwargs.get("unit")
         return value
 
     raise ValueError(

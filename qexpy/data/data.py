@@ -148,7 +148,8 @@ class ExperimentalValue(ABC):
     @name.setter
     def name(self, new_name: str):
         if not isinstance(new_name, str):
-            raise TypeError("Cannot set name of a value to \"{}\"".format(type(new_name)))
+            raise TypeError(
+                "Cannot set name of value to \"{}\"".format(type(new_name).__name__))
         self._name = new_name
 
     @property
@@ -159,7 +160,8 @@ class ExperimentalValue(ABC):
     @unit.setter
     def unit(self, new_unit: str):
         if not isinstance(new_unit, str):
-            raise TypeError("Cannot set unit of a value to \"{}\"".format(type(new_unit)))
+            raise TypeError(
+                "Cannot set unit of value to \"{}\"".format(type(new_unit).__name__))
         self._unit = utils.parse_unit_string(new_unit) if new_unit else {}
 
     @utils.check_operand_type("==")
@@ -364,7 +366,8 @@ class MeasuredValue(ExperimentalValue):
             raise IllegalArgumentError("Invalid data type to record an uncertainty!")
         unit = kwargs.get("unit", "")
         name = kwargs.get("name", "")
-        super().__init__(unit, name, save=True)
+        save = kwargs.get("save", True)
+        super().__init__(unit, name, save=save)
         self._value, self._error = float(data), float(error) if error else 0.0
 
     @property
@@ -372,22 +375,22 @@ class MeasuredValue(ExperimentalValue):
         return self._value
 
     @value.setter
-    def value(self, new_value: Real):
-        if not isinstance(new_value, Real):
-            raise TypeError("Cannot assign a {} to the value!".format(type(new_value)))
-        self._value = new_value
+    def value(self, value: Real):
+        if not isinstance(value, Real):
+            raise TypeError("Cannot assign a {} to the value!".format(type(value).__name__))
+        self._value = value
 
     @property
     def error(self):
         return self._error
 
     @error.setter
-    def error(self, new_error: Real):
-        if not isinstance(new_error, Real):
-            raise TypeError("Cannot assign a {} to the error!".format(type(new_error)))
-        if new_error < 0:
+    def error(self, error: Real):
+        if not isinstance(error, Real):
+            raise TypeError("Cannot assign a {} to the error!".format(type(error).__name__))
+        if error < 0:
             raise ValueError("The error must be a positive real number!")
-        self._error = new_error
+        self._error = error
 
     @property
     def relative_error(self):
@@ -396,7 +399,8 @@ class MeasuredValue(ExperimentalValue):
     @relative_error.setter
     def relative_error(self, relative_error: Real):
         if not isinstance(relative_error, Real):
-            raise TypeError("Cannot assign a {} to the error!".format(type(relative_error)))
+            raise TypeError(
+                "Cannot assign a {} to the error!".format(type(relative_error).__name__))
         if relative_error < 0:
             raise ValueError("The error must be a positive real number!")
         new_error = self.value * float(relative_error)
@@ -557,7 +561,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         # Initialize raw data and its uncertainties. Internally, the raw data is implemented
         # as an ExperimentalValueArray. However, in principle, the ExperimentalValueArray
         # should only be used for an array of measurements of different quantities.
-        self._raw_data = ExperimentalValueArray(data, error, **kwargs)
+        self._raw_data = ExperimentalValueArray(data, error, save=False, **kwargs)
 
         # Calculate its statistical properties
         self._mean = self._raw_data.mean().value
@@ -574,7 +578,8 @@ class RepeatedlyMeasuredValue(MeasuredValue):
     @value.setter
     def value(self, new_value: Real):
         if not isinstance(new_value, Real):
-            raise TypeError("Cannot assign a {} to the value!".format(type(new_value)))
+            raise TypeError(
+                "Cannot assign a {} to the value!".format(type(new_value).__name__))
         warnings.warn(
             "You are trying to override the value calculated from an array of repeated "
             "measurements. This value is now considered a single Measurement.")
@@ -752,7 +757,8 @@ class DerivedValue(ExperimentalValue):
     @value.setter
     def value(self, new_value: Real):
         if not isinstance(new_value, Real):
-            raise ValueError("Cannot assign a {} to the value".format(type(new_value)))
+            raise ValueError(
+                "Cannot assign a {} to the value".format(type(new_value).__name__))
         warnings.warn(
             "You are trying to override the calculated value of a derived quantity. This "
             "value is casted to a regular Measurement")
@@ -767,7 +773,8 @@ class DerivedValue(ExperimentalValue):
     @error.setter
     def error(self, new_error: Real):
         if not isinstance(new_error, Real):
-            raise ValueError("Cannot assign a {} to the error!".format(type(new_error)))
+            raise ValueError(
+                "Cannot assign a {} to the error!".format(type(new_error).__name__))
         if new_error < 0:
             raise ValueError("The error must be a positive real number!")
         warnings.warn(
@@ -784,7 +791,8 @@ class DerivedValue(ExperimentalValue):
     @relative_error.setter
     def relative_error(self, relative_error: Real):
         if not isinstance(relative_error, Real):
-            raise ValueError("Cannot assign a {} to the error!".format(type(relative_error)))
+            raise ValueError(
+                "Cannot assign a {} to the error!".format(type(relative_error).__name__))
         if relative_error < 0:
             raise ValueError("The error must be a positive real number!")
         new_error = self.value * float(relative_error)

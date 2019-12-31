@@ -129,6 +129,14 @@ class ExperimentalValueArray(np.ndarray):
 
         error_array = _get_error_array_helper(data, error, relative_error)
 
+        if all(isinstance(x, dt.ExperimentalValue) for x in data):
+            if error is None and relative_error is None:
+                error_array = None
+            return ExperimentalValueArray.__wrap(data, error_array=error_array, **kwargs)
+
+        if not all(isinstance(x, Real) for x in data):
+            raise TypeError("Some values in the array are not real numbers")
+
         values = list(
             dt.MeasuredValue(val, err, **kwargs) for val, err in zip(data, error_array))
         for index, meas in enumerate(values):
@@ -149,8 +157,13 @@ class ExperimentalValueArray(np.ndarray):
         return "{}[ {} ]{}".format(name, value_errors, unit)
 
     def __setitem__(self, key, value):
-        super().__setitem__(
-            key, dut.wrap_in_measurement(value, unit=self.unit, name=self.name))
+        if isinstance(value, Real):
+            self[key].value = value
+        else:
+            super().__setitem__(
+                key, dut.wrap_in_measurement(value, unit=self.unit, name=self.name))
+            if self.name:
+                self[key].name = "{}_{}".format(self.name, key)
 
     def __array_finalize__(self, obj):
         """wrap up array initialization"""
@@ -178,7 +191,7 @@ class ExperimentalValueArray(np.ndarray):
     @name.setter
     def name(self, new_name: str):
         if not isinstance(new_name, str):
-            raise TypeError("Cannot set dataset name to \"{}\"!".format(type(new_name)))
+            raise TypeError("Cannot set name to \"{}\"!".format(type(new_name).__name__))
         for index, measurement in enumerate(self):
             measurement.name = "{}_{}".format(new_name, index)
 
@@ -195,10 +208,8 @@ class ExperimentalValueArray(np.ndarray):
     @unit.setter
     def unit(self, unit_string: str):
         if not isinstance(unit_string, str):
-            raise TypeError("Cannot set dataset unit to \"{}\"!".format(type(unit_string)))
-        if not unit_string:
-            return
-        new_unit = utils.parse_unit_string(unit_string)
+            raise TypeError("Cannot set unit to \"{}\"!".format(type(unit_string).__name__))
+        new_unit = utils.parse_unit_string(unit_string) if unit_string else {}
         for data in self:
             data._unit = new_unit
 
@@ -228,6 +239,7 @@ class ExperimentalValueArray(np.ndarray):
         result = np.append(self, value).view(ExperimentalValueArray)
         for index, measurement in enumerate(result):
             measurement.name = "{}_{}".format(self.name, index)
+            measurement.unit = self.unit
         return result
 
     def insert(self, index: int, value) -> "ExperimentalValueArray":
@@ -247,6 +259,7 @@ class ExperimentalValueArray(np.ndarray):
         result = np.insert(self, index, value).view(ExperimentalValueArray)
         for idx, measurement in enumerate(result):
             measurement.name = "{}_{}".format(self.name, idx)
+            measurement.unit = self.unit
         return result
 
     def delete(self, index: int) -> "ExperimentalValueArray":
@@ -302,6 +315,30 @@ class ExperimentalValueArray(np.ndarray):
             return np.nan
         weights = np.asarray(list(1 / (err ** 2) for err in self.errors))
         return 1 / np.sqrt(np.sum(weights))
+
+    @classmethod
+    def __wrap(cls, data, **kwargs):
+        """if an array of ExperimentalValue objects are passed in, simply wrap it"""
+
+        error_array = kwargs.get("error_array", None)
+
+        if error_array is not None:
+            for x, err in zip(data, error_array):
+                x.error = err  # update the errors if specified
+
+        name = kwargs.get("name", None)
+        unit = kwargs.get("unit", None)
+
+        if name is not None:
+            for idx, x in enumerate(data):
+                x.name = "{}_{}".format(name, idx)
+        if unit is not None:
+            for x in data:
+                x.unit = unit
+
+        obj = data.view(ExperimentalValueArray)
+        obj.__class__ = cls
+        return obj
 
 
 class XYDataSet:
@@ -376,7 +413,7 @@ class XYDataSet:
     @name.setter
     def name(self, new_name: str):
         if not isinstance(new_name, str):
-            raise TypeError("Cannot set name to \"{}\"".format(type(new_name)))
+            raise TypeError("Cannot set name to \"{}\"".format(type(new_name).__name__))
         self._name = new_name
 
     @property
@@ -407,7 +444,7 @@ class XYDataSet:
     @xname.setter
     def xname(self, name):
         if not isinstance(name, str):
-            raise TypeError("Cannot set xname to \"{}\"".format(type(name)))
+            raise TypeError("Cannot set xname to \"{}\"".format(type(name).__name__))
         self.xdata.name = name
 
     @property
@@ -418,7 +455,7 @@ class XYDataSet:
     @xunit.setter
     def xunit(self, unit):
         if not isinstance(unit, str):
-            raise TypeError("Cannot set xunit to \"{}\"".format(type(unit)))
+            raise TypeError("Cannot set xunit to \"{}\"".format(type(unit).__name__))
         self.xdata.unit = unit
 
     @property
@@ -429,7 +466,7 @@ class XYDataSet:
     @yname.setter
     def yname(self, name):
         if not isinstance(name, str):
-            raise TypeError("Cannot set yname to \"{}\"".format(type(name)))
+            raise TypeError("Cannot set yname to \"{}\"".format(type(name).__name__))
         self.ydata.name = name
 
     @property
@@ -440,7 +477,7 @@ class XYDataSet:
     @yunit.setter
     def yunit(self, unit):
         if not isinstance(unit, str):
-            raise TypeError("Cannot set yunit to \"{}\"".format(type(unit)))
+            raise TypeError("Cannot set yunit to \"{}\"".format(type(unit).__name__))
         self.ydata.unit = unit
 
     def fit(self, model, **kwargs):
@@ -458,8 +495,14 @@ class XYDataSet:
         """Wraps the data set into ExperimentalValueArray objects"""
 
         if isinstance(data, ExperimentalValueArray):
-            data.name = name if name else data.name
-            data.unit = unit if unit else data.unit
+            if name:
+                data.name = name
+            if unit:
+                data.unit = unit
+            if error is not None:
+                error_array = _get_error_array_helper(data, error, None)
+                for x, e in zip(data, error_array):
+                    x.error = e
             return data
         if isinstance(data, ARRAY_TYPES):
             return ExperimentalValueArray(data, error, unit=unit, name=name)
@@ -467,24 +510,27 @@ class XYDataSet:
         raise IllegalArgumentError("Cannot create XYDataSet with the given arguments.")
 
 
-def _get_error_array_helper(data, error, relative_error):
+def _get_error_array_helper(data, error, rel_error):
     """Helper method that produces an error array for an ExperimentalValueArray"""
 
-    if error is None and relative_error is None:
+    if error is None and rel_error is None:
         error_array = [0.0] * len(data)
     elif isinstance(error, Real):
         error_array = [float(error)] * len(data)
-    elif isinstance(error, ARRAY_TYPES):
+    elif isinstance(error, ARRAY_TYPES) and all(isinstance(err, Real) for err in error):
         if len(error) != len(data):
             raise ValueError("The length of the error data arrays don't match.")
         error_array = np.asarray(error)
-    elif isinstance(relative_error, Real):
-        error_array = float(relative_error) * data
-    elif isinstance(relative_error, ARRAY_TYPES):
-        if len(relative_error) != len(data):
+    elif isinstance(rel_error, Real):
+        error_array = float(rel_error) * abs(data)
+    elif isinstance(rel_error, ARRAY_TYPES) and all(isinstance(e, Real) for e in rel_error):
+        if len(rel_error) != len(data):
             raise ValueError("The length of the relative error and data arrays don't match.")
-        error_array = relative_error * data
+        error_array = rel_error * abs(data)
     else:
-        raise IllegalArgumentError("The error or relative error provided is invalid!")
+        raise TypeError("The error or relative error provided is invalid!")
+
+    if any(err < 0 for err in error_array):
+        raise ValueError("The uncertainty of any measurement cannot be negative!")
 
     return error_array

@@ -84,7 +84,7 @@ def __parse_unit_string_to_list(unit_string: str) -> List[Union[str, List]]:
 
     """
 
-    unit_string.replace(r"⋅", "*")  # replace dots with multiplication sign
+    unit_string = unit_string.replace("⋅", "*")  # replace dots with multiplication sign
 
     raw_tokens_list = []  # The raw list of tokens
     tokens_list = []  # The final list of tokens

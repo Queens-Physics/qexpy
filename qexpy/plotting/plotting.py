@@ -162,7 +162,7 @@ class Plot:
     @xname.setter
     def xname(self, name):
         if not isinstance(name, str):
-            raise TypeError("Cannot set xname to \"{}\"".format(type(name)))
+            raise TypeError("Cannot set xname to \"{}\"".format(type(name).__name__))
         self._plot_info[lit.XNAME] = name
 
     @property
@@ -176,7 +176,7 @@ class Plot:
     @yname.setter
     def yname(self, name):
         if not isinstance(name, str):
-            raise TypeError("Cannot set yname to \"{}\"".format(type(name)))
+            raise TypeError("Cannot set yname to \"{}\"".format(type(name).__name__))
         self._plot_info[lit.YNAME] = name
 
     @property
@@ -190,7 +190,7 @@ class Plot:
     @xunit.setter
     def xunit(self, unit):
         if not isinstance(unit, str):
-            raise TypeError("Cannot set xunit to \"{}\"".format(type(unit)))
+            raise TypeError("Cannot set xunit to \"{}\"".format(type(unit).__name__))
         self._plot_info[lit.XUNIT] = unit
 
     @property
@@ -204,7 +204,7 @@ class Plot:
     @yunit.setter
     def yunit(self, unit):
         if not isinstance(unit, str):
-            raise TypeError("Cannot set yunit to \"{}\"".format(type(unit)))
+            raise TypeError("Cannot set yunit to \"{}\"".format(type(unit).__name__))
         self._plot_info[lit.YUNIT] = unit
 
     @property
