@@ -69,7 +69,7 @@ def construct_unit_string(units: Dict[str, int]) -> str:
 
 def operate_with_units(operator, *operands):
     """perform an operation with two sets of units"""
-    # TODO: implement unit propagation for non-linear operations
+
     result = UNIT_OPERATIONS[operator](*operands) if operator in UNIT_OPERATIONS else {}
     # filter for non-zero values
     return {unit: count for unit, count in result.items() if count != 0}
@@ -224,7 +224,7 @@ def __evaluate_unit_tree(tree: Expression) -> Dict[str, int]:
             start_exponent_from = units[unit] if unit in units else 0
             plus_or_minus = 1 if tree.operator == "*" else -1
             units[unit] = start_exponent_from + plus_or_minus * exponent
-    elif isinstance(tree, str):
+    else:  # just a string then count it
         units[tree] = 1
     return units
 
@@ -241,7 +241,7 @@ def __construct_unit_string_as_fraction(units: Dict[str, int]) -> str:
             denominator_units.append("{}".format(unit))
         elif power < 0:
             denominator_units.append("{}^{}".format(unit, -power))
-        elif power > 0:
+        else:
             numerator_units.append("{}^{}".format(unit, power))
 
     numerator_string = DOT_STRING.join(numerator_units) if numerator_units else "1"
@@ -263,8 +263,7 @@ def __construct_unit_string_with_exponents(units: Dict[str, int]) -> str:
         if power == 1:
             # For power of 1, do not print the exponent as it's implied
             unit_strings.append("{}".format(unit))
-        elif power != 0:
-            # Ignore 0 powers if present (they shouldn't be)
+        else:
             unit_strings.append("{}^{}".format(unit, power))
     return DOT_STRING.join(unit_strings)
 

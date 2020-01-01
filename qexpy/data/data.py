@@ -124,16 +124,19 @@ class ExperimentalValue(ABC):
     @abstractmethod
     def value(self):
         """float: The center value of this quantity"""
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def error(self):
         """float: The uncertainty of this quantity"""
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def relative_error(self):
         """float: The ratio of the uncertainty to its center value"""
+        raise NotImplementedError
 
     @property
     def std(self):
@@ -244,6 +247,7 @@ class ExperimentalValue(ABC):
             other (ExperimentalValue): the target for finding the derivative
 
         """
+        raise NotImplementedError
 
     # pylint: disable=no-self-use,unused-argument
     def get_covariance(self, other: "ExperimentalValue") -> float:

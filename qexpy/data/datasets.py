@@ -165,6 +165,56 @@ class ExperimentalValueArray(np.ndarray):
             if self.name:
                 self[key].name = "{}_{}".format(self.name, key)
 
+    def __pow__(self, power):
+        if isinstance(power, ARRAY_TYPES):
+            return super().__pow__(power)
+        return super().__pow__(dut.wrap_in_experimental_value(power))
+
+    def __rpow__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__rpow__(other)
+        return super().__rpow__(dut.wrap_in_experimental_value(other))
+
+    def __add__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__add__(other)
+        return super().__add__(dut.wrap_in_experimental_value(other))
+
+    def __radd__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__radd__(other)
+        return super().__radd__(dut.wrap_in_experimental_value(other))
+
+    def __sub__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__sub__(other)
+        return super().__sub__(dut.wrap_in_experimental_value(other))
+
+    def __rsub__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__rsub__(other)
+        return super().__rsub__(dut.wrap_in_experimental_value(other))
+
+    def __mul__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__mul__(other)
+        return super().__mul__(dut.wrap_in_experimental_value(other))
+
+    def __rmul__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__rmul__(other)
+        return super().__rmul__(dut.wrap_in_experimental_value(other))
+
+    def __truediv__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__truediv__(other)
+        return super().__truediv__(dut.wrap_in_experimental_value(other))
+
+    def __rtruediv__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return super().__rtruediv__(other)
+        return super().__rtruediv__(dut.wrap_in_experimental_value(other))
+
     def __array_finalize__(self, obj):
         """wrap up array initialization"""
         if obj is None or not (self.shape and isinstance(self[0], dt.ExperimentalValue)):

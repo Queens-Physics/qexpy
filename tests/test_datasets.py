@@ -98,14 +98,16 @@ class TestExperimentalValueArray:
             a[2] = 'a'
 
         b = q.MeasurementArray([5, 6, 7], 0.5)
+        b[-1] = (8, 0.5)
+
         a = a.append(b)
-        assert str(a[-1]) == "speed_8 = 7.0 +/- 0.5 [m⋅s^-1]"
+        assert str(a[-1]) == "speed_8 = 8.0 +/- 0.5 [m⋅s^-1]"
 
         a = a.append([8, 9, 10])
         assert str(a[-1]) == "speed_11 = 10 +/- 0 [m⋅s^-1]"
 
     def test_calculations_with_measurement_array(self):
-        """tests for vectorized calculations with measurement arrays"""
+        """tests for calculating properties of a measurement array"""
 
         a = q.MeasurementArray([1, 2, 3, 4, 5])
         assert a.mean() == 3

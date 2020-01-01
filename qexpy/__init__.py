@@ -46,7 +46,7 @@ from .data import std, mean, sum  # pylint: disable=redefined-builtin
 from .fitting import fit, FitModel
 
 # Check the python interpreter version
-if sys.version_info[0] < 3:
+if sys.version_info[0] < 3:  # pragma: no coverage
     raise ImportError(
         "Error: QExPy is only supported on Python 3. Please upgrade your interpreter. "
         "If you're using Anaconda, you can download the correct version here: "

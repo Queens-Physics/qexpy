@@ -11,5 +11,5 @@ from .printing import get_printer
 import sys
 import IPython
 
-if "ipykernel" in sys.modules:
+if "ipykernel" in sys.modules:  # pragma: no cover
     IPython.get_ipython().magic("matplotlib inline")

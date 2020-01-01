@@ -16,15 +16,11 @@ class UndefinedActionError(QExPyBaseError):
 class UndefinedOperationError(UndefinedActionError):
     """Exception for undefined arithmetic operations between values"""
 
-    def __init__(self, op, got, expected=""):
+    def __init__(self, op, got, expected):
         """Defines the standard format for the error message"""
 
-        if not isinstance(got, (list, tuple)):
-            got = (got,)
-
         got_types = " and ".join("\'{}\'".format(type(x).__name__) for x in got)
-        message = "\"{}\" is undefined with operands of type(s) {}.".format(op, got_types)
-        if expected:
-            message += " Expected: {}".format(expected)
+        message = "\"{}\" is undefined with operands of type(s) {}. " \
+                  "Expected: {}".format(op, got_types, expected)
 
         super().__init__(message)

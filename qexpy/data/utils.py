@@ -208,10 +208,8 @@ def wrap_in_measurement(value, **kwargs) -> "dt.ExperimentalValue":
     if isinstance(value, tuple) and len(value) == 2:
         return dt.MeasuredValue(*value, **kwargs)
     if isinstance(value, dt.ExperimentalValue):
-        if "name" in kwargs:
-            value.name = kwargs.get("name")
-        if "unit" in kwargs:
-            value.unit = kwargs.get("unit")
+        value.name = kwargs.get("name", "")
+        value.unit = kwargs.get("unit", "")
         return value
 
     raise TypeError(

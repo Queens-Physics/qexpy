@@ -1,6 +1,12 @@
 [run]
 branch = True
+
 omit =
-    # omit coverage in documentations
     */docs/*
     */plotting/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError

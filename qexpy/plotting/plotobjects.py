@@ -62,6 +62,7 @@ class ObjectOnPlot(ABC):
     @abstractmethod
     def show(self, ax: Axes, plot: "plt.Plot"):
         """Draw the object itself onto the given axes"""
+        raise NotImplementedError
 
 
 class FitTarget(ABC):  # pylint: disable=too-few-public-methods
@@ -71,6 +72,7 @@ class FitTarget(ABC):  # pylint: disable=too-few-public-methods
     @abstractmethod
     def fit_target_dataset(self):
         """dts.XYDataSet: The target dataset instance to apply the fit to"""
+        raise NotImplementedError
 
 
 class ObjectWithRange(ABC):  # pylint: disable=too-few-public-methods
@@ -80,6 +82,7 @@ class ObjectWithRange(ABC):  # pylint: disable=too-few-public-methods
     @abstractmethod
     def xrange(self):
         """tuple: The xrange of the object"""
+        raise NotImplementedError
 
 
 class XYObjectOnPlot(ObjectOnPlot, ObjectWithRange):
@@ -123,11 +126,13 @@ class XYObjectOnPlot(ObjectOnPlot, ObjectWithRange):
     @abstractmethod
     def xvalues(self):
         """np.ndarray: The array of x-values to be plotted"""
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def yvalues(self):
         """np.ndarray: The array of y-values to be plotted"""
+        raise NotImplementedError
 
     @property
     def xrange(self):
