@@ -3,3 +3,4 @@ branch = True
 omit =
     # omit coverage in documentations
     */docs/*
+    */plotting/*

@@ -214,7 +214,7 @@ def wrap_in_measurement(value, **kwargs) -> "dt.ExperimentalValue":
             value.unit = kwargs.get("unit")
         return value
 
-    raise ValueError(
+    raise TypeError(
         "Elements of a MeasurementArray must be convertible to an ExperimentalValue")
 
 

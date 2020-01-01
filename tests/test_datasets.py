@@ -94,6 +94,16 @@ class TestExperimentalValueArray:
         a[4] = (10, 0.6)
         assert str(a[4]) == "speed_4 = 10.0 +/- 0.6 [m⋅s^-1]"
 
+        with pytest.raises(TypeError):
+            a[2] = 'a'
+
+        b = q.MeasurementArray([5, 6, 7], 0.5)
+        a = a.append(b)
+        assert str(a[-1]) == "speed_8 = 7.0 +/- 0.5 [m⋅s^-1]"
+
+        a = a.append([8, 9, 10])
+        assert str(a[-1]) == "speed_11 = 10 +/- 0 [m⋅s^-1]"
+
     def test_calculations_with_measurement_array(self):
         """tests for vectorized calculations with measurement arrays"""
 
