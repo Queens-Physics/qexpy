@@ -110,6 +110,8 @@ class ExperimentalValueArray(np.ndarray):
 
     """
 
+    # pylint: disable=no-member,arguments-differ,too-many-function-args
+
     def __new__(cls, *args, **kwargs):
         """Constructor for an ExperimentalValueArray
 

@@ -4,6 +4,7 @@ scipy
 IPython
 pylint
 pytest
+coverage
 jupyterlab
 sphinx
 nbsphinx
