@@ -7,6 +7,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Dict, Callable, List, Set, Generator
 from numbers import Real
+from collections import OrderedDict
 
 from qexpy.utils import UndefinedOperationError, UndefinedActionError
 from uuid import UUID
@@ -246,7 +247,8 @@ def propagate_units(formula: "dt.Formula") -> Dict[str, dict]:
     # the power operator is different, treat separately
     if operator == lit.POW and isinstance(operands[1], dt.Constant):
         power = operands[1].value
-        return {unit: count * power for unit, count in operands[0]._unit.items()}
+        return OrderedDict([
+            (unit, count * power) for unit, count in operands[0]._unit.items()])
 
     if all(operand._unit or isinstance(operand, dt.Constant) for operand in operands):
         return utils.operate_with_units(operator, *(operand._unit for operand in operands))

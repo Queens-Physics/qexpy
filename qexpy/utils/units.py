@@ -72,7 +72,7 @@ def operate_with_units(operator, *operands):
 
     result = UNIT_OPERATIONS[operator](*operands) if operator in UNIT_OPERATIONS else {}
     # filter for non-zero values
-    return {unit: count for unit, count in result.items() if count != 0}
+    return OrderedDict([(unit, count) for unit, count in result.items() if count != 0])
 
 
 def __parse_unit_string_to_list(unit_string: str) -> List[Union[str, List]]:
