@@ -84,7 +84,7 @@ class DerivativeEvaluator(Evaluator):
 
         # Calculate the result
         result_sums = sum(quads) + sum(covariance_terms)
-        if result_sums < 0:
+        if result_sums < 0:  # pragma: no cover
             raise UndefinedActionError(
                 "The error propagated for the given operation is negative. This is likely "
                 "to be incorrect! Check your values, maybe you have unphysical covariance.")
@@ -395,11 +395,11 @@ def sum_(array):  # avoid built-in function "sum"
     return np.sum(array)
 
 
-def std(array):
+def std(array, ddof=1):
     """The standard deviation of an array"""
     if isinstance(array, dts.ExperimentalValueArray):
         return array.std()
-    return np.std(array)
+    return np.std(array, ddof=ddof)
 
 
 def _evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None):
@@ -421,13 +421,9 @@ def _evaluate_formula(formula, samples: Dict[UUID, np.ndarray] = None):
         return _evaluate_formula(formula._formula, samples)
     if isinstance(formula, (dt.MeasuredValue, dt.Constant)):
         return formula.value
-    if isinstance(formula, Real):
-        return float(formula)
-    if isinstance(formula, dt.Formula):
-        operands = (_evaluate_formula(variable, samples) for variable in formula.operands)
-        result = OPERATIONS[formula.operator](*operands)
-        return result
-    return 0
+
+    operands = (_evaluate_formula(variable, samples) for variable in formula.operands)
+    return OPERATIONS[formula.operator](*operands)
 
 
 def _find_source_measurement_ids(formula) -> Set[UUID]:

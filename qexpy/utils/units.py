@@ -7,6 +7,7 @@ from typing import Dict, List, Union
 from collections import namedtuple, OrderedDict
 from qexpy.settings import UnitStyle
 from copy import deepcopy
+from fractions import Fraction
 
 import qexpy.settings as sts
 import qexpy.settings.literals as lit
@@ -232,17 +233,10 @@ def __evaluate_unit_tree(tree: Expression) -> Dict[str, int]:
 def __construct_unit_string_as_fraction(units: Dict[str, int]) -> str:
     """Construct a unit string in the fraction format"""
 
-    numerator_units = []
-    denominator_units = []
-    for unit, power in units.items():
-        if power == 1:
-            numerator_units.append("{}".format(unit))
-        elif power == -1:
-            denominator_units.append("{}".format(unit))
-        elif power < 0:
-            denominator_units.append("{}^{}".format(unit, -power))
-        else:
-            numerator_units.append("{}^{}".format(unit, power))
+    numerator_units = ["{}{}".format(
+        unit, __power_num2str(power)) for unit, power in units.items() if power > 0]
+    denominator_units = ["{}{}".format(
+        unit, __power_num2str(-power)) for unit, power in units.items() if power < 0]
 
     numerator_string = DOT_STRING.join(numerator_units) if numerator_units else "1"
     denominator_string = DOT_STRING.join(denominator_units)
@@ -258,14 +252,20 @@ def __construct_unit_string_as_fraction(units: Dict[str, int]) -> str:
 
 def __construct_unit_string_with_exponents(units: Dict[str, int]) -> str:
     """Construct a unit string in the exponent format"""
-    unit_strings = []
-    for unit, power in units.items():
-        if power == 1:
-            # For power of 1, do not print the exponent as it's implied
-            unit_strings.append("{}".format(unit))
-        else:
-            unit_strings.append("{}^{}".format(unit, power))
+    unit_strings = ["{}{}".format(
+        unit, __power_num2str(power)) for unit, power in units.items()]
     return DOT_STRING.join(unit_strings)
+
+
+def __power_num2str(power) -> str:
+    """Construct a string for the power of a unit"""
+
+    fraction = Fraction(power).limit_denominator(10)
+    if fraction.numerator == 1 and fraction.denominator == 1:
+        return ""  # do not print power of 1 as it's implied
+    if fraction.denominator == 1:
+        return "^{}".format(str(fraction.numerator))
+    return "^({})".format(str(fraction))
 
 
 def __neg(units):

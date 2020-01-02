@@ -339,11 +339,11 @@ class Constant(ExperimentalValue):
 
     @property
     def error(self) -> 0:
-        return 0
+        return 0  # pragma: no cover
 
     @property
     def relative_error(self) -> 0:
-        return 0
+        return 0  # pragma: no cover
 
     def derivative(self, other: "ExperimentalValue") -> 0:
         return 0  # the derivative of a constant with respect to anything is 0

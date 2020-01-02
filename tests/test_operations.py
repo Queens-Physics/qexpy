@@ -3,6 +3,7 @@
 import pytest
 import qexpy as q
 
+from qexpy.data.data import ExperimentalValue
 from qexpy.utils.exceptions import UndefinedOperationError
 
 
@@ -205,6 +206,126 @@ class TestArithmetic:
         res = [2, 2, 2, 2, 2] ** a
         assert all(res.values == [2, 4, 8, 16, 32])
 
+    def test_composite_operations(self):
+        """tests combining several operations"""
+
+        d = q.Measurement(5, 0.1, unit="m")
+        m = q.Measurement(10, 0.5, unit="kg")
+        t = q.Measurement(2, 0.1, unit="s")
+
+        v = d / t
+        e = 1 / 2 * m * (v ** 2)
+
+        assert e.value == 31.25
+        assert e.error == pytest.approx(3.7107319021993495716)
+        assert e.unit == "kg⋅m^2⋅s^-2"
+
+        res = (d ** 2) ** (1 / 3)
+        assert res.unit == "m^(2/3)"
+
 
 class TestMathFunctions:
     """tests for math function wrappers"""
+
+    def test_math_functions(self):
+        """tests for math functions on single values"""
+
+        a = q.Measurement(4, 0.5, unit="m")
+
+        res = q.sqrt(a)
+        assert res.value == 2
+        assert res.error == 0.125
+        assert res.unit == "m^(1/2)"
+        assert q.sqrt(4) == 2
+
+        with pytest.raises(UndefinedOperationError):
+            q.sqrt("a")
+
+        res = q.exp(a)
+        assert res.value == pytest.approx(54.598150033144239)
+        assert res.error == pytest.approx(27.299075016572120)
+
+        res = q.log(a)
+        assert res.value == pytest.approx(1.3862943611198906)
+        assert res.error == 0.125
+
+        res = q.log(2, a)
+        assert res.value == 2
+        assert res.error == pytest.approx(0.1803368801111204)
+
+        res = q.log10(a)
+        assert res.value == pytest.approx(0.6020599913279624)
+        assert res.error == pytest.approx(0.0542868102379065)
+
+        with pytest.raises(TypeError):
+            q.log(2, a, 2)
+
+    def test_trig_functions(self):
+        """tests for trigonometric functions"""
+
+        a = q.Measurement(0.7853981633974483)
+        b = q.Measurement(45)
+        c = q.Measurement(0.5)
+
+        res = q.sin(a)
+        assert res.value == pytest.approx(0.7071067811865475244)
+
+        res = q.sind(b)
+        assert res.value == pytest.approx(0.7071067811865475244)
+
+        res = q.cos(a)
+        assert res.value == pytest.approx(0.7071067811865475244)
+
+        res = q.cosd(b)
+        assert res.value == pytest.approx(0.7071067811865475244)
+
+        res = q.tan(a)
+        assert res.value == pytest.approx(1)
+
+        res = q.tand(b)
+        assert res.value == pytest.approx(1)
+
+        res = q.sec(a)
+        assert res.value == pytest.approx(1.4142135623730950488)
+
+        res = q.secd(b)
+        assert res.value == pytest.approx(1.4142135623730950488)
+
+        res = q.csc(a)
+        assert res.value == pytest.approx(1.4142135623730950488)
+
+        res = q.cscd(b)
+        assert res.value == pytest.approx(1.4142135623730950488)
+
+        res = q.cot(a)
+        assert res.value == pytest.approx(1)
+
+        res = q.cotd(b)
+        assert res.value == pytest.approx(1)
+
+        res = q.asin(c)
+        assert res.value == pytest.approx(0.523598775598298873077)
+
+        res = q.acos(c)
+        assert res.value == pytest.approx(1.047197551196597746154)
+
+        res = q.atan(c)
+        assert res.value == pytest.approx(0.463647609000806116214)
+
+    def test_vectorized_functions(self):
+        """tests for functions on experimental value arrays"""
+
+        a = q.MeasurementArray([1, 2, 3, 4, 5])
+        assert q.mean(a) == 3
+        assert q.std(a) == pytest.approx(1.58113883008419)
+        assert q.sum(a) == 15
+
+        b = [1, 2, 3, 4, 5]
+
+        res = q.mean(b)
+
+        assert res == 3
+        assert not isinstance(res, ExperimentalValue)
+
+        assert q.std(b) == pytest.approx(1.58113883008419)
+        assert q.sum(b) == 15
