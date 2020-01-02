@@ -131,6 +131,9 @@ class TestArithmetic:
         res = (2, 0.5) + a
         assert all(res.values == [3, 4, 5, 6, 7])
 
+        res = q.Measurement(2, 0.5) + a
+        assert all(res.values == [3, 4, 5, 6, 7])
+
         res = a + [1, 2, 3, 4, 5]
         assert all(res.values == [2, 4, 6, 8, 10])
 
@@ -143,6 +146,9 @@ class TestArithmetic:
         res = 10 - a
         assert all(res.values == [9, 8, 7, 6, 5])
 
+        res = q.Measurement(10, 0.5) - a
+        assert all(res.values == [9, 8, 7, 6, 5])
+
         res = a - [1, 2, 3, 4, 5]
         assert all(res.values == [0, 0, 0, 0, 0])
 
@@ -153,6 +159,9 @@ class TestArithmetic:
         assert all(res.values == [2, 4, 6, 8, 10])
 
         res = 2 * a
+        assert all(res.values == [2, 4, 6, 8, 10])
+
+        res = q.Measurement(2, 0.5) * a
         assert all(res.values == [2, 4, 6, 8, 10])
 
         b = q.MeasurementArray([10, 20, 30, 40, 50], 0.5, unit="m")
@@ -170,6 +179,9 @@ class TestArithmetic:
         res = 2 / a
         assert all(res.values == [2, 1, 2 / 3, 2 / 4, 2 / 5])
 
+        res = q.Measurement(2, 0.5) / a
+        assert all(res.values == [2, 1, 2 / 3, 2 / 4, 2 / 5])
+
         res = b / a
         assert all(res.values == [10, 10, 10, 10, 10])
         assert res.unit == "m⋅s^-1"
@@ -181,6 +193,9 @@ class TestArithmetic:
         assert all(res.values == [1, 4, 9, 16, 25])
 
         res = 2 ** a
+        assert all(res.values == [2, 4, 8, 16, 32])
+
+        res = q.Measurement(2, 0.5) ** a
         assert all(res.values == [2, 4, 8, 16, 32])
 
         res = a ** [2, 2, 2, 2, 2]

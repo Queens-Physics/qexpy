@@ -192,6 +192,8 @@ class ExperimentalValue(ABC):
 
     @utils.check_operand_type("pow")
     def __pow__(self, power):
+        if isinstance(power, ARRAY_TYPES):
+            return power.__rpow__(self)
         return DerivedValue(Formula(lit.POW, [self, dut.wrap_in_experimental_value(power)]))
 
     @utils.check_operand_type("pow")
@@ -201,6 +203,8 @@ class ExperimentalValue(ABC):
 
     @utils.check_operand_type("+")
     def __add__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return other.__radd__(self)
         return DerivedValue(Formula(lit.ADD, [self, dut.wrap_in_experimental_value(other)]))
 
     @utils.check_operand_type("+")
@@ -210,6 +214,8 @@ class ExperimentalValue(ABC):
 
     @utils.check_operand_type("-")
     def __sub__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return other.__rsub__(self)
         return DerivedValue(Formula(lit.SUB, [self, dut.wrap_in_experimental_value(other)]))
 
     @utils.check_operand_type("-")
@@ -219,6 +225,8 @@ class ExperimentalValue(ABC):
 
     @utils.check_operand_type("*")
     def __mul__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return other.__rmul__(self)
         return DerivedValue(Formula(lit.MUL, [self, dut.wrap_in_experimental_value(other)]))
 
     @utils.check_operand_type("*")
@@ -228,6 +236,8 @@ class ExperimentalValue(ABC):
 
     @utils.check_operand_type("/")
     def __truediv__(self, other):
+        if isinstance(other, ARRAY_TYPES):
+            return other.__rtruediv__(self)
         return DerivedValue(Formula(lit.DIV, [self, dut.wrap_in_experimental_value(other)]))
 
     @utils.check_operand_type("/")
@@ -328,11 +338,11 @@ class Constant(ExperimentalValue):
         return self._value_error.value
 
     @property
-    def error(self) -> float:
+    def error(self) -> 0:
         return 0
 
     @property
-    def relative_error(self) -> float:
+    def relative_error(self) -> 0:
         return 0
 
     def derivative(self, other: "ExperimentalValue") -> 0:
