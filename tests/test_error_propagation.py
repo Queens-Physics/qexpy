@@ -3,7 +3,8 @@
 import pytest
 import qexpy as q
 
-from qexpy.data.data import ExperimentalValue
+from qexpy.data.data import ExperimentalValue, MeasuredValue
+from qexpy.utils.exceptions import IllegalArgumentError
 
 
 class TestDerivedValue:
@@ -104,7 +105,7 @@ class TestDerivedValue:
         f.recalculate()
         assert f.value == pytest.approx(0.848, abs=0.15)
         assert f.error == pytest.approx(0.435, abs=0.15)
-        
+
         k = q.Measurement(0.01, 0.1)
         res = q.log(k)
         with pytest.warns(UserWarning):
@@ -126,3 +127,56 @@ class TestDerivedValue:
 
     def test_manipulate_derived_value(self):
         """unit tests for the derived value class"""
+
+        a = q.Measurement(5, 0.5)
+        b = q.Measurement(2, 0.5)
+
+        res = a + b
+        assert res.value == 7
+        assert res.error == pytest.approx(0.7071067811865476)
+        assert res.relative_error == pytest.approx(0.1010152544552210749)
+
+        assert res.derivative(a) == 1
+
+        with pytest.raises(IllegalArgumentError):
+            res.derivative(1)
+
+        res.error_method = q.ErrorMethod.MONTE_CARLO
+        assert res.error_method == q.ErrorMethod.MONTE_CARLO
+
+        res.error_method = "derivative"
+        assert res.error_method == q.ErrorMethod.DERIVATIVE
+
+        res.reset_error_method()
+        assert res.error_method == q.ErrorMethod.DERIVATIVE
+
+        with pytest.raises(ValueError):
+            res.error_method = "hello"
+
+        with pytest.raises(TypeError):
+            res.value = 'a'
+        with pytest.raises(TypeError):
+            res.error = 'a'
+        with pytest.raises(ValueError):
+            res.error = -1
+        with pytest.raises(TypeError):
+            res.relative_error = 'a'
+        with pytest.raises(ValueError):
+            res.relative_error = -1
+
+        with pytest.warns(UserWarning):
+            res.value = 6
+        assert res.value == 6
+        assert isinstance(res, MeasuredValue)
+
+        res = a + b
+        with pytest.warns(UserWarning):
+            res.error = 0.5
+        assert res.error == 0.5
+        assert isinstance(res, MeasuredValue)
+
+        res = a + b
+        with pytest.warns(UserWarning):
+            res.relative_error = 0.5
+        assert res.relative_error == 0.5
+        assert isinstance(res, MeasuredValue)

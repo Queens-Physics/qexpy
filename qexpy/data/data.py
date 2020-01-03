@@ -775,7 +775,7 @@ class DerivedValue(ExperimentalValue):
     @value.setter
     def value(self, new_value: Real):
         if not isinstance(new_value, Real):
-            raise ValueError(
+            raise TypeError(
                 "Cannot assign a {} to the value".format(type(new_value).__name__))
         warnings.warn(
             "You are trying to override the calculated value of a derived quantity. This "
@@ -791,7 +791,7 @@ class DerivedValue(ExperimentalValue):
     @error.setter
     def error(self, new_error: Real):
         if not isinstance(new_error, Real):
-            raise ValueError(
+            raise TypeError(
                 "Cannot assign a {} to the error!".format(type(new_error).__name__))
         if new_error < 0:
             raise ValueError("The error must be a positive real number!")
@@ -809,7 +809,7 @@ class DerivedValue(ExperimentalValue):
     @relative_error.setter
     def relative_error(self, relative_error: Real):
         if not isinstance(relative_error, Real):
-            raise ValueError(
+            raise TypeError(
                 "Cannot assign a {} to the error!".format(type(relative_error).__name__))
         if relative_error < 0:
             raise ValueError("The error must be a positive real number!")
