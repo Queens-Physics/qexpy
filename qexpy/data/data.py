@@ -644,12 +644,16 @@ class RepeatedlyMeasuredValue(MeasuredValue):
         error_weighted_mean = self.error_weighted_mean
         if not np.isnan(error_weighted_mean):
             self._value = error_weighted_mean
+        else:  # pragma: no cover
+            warnings.warn("The error weighted mean is not valid")
 
     def use_propagated_error_for_uncertainty(self):
         """Sets the uncertainty of this object to the weight propagated error"""
         propagated_error = self.propagated_error
         if not np.isnan(propagated_error):
             self._error = propagated_error
+        else:  # pragma: no cover
+            warnings.warn("The propagated error is not valid")
 
     def set_covariance(self, other: "ExperimentalValue", cov: float = None):
         """Sets the covariance of this value with another value"""
@@ -684,7 +688,7 @@ class RepeatedlyMeasuredValue(MeasuredValue):
 
         super().set_correlation(other, corr)
 
-    def show_histogram(self, **kwargs) -> tuple:
+    def show_histogram(self, **kwargs) -> tuple:  # pragma: no cover
         """Plots the raw measurement data in a histogram
 
         See Also:
@@ -844,9 +848,8 @@ class DerivedValue(ExperimentalValue):
     def mc(self):
         """dut.MonteCarloSettings: The settings object for customizing Monte Carlo"""
         evaluator = self.__evaluators[lit.MONTE_CARLO]
-        if not isinstance(evaluator, op.MonteCarloEvaluator):
-            raise Exception("Wrong evaluator type!")
-        evaluator.evaluate(self._formula)
+        assert isinstance(evaluator, op.MonteCarloEvaluator)
+        evaluator.regenerate_samples(self._formula)
         return evaluator.settings
 
     def reset_error_method(self):
@@ -887,12 +890,11 @@ class DerivedValue(ExperimentalValue):
                 "You can only find derivative with respect to another ExperimentalValue")
         return 1 if self._id == other._id else op.differentiate(self._formula, other)
 
-    def show_error_contributions(self):
+    def show_error_contributions(self):  # pragma: no cover
         """Displays measurements' contribution to the final uncertainty"""
         import matplotlib.pyplot as plt
         evaluator = self.__evaluators[lit.DERIVATIVE]
-        if not isinstance(evaluator, op.DerivativeEvaluator):
-            raise Exception("wrong evaluator type!")
+        assert isinstance(evaluator, op.DerivativeEvaluator)
         evaluator.evaluate(self._formula)
         measurements, contributions = evaluator.measurements, evaluator.error_contributions
         names = list(var.name if var.name else "var_{}".format(idx)
@@ -1000,6 +1002,11 @@ def set_correlation(var1: MeasuredValue, var2: MeasuredValue, corr: Real = None)
             "Cannot set correlation between non-QExPy defined variables")
 
     var1.set_correlation(var2, corr)
+
+
+def reset_correlations():
+    """resets all correlation settings"""
+    ExperimentalValue._correlations.clear()  # pylint: disable=protected-access
 
 
 def get_variable_by_id(variable_id: uuid.UUID) -> ExperimentalValue:

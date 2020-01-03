@@ -136,30 +136,35 @@ class MonteCarloEvaluator(Evaluator):
 
     def evaluate(self, formula: "dt.Formula") -> "dt.ValueWithError":
 
+        self.regenerate_samples(formula)
+
+        strategy = self.settings.strategy
+
+        if strategy == lit.MC_CUSTOM not in self.values:
+            strategy = lit.MC_MEAN_AND_STD
+            self.settings.use_mean_and_std()
+
+        if strategy == lit.MC_MEAN_AND_STD not in self.values:
+            result = dt.ValueWithError(np.mean(self.samples), np.std(self.samples, ddof=1))
+            self.values[strategy] = result
+
+        if strategy == lit.MC_MODE_AND_CONFIDENCE not in self.values:
+            n, bins = np.histogram(self.samples, bins=100)
+            value, error = utils.find_mode_and_uncertainty(n, bins, self.settings.confidence)
+            self.values[strategy] = dt.ValueWithError(value, error)
+
+        return self.values[strategy]
+
+    def regenerate_samples(self, formula):
+        """generates raw samples if none is present"""
         if not self.raw_samples.size:
             self.raw_samples = self.__compute_samples(formula)
 
-        error_method = self.settings.strategy
-
-        if error_method == lit.MC_CUSTOM not in self.values:
-            error_method = self.settings.strategy = lit.MC_MEAN_AND_STD
-
-        if error_method == lit.MC_MEAN_AND_STD not in self.values:
-            result = dt.ValueWithError(np.mean(self.samples), np.std(self.samples, ddof=1))
-            self.values[error_method] = result
-
-        if error_method == lit.MC_MODE_AND_CONFIDENCE not in self.values:
-            n, bins = np.histogram(self.samples, bins=100)
-            value, error = utils.find_mode_and_uncertainty(n, bins, self.settings.confidence)
-            self.values[error_method] = dt.ValueWithError(value, error)
-
-        return self.values[error_method]
-
     def clear(self):
         self.raw_samples = np.empty(0)
-        self.values = {}
+        self.values.clear()
 
-    def show_histogram(self, bins=100, **kwargs):
+    def show_histogram(self, bins=100, **kwargs):  # pragma: no cover
         """Shows the distribution of the Monte Carlo simulated samples"""
 
         samples = self.samples
@@ -216,9 +221,10 @@ class MonteCarloEvaluator(Evaluator):
         result_data_set = _evaluate_formula(formula, data_sets)
 
         # Check the quality of the result data
-        if isinstance(result_data_set, np.ndarray):
-            # First remove undefined values
-            result_data_set = result_data_set[np.isfinite(result_data_set)]
+        assert isinstance(result_data_set, np.ndarray)
+
+        # First remove undefined values
+        result_data_set = result_data_set[np.isfinite(result_data_set)]
 
         if len(result_data_set) / sts.get_settings().monte_carlo_sample_size < 0.9:
             # If over 10% of the results calculated are invalid

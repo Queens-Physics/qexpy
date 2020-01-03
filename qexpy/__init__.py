@@ -42,6 +42,7 @@ from .data import get_covariance, set_covariance, get_correlation, set_correlati
 from .data import sqrt, exp, sin, sind, cos, cosd, tan, tand, sec, secd, cot, cotd, \
     csc, cscd, asin, acos, atan, log, log10, pi, e
 from .data import std, mean, sum  # pylint: disable=redefined-builtin
+from .data import reset_correlations
 
 from .fitting import fit, FitModel
 

@@ -40,6 +40,10 @@ class MonteCarloSettings:
         self.__settings[lit.MONTE_CARLO_SAMPLE_SIZE] = new_size
         self.__evaluator.clear()
 
+    def reset_sample_size(self):
+        """reset the sample size to default"""
+        self.__settings[lit.MONTE_CARLO_SAMPLE_SIZE] = 0
+
     @property
     def confidence(self):
         """float: The confidence level for choosing the mode of a Monte Carlo distribution"""
@@ -47,9 +51,13 @@ class MonteCarloSettings:
 
     @confidence.setter
     def confidence(self, new_level: float):
-        if not isinstance(new_level, float) or new_level > 1 or new_level < 0:
+        if not isinstance(new_level, Real):
+            raise TypeError("The MC confidence level has to be a number")
+        if new_level > 1 or new_level < 0:
             raise ValueError("The MC confidence level has to be a number between 0 and 1")
         self.__settings[lit.MONTE_CARLO_CONFIDENCE] = new_level
+        if lit.MC_MODE_AND_CONFIDENCE in self.__evaluator.values:
+            self.__evaluator.values.pop(lit.MC_MODE_AND_CONFIDENCE)
 
     @property
     def xrange(self):
@@ -63,22 +71,25 @@ class MonteCarloSettings:
 
     def set_xrange(self, *args):
         """set the range for the monte carlo simulation"""
+
         if not args:
             self.__settings[lit.XRANGE] = ()
-        new_range = (args[0], args[1]) if len(args) > 1 else args
-        if utils.validate_xrange(new_range):
+        else:
+            new_range = (args[0], args[1]) if len(args) > 1 else args
+            utils.validate_xrange(new_range)
             self.__settings[lit.XRANGE] = new_range
-        self.__evaluator.values = {}
+
+        self.__evaluator.values.clear()
 
     def use_mode_with_confidence(self, confidence=None):
         """Use the mode of the distribution with a confidence coverage for this value"""
-        self.strategy = lit.MC_MODE_AND_CONFIDENCE
+        self.__settings[lit.MONTE_CARLO_STRATEGY] = lit.MC_MODE_AND_CONFIDENCE
         if confidence:
             self.confidence = confidence
 
     def use_mean_and_std(self):
         """Use the mean and std of the distribution for this value"""
-        self.strategy = lit.MC_MEAN_AND_STD
+        self.__settings[lit.MONTE_CARLO_STRATEGY] = lit.MC_MEAN_AND_STD
 
     def use_custom_value_and_error(self, value, error):
         """Manually set the value and uncertainty for this quantity
@@ -88,27 +99,21 @@ class MonteCarloSettings:
         use this method to manually set these values.
 
         """
-        self.strategy = lit.MC_CUSTOM
+        self.__settings[lit.MONTE_CARLO_STRATEGY] = lit.MC_CUSTOM
         if not isinstance(value, Real):
             raise TypeError("Cannot assign a {} to the value!".format(type(value).__name__))
         if not isinstance(error, Real):
             raise TypeError("Cannot assign a {} to the error!".format(type(error).__name__))
         if error < 0:
             raise ValueError("The error must be a positive real number!")
-        self.__evaluator.values[self.strategy] = (value, error)
+        self.__evaluator.values[self.strategy] = dt.ValueWithError(value, error)
 
     @property
     def strategy(self):
         """str: the strategy used to extract value and error from a histogram"""
         return self.__settings[lit.MONTE_CARLO_STRATEGY]
 
-    @strategy.setter
-    def strategy(self, new_strategy: str):
-        if new_strategy not in [lit.MC_MEAN_AND_STD, lit.MC_MODE_AND_CONFIDENCE]:
-            raise ValueError("Invalid strategy string")
-        self.__settings[lit.MONTE_CARLO_STRATEGY] = new_strategy
-
-    def show_histogram(self, bins=100, **kwargs):
+    def show_histogram(self, bins=100, **kwargs):  # pragma: no cover
         """Shows the distribution of the Monte Carlo simulated samples"""
         self.__evaluator.show_histogram(bins, **kwargs)
 
@@ -174,10 +179,10 @@ def correlate_samples(variables, sample_vector):
         chelosky_decomposition = np.linalg.cholesky(corr_matrix)
         result_vector = np.dot(chelosky_decomposition, sample_vector)
         return result_vector
-    except np.linalg.linalg.LinAlgError:
+    except np.linalg.linalg.LinAlgError:  # pragma: no cover
         warnings.warn(
             "Fail to generate a physical correlation matrix for the values provided, using "
-            "uncorrelated samples instead. Please check that the covariance or  correlation "
+            "uncorrelated samples instead. Please check that the covariance or correlation "
             "factors assigned to the measurements are physical.")
         return sample_vector
 
