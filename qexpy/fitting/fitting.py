@@ -23,6 +23,8 @@ RawFitResults = namedtuple("RawFitResults", "popt, perr, pcov")
 # container for fit results
 FitResults = namedtuple("FitResults", "func, params, residuals, chi2, pcorr")
 
+ARRAY_TYPES = np.ndarray, list
+
 
 class XYFitResult:
     """Stores the results of a curve fit"""
@@ -215,10 +217,10 @@ def __try_fit_to_xdata_and_ydata(*args, **kwargs):
     model = kwargs.pop("model", args[2] if len(args) > 2 else None)
 
     if not isinstance(xdata, dts.ExperimentalValueArray):
-        xdata = np.asarray(xdata) if isinstance(xdata, list) else np.empty(0)
+        xdata = np.asarray(xdata) if isinstance(xdata, ARRAY_TYPES) else np.empty(0)
 
     if not isinstance(ydata, dts.ExperimentalValueArray):
-        ydata = np.asarray(ydata) if isinstance(ydata, list) else np.empty(0)
+        ydata = np.asarray(ydata) if isinstance(ydata, ARRAY_TYPES) else np.empty(0)
 
     if xdata.size and ydata.size and model:
         return fit_to_xy_dataset(dts.XYDataSet(xdata, ydata, **kwargs), model, **kwargs)
@@ -245,6 +247,7 @@ def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
         # adjust the fit by factoring in the uncertainty on x
         if any(err > 0 for err in xdata.errors):
             func = __combine_fit_func_and_fit_params(fit_func, popt)
+            yerr = 0 if yerr is None else yerr
             adjusted_yerr = np.sqrt(
                 yerr ** 2 + xdata.errors * utils.numerical_derivative(func, xdata.errors))
 
@@ -252,7 +255,7 @@ def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
             popt, pcov = opt.curve_fit(
                 fit_func, xdata.values, ydata.values, p0=parguess, sigma=adjusted_yerr)
 
-    except RuntimeError:
+    except RuntimeError:  # pragma: no cover
 
         # Re-write the error message so that it can be more easily understood by the user
         raise RuntimeError(
@@ -282,9 +285,7 @@ def __correlate_fit_params(params, corr):
     """Apply correlation to the list of parameters with the covariance matrix"""
 
     for index1, param1 in enumerate(params):
-        if param1.error == 0:
-            continue
         for index2, param2 in enumerate(params[index1 + 1:]):
-            if param2.error == 0:
+            if param1.error == 0 or param2.error == 0:  # pragma: no cover
                 continue
             param1.set_covariance(param2, corr[index1][index2 + index1 + 1])

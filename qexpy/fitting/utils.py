@@ -56,7 +56,7 @@ def prepare_fit_model(model) -> FitModelInfo:
     elif callable(model):
         name, func = "custom", model
     else:
-        raise TypeError(
+        raise ValueError(
             "Invalid fit model specified! The fit model can be one of the following: "
             "one of the pre-set fit models in the form of a string or chosen from the "
             "q.FitModel enum, or a custom callable fit function")
