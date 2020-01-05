@@ -24,8 +24,34 @@ import qexpy as q
 
 ## Contributing
 
-With a local clone of this repository, if you wish to do development work, run the `make prep` in the project root directory. This will install pytest which we use for testing, and pylint which we use to control code quality, as well as necessary packages for generating documentation.
+With a local clone of this repository, if you wish to do development work, run the `make prep` in the project root directory, or run the following command explicitly:
+
+```shell script
+pip install -r requirements.txt
+pip install -e .
+```
+ 
+This will install pytest which we use for testing, and pylint which we use to control code quality, as well as necessary packages for generating documentation.
 
 Before submitting any change, you should run `make test` in the project root directory to make sure that your code matches all code style requirements and passes all unit tests.
+ 
+ The following command checks your code against all code style requirements:
+
+```shell script
+pylint qexpy
+```
+
+Navigate to the tests directory, and execute the following command to run all unit tests:
+
+```shell script
+pytest -v --durations=0
+```
 
 Documentation for this package is located in the docs directory. Run `make docs` in the project root directory to build the full documentation. The html page will open after the build is complete.
+
+Navigate to the docs directory, and run the following commands to build and see the full documentation page:
+
+```shell script
+make html
+open docs/build/html/index.html
+```
