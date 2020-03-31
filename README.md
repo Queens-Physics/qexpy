@@ -6,25 +6,52 @@
 
 QExPy (Queen’s Experimental Physics) is a python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser.
 
-**Highlights**:  
-  * Easily propagate uncertainties in measured quantities  
-  * Compare different uncertainty calculations (e.g. Min-Max, quadrature errors, Monte Carlo errors)  
-  * Correctly include correlations between quantities when propagating uncertainties (e.g. the uncertainty on x-x should always be 0!)  
-  * Calculate exact numerical values of derivatives  
-  * Choose display format (standard, Latex, scientific notation)  
-  * Control the number of significant figures  
-  * Handle ensembles of measurements (e.g. combine multiple measurements, with uncertainties, of a single quantity)  
-  * Produce interactive plots of data in the browser  
-  * Fit data to common functions (polynomials, gaussians) or provide custom functions  
-  * Examine residual plots after fits  
-  * Track units in calculations (still in development)  
-  * Plot confidence bands from the errors in fitted parameters (still in development)  
-  * Integrates with Jupyter notebooks, numpy, bokeh  
+## Getting Started
 
-## Examples
-Up to date examples are maintained in the examples directory of the repository. These are likely the best way to get acquainted with the package.
+To install the package, type the following command in your terminal or [Anaconda](https://www.anaconda.com/distribution/#download-section) shell. 
 
-## More information
-Refer to the example notebooks in the examples/jupyter directory to learn how to use the package, and browse through the official documentstion.
+```sh
+$ pip install qexpy
+```
 
-Read the documentation at http://qexpy.readthedocs.io/en/latest/intro.html
+## Usage
+
+It's recommanded to use this package in the Jupyter Notebook environment.
+
+```python
+import qexpy as q
+```
+
+## Contributing
+
+With a local clone of this repository, if you wish to do development work, run the `make prep` in the project root directory, or run the following command explicitly:
+
+```shell script
+pip install -r requirements.txt
+pip install -e .
+```
+ 
+This will install pytest which we use for testing, and pylint which we use to control code quality, as well as necessary packages for generating documentation.
+
+Before submitting any change, you should run `make test` in the project root directory to make sure that your code matches all code style requirements and passes all unit tests.
+ 
+ The following command checks your code against all code style requirements:
+
+```shell script
+pylint qexpy
+```
+
+Navigate to the tests directory, and execute the following command to run all unit tests:
+
+```shell script
+pytest -v --durations=0
+```
+
+Documentation for this package is located in the docs directory. Run `make docs` in the project root directory to build the full documentation. The html page will open after the build is complete.
+
+Navigate to the docs directory, and run the following commands to build and see the full documentation page:
+
+```shell script
+make html
+open docs/build/html/index.html
+```
