@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='qexpy',
     packages=find_packages(),
-    version='3.0.0',
+    version='2.0.0',
     description='''Package to handle error analysis and data plotting aimed at undergraduate physics.''',
     author='Astral Cai, Connor Kapahi, Prof. Ryan Martin',
     author_email='ryan.martin@queensu.ca, astral.cai@queensu.ca',
