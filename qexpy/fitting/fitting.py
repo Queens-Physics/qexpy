@@ -241,7 +241,7 @@ def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
     """perform a regular curve fit with scipy.optimize.curve_fit"""
 
     try:
-        popt, pcov = opt.curve_fit(
+        popt, pcov = opt.curve_fit(  # pylint:disable=unbalanced-tuple-unpacking
             fit_func, xdata.values, ydata.values, p0=parguess, sigma=yerr)
 
         # adjust the fit by factoring in the uncertainty on x
@@ -252,7 +252,7 @@ def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
                 yerr ** 2 + xdata.errors * utils.numerical_derivative(func, xdata.errors))
 
             # re-calculate the fit with adjusted uncertainties for ydata
-            popt, pcov = opt.curve_fit(
+            popt, pcov = opt.curve_fit(  # pylint:disable=unbalanced-tuple-unpacking
                 fit_func, xdata.values, ydata.values, p0=parguess, sigma=adjusted_yerr)
 
     except RuntimeError:  # pragma: no cover
