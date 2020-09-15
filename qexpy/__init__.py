@@ -28,7 +28,7 @@
 
 import sys
 
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 
 from .utils import load_data_from_file
 
