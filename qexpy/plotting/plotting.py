@@ -210,12 +210,12 @@ class Plot:
     @property
     def xlabel(self):
         """str: The xlabel of the plot"""
-        return self.xname + "[{}]".format(self.xunit) if self.xunit else ""
+        return self.xname + ("[{}]".format(self.xunit) if self.xunit else "")
 
     @property
     def ylabel(self):
         """str: the ylabel of the plot"""
-        return self.yname + "[{}]".format(self.yunit) if self.yunit else ""
+        return self.yname + ("[{}]".format(self.yunit) if self.yunit else "")
 
     @property
     def xrange(self):
