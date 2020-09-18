@@ -12,6 +12,8 @@ from fractions import Fraction
 import qexpy.settings as sts
 import qexpy.settings.literals as lit
 
+from .exceptions import IllegalArgumentError
+
 # The standard character used in a dot multiply expression
 DOT_STRING = "⋅"
 
@@ -19,6 +21,42 @@ DOT_STRING = "⋅"
 # the root node of the sub-tree, and the "left" and "right" points to the two branches. The
 # leaf nodes of a unit expression tree are either unit strings or their powers.
 Expression = namedtuple("Expression", "operator, left, right")
+
+
+# A dictionary to keep track of equivalent units
+UNIT_DEFINITIONS = {}
+
+
+def clear_unit_definitions():
+    """Delete all unit definitions"""
+
+    global UNIT_DEFINITIONS  # pylint:disable=global-statement
+
+    UNIT_DEFINITIONS = {}
+
+
+def define_unit(name: str, unit: str):
+    """Assign a name to a unit expression
+
+    This function can be used to manually define N (Newton) as kg*m/s^2, which will make
+    unit operations easier.
+
+    Args:
+        name: the name of the unit expression
+        unit: the unit expression
+
+    Examples:
+        >>> import qexpy as q
+        >>> q.define_unit("N", "kg*m/s^2")
+
+    """
+
+    global UNIT_DEFINITIONS  # pylint:disable=global-statement
+
+    if not re.match(r"^[\w]+$", name):
+        raise IllegalArgumentError("The name of the new unit can only contain letters")
+
+    UNIT_DEFINITIONS[name] = parse_unit_string(unit)
 
 
 def parse_unit_string(unit_string: str) -> Dict[str, int]:
@@ -60,6 +98,14 @@ def construct_unit_string(units: Dict[str, int]) -> str:
         The string representation of the units
 
     """
+
+     # pack full pre-defined compound units if applicable
+    for unit, expression in UNIT_DEFINITIONS.items():
+        exp = __try_pack(units, expression)
+        if exp:
+            units = {unit: exp}
+            break
+
     unit_string = ""
     if sts.get_settings().unit_style == UnitStyle.FRACTION:
         unit_string = __construct_unit_string_as_fraction(units)
@@ -71,9 +117,22 @@ def construct_unit_string(units: Dict[str, int]) -> str:
 def operate_with_units(operator, *operands):
     """perform an operation with two sets of units"""
 
-    result = UNIT_OPERATIONS[operator](*operands) if operator in UNIT_OPERATIONS else {}
+    # first unpack any pre-defined units
+    opr_unpacked = [__unpack_unit(operand) for operand in operands]
+
+    # obtain the results
+    result = UNIT_OPERATIONS[operator](*opr_unpacked) if operator in UNIT_OPERATIONS else {}
+
     # filter for non-zero values
-    return OrderedDict([(unit, count) for unit, count in result.items() if count != 0])
+    result = OrderedDict([(unit, count) for unit, count in result.items() if count != 0])
+
+    # pack full pre-defined compound units
+    for unit, expression in UNIT_DEFINITIONS.items():
+        exp = __try_pack(result, expression)
+        if exp:
+            return {unit: exp}
+
+    return result
 
 
 def __parse_unit_string_to_list(unit_string: str) -> List[Union[str, List]]:
@@ -255,6 +314,45 @@ def __construct_unit_string_with_exponents(units: Dict[str, int]) -> str:
     unit_strings = ["{}{}".format(
         unit, __power_num2str(power)) for unit, power in units.items()]
     return DOT_STRING.join(unit_strings)
+
+
+def __unpack_unit(unit, count=1):
+    """unpacks any pre-defined units"""
+
+    global UNIT_DEFINITIONS  # pylint: disable=global-statement
+
+    if isinstance(unit, str) and unit not in UNIT_DEFINITIONS:
+        return {unit: count}
+
+    if isinstance(unit, str) and unit in UNIT_DEFINITIONS:
+        return __unpack_unit(UNIT_DEFINITIONS[unit], count)
+
+    result = {}
+
+    for name, exp in unit.items():
+        unpacked = __unpack_unit(name, exp)
+        for tok, val in unpacked.items():
+            __update_unit_exponent_count_in_dict(result, tok, val)
+
+    return result
+
+
+def __try_pack(unit, pre_defined):
+    """try packing unit into some power of a predefined compound unit"""
+
+    exponent = 0
+    for name, exp in unit.items():
+        pre_exp = pre_defined.get(name, 0)
+        if not pre_exp:
+            return 0  # unit non-existing in predefined units
+        if exponent and exponent != exp / pre_exp:
+            return 0  # exponent different from previous
+        if not exponent:
+            exponent = exp / pre_exp
+    for name, exp in pre_defined.items():
+        if not unit.get(name, 0):
+            return 0
+    return exponent
 
 
 def __power_num2str(power) -> str:

@@ -31,6 +31,7 @@ import sys
 __version__ = '2.0.1'
 
 from .utils import load_data_from_file
+from .utils import define_unit, clear_unit_definitions
 
 from .settings import ErrorMethod, PrintStyle, UnitStyle, SigFigMode
 from .settings import get_settings, reset_default_configuration

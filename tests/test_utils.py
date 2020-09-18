@@ -3,6 +3,7 @@
 import os
 import pytest
 import numpy as np
+import qexpy as q
 
 from collections import OrderedDict
 
@@ -230,6 +231,7 @@ class TestUnits:
     @pytest.fixture(autouse=True)
     def reset_environment(self):
         sts.get_settings().reset()
+        units.clear_unit_definitions()
 
     def test_parse_unit_string(self, resource):
         """tests for parsing unit strings into dictionary objects"""
@@ -294,3 +296,21 @@ class TestUnits:
         assert units.operate_with_units(lit.MUL, pascal, joule) == {'kg': 2, 'm': 1, 's': -4}
         assert units.operate_with_units(lit.DIV, joule, pascal) == {'m': 3}
         assert units.operate_with_units(lit.SQRT, joule) == {'kg': 1 / 2, 'm': 1, 's': -1}
+
+
+    def test_equivalent_units(self):
+        """tests for pre-defined compound units"""
+
+        units.define_unit('N', 'kg*m/s^2')
+        units.define_unit('J', 'N*m')
+
+        a = q.Measurement(5, unit='N')
+        b = q.Measurement(2, unit='J')
+        c = q.Measurement(2, unit='m')
+
+        res = a * b / c
+        assert res.unit == 'N^2'
+
+        res = a / c
+        q.set_unit_style(q.UnitStyle.FRACTION)
+        assert res.unit == 'kg/s^2'

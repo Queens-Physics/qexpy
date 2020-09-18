@@ -297,10 +297,26 @@ def plot(*args, **kwargs) -> Plot:
             and ydata, a callable function, or an XYFitResult object. The function also takes
             a string at the end of the list of arguments as the format string.
 
+    Keyword Args:
+        xdata: a list of data for x-values
+        xerr: the uncertainties for the x-values
+        ydata: a list of data for y-values
+        yerr: the uncertainties for the y-values
+        xrange (tuple): a tuple of two values specifying the x-range for the data to plot
+        xname (str): the name of the x-values
+        yname (str): the name of the y-values
+        xunit (str): the unit of the x-values
+        yunit (str): the unit of the y-values
+        fmt (str): the format string for the object to be plotted (matplotlib style)
+        color (str): the color for the object to be plotted
+        label (str): the label for the object to be displayed in the legend
+        **kwargs: additional keyword arguments that matplotlib.pyplot.plot supports
+
+
     See Also:
         :py:class:`~qexpy.data.XYDataSet`,
-        `plot() <https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html>`_,
-        `errorbar() <https://matplotlib.org/api/_as_gen/matplotlib.pyplot.errorbar.html>`_
+        `pyplot.plot <https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html>`_,
+        `pyplot.errorbar <https://matplotlib.org/api/_as_gen/matplotlib.pyplot.errorbar.html>`_
 
     """
 

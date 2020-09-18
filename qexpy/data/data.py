@@ -883,6 +883,7 @@ class DerivedValue(ExperimentalValue):
         """
         for evaluator in self.__evaluators.values():
             evaluator.clear()
+        self._unit = op.propagate_units(self._formula)
 
     def derivative(self, other: ExperimentalValue) -> float:
         if not isinstance(other, ExperimentalValue):
