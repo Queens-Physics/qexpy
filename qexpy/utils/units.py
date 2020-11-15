@@ -322,7 +322,7 @@ def __unpack_unit(unit, count=1):
     global UNIT_DEFINITIONS  # pylint: disable=global-statement
 
     if isinstance(unit, str) and unit not in UNIT_DEFINITIONS:
-        return {unit: count}
+        return OrderedDict({unit: count})
 
     if isinstance(unit, str) and unit in UNIT_DEFINITIONS:
         return __unpack_unit(UNIT_DEFINITIONS[unit], count)
