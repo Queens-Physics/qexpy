@@ -327,7 +327,7 @@ def __unpack_unit(unit, count=1):
     if isinstance(unit, str) and unit in UNIT_DEFINITIONS:
         return __unpack_unit(UNIT_DEFINITIONS[unit], count)
 
-    result = {}
+    result = OrderedDict()
 
     for name, exp in unit.items():
         unpacked = __unpack_unit(name, exp)
