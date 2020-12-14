@@ -128,13 +128,13 @@ class Plot:
     def show(self):
         """Draws the plot to output"""
 
-        plt.__prepare_fig()
+        self.__prepare_fig()
         plt.show()
-   
+
     def savefig(self, filename):
         """Save figure using matplotlib"""
 
-        plt.__prepare_fig()
+        self.__prepare_fig()
         plt.savefig(filename)
 
     def legend(self, new_setting=True):
