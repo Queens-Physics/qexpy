@@ -99,62 +99,42 @@ class Plot:
         self._objects.append(obj)
         return result
 
+    def __prepare_fig(self):
+        """Prepare figure before showing or saving it"""
+        self.__setup_figure_and_subplots()
+
+        # set the xrange of functions to plot using the range of existing data sets
+        xrange = self.xrange
+        for obj in self._objects:
+            if isinstance(obj, FunctionOnPlot) and not obj.xrange_specified:
+                obj.xrange = xrange
+
+        for obj in self._objects:
+            obj.show(self.main_ax, self)
+
+        self.main_ax.set_title(self.title)
+        self.main_ax.set_xlabel(self.xlabel)
+        self.main_ax.set_ylabel(self.ylabel)
+        self.main_ax.grid()
+
+        if self.res_ax:
+            self.res_ax.set_xlabel(self.xlabel)
+            self.res_ax.set_ylabel("residuals")
+            self.res_ax.grid()
+
+        if self.plot_settings[lit.LEGEND]:
+            self.main_ax.legend()  # show legend if requested
+
     def show(self):
         """Draws the plot to output"""
 
-        self.__setup_figure_and_subplots()
-
-        # set the xrange of functions to plot using the range of existing data sets
-        xrange = self.xrange
-        for obj in self._objects:
-            if isinstance(obj, FunctionOnPlot) and not obj.xrange_specified:
-                obj.xrange = xrange
-
-        for obj in self._objects:
-            obj.show(self.main_ax, self)
-
-        self.main_ax.set_title(self.title)
-        self.main_ax.set_xlabel(self.xlabel)
-        self.main_ax.set_ylabel(self.ylabel)
-        self.main_ax.grid()
-
-        if self.res_ax:
-            self.res_ax.set_xlabel(self.xlabel)
-            self.res_ax.set_ylabel("residuals")
-            self.res_ax.grid()
-
-        if self.plot_settings[lit.LEGEND]:
-            self.main_ax.legend()  # show legend if requested
-
+        plt.__prepare_fig()
         plt.show()
-    
-
+   
     def savefig(self, filename):
         """Save figure using matplotlib"""
-        self.__setup_figure_and_subplots()
 
-        # set the xrange of functions to plot using the range of existing data sets
-        xrange = self.xrange
-        for obj in self._objects:
-            if isinstance(obj, FunctionOnPlot) and not obj.xrange_specified:
-                obj.xrange = xrange
-
-        for obj in self._objects:
-            obj.show(self.main_ax, self)
-
-        self.main_ax.set_title(self.title)
-        self.main_ax.set_xlabel(self.xlabel)
-        self.main_ax.set_ylabel(self.ylabel)
-        self.main_ax.grid()
-
-        if self.res_ax:
-            self.res_ax.set_xlabel(self.xlabel)
-            self.res_ax.set_ylabel("residuals")
-            self.res_ax.grid()
-
-        if self.plot_settings[lit.LEGEND]:
-            self.main_ax.legend()  # show legend if requested
-
+        plt.__prepare_fig()
         plt.savefig(filename)
 
     def legend(self, new_setting=True):
@@ -373,6 +353,7 @@ def show(plot_obj=None):
     if not plot_obj:
         plot_obj = Plot.current_plot_buffer
     plot_obj.show()
+
 
 def savefig(filename, plot_obj=None):
     """Save the plot into a file
