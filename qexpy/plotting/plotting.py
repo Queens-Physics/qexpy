@@ -131,11 +131,11 @@ class Plot:
         self.__prepare_fig()
         plt.show()
 
-    def savefig(self, filename):
+    def savefig(self, filename, **kwargs):
         """Save figure using matplotlib"""
 
         self.__prepare_fig()
-        plt.savefig(filename)
+        plt.savefig(filename, **kwargs)
 
     def legend(self, new_setting=True):
         """Add or remove legend to plot"""
