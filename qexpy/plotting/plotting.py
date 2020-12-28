@@ -99,9 +99,8 @@ class Plot:
         self._objects.append(obj)
         return result
 
-    def show(self):
-        """Draws the plot to output"""
-
+    def __prepare_fig(self):
+        """Prepare figure before showing or saving it"""
         self.__setup_figure_and_subplots()
 
         # set the xrange of functions to plot using the range of existing data sets
@@ -126,7 +125,17 @@ class Plot:
         if self.plot_settings[lit.LEGEND]:
             self.main_ax.legend()  # show legend if requested
 
+    def show(self):
+        """Draws the plot to output"""
+
+        self.__prepare_fig()
         plt.show()
+
+    def savefig(self, filename, **kwargs):
+        """Save figure using matplotlib"""
+
+        self.__prepare_fig()
+        plt.savefig(filename, **kwargs)
 
     def legend(self, new_setting=True):
         """Add or remove legend to plot"""
@@ -360,6 +369,22 @@ def show(plot_obj=None):
     if not plot_obj:
         plot_obj = Plot.current_plot_buffer
     plot_obj.show()
+
+
+def savefig(filename, plot_obj=None):
+    """Save the plot into a file
+
+    The QExPy plotting module keeps a buffer on the last plot being operated on. If no
+    Plot instance is supplied to this function, the buffered plot will be shown.
+
+    Args:
+        filename (string): name and format of the file (ex: myplot.pdf),
+        plot_obj (Plot): the Plot instance to be shown.
+
+    """
+    if not plot_obj:
+        plot_obj = Plot.current_plot_buffer
+    plot_obj.savefig(filename)
 
 
 def get_plot():
