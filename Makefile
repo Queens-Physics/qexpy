@@ -13,3 +13,9 @@ test:
 	pylint qexpy
 	@echo 'Running Unit Tests'
 	cd tests && pytest -v --durations=0
+
+publish:
+	pip install --upgrade pip setuptools wheel
+	python setup.py sdist bdist_wheel
+	pip install --user --upgrade twine
+	twine upload dist/*

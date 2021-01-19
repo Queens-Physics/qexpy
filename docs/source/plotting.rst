@@ -5,6 +5,9 @@ The Plotting Module
 .. autofunction:: qexpy.plotting.plotting.plot
 .. autofunction:: qexpy.plotting.plotting.hist
 .. autofunction:: qexpy.plotting.plotting.show
+.. autofunction:: qexpy.plotting.plotting.savefig
+.. autofunction:: qexpy.plotting.plotting.get_plot
+.. autofunction:: qexpy.plotting.plotting.new_plot
 
 The Plot Object
 ===============
@@ -33,3 +36,4 @@ Methods
 .. automethod:: qexpy.plotting.plotting.Plot.legend
 .. automethod:: qexpy.plotting.plotting.Plot.error_bars
 .. automethod:: qexpy.plotting.plotting.Plot.residuals
+.. automethod:: qexpy.plotting.plotting.Plot.savefig

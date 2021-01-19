@@ -371,7 +371,7 @@ def show(plot_obj=None):
     plot_obj.show()
 
 
-def savefig(filename, plot_obj=None):
+def savefig(filename, plot_obj=None, **kwargs):
     """Save the plot into a file
 
     The QExPy plotting module keeps a buffer on the last plot being operated on. If no
@@ -384,7 +384,7 @@ def savefig(filename, plot_obj=None):
     """
     if not plot_obj:
         plot_obj = Plot.current_plot_buffer
-    plot_obj.savefig(filename)
+    plot_obj.savefig(filename, **kwargs)
 
 
 def get_plot():
