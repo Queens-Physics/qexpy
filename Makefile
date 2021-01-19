@@ -17,5 +17,5 @@ test:
 publish:
 	pip install --upgrade pip setuptools wheel
 	python setup.py sdist bdist_wheel
-	pip install --user --upgrade twine
+	pip install --upgrade twine
 	twine upload dist/*
