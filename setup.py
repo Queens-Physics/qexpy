@@ -7,7 +7,7 @@ setup(
     description='''Package to handle error analysis and data plotting aimed at undergraduate physics.''',
     author='Astral Cai, Connor Kapahi, Prof. Ryan Martin',
     author_email='ryan.martin@queensu.ca, astral.cai@queensu.ca',
-    license='GNU GLP v3',
+    license='GNU GPL v3',
     url='https://github.com/Queens-Physics/QExPy',
     keywords=['physics', 'laboratories', 'labs', 'undergraduate', 'data analysis', 'uncertainties', 'plotting',
               'error analysis', 'error propagation', 'uncertainty propagation'],
