@@ -351,7 +351,7 @@ class FunctionOnPlot(XYObjectOnPlot):
         return errors if errors.size else np.empty(0)
 
 
-class XYFitResultOnPlot(ObjectOnPlot):
+class XYFitResultOnPlot(ObjectOnPlot, ObjectWithRange):
     """Wrapper for an XYFitResult to be plotted"""
 
     def __init__(self, *args, **kwargs):
@@ -367,11 +367,11 @@ class XYFitResultOnPlot(ObjectOnPlot):
         ObjectOnPlot.__init__(self, **kwargs)
         self.fit_result = result
 
-        xrange = result.xrange if result.xrange else (
+        self._xrange = result.xrange if result.xrange else (
             min(result.dataset.xvalues), max(result.dataset.xvalues))
 
         self.func_on_plot = FunctionOnPlot(
-            result.fit_function, xrange=xrange, error_method=lit.MONTE_CARLO, **kwargs)
+            result.fit_function, xrange=self._xrange, error_method=lit.MONTE_CARLO, **kwargs)
         self.residuals_on_plot = XYDataSetOnPlot(
             result.dataset.xdata, result.residuals, **kwargs)
 
@@ -404,6 +404,10 @@ class XYFitResultOnPlot(ObjectOnPlot):
     def dataset(self):
         """dts.XYDataSet: The dataset that the fit is associated with"""
         return self.fit_result.dataset
+
+    @property
+    def xrange(self):
+        return self._xrange
 
 
 class HistogramOnPlot(ObjectOnPlot, FitTarget, ObjectWithRange):
