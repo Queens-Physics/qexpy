@@ -12,7 +12,7 @@ setup(
     url='https://qexpy.readthedocs.io/en/latest/index.html',
     project_urls={
         "Bug Tracker": 'https://github.com/Queens-Physics/qexpy/issues',
-        "Documentation": 'https://qexpy.readthedocs.io/en/latest/index.html'
+        "Documentation": 'https://qexpy.readthedocs.io/en/latest/index.html',
         "Source Code": 'https://github.com/Queens-Physics/qexpy',
     },
     keywords=['physics', 'laboratories', 'labs', 'undergraduate', 'data analysis', 'uncertainties', 'plotting',
