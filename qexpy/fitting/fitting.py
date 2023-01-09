@@ -242,7 +242,13 @@ def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
 
     try:
         popt, pcov = opt.curve_fit(  # pylint:disable=unbalanced-tuple-unpacking
-            fit_func, xdata.values, ydata.values, p0=parguess, sigma=yerr)
+            fit_func,
+            xdata.values,
+            ydata.values,
+            p0=parguess,
+            sigma=yerr,
+            absolute_sigma=True
+        )
 
         # adjust the fit by factoring in the uncertainty on x
         if any(err > 0 for err in xdata.errors):
@@ -253,7 +259,13 @@ def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
 
             # re-calculate the fit with adjusted uncertainties for ydata
             popt, pcov = opt.curve_fit(  # pylint:disable=unbalanced-tuple-unpacking
-                fit_func, xdata.values, ydata.values, p0=parguess, sigma=adjusted_yerr)
+                fit_func,
+                xdata.values,
+                ydata.values,
+                p0=parguess,
+                sigma=adjusted_yerr,
+                absolute_sigma=True
+            )
 
     except RuntimeError:  # pragma: no cover
 

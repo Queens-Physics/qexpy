@@ -73,8 +73,8 @@ class TestUtils:
     def test_numerical_derivative(self):
         """test the numerical derivative"""
 
-        assert pytest.approx(1.9726023611141572335938, utils.numerical_derivative(
-            lambda x: x ** 2 * np.sin(x), 2))
+        assert utils.numerical_derivative(
+            lambda x: x ** 2 * np.sin(x), 2) == pytest.approx(1.9726023611141572335938)
 
     def test_calculate_covariance(self):
         """test the covariance calculator"""
@@ -82,9 +82,9 @@ class TestUtils:
         with pytest.raises(ValueError):
             utils.calculate_covariance([1, 2, 3], [1, 2, 3, 4])
 
-        assert pytest.approx(utils.calculate_covariance([1, 2, 3, 4], [4, 3, 2, 1]), - 5 / 3)
-        assert pytest.approx(utils.calculate_covariance(
-            np.array([1, 2, 3, 4]), np.array([4, 3, 2, 1])), - 5 / 3)
+        assert utils.calculate_covariance([1, 2, 3, 4], [4, 3, 2, 1]) == pytest.approx(- 5 / 3)
+        assert utils.calculate_covariance(
+            np.array([1, 2, 3, 4]), np.array([4, 3, 2, 1]))  == pytest.approx(- 5 / 3)
 
     def test_cov2corr(self):
         """test converting covariance matrix to correlation matrix"""
