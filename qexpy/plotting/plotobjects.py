@@ -9,7 +9,7 @@ from qexpy.utils.exceptions import IllegalArgumentError, UndefinedActionError
 from qexpy.fitting.fitting import XYFitResult
 
 import qexpy.data.data as dt
-import qexpy.utils as utils
+import qexpy.utils as uts
 import qexpy.settings.settings as sts
 import qexpy.settings.literals as lit
 import qexpy.data.datasets as dts
@@ -93,7 +93,7 @@ class XYObjectOnPlot(ObjectOnPlot, ObjectWithRange):
 
         xrange = kwargs.pop("xrange", ())
         if xrange:
-            utils.validate_xrange(xrange)
+            uts.validate_xrange(xrange)
         self._xrange = xrange
 
         xname = kwargs.pop("xname", "")
@@ -142,7 +142,7 @@ class XYObjectOnPlot(ObjectOnPlot, ObjectWithRange):
     @xrange.setter
     def xrange(self, new_range: tuple):
         if new_range:
-            utils.validate_xrange(new_range)
+            uts.validate_xrange(new_range)
         self._xrange = new_range
 
     @property
@@ -311,7 +311,7 @@ class FunctionOnPlot(XYObjectOnPlot):
     @xrange.setter
     def xrange(self, new_range: tuple):
         if new_range:
-            utils.validate_xrange(new_range)
+            uts.validate_xrange(new_range)
         self._xrange = new_range
         self._ydata = None  # clear y data since it would need to be re-calculated
 
