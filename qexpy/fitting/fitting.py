@@ -255,7 +255,7 @@ def __curve_fit(fit_func, xdata, ydata, parguess, yerr) -> RawFitResults:
             func = __combine_fit_func_and_fit_params(fit_func, popt)
             yerr = 0 if yerr is None else yerr
             adjusted_yerr = np.sqrt(
-                yerr ** 2 + xdata.errors * utils.numerical_derivative(func, xdata.errors))
+                yerr ** 2 + (xdata.errors * utils.numerical_derivative(func, xdata.errors))**2)
 
             # re-calculate the fit with adjusted uncertainties for ydata
             popt, pcov = opt.curve_fit(  # pylint:disable=unbalanced-tuple-unpacking
