@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qexpy"
+dynamic = ["version"]
+authors = [
+    { name = "Astral Cai", email = "astralcai@gmail.com" },
+    { name = "Dr. Ryan Martin", email = "ryan.martin@queensu.ca" }
+]
+description = "A package for experimental data analysis with built-in error propagation."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics"
+]
+
+[project.urls]
+Homepage = "https://github.com/Queens-Physics/qexpy"
+Documentation = "https://qexpy.readthedocs.io/en/latest/index.html"
+Repository = "https://github.com/Queens-Physics/qexpy.git"
+Issues = "https://github.com/Queens-Physics/qexpy/issues"
+Changelog = "https://github.com/Queens-Physics/qexpy/blob/master/CHANGELOG.md"
+
+[tool.setuptools.dynamic]
+version = { attr = "qexpy.__version__" }
