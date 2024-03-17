@@ -1,0 +1,22 @@
+name: Formatting check
+on:
+  - pull_request
+
+jobs:
+  black-pylint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: pip install black pylint
+      - name: Run Black
+        run: |
+          black -l 100 qexpy tests --check
+      - name: Run Pylint (source files)
+        run: pylint --rcfile .pylintrc qexpy
+      - name: Run Pylint (test files)
+        run: pylint --rcfile tests/.pylintrc tests
