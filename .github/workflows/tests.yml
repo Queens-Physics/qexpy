@@ -26,8 +26,3 @@ jobs:
       - name: Run unit tests
         run: |
           python -m pytest --cov=qexpy --cov-report=xml:coverage.xml
-      - name: Run coverage
-        uses: orgoro/coverage@v3
-        with:
-          coverageFile: coverage.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
