@@ -27,3 +27,6 @@
 #
 
 __version__ = '3.0.1'
+
+from qexpy._config import get_option, set_option, reset_option, options
+import qexpy._config.config_init  # Initialize all configurations

@@ -1,0 +1,227 @@
+"""Defines the data structure that stores package-wide configurations
+
+References
+----------
+https://github.com/pandas-dev/pandas/blob/main/pandas/_config/config.py
+
+"""
+
+from __future__ import annotations
+
+import keyword
+from functools import wraps
+from numbers import Real
+from typing import NamedTuple, Callable, Any, Iterable, Dict
+
+_registered_options: Dict[str, Option] = {}
+
+_global_config: Dict[str, Any] = {}
+
+
+class Option(NamedTuple):
+    """The data structure that represents an option"""
+    key: str
+    default: object
+    validator: Callable[[object], Any] | None
+
+
+class DictWrapper:
+    """Provide attribute-style access to a nested dictionary."""
+
+    def __init__(self, d: dict[str, Any], prefix: str = "") -> None:
+        object.__setattr__(self, "d", d)
+        object.__setattr__(self, "prefix", prefix)
+
+    def __setattr__(self, key: str, val: Any) -> None:
+        prefix = object.__getattribute__(self, "prefix")
+        if prefix:
+            prefix += "."
+        prefix += key
+        if key in self.d and not isinstance(self.d[key], dict):
+            set_option(prefix, val)
+        else:
+            raise KeyError("You can only set the value of existing options")
+
+    def __getattr__(self, key: str):
+        prefix = object.__getattribute__(self, "prefix")
+        if prefix:
+            prefix += "."
+        prefix += key
+        try:
+            v = object.__getattribute__(self, "d")[key]
+        except KeyError as err:
+            raise KeyError("No such option") from err
+        if isinstance(v, dict):
+            return DictWrapper(v, prefix)
+        else:
+            return get_option(prefix)
+
+
+options = DictWrapper(_global_config)
+
+
+def register_option(
+        key: str,
+        default: object,
+        validator: Callable[[object], Any] | None = None,
+) -> None:
+    """ Register an option in the package-wide qexpy config object
+
+    Parameters
+    ----------
+
+    key : str
+        The name of the option
+    default : object
+        The default value of the option
+    validator : Callable, optional
+        A function that should raise an exception if the value is invalid
+
+    """
+
+    # Make sure the default value is valid
+    if validator:
+        validator(default)
+
+    # Walk the nested dict, creating dicts as needed along the path
+    path = key.split(".")
+
+    # Validate keys
+    for p in path:
+        if keyword.iskeyword(p):
+            raise ValueError(f"{p} is a python keyword")
+
+    cursor = _global_config
+    for p in path[:-1]:
+        if not isinstance(cursor, dict):
+            raise ValueError("Path prefix is already an option")
+        if p not in cursor:
+            cursor[p] = {}
+        cursor = cursor[p]
+
+    if not isinstance(cursor, dict):
+        raise ValueError("Path prefix is already an option")
+
+    if path[-1] in cursor and isinstance(cursor[path[-1]], dict):
+        raise ValueError("Path is already a prefix to other options")
+
+    cursor[path[-1]] = default
+
+    _registered_options[key] = Option(key, default, validator)
+
+
+def validate_key(accessor):
+    """Decorator to validate the key passed to an option accessor"""
+
+    @wraps(accessor)
+    def wrapper(*args) -> None:
+        try:
+            return accessor(*args)
+        except KeyError as err:
+            raise KeyError(f"No such option: {args[0]}") from err
+
+    return wrapper
+
+
+@validate_key
+def get_option(key: str) -> Any:
+    """Gets the value of an option
+
+    Parameters
+    ----------
+
+    key : str
+        The name of the option
+
+    """
+    root, k = _get_root(key)
+    return root[k]
+
+
+@validate_key
+def set_option(key: str, value) -> None:
+    """Sets the value of an option
+
+    Parameters
+    ----------
+
+    key : str
+        The name of the option
+    value : Any
+        The value to set
+
+    """
+
+    o = _registered_options[key]
+
+    if o and o.validator:
+        o.validator(value)
+
+    root, k = _get_root(key)
+    root[k] = value
+
+
+def reset_option(key: str = "") -> None:
+    """Resets an option or all options to their default values
+
+    Parameters
+    ----------
+
+    key : str, optional
+        The name of the option to reset, if empty or ``all``, resets all options
+
+    """
+
+    if key in _registered_options:
+        set_option(key, _registered_options[key].default)
+    elif key in ["", "all"]:
+        for k, o in _registered_options.items():
+            set_option(k, o.default)
+    else:
+        raise KeyError(f"No such option: {key}")
+
+
+def _get_root(key: str) -> tuple[dict[str, Any], str]:
+    """Gets the root of the sub-dictionary"""
+
+    path = key.split(".")
+    cursor = _global_config
+    for p in path[:-1]:
+        cursor = cursor[p]
+    return cursor, path[-1]
+
+
+def is_one_of_factory(legal_values: Iterable) -> Callable[[Any], None]:
+    """Produce a function that checks if a value is one of the legal values"""
+
+    def inner(x) -> None:
+        if x not in legal_values:
+            vals = [str(val) for val in legal_values]
+            msg = f"Value must be one of {'|'.join(vals)}"
+            raise ValueError(msg)
+
+    return inner
+
+
+def is_positive_integer(x) -> None:
+    """Checks if a value is a positive integer"""
+
+    if not isinstance(x, int) or x <= 0:
+        raise ValueError(f"Value must be a positive integer: {x}")
+
+
+def is_boolean(x) -> None:
+    """Checks if a value is a boolean"""
+
+    if not isinstance(x, bool):
+        raise TypeError(f"Value must be a boolean: {x}")
+
+
+def is_tuple_of_floats(x) -> None:
+    """Checks if a value is a tuple of floats"""
+
+    if not isinstance(x, (tuple, list)) or len(x) != 2:
+        raise TypeError(f"Value must be a tuple of length 2: {x}")
+
+    if not all(isinstance(v, Real) for v in x):
+        raise ValueError(f"Value must be a tuple of floats: {x}")
