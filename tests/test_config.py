@@ -1,5 +1,7 @@
 """Unit tests for accessing and changing configurations"""
 
+# pylint: disable=protected-access
+
 import pytest
 
 import qexpy._config.config as cf
@@ -10,6 +12,7 @@ class TestConfig:
 
     @pytest.fixture(autouse=True)
     def clean_config(self, monkeypatch):
+        """Cleans up the global configuration"""
         with monkeypatch.context() as m:
             m.setattr(cf, "_global_config", {})
             m.setattr(cf, "options", cf.DictWrapper(cf._global_config))
@@ -28,7 +31,10 @@ class TestConfig:
             cf.register_option("abc.def", 2)
 
         assert cf._global_config == {
-            'foo': 1, 'abc': {'cba': 2}, 'bar': {'foo': {'test': 3, 'abc': 4}}}
+            "foo": 1,
+            "abc": {"cba": 2},
+            "bar": {"foo": {"test": 3, "abc": 4}},
+        }
 
         with pytest.raises(ValueError, match="Path prefix is already an option"):
             cf.register_option("foo.bar", 1)
@@ -90,7 +96,7 @@ class TestConfig:
             cf.set_option("e", 2)
 
         with pytest.raises(ValueError, match="Value must be a tuple of floats"):
-            cf.set_option("e", (1.0, 'a'))
+            cf.set_option("e", (1.0, "a"))
 
     def test_reset_options(self):
         """Tests resetting options"""

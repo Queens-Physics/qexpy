@@ -20,6 +20,7 @@ _global_config: Dict[str, Any] = {}
 
 class Option(NamedTuple):
     """The data structure that represents an option"""
+
     key: str
     default: object
     validator: Callable[[object], Any] | None
@@ -61,11 +62,11 @@ options = DictWrapper(_global_config)
 
 
 def register_option(
-        key: str,
-        default: object,
-        validator: Callable[[object], Any] | None = None,
+    key: str,
+    default: object,
+    validator: Callable[[object], Any] | None = None,
 ) -> None:
-    """ Register an option in the package-wide qexpy config object
+    """Register an option in the package-wide qexpy config object
 
     Parameters
     ----------
