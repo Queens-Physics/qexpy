@@ -26,4 +26,4 @@ jobs:
           python -m pip install .
       - name: Run unit tests
         run: |
-          python -m pytest --cov=qexpy --cov-report=xml:coverage.xml
+          python -m pytest
