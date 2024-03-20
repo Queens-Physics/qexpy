@@ -180,3 +180,20 @@ class TestConfig:
 
         with pytest.raises(KeyError, match="No such option"):
             cf.describe_option("no.such.option")
+
+    def test_option_context(self):
+        """Tests the options context manager"""
+
+        cf.register_option("foo", 1)
+        cf.register_option("abc.cba", 2)
+        cf.register_option("bar.foo.test", 3)
+        cf.register_option("bar.foo.abc", 4)
+
+        with cf.option_context("foo", 2):
+            assert cf.get_option("foo") == 2
+
+        assert cf.get_option("foo") == 1
+
+        with pytest.raises(ValueError):
+            with cf.option_context("foo", 1, 2):
+                pass

@@ -1,13 +1,18 @@
 """Functions for parsing and constructing unit strings"""
 
+# pylint: disable=too-few-public-methods
+
 from __future__ import annotations
 
 import re
 import warnings
-from copy import copy
 from fractions import Fraction
 from numbers import Real
 from typing import Dict, List
+
+import math as m
+
+import qexpy as q
 
 _DOT_STRING = "\N{Dot Operator}"
 
@@ -53,21 +58,27 @@ class Unit(dict):
         tree = _construct_expression_tree(tokens)
         return tree.evaluate()
 
+    def __str__(self) -> str:
+
+        if not self:
+            return ""
+
+        if q.options.format.style.unit == "fraction":
+            return _unit_to_fraction_string(self)
+
+        return _unit_to_exponent_string(self)
+
     def __setitem__(self, key, value):
         return TypeError("Unit does not support item assignment.")
 
-    def update(self, __m, **kwargs):
+    def update(self, __m, **_):
         return TypeError("Unit does not support item assignment.")
 
     def __hash__(self):
         return hash(frozenset(self.items()))
 
-    def __str__(self) -> str:
-        pass
-
     def __add__(self, other: dict) -> Unit:
-        if not isinstance(other, Unit):
-            raise TypeError("Can only add units with other units.")
+        assert isinstance(other, Unit)
         if self and other and self != other:
             warnings.warn("Adding two quantities with mismatching units!")
         return Unit(dict(self.items())) if self else Unit(dict(other.items()))
@@ -75,8 +86,7 @@ class Unit(dict):
     __radd__ = __add__
 
     def __sub__(self, other):
-        if not isinstance(other, Unit):
-            raise TypeError("Can only subtract units with other units.")
+        assert isinstance(other, Unit)
         if self and other and self != other:
             warnings.warn("Subtracting two quantities with mismatching units!")
         return Unit(dict(self.items())) if self else Unit(dict(other.items()))
@@ -84,8 +94,7 @@ class Unit(dict):
     __rsub__ = __sub__
 
     def __mul__(self, other):
-        if not isinstance(other, Unit):
-            raise TypeError("Can only multiply units with other units.")
+        assert isinstance(other, Unit)
         result = {}
         for unit, exp in self.items():
             result[unit] = exp
@@ -96,8 +105,7 @@ class Unit(dict):
     __rmul__ = __mul__
 
     def __truediv__(self, other):
-        if not isinstance(other, Unit):
-            raise TypeError("Can only divide units with other units.")
+        assert isinstance(other, Unit)
         result = {}
         for unit, exp in self.items():
             result[unit] = exp
@@ -105,19 +113,8 @@ class Unit(dict):
             result[unit] = result.get(unit, 0) - exp
         return Unit(result)
 
-    def __rtruediv__(self, other):
-        if not isinstance(other, Unit):
-            raise TypeError("Can only divide units with other units.")
-        result = {}
-        for unit, exp in other.items():
-            result[unit] = exp
-        for unit, exp in self.items():
-            result[unit] = result.get(unit, 0) + exp
-        return Unit(result)
-
     def __pow__(self, power):
-        if not isinstance(power, Real):
-            raise TypeError("Can only take a unit to a numerical exponent.")
+        assert isinstance(power, Real)
         return Unit({name: exp * power for name, exp in self.items()})
 
     def __copy__(self):
@@ -210,7 +207,7 @@ class _Expression:
 
     def evaluate(self) -> Unit | float:
         """Evaluates the expression to a Unit object."""
-        return Unit({})
+        return Unit({})  # pragma: no cover
 
 
 class _BinOp(_Expression):
@@ -234,7 +231,7 @@ class _BinOp(_Expression):
         elif self.op == "^":
             return self.left.evaluate() ** self.right.evaluate()
 
-        raise TypeError(f"Unsupported operator in unit string: {self.op}")
+        raise TypeError(f"Unsupported operator in unit string: {self.op}")  # pragma: no cover
 
 
 class _Number(_Expression):
@@ -328,3 +325,79 @@ def _construct_expression_tree(tokens: List) -> _Expression:
         operand_stack.append(__construct_sub_tree())
 
     return operand_stack[0] if operand_stack else _Expression()
+
+
+def _number_of_decimals(value: float) -> int:
+    """Calculates the correct number of decimal places to show"""
+
+    order = m.floor(m.log10(abs(value) % 1))
+    number_of_decimals = -order + 2 - 1
+    return number_of_decimals if number_of_decimals > 0 else 0
+
+
+def _construct_exponent(exponent: float) -> str:
+    """Construct the string representation of a unit exponent"""
+
+    # Gets rid of the error caused by the machine epsilon
+    fraction = Fraction(exponent).limit_denominator(int(1e10))
+
+    # Construct the string representation of the exponent
+    if fraction.numerator == 1 and fraction.denominator == 1:
+        return ""  # do not print power of 1 as it's implied
+    if fraction.denominator == 1:
+        return f"^{str(fraction.numerator)}"
+
+    # When the fraction form is too complicated, keep decimal form, but only keep two
+    # significant figures after the decimal point for simplicity.
+    if fraction.denominator > 10:
+        return f"^{exponent:.{_number_of_decimals(exponent)}f}"
+
+    return f"^({str(fraction)})"
+
+
+def _unit_to_fraction_string(units: Dict[str, float]) -> str:
+    """Construct the string representation of a unit in the fraction style
+
+    Parameters
+    ----------
+
+    units : Dict
+        A dictionary of units and their exponents
+
+    Returns
+    -------
+    The string representation of the unit in the fraction style
+
+    """
+
+    numerator = [f"{unit}{_construct_exponent(exp)}" for unit, exp in units.items() if exp > 0]
+    denominator = [f"{unit}{_construct_exponent(-exp)}" for unit, exp in units.items() if exp < 0]
+    numerator_string = _DOT_STRING.join(numerator) if numerator else "1"
+    denominator_string = _DOT_STRING.join(denominator)
+
+    if not denominator:
+        return numerator_string
+
+    if len(denominator) > 1:
+        # For multiple units in the denominator, use bracket to avoid ambiguity
+        denominator_string = f"({denominator_string})"
+
+    # Combine numerator and denominator
+    return f"{numerator_string}/{denominator_string}"
+
+
+def _unit_to_exponent_string(units: Dict[str, float]) -> str:
+    """Construct the string representation of a unit in the exponent style
+
+    Parameters
+    ----------
+    units : Dict
+        A dictionary of units and their exponents
+
+    Returns
+    -------
+
+    The string representation of the unit in the exponent style
+
+    """
+    return _DOT_STRING.join(f"{unit}{_construct_exponent(exp)}" for unit, exp in units.items())

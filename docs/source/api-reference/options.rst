@@ -16,5 +16,6 @@ Managing Options
    set_option
    describe_option
    reset_option
+   option_context
 
 See :ref:`user_guide.options` for more details.

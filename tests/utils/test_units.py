@@ -2,6 +2,7 @@
 
 import pytest
 
+import qexpy as q
 from qexpy.utils import Unit
 
 PREDEFINED = {
@@ -27,6 +28,20 @@ STRINGS_TO_UNITS = [
     ("kg^1/2m^(1/3)/s^(2.003123)A^0.02312", PREDEFINED["ugly"]),
 ]
 
+UNITS_TO_STRINGS = [
+    ({}, "", ""),
+    (PREDEFINED["joule"], "kg⋅m^2⋅s^-2", "kg⋅m^2/s^2"),
+    (PREDEFINED["pascal"], "kg⋅m^-1⋅s^-2", "kg/(m⋅s^2)"),
+    (PREDEFINED["coulomb"], "A⋅s", "A⋅s"),
+    (PREDEFINED["hello"], "A^-1⋅s^-1", "1/(A⋅s)"),
+    (PREDEFINED["world"], "kg^4⋅m^2⋅Pa⋅L^-3⋅s^-2⋅A^-2", "kg^4⋅m^2⋅Pa/(L^3⋅s^2⋅A^2)"),
+    (
+        PREDEFINED["ugly"],
+        "kg^(1/2)⋅m^(1/3)⋅s^-2.0031⋅A^-0.023",
+        "kg^(1/2)⋅m^(1/3)/(s^2.0031⋅A^0.023)",
+    ),
+]
+
 
 class TestUnits:
     """Tests for parsing and constructing unit strings"""
@@ -35,3 +50,19 @@ class TestUnits:
     def test_parse_unit_string(self, string, expected):
         """Tests parsing a unit string"""
         assert Unit.from_string(string) == expected
+
+    @pytest.mark.parametrize("unit_dict, exp_str, frac_str", UNITS_TO_STRINGS)
+    def test_construct_unit_string(self, unit_dict, exp_str, frac_str):
+        """Tests constructing a unit string"""
+
+        units = Unit(unit_dict)
+        with q.option_context("format.style.unit", "fraction"):
+            assert str(units) == frac_str
+        with q.option_context("format.style.unit", "exponent"):
+            assert str(units) == exp_str
+
+    def test_invalid_string(self):
+        """Tests invalid unit strings"""
+
+        with pytest.raises(ValueError):
+            Unit.from_string("m2kg4/A2")
