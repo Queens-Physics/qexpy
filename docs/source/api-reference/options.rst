@@ -14,4 +14,5 @@ Managing Options
 
    get_option
    set_option
+   describe_option
    reset_option

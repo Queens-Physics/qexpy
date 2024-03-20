@@ -6,4 +6,4 @@ using the "dotted-style".
 
 """
 
-from qexpy._config.config import get_option, set_option, reset_option, options
+from qexpy._config.config import get_option, set_option, describe_option, reset_option, options
