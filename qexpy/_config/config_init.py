@@ -4,6 +4,8 @@ This script is imported at the top level of the package to initialize all config
 
 """
 
+# pylint: disable-msg=invalid-name
+
 import qexpy._config.config as cf
 
 format_unit_doc = """
