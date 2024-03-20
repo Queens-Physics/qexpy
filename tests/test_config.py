@@ -75,10 +75,10 @@ class TestConfig:
     def test_validation(self):
         """Tests validation of option values"""
 
-        cf.register_option("a", "foo", cf.is_one_of_factory(["foo", "bar"]))
-        cf.register_option("b.c", 1, cf.is_positive_integer)
-        cf.register_option("d", True, cf.is_boolean)
-        cf.register_option("e", (1.0, 2.0), cf.is_tuple_of_floats)
+        cf.register_option("a", "foo", "", cf.is_one_of_factory(["foo", "bar"]))
+        cf.register_option("b.c", 1, "", cf.is_positive_integer)
+        cf.register_option("d", True, "", cf.is_boolean)
+        cf.register_option("e", (1.0, 2.0), "", cf.is_tuple_of_floats)
 
         with pytest.raises(ValueError, match="Value must be one of"):
             cf.set_option("a", "hello")
@@ -145,3 +145,38 @@ class TestConfig:
 
         with pytest.raises(KeyError, match="No such option"):
             print(cf.options.no_such_option)
+
+    def test_describe_option(self, capfd):
+        """Tests that describing a registered option works"""
+
+        foo_doc = """
+        : int
+            foo
+        """
+        cf.register_option("foo", 1, foo_doc)
+        cf.register_option("abc.cba", 2)
+        cf.register_option("bar.foo.test", 3, foo_doc)
+        cf.register_option("bar.foo.abc", 4, foo_doc)
+
+        cf.describe_option("foo")
+        out, _ = capfd.readouterr()
+        assert out == "foo : int\n            foo\n    [default: 1] [currently: 1]\n"
+
+        cf.describe_option("bar.foo")
+        out, _ = capfd.readouterr()
+        assert out == (
+            "bar.foo.abc : int\n            foo\n    [default: 4] [currently: 4]\n"
+            "bar.foo.test : int\n            foo\n    [default: 3] [currently: 3]\n"
+        )
+
+        cf.describe_option("")
+        out, _ = capfd.readouterr()
+        assert out == (
+            "abc.cba \n    [default: 2] [currently: 2]\n"
+            "bar.foo.abc : int\n            foo\n    [default: 4] [currently: 4]\n"
+            "bar.foo.test : int\n            foo\n    [default: 3] [currently: 3]\n"
+            "foo : int\n            foo\n    [default: 1] [currently: 1]\n"
+        )
+
+        with pytest.raises(KeyError, match="No such option"):
+            cf.describe_option("no.such.option")

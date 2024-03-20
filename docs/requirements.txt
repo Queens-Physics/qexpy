@@ -1,0 +1,7 @@
+sphinx
+numpydoc
+nbsphinx
+sphinx_design
+pydata-sphinx-theme
+ipython
+pickleshare

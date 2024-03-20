@@ -8,6 +8,7 @@ https://github.com/pandas-dev/pandas/blob/main/pandas/_config/config.py
 
 from __future__ import annotations
 
+import re
 import keyword
 from functools import wraps
 from numbers import Real
@@ -23,6 +24,7 @@ class Option(NamedTuple):
 
     key: str
     default: object
+    doc: str
     validator: Callable[[object], Any] | None
 
 
@@ -64,6 +66,7 @@ options = DictWrapper(_global_config)
 def register_option(
     key: str,
     default: object,
+    doc: str = "",
     validator: Callable[[object], Any] | None = None,
 ) -> None:
     """Register an option in the package-wide qexpy config object
@@ -75,6 +78,8 @@ def register_option(
         The name of the option
     default : object
         The default value of the option
+    doc: str, optional
+        A description of the option
     validator : Callable, optional
         A function that should raise an exception if the value is invalid
 
@@ -108,7 +113,7 @@ def register_option(
 
     cursor[path[-1]] = default
 
-    _registered_options[key] = Option(key, default, validator)
+    _registered_options[key] = Option(key, default, doc, validator)
 
 
 def validate_key(accessor):
@@ -152,7 +157,6 @@ def set_option(key: str, value) -> None:
         The value to set
 
     """
-
     o = _registered_options[key]
 
     if o and o.validator:
@@ -173,13 +177,46 @@ def reset_option(key: str = "") -> None:
 
     """
 
-    if key in _registered_options:
-        set_option(key, _registered_options[key].default)
-    elif key in ["", "all"]:
-        for k, o in _registered_options.items():
-            set_option(k, o.default)
-    else:
-        raise KeyError(f"No such option: {key}")
+    keys = _select_keys(key)
+
+    if len(keys) == 0:
+        raise KeyError(f"No such option(s) matching {key=}")
+
+    for k in keys:
+        set_option(k, _registered_options[k].default)
+
+
+def describe_option(key: str = ""):
+    """Prints the description of one or more options
+
+    Parameters
+    ----------
+
+    key: str, optional
+        The key of the option, or a path prefix that matches multiple options.
+        If empty, all options will be listed.
+
+    """
+
+    keys = _select_keys(key)
+
+    if len(keys) == 0:
+        raise KeyError(f"No such option(s) matching {key=}")
+
+    print("\n".join([_build_option_description(k) for k in keys]))
+
+
+def _select_keys(pattern: str) -> list[str]:
+    """Selects one or more keys matching a pattern"""
+
+    if pattern in _registered_options:
+        return [pattern]
+
+    keys = sorted(_registered_options.keys())
+    if pattern in ("", "all"):
+        return keys
+
+    return [k for k in keys if re.search(rf"^{pattern}\.", k, re.I)]
 
 
 def _get_root(key: str) -> tuple[dict[str, Any], str]:
@@ -190,6 +227,18 @@ def _get_root(key: str) -> tuple[dict[str, Any], str]:
     for p in path[:-1]:
         cursor = cursor[p]
     return cursor, path[-1]
+
+
+def _build_option_description(k: str) -> str:
+    """Builds a formatted description of a registered option and prints it"""
+
+    option = _registered_options[k]
+
+    s = f"{k} "
+    s += "\n".join(option.doc.strip().split("\n"))
+    s += f"\n    [default: {option.default}] [currently: {get_option(k)}]"
+
+    return s
 
 
 def is_one_of_factory(legal_values: Iterable) -> Callable[[Any], None]:
