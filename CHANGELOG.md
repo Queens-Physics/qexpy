@@ -13,3 +13,5 @@
 * Support for Python 3.5, 3.6, 3.7, 3.8 are discontinued.
 * Switching to dotted-style options like in `pandas`. The old way of setting package-wide options
   are removed. See documentation for more details.
+* Measurements are made immutable. Users will no longer be able to change the value or uncertainty 
+  of a recorded measurement or measurement array.
