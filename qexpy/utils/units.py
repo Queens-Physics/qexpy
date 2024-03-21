@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 import warnings
+from copy import copy
 from fractions import Fraction
 from numbers import Real
 from typing import Dict, List
@@ -15,6 +16,9 @@ import math as m
 import qexpy as q
 
 _DOT_STRING = "\N{Dot Operator}"
+
+# Keeps track of user-defined units
+_registered_units: Dict[str, Unit] = {}
 
 
 class Unit(dict):
@@ -63,10 +67,21 @@ class Unit(dict):
         if not self:
             return ""
 
-        if q.options.format.style.unit == "fraction":
-            return _unit_to_fraction_string(self)
+        # Replace part of the unit expression with user-defined aliases if applicable. To avoid
+        # making unwanted substitutions, the unit expression is only simplified when the entire
+        # expression is a power of a pre-defined unit. For example, "kg^2*m^2/s^4" is simplified
+        # to "N^2", but "kg^2*m^2/s^3" will not be converted to "N^2*s"
+        unit_dict = copy(self)
+        for unit, expression in _registered_units.items():
+            exp = _try_pack(unit_dict, expression)
+            if exp:
+                unit_dict = {unit: exp}
+                break
 
-        return _unit_to_exponent_string(self)
+        if q.options.format.style.unit == "fraction":
+            return _unit_to_fraction_string(unit_dict)
+
+        return _unit_to_exponent_string(unit_dict)
 
     def __setitem__(self, key, value):
         return TypeError("Unit does not support item assignment.")
@@ -119,6 +134,57 @@ class Unit(dict):
 
     def __copy__(self):
         return Unit(dict(self.items()))
+
+
+def define_unit(name: str, unit_str: str):
+    """Define an alias for a compound unit
+
+    Assign a unit expression to a name. For example, define ``'N'`` as ``'kg*m/s^2'``. Once a
+    unit is defined, it will be treated as its expanded form when performing calculations.
+
+    Parameters
+    ----------
+
+    name: str
+        The name of the compound unit
+    unit_str: str
+        The expanded unit expression
+
+    Examples
+    --------
+
+    >>> import qexpy as q
+    >>> q.define_unit("N", "kg*m/s^2")
+
+    Once a unit is defined, we can assign it to a measurement:
+
+    >>> force = q.Measurement(4, unit="N")
+    >>> mass = q.Measurement(2, unit="kg")
+    >>> acceleration = force / mass
+    >>> print(acceleration)
+    2 +/- 0 [m/s^2]
+
+    See Also
+    --------
+
+    :py:func:`clear_unit_definitions`
+
+    """
+    if not re.match(r"^[a-zA-Z]+$", name):
+        raise ValueError("The name of a unit can only contain letters!")
+    _registered_units[name] = Unit.from_string(unit_str)
+
+
+def clear_unit_definitions():
+    """Deletes all user-defined unit aliases
+
+    See Also
+    --------
+
+    :py:func:`define_unit`
+
+    """
+    _registered_units.clear()
 
 
 def _split_unit_string(unit_string: str) -> List:
@@ -401,3 +467,21 @@ def _unit_to_exponent_string(units: Dict[str, float]) -> str:
 
     """
     return _DOT_STRING.join(f"{unit}{_construct_exponent(exp)}" for unit, exp in units.items())
+
+
+def _try_pack(unit: Dict[str, float], pre_defined: Dict) -> float:
+    """Try packing a unit into some power of a predefined compound unit"""
+
+    exponent = 0
+    for name, exp in unit.items():
+        pre_exp = pre_defined.get(name, 0)
+        if not pre_exp:
+            return 0  # unit non-existing in predefined units
+        if exponent and exponent != exp / pre_exp:
+            return 0  # exponent different from previous
+        if not exponent:
+            exponent = exp / pre_exp
+    for name, exp in pre_defined.items():
+        if not unit.get(name, 0):
+            return 0
+    return exponent

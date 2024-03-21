@@ -1,5 +1,7 @@
 """Unit tests for unit parsing, constructing unit strings, and unit operations"""
 
+# pylint: disable=protected-access,use-implicit-booleaness-not-comparison
+
 import pytest
 
 import qexpy as q
@@ -66,3 +68,33 @@ class TestUnits:
 
         with pytest.raises(ValueError):
             Unit.from_string("m2kg4/A2")
+
+        with pytest.raises(ValueError):
+            q.define_unit("1", "m2kg4/A2")
+
+    def test_define_unit(self):
+        """Tests user defined units"""
+
+        q.define_unit("N", "kg*m/s^2")
+        assert q.utils.units._registered_units == {"N": {"kg": 1, "m": 1, "s": -2}}
+
+        unit = Unit({"kg": 1, "m": 1, "s": -2})
+        assert str(unit) == "N"
+
+        unit = Unit({"kg": 2, "m": 2, "s": -4})
+        assert str(unit) == "N^2"
+
+        unit = Unit({"kg": -2, "m": -2, "s": 4})
+        assert str(unit) == "1/N^2"
+
+        unit = Unit({"kg": 2, "m": 2, "s": -3})
+        assert str(unit) == "kg^2⋅m^2/s^3"
+
+        unit = Unit({"kg": 2, "m": 2})
+        assert str(unit) == "kg^2⋅m^2"
+
+        unit = Unit({"kg": 2, "m": 2, "A": -2})
+        assert str(unit) == "kg^2⋅m^2/A^2"
+
+        q.clear_unit_definitions()
+        assert q.utils.units._registered_units == {}
