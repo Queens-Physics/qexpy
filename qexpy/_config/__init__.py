@@ -6,7 +6,6 @@ using the "dotted-style".
 
 """
 
-<<<<<<< HEAD
 from qexpy._config.config import (
     get_option,
     set_option,
@@ -15,8 +14,3 @@ from qexpy._config.config import (
     options,
     option_context,
 )
-=======
-from qexpy._config.config import get_option, set_option, describe_option, reset_option, options
-
-__all__ = ["get_option", "set_option", "describe_option", "reset_option", "options"]
->>>>>>> 5aa3578 (Implement the core data structure for experimental values)

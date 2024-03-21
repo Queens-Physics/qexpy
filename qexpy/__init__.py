@@ -31,8 +31,5 @@ __version__ = "3.0.1"
 import qexpy._config.config_init  # Initialize all configurations
 
 from qexpy._config import *
-<<<<<<< HEAD
-from qexpy.utils import define_unit, clear_unit_definitions
-=======
 from qexpy.core import *
->>>>>>> 5aa3578 (Implement the core data structure for experimental values)
+from qexpy.utils import define_unit, clear_unit_definitions
