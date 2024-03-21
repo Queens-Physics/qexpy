@@ -9,6 +9,7 @@ https://github.com/pandas-dev/pandas/blob/main/pandas/_config/config.py
 from __future__ import annotations
 
 import re
+from contextlib import contextmanager
 import keyword
 from functools import wraps
 from numbers import Real
@@ -204,6 +205,33 @@ def describe_option(key: str = ""):
         raise KeyError(f"No such option(s) matching {key=}")
 
     print("\n".join([_build_option_description(k) for k in keys]))
+
+
+@contextmanager
+def option_context(*args):
+    """
+    Context manager to temporarily set options in a ``with`` statement.
+
+    Parameters
+    ----------
+    *args
+        An even amount of arguments which will be interpreted as (key, value) pairs.
+
+    """
+    if len(args) % 2 != 0 or len(args) < 2:
+        raise ValueError(
+            "Provide an even amount of arguments as option_context(key, val, key, val...)."
+        )
+
+    ops = tuple(zip(args[::2], args[1::2]))
+    try:
+        undo = tuple((pat, get_option(pat)) for pat, val in ops)
+        for pat, val in ops:
+            set_option(pat, val)
+        yield
+    finally:
+        for pat, val in undo:  # pylint: disable=used-before-assignment
+            set_option(pat, val)
 
 
 def _select_keys(pattern: str) -> list[str]:
