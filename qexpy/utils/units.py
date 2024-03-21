@@ -139,7 +139,7 @@ class Unit(dict):
 def define_unit(name: str, unit_str: str):
     """Define an alias for a compound unit
 
-    Assign a unit expression to a name. For example, define ``'N'`` as ``'kg*m/s^2'``. Once a
+    Assign a unit expression to a name. For example, define ``"N"`` as ``"kg*m/s^2"``. Once a
     unit is defined, it will be treated as its expanded form when performing calculations.
 
     Parameters

@@ -1,7 +1,5 @@
 """Unit tests for unit parsing, constructing unit strings, and unit operations"""
 
-# pylint: disable=protected-access,use-implicit-booleaness-not-comparison
-
 import pytest
 
 import qexpy as q
