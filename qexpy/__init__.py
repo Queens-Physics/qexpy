@@ -32,4 +32,4 @@ import qexpy._config.config_init  # Initialize all configurations
 
 from qexpy._config import *
 from qexpy.core import *
-from qexpy.utils import define_unit, clear_unit_definitions
+from qexpy.utils import *

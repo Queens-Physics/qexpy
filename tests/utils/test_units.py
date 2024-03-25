@@ -58,8 +58,10 @@ class TestUnits:
         units = Unit(unit_dict)
         with q.option_context("format.style.unit", "fraction"):
             assert str(units) == frac_str
+            assert repr(units) == frac_str
         with q.option_context("format.style.unit", "exponent"):
             assert str(units) == exp_str
+            assert repr(units) == exp_str
 
     def test_invalid_string(self):
         """Tests invalid unit strings"""

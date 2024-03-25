@@ -83,6 +83,9 @@ class Unit(dict):
 
         return _unit_to_exponent_string(unit_dict)
 
+    def __repr__(self) -> str:
+        return str(self)
+
     def __setitem__(self, key, value):
         return TypeError("Unit does not support item assignment.")
 
