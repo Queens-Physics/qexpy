@@ -5,9 +5,23 @@
 from __future__ import annotations
 
 from numbers import Real
+from typing import NamedTuple, Dict
 
-from qexpy._typing import ArrayLikeT
+import numpy as np
+
+import qexpy as q
+from qexpy._typing import ArrayLikeT, ArrayLike
 from .experimental_value import ExperimentalValue
+
+
+class _Correlation(NamedTuple):
+    """The correlation between two quantities"""
+
+    corr: float
+    cov: float
+
+
+_correlations: Dict[Measurement, Dict[Measurement, _Correlation]] = {}
 
 
 class Measurement(ExperimentalValue):
@@ -17,15 +31,12 @@ class Measurement(ExperimentalValue):
     measurement can be recorded as a single measurement or a series of repeated measurements
     taken on the same quantity.
 
-    The latter case is not to be confused with an array of measurements, which should be taken
-    with :py:func:`qexpy.MeasurementArray`. Think of this as recording a single data point,
-    measured multiple times to reduce the uncertainty.
-
     Parameters
     ----------
 
     data : float or array
-        The measured value(s) of this quantity.
+        The measured value(s) of this quantity. This can be a single value or an array of values
+        representing multiple measurements taken towards the same quantity.
     error : float or array, default=0
         The uncertainty of the measurement. If ``data`` is an array, this can be a single value
         that represents the uncertainty of all measurements, or an array that correspond to the
@@ -54,39 +65,59 @@ class Measurement(ExperimentalValue):
     See Also
     --------
 
-    :class:`~qexpy.core.Measurement`
     :class:`~qexpy.core.RepeatedMeasurement`
+    :class:`~qexpy.core.ExperimentalValue`
+
+    Attributes
+    ----------
+
+    value : float
+    error : float
+    relative_error : float
+    std : float
+    name : str
+    unit : str
+
+    Methods
+    -------
+
+    get_covariance
+    get_correlation
+    set_covariance
+    set_correlation
 
     """
 
     def __new__(
         cls,
-        data: Real | ArrayLikeT,
-        error: Real | ArrayLikeT = 0.0,
-        relative_error: Real | ArrayLikeT = None,
+        data: Real | ArrayLike,
+        error: Real | ArrayLike = 0.0,
+        relative_error: Real | ArrayLike = None,
         name: str = "",
         unit: str = "",
     ):
-        if isinstance(data, Real) and isinstance(error, Real):
+        if isinstance(data, Real):
             return object.__new__(Measurement)
 
         if isinstance(data, ArrayLikeT):
             return object.__new__(RepeatedMeasurement)
 
-        raise TypeError("Invalid data types for a measurement!")
+        raise TypeError(f"The data must be a real number or an array, got: {type(data)}")
 
     def __init__(
         self,
-        value: Real,
+        data: Real,
         error: Real = 0.0,
         relative_error: Real = None,
         name: str = "",
         unit: str = "",
     ):
-        self._value = float(value)
-        error = float(error) if relative_error is None else float(relative_error) * float(value)
+        self._value = float(data)
+        if not isinstance(error, Real):
+            raise TypeError(f"The error must be a real number, got: {type(error)}")
+        error = float(error) if relative_error is None else float(relative_error) * float(data)
         if error < 0:
-            raise ValueError("The error must be non-negative!")
+            raise ValueError(f"The error must be non-negative, got: {error}")
         self._error = error
         super().__init__(name=name, unit=unit)
 
@@ -109,6 +140,172 @@ class Measurement(ExperimentalValue):
         """
         return self.error
 
+    def get_covariance(self, other: Measurement):
+        """Gets the covariance between two measurements
+
+        The covariance is defined as
+
+        .. math::
+            cov_{xy} = \\frac{\\sum_{i}(x_i-\\bar{x})(y_i-\\bar{y})}{N-1}
+
+        It measures the joint variability of two variables
+
+        QExPy does not assume that any two measurements are correlated, so 0 is returned here by
+        default, unless the covariance between the two variables is explicitly set or declared.
+
+        Parameters
+        ----------
+
+        other : MeasuredValue
+            The other measurement
+
+        Returns
+        -------
+
+        cov : float
+            The covariance between this and the other measurement.
+
+        See Also
+        --------
+
+        :py:func:`~Measurement.set_covariance`
+
+        """
+        if not isinstance(other, Measurement):
+            raise TypeError(
+                f"The covariance is only defined between measurements, got: {type(other)}."
+            )
+        if self is other:
+            return self.std**2
+        return _correlations.get(self, {}).get(other, _Correlation(0, 0)).cov
+
+    def get_correlation(self, other: Measurement):
+        """Gets the correlation coefficient between two measurements
+
+        The correlation coefficient is the normalized covariance, defined as
+
+        .. math::
+            \\rho_{xy} = \\frac{cov_{xy}}{\\sigma_x\\sigma_y}
+
+        where :math:`\\sigma_x` and :math:`\\sigma_y` are the standard deviations.
+
+        It measures the joint variability of two variables
+
+        QExPy does not assume that any two measurements are correlated, so 0 is returned here by
+        default, unless the correlation between the two variables is explicitly set or declared.
+
+        Parameters
+        ----------
+
+        other : MeasuredValue
+            The other measurement
+
+        Returns
+        -------
+
+        corr : float
+            The correlation coefficient between this and the other measurement.
+
+        See Also
+        --------
+
+        :py:func:`~Measurement.set_correlation`
+
+        """
+        if not isinstance(other, Measurement):
+            raise TypeError(
+                f"The correlation is only defined between measurements, got: {type(other)}."
+            )
+        if self is other:
+            return 1.0
+        return _correlations.get(self, {}).get(other, _Correlation(0, 0)).corr
+
+    def set_covariance(self, other: Measurement, cov: float):
+        """Sets the covariance between two measurements
+
+        The covariance is defined as
+
+        .. math::
+            cov_{xy} = \\frac{\\sum_{i}(x_i-\\bar{x})(y_i-\\bar{y})}{N-1}
+
+        It measures the joint variability of two variables. If two measurements are correlated,
+        the covariance will be taken into account in error propagation.
+
+        Parameters
+        ----------
+
+        other : Measurement
+            The other measurement
+        cov : float
+            The covariance between this and the other measurement
+
+        See Also
+        --------
+
+        :py:func:`~Measurement.get_covariance`
+
+        """
+
+        if not isinstance(other, Measurement):
+            raise TypeError(
+                f"The covariance is only defined between measurements, got: {type(other)}."
+            )
+
+        if self.std == 0 or other.std == 0:
+            raise ArithmeticError("Cannot set covariance between values with a 0 uncertainty")
+
+        corr = cov / (self.std * other.std)
+
+        # Check that the result makes sense
+        if corr > 1 or corr < -1:
+            raise ValueError(f"The covariance: {cov} is non-physical!")
+
+        _correlations.setdefault(self, {})[other] = _Correlation(corr, cov)
+        _correlations.setdefault(other, {})[self] = _Correlation(corr, cov)
+
+    def set_correlation(self, other: Measurement, corr: float):
+        """Sets the correlation between two measurements
+
+        The correlation coefficient is the normalized covariance, defined as
+
+        .. math::
+            \\rho_{xy} = \\frac{cov_{xy}}{\\sigma_x\\sigma_y}
+
+        where :math:`\\sigma_x` and :math:`\\sigma_y` are the standard deviations.
+
+        It measures the joint variability of two variables.  If two measurements are correlated,
+        the correlation will be taken into account in error propagation.
+
+        Parameters
+        ----------
+
+        other : Measurement
+            The other measurement
+        corr : float
+            The correlation coefficient between this and the other measurement
+
+        See Also
+        --------
+
+        :py:func:`~Measurement.get_correlation`
+
+        """
+        if not isinstance(other, Measurement):
+            raise TypeError(
+                f"The correlation is only defined between measurements, got: {type(other)}."
+            )
+
+        if self.std == 0 or other.std == 0:
+            raise ArithmeticError("Cannot set correlation between values with a 0 uncertainty")
+
+        if corr < -1 or corr > 1:
+            raise ValueError("The correlation coefficient must be between -1 and 1!")
+
+        cov = corr * self.std * other.std
+
+        _correlations.setdefault(self, {})[other] = _Correlation(corr, cov)
+        _correlations.setdefault(other, {})[self] = _Correlation(corr, cov)
+
 
 class RepeatedMeasurement(Measurement):
     """A single quantity measured in multiple takes
@@ -116,4 +313,168 @@ class RepeatedMeasurement(Measurement):
     The ``RepeatedMeasurement`` stores the array of repeated measurements. By default, its value
     and error are the mean and standard error (error on mean) of the samples.
 
+    Attributes
+    ----------
+
+    value : float
+    error : float
+    relative_error : float
+    std : float
+    name : str
+    unit : str
+
+    Methods
+    -------
+
+    get_covariance
+    get_correlation
+    set_covariance
+    set_correlation
+
+    See Also
+    --------
+
+    :class:`~qexpy.core.Measurement`
+
     """
+
+    def __init__(
+        self,
+        data: ArrayLike,
+        error: Real | ArrayLike = 0.0,
+        relative_error: Real | ArrayLike = None,
+        name: str = "",
+        unit: str = "",
+    ):
+        self._data, self._errors = q.core.array.pack_data_arrays(data, error, relative_error)
+        self._mean = float(np.mean(self._data))
+        self._std = float(np.std(self._data, ddof=1))
+        self._std_err = self._std / np.sqrt(len(self._data))
+        super().__init__(self._mean, self._std_err, name=name, unit=unit)
+
+    @property
+    def value(self) -> float:
+        """The value of this quantity
+
+        For a quantity recorded with a series of repeated measurements, by default, the estimated
+        centre value is the average of all measurements.
+
+        :type: float
+
+        """
+        return self._value
+
+    @property
+    def error(self) -> float:
+        """The uncertainty of this value
+
+        The uncertainty of a repeatedly measured value is typically the standard error (error on
+        the mean) of the repeated measurements. In other words, the uncertainty is estimated from
+        the statistical properties of the original measurement array. In this case, the uncertainty
+        of each individual measurement within this series of takes is irrelevant.
+
+        :type: float
+
+        See Also
+        --------
+
+        :py:func:`RepeatedlyMeasuredValue.standard_error`
+
+        """
+        return self._error
+
+    @property
+    def std(self) -> float:
+        """The standard deviation of the array of samples
+
+        For a measurement recorded as an array of repeated takes, the standard deviation is a
+        statistical property of the samples, which reflects the uncertainty of each individual
+        measurement within this series of takes.
+
+        :type: float
+
+        See Also
+        --------
+
+        :py:func:`RepeatedlyMeasuredValue.standard_error`
+
+        """
+        return self._std
+
+    @property
+    def data(self):
+        """The array of samples
+
+        :type: numpy.ndarray
+
+        """
+        return self._data
+
+    def set_covariance(self, other: Measurement, cov: float = None):
+        """Sets the covariance between two measurements
+
+        For two repeated measurements, if the `cov` argument is not provided, the covariance will
+        be calculated from the raw samples taken towards each value. Keep in mind that this does
+        not necessarily make sense for every pair of repeated measurements.
+
+        Parameters
+        ----------
+
+        other : Measurement
+            The other measurement
+        cov : float, optional
+            The value of the covariance
+
+        Examples
+        --------
+
+        >>> import qexpy as q
+        >>> a = q.Measurement([4.9, 5, 5.1])
+        >>> b = q.Measurement([3.1, 3.3, 3.2])
+        >>> a.set_covariance(b)  # implicitly calculates the covariance from the two arrays.
+        >>> a.get_covariance(b)
+        0.005
+
+        See Also
+        --------
+
+        :py:func:`~Measurement.set_covariance`
+
+        """
+
+        if isinstance(other, RepeatedMeasurement) and cov is None:
+            cov = q.covariance(self._data, other._data)
+
+        super().set_covariance(other, cov)
+
+    def set_correlation(self, other: Measurement, corr: float = None):
+        """Sets the correlation coefficient between two measurements
+
+        For two repeated measurements, if the `corr` argument is not provided, the correlation will
+        be calculated from the raw samples taken towards each value. Keep in mind that this does
+        not necessarily make sense for every pair of repeated measurements.
+
+        Parameters
+        ----------
+
+        other : Measurement
+            The other measurement
+        corr : float, optional
+            The value of the correlation coefficient
+
+        Examples
+        --------
+
+        >>> import qexpy as q
+        >>> a = q.Measurement([4.9, 5, 5.1])
+        >>> b = q.Measurement([3.1, 3.3, 3.2])
+        >>> a.set_correlation(b)  # The correlation here is implicitly calculated
+        >>> a.get_correlation(b)
+        0.5
+
+        """
+
+        if isinstance(other, RepeatedMeasurement) and corr is None:
+            corr = q.correlation(self._data, other._data)
+
+        super().set_correlation(other, corr)
