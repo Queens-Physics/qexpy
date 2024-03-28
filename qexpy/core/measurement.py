@@ -1,6 +1,6 @@
 """Defines measurements"""
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,protected-access
 
 from __future__ import annotations
 
