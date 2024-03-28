@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from numbers import Real
 
 import numpy as np
 
@@ -67,6 +68,44 @@ class ExperimentalValue(ABC):
 
     def __repr__(self):
         return self.__str__()
+
+    def __eq__(self, other):
+        if isinstance(other, Real):
+            return self.value == other
+        if isinstance(other, ExperimentalValue):
+            return self.value == other.value
+        return NotImplemented
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        if isinstance(other, Real):
+            return self.value < other
+        if isinstance(other, ExperimentalValue):
+            return self.value < other.value
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, Real):
+            return self.value > other
+        if isinstance(other, ExperimentalValue):
+            return self.value > other.value
+        return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, Real):
+            return self.value <= other
+        if isinstance(other, ExperimentalValue):
+            return self.value <= other.value
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, Real):
+            return self.value >= other
+        if isinstance(other, ExperimentalValue):
+            return self.value >= other.value
+        return NotImplemented
 
     @property
     @abstractmethod
