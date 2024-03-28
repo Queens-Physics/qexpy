@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+import numpy as np
+
+import qexpy as q
 from qexpy.utils.formatter import format_value_error
 from qexpy.utils.units import Unit
 
@@ -21,7 +24,35 @@ class ExperimentalValue(ABC):
     error : float
     relative_error : float
     name : str
-    unit : str
+    unit : Unit
+
+    Examples
+    --------
+
+    Values are recorded as a :func:`~qexpy.Measurement`.
+
+    >>> import qexpy as q
+    >>> distance = q.Measurement(5, 0.1, name="distance", unit="m")
+
+    The string representation of a value contains the name and the unit.
+
+    >>> print(distance)
+    distance = 5.0 +/- 0.1 [m]
+
+    You can also access the centre value and the uncertainty individually.
+
+    >>> print(distance.value)
+    5.0
+    >>> print(distance.error)
+    0.1
+
+    When using `ExperimentalValue` objects in calculations, the results will have properly
+    propagated uncertainties. The units will also participate in calculations.
+
+    >>> time = q.Measurement(10, 0.1, name="time", unit="s")
+    >>> speed = distance / time
+    >>> print(speed)
+    0.50 +/- 0.01 [m/s]
 
     """
 
@@ -40,7 +71,7 @@ class ExperimentalValue(ABC):
     @property
     @abstractmethod
     def value(self) -> float:
-        """The value of this quantity.
+        """The centre value of this quantity.
 
         :type: float
 
@@ -66,7 +97,7 @@ class ExperimentalValue(ABC):
         :type: float
 
         """
-        return self.error / self.value if self.value != 0 else 0.0
+        return np.abs(self.error / self.value) if self.value != 0 else 0.0
 
     @property
     def name(self) -> str:
@@ -80,7 +111,7 @@ class ExperimentalValue(ABC):
         --------
 
         >>> import qexpy as q
-        >>> a = q.Measurement(5, 0.5, name="x")
+        >>> a = q.Measurement(5, 0.1, name="x")
         >>> print(a)
         x = 5.0 +/- 0.1
 
@@ -94,14 +125,14 @@ class ExperimentalValue(ABC):
         self._name = name
 
     @property
-    def unit(self) -> str:
+    def unit(self) -> Unit:
         """The unit of the quantity.
 
         The unit is internally stored as a dictionary, but represented as a string. The user can
         specify the unit of a quantity, and it will participate in future calculations. Units can
         be specified and displayed in different ways.
 
-        :type: str
+        :type: Unit
 
         Examples
         --------
@@ -137,10 +168,10 @@ class ExperimentalValue(ABC):
         'kg⋅m⋅s^-2'
 
         """
-        return str(self._unit)
+        return self._unit
 
     @unit.setter
-    def unit(self, unit: str):
-        if not isinstance(unit, str):
-            raise TypeError("The unit must be a string!")
-        self._unit = Unit.from_string(unit)
+    def unit(self, unit: Unit | str):
+        if not isinstance(unit, (Unit, str)):
+            raise TypeError(f"The unit must be a string or a Unit object, got: {type(unit)}")
+        self._unit = unit if isinstance(unit, Unit) else Unit.from_string(unit)
