@@ -17,5 +17,4 @@
   options are removed. See documentation for more details.
 
 * Measurements are now semi-immutable. Users will no longer be able to override the value or 
-  uncertainty of a recorded measurement. The value and error of repeated measurements are now fixed 
-  to the mean and the standard error of the samples.
+  uncertainty of a recorded measurement.

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from numbers import Real
-from typing import NamedTuple, Dict
+from typing import NamedTuple, Dict, Tuple
 
 import numpy as np
 
@@ -307,11 +307,19 @@ class Measurement(ExperimentalValue):
         _correlations.setdefault(other, {})[self] = _Correlation(corr, cov)
 
 
+def _error_weighted_mean(_data, _errors) -> Tuple[float, float]:
+    if np.any(_errors == 0):
+        return np.nan, np.nan
+    weights = 1 / (_errors**2)
+    return np.average(_data, weights=weights), 1 / np.sqrt(np.sum(weights))
+
+
 class RepeatedMeasurement(Measurement):
     """A single quantity measured in multiple takes
 
     The ``RepeatedMeasurement`` stores the array of repeated measurements. By default, its value
-    and error are the mean and standard error (error on mean) of the samples.
+    and error are the mean and standard error (error on mean) of the samples. This class also
+    provides flexibility to use other statistical properties of the samples as the value and error.
 
     Attributes
     ----------
@@ -348,6 +356,7 @@ class RepeatedMeasurement(Measurement):
     ):
         self._data, self._errors = q.core.array.pack_data_arrays(data, error, relative_error)
         self._mean = float(np.mean(self._data))
+        self._err_weighted_mean, self._prop_error = _error_weighted_mean(self._data, self._errors)
         self._std = float(np.std(self._data, ddof=1))
         self._std_err = self._std / np.sqrt(len(self._data))
         super().__init__(self._mean, self._std_err, name=name, unit=unit)
@@ -409,6 +418,69 @@ class RepeatedMeasurement(Measurement):
 
         """
         return self._data
+
+    def use_error_weighted_mean(self):
+        """Sets the value of this quantity to the error weighted mean of the samples
+
+        The error weighted mean is defined as
+
+        .. math::
+            \\mu_x = \\frac{1}{N} \\sum_{i=1}^N \\frac{x_i}{\\sigma_i^2}
+
+        This method gives more importance to the measurements with smaller uncertainties. If the
+        error weighted mean is chosen to represent the value of this measurement, the error will
+        be set to the weight propagated error, i.e., the error calculated using standard error
+        propagation when computing the error weighted mean.
+
+        Examples
+        --------
+
+        >>> import qexpy as q
+        >>> a = q.Measurement([4.9, 5, 5.1], [0.1, 0.5, 0.5])
+        >>> a.value, a.error
+        (5.0, 0.05773502691896237)
+
+        By default, the value is exactly equal to 5, which is the mean of the samples.
+
+        >>> a.use_error_weighted_mean()
+        >>> a.value, a.error
+        (4.911111111111111, 0.09622504486493764)
+
+        We can see now that the value is closer to 4.9. This is because the uncertainty of the
+        sample 4.9 is 0.1, significantly smaller than the uncertainty of the other samples. The
+        error weighted mean gives more importance to the samples with smaller uncertainties.
+
+        """
+        self._value, self._error = self._err_weighted_mean, self._prop_error
+
+    def use_mean_and_standard_error(self):
+        """Sets the value of this quantity to the mean and standard error of the samples
+
+        This is the default behaviour.
+
+        """
+        self._value, self._error = self._mean, self._std_err
+
+    def use_mean_and_std(self):
+        """Sets the value to the mean of the samples and error to the standard deviation
+
+        This is typically not recommended, as the standard deviation reflects the uncertainty of
+        each individual measurement within this series of takes, which defeats the purpose of
+        recording a series of repeated measurements of the same quantity.
+
+        Examples
+        --------
+
+        >>> import qexpy as q
+        >>> a = q.Measurement([4.9, 5, 5.1], [0.1, 0.5, 0.5])
+        >>> a.value, a.error
+        (5.0, 0.05773502691896237)
+        >>> a.use_mean_and_std()
+        >>> a.value, a.error  # this would be typically be an over estimation
+        (5.0, 0.09999999999999964)
+
+        """
+        self._value, self._error = self._mean, self._std
 
     def set_covariance(self, other: Measurement, cov: float = None):
         """Sets the covariance between two measurements
