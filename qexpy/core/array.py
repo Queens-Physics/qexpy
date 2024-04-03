@@ -21,8 +21,13 @@ def pack_data_arrays(
         error = data * float(relative_error)
     elif isinstance(relative_error, ArrayLikeT):
         if len(data) != len(relative_error):
-            raise TypeError("The data and error arrays must have the same length!")
+            raise ValueError("The data and error arrays must have the same length!")
         error = data * np.asarray(relative_error)
+    elif relative_error is not None:
+        raise TypeError(
+            "The relative error must be a non-negative real number or an array of "
+            "non-negative real numbers that match the length of the data array!"
+        )
 
     # Then deal with the error
     elif isinstance(error, ArrayLikeT):
@@ -39,7 +44,10 @@ def pack_data_arrays(
 
     # Check that the data and error arrays have the same length
     if len(data) != len(error):
-        raise TypeError("The data and error arrays must have the same length!")
+        raise ValueError("The data and error arrays must have the same length!")
+
+    if any(error < 0):
+        raise ValueError("The error must be non-negative!")
 
     # Return the packed array
     return data, error

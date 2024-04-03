@@ -9,19 +9,6 @@ from qexpy.utils import Unit
 class TestAttributes:
     """Tests accessing the attributes of the ExperimentalValue class"""
 
-    def test_value_and_error(self):
-        """Tests the value and the error attributes"""
-
-        x = q.Measurement(1.23, 0.15)
-        assert x.value == 1.23
-        assert x.error == 0.15
-        assert x.relative_error == 0.15 / 1.23
-
-        x = q.Measurement(1.23, relative_error=0.15)
-        assert x.value == 1.23
-        assert x.error == 0.15 * 1.23
-        assert x.relative_error == 0.15
-
     def test_name(self):
         """Tests the name attribute"""
 

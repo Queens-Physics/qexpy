@@ -74,7 +74,7 @@ class ExperimentalValue(ABC):
             return self.value == other
         if isinstance(other, ExperimentalValue):
             return self.value == other.value
-        return NotImplemented
+        return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
