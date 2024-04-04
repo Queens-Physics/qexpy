@@ -7,7 +7,7 @@ from numbers import Real
 
 import numpy as np
 
-import qexpy as q
+from qexpy.core.formula import (
 from qexpy.utils.formatter import format_value_error
 from qexpy.utils.units import Unit
 
