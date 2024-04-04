@@ -1,9 +1,11 @@
 """Unit tests for measurements"""
 
+# pylint: disable=too-few-public-methods
+
 import pytest
 
-import qexpy as q
 import numpy as np
+import qexpy as q
 
 
 class TestMeasurement:
