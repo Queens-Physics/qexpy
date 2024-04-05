@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import uuid
-from copy import deepcopy
 from numbers import Real
 from typing import NamedTuple, Dict, Tuple
 
@@ -123,13 +122,6 @@ class Measurement(ExperimentalValue):
         self._error = error
         self._id = uuid.uuid4()
         super().__init__(name=name, unit=unit)
-
-    def __abs__(self):
-        if self.value < 0:
-            return -self
-        copy = deepcopy(self)
-        copy._id = uuid.uuid4()  # assign new id
-        return copy
 
     def __hash__(self):
         return self._id.__hash__()
