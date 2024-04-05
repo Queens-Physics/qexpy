@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import uuid
+from copy import deepcopy
 from numbers import Real
 from typing import NamedTuple, Dict, Tuple
 
@@ -119,7 +121,18 @@ class Measurement(ExperimentalValue):
         if error < 0:
             raise ValueError(f"The error must be non-negative, got: {error}")
         self._error = error
+        self._id = uuid.uuid4()
         super().__init__(name=name, unit=unit)
+
+    def __abs__(self):
+        if self.value < 0:
+            return -self
+        copy = deepcopy(self)
+        copy._id = uuid.uuid4()  # assign new id
+        return copy
+
+    def __hash__(self):
+        return self._id.__hash__()
 
     @property
     def value(self) -> float:
@@ -254,7 +267,7 @@ class Measurement(ExperimentalValue):
         if self.std == 0 or other.std == 0:
             raise ArithmeticError("Cannot set covariance between values with a 0 uncertainty")
 
-        corr = cov / (self.std * other.std)
+        corr = np.round(cov / (self.std * other.std), 14)
 
         # Check that the result makes sense
         if corr > 1 or corr < -1:
@@ -301,7 +314,7 @@ class Measurement(ExperimentalValue):
         if corr < -1 or corr > 1:
             raise ValueError("The correlation coefficient must be between -1 and 1!")
 
-        cov = corr * self.std * other.std
+        cov = np.round(corr * self.std * other.std, 14)
 
         _correlations.setdefault(self, {})[other] = _Correlation(corr, cov)
         _correlations.setdefault(other, {})[self] = _Correlation(corr, cov)
@@ -515,7 +528,7 @@ class RepeatedMeasurement(Measurement):
         """
 
         if isinstance(other, RepeatedMeasurement) and cov is None:
-            cov = q.covariance(self._data, other._data)
+            cov = np.round(q.covariance(self._data, other._data), 14)
 
         super().set_covariance(other, cov)
 
@@ -547,6 +560,6 @@ class RepeatedMeasurement(Measurement):
         """
 
         if isinstance(other, RepeatedMeasurement) and corr is None:
-            corr = q.correlation(self._data, other._data)
+            corr = np.round(q.correlation(self._data, other._data), 14)
 
         super().set_correlation(other, corr)

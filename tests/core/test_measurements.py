@@ -148,3 +148,42 @@ class TestMeasurement:
 
 class TestCorrelations:
     """Tests for setting correlations between measurements"""
+
+    def test_zero_correlation(self):
+        """Tests that measurements are not originally correlated"""
+
+        m1 = q.Measurement([4.9, 5, 5.1])
+        m2 = q.Measurement([3.1, 3.3, 3.2])
+        assert m1.get_correlation(m2) == 0.0
+        assert m1.get_covariance(m2) == 0.0
+
+        m1 = q.Measurement(5, 0.1)
+        m2 = q.Measurement(3, 0.5)
+        assert m2.get_correlation(m1) == 0.0
+        assert m2.get_covariance(m1) == 0.0
+
+    def test_self_correlation(self):
+        """Tests that measurements are correlated to themselves"""
+
+        m1 = q.Measurement(5, 0.2)
+        assert m1.get_correlation(m1) == 1.0
+        assert m1.get_covariance(m1) == pytest.approx(0.04)
+
+        m2 = q.Measurement([4.9, 5, 5.1])
+        assert m2.get_correlation(m2) == 1.0
+        assert m2.get_covariance(m2) == pytest.approx(0.01)
+
+    def test_set_correlation(self):
+        """Tests that correlation can be set"""
+
+        a = q.Measurement([4.9, 5, 5.1])
+        b = q.Measurement([3.1, 3.3, 3.2])
+        a.set_covariance(b)
+        assert a.get_covariance(b) == 0.005
+        assert b.get_correlation(a) == 0.5
+
+        a = q.Measurement([4.9, 5, 5.1])
+        b = q.Measurement([3.1, 3.3, 3.2])
+        b.set_correlation(a)
+        assert a.get_covariance(b) == 0.005
+        assert b.get_correlation(a) == 0.5

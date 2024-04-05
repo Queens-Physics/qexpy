@@ -25,7 +25,7 @@ def correlation(
     if isinstance(var1, q.core.Measurement) and isinstance(var2, q.core.Measurement):
         return var1.get_correlation(var2)
 
-    return float(np.cov(var1, var2)[0][1])
+    return float(np.corrcoef(var1, var2)[0][1])
 
 
 def covariance(var1: q.core.Measurement | ArrayLike, var2: q.core.Measurement | ArrayLike) -> float:
@@ -41,4 +41,4 @@ def covariance(var1: q.core.Measurement | ArrayLike, var2: q.core.Measurement | 
     if isinstance(var1, q.core.Measurement) and isinstance(var2, q.core.Measurement):
         return var1.get_covariance(var2)
 
-    return float(np.corrcoef(var1, var2)[0][1])
+    return float(np.cov(var1, var2)[0][1])
