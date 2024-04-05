@@ -187,3 +187,49 @@ class TestCorrelations:
         b.set_correlation(a)
         assert a.get_covariance(b) == 0.005
         assert b.get_correlation(a) == 0.5
+
+        a = q.Measurement([4.9, 5, 5.1])
+        b = q.Measurement([3.1, 3.3, 3.2])
+        b.set_correlation(a, 0.25)
+        assert a.get_covariance(b) == 0.0025
+        assert b.get_correlation(a) == 0.25
+
+        a = q.Measurement([4.9, 5, 5.1])
+        b = q.Measurement([3.1, 3.3, 3.2])
+        b.set_covariance(a, 0.0025)
+        assert a.get_covariance(b) == 0.0025
+        assert b.get_correlation(a) == 0.25
+
+    def test_invalid_argument_type(self):
+        """Tests covariance is only defined between measurements"""
+
+        m = q.Measurement([4.9, 5, 5.1])
+        with pytest.raises(TypeError, match="only defined between measurements"):
+            m.set_correlation(2)
+        with pytest.raises(TypeError, match="only defined between measurements"):
+            m.set_covariance(2)
+        with pytest.raises(TypeError, match="only defined between measurements"):
+            m.get_correlation(2)
+        with pytest.raises(TypeError, match="only defined between measurements"):
+            m.get_covariance(2)
+
+    def test_invalid_covariance_and_correlation(self):
+        """Tests that the correlation must be between -1 and 1"""
+
+        a = q.Measurement([4.9, 5, 5.1])
+        b = q.Measurement([3.1, 3.3, 3.2])
+
+        with pytest.raises(ValueError, match="must be between -1 and 1"):
+            a.set_correlation(b, 2)
+
+        with pytest.raises(ValueError, match="non-physical"):
+            a.set_covariance(b, 100)
+
+        a = q.Measurement(5)
+        b = q.Measurement(3)
+
+        with pytest.raises(ArithmeticError, match="values with a 0 uncertainty"):
+            a.set_correlation(b, 0.5)
+
+        with pytest.raises(ArithmeticError, match="values with a 0 uncertainty"):
+            a.set_covariance(b, 0.005)
