@@ -72,7 +72,7 @@ class TestMeasurement:
         assert m.value == pytest.approx(5)
         assert m.error == pytest.approx(0.1)
 
-        m.use_mean_and_standard_error()
+        m.use_mean_and_std_error()
         assert m.value == pytest.approx(5)
         assert m.error == pytest.approx(0.1 / np.sqrt(3))
 
