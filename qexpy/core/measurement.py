@@ -28,9 +28,10 @@ _correlations: Dict[Measurement, Dict[Measurement, _Correlation]] = {}
 class Measurement(ExperimentalValue):
     """A measurement recorded with an uncertainty
 
-    Stores a measured value and the uncertainty of the measurement on a single quantity. A
-    measurement can be recorded as a single measurement or a series of repeated measurements
-    taken on the same quantity.
+    Stores a measured value and the uncertainty of the measurement. A measurement can be recorded
+    as a single value or a series of repeated takes. The latter should be interpreted as a single
+    quantity measured multiple times, typically to mitigate the uncertainty. In this case, a
+    :py:class:`~qexpy.core.RepeatedMeasurement` is returned.
 
     Parameters
     ----------
@@ -161,7 +162,7 @@ class Measurement(ExperimentalValue):
         Parameters
         ----------
 
-        other : MeasuredValue
+        other : Measurement
             The other measurement
 
         Returns
@@ -202,7 +203,7 @@ class Measurement(ExperimentalValue):
         Parameters
         ----------
 
-        other : MeasuredValue
+        other : Measurement
             The other measurement
 
         Returns
@@ -320,11 +321,12 @@ def _error_weighted_mean(_data, _errors) -> Tuple[float, float]:
 
 
 class RepeatedMeasurement(Measurement):
-    """A single quantity measured in multiple takes
+    """A measurement with repeated takes
 
-    The ``RepeatedMeasurement`` stores the array of repeated measurements. By default, its value
-    and error are the mean and standard error (error on mean) of the samples. This class also
-    provides flexibility to use other statistical properties of the samples as the value and error.
+    A ``RepeatedMeasurement`` is produced if a :py:class:`~qexpy.core.Measurement` is taken with an
+    array of values. By default, the mean of the samples is used as the value, and the standard
+    error (error on the mean) of the sample distribution is used as the uncertainty. Note that in
+    this case, the error of each individual measurement is not taken into account.
 
     Attributes
     ----------
@@ -343,6 +345,9 @@ class RepeatedMeasurement(Measurement):
     get_correlation
     set_covariance
     set_correlation
+    use_error_weighted_mean
+    use_mean_and_std
+    use_mean_and_std_error
 
     See Also
     --------
@@ -389,11 +394,6 @@ class RepeatedMeasurement(Measurement):
 
         :type: float
 
-        See Also
-        --------
-
-        :py:func:`RepeatedlyMeasuredValue.standard_error`
-
         """
         return self._error
 
@@ -406,11 +406,6 @@ class RepeatedMeasurement(Measurement):
         measurement within this series of takes.
 
         :type: float
-
-        See Also
-        --------
-
-        :py:func:`RepeatedlyMeasuredValue.standard_error`
 
         """
         return self._std
@@ -434,8 +429,8 @@ class RepeatedMeasurement(Measurement):
 
         This method gives more importance to the measurements with smaller uncertainties. If the
         error weighted mean is chosen to represent the value of this measurement, the error will
-        be set to the weight propagated error, i.e., the error calculated using standard error
-        propagation when computing the error weighted mean.
+        be set to the weight propagated error, i.e., the error from standard error propagation
+        when computing the error weighted mean.
 
         Examples
         --------
@@ -458,7 +453,7 @@ class RepeatedMeasurement(Measurement):
         """
         self._value, self._error = self._err_weighted_mean, self._prop_error
 
-    def use_mean_and_standard_error(self):
+    def use_mean_and_std_error(self):
         """Sets the value of this quantity to the mean and standard error of the samples
 
         This is the default behaviour.

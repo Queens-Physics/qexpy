@@ -18,4 +18,4 @@ plotting: ``qexpy.plotting``, which can be imported separately if needed.
    :maxdepth: 1
    :caption: Data Structures
 
-   experimental-value
+   core
