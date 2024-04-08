@@ -31,4 +31,5 @@ __version__ = "3.0.1"
 import qexpy._config.config_init  # Initialize all configurations
 
 from qexpy._config import *
-from qexpy.utils import define_unit, clear_unit_definitions
+from qexpy.core import *
+from qexpy.utils import *

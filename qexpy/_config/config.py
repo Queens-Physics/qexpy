@@ -140,6 +140,26 @@ def get_option(key: str) -> Any:
     key : str
         The name of the option
 
+    Returns
+    -------
+
+    value
+        The current setting for the requested option
+
+    Examples
+    --------
+
+    The option can be accessed using a string:
+
+    >>> import qexpy as q
+    >>> q.get_option('error.mc.sample_size')
+    100000
+
+    Or using the dotted-style, as an attribute:
+
+    >>> q.options.error.mc.sample_size
+    100000
+
     """
     root, k = _get_root(key)
     return root[k]
@@ -156,6 +176,22 @@ def set_option(key: str, value) -> None:
         The name of the option
     value : Any
         The value to set
+
+    Examples
+    --------
+
+    >>> import qexpy as q
+    >>> q.get_option('error.mc.sample_size')
+    100000
+    >>> q.set_option('error.mc.sample_size', 200000)
+    >>> q.get_option('error.mc.sample_size')
+    200000
+
+    Options can also be modified using the dotted-style, as an attribute:
+
+    >>> q.options.error.mc.sample_size = 500000
+    >>> q.options.error.mc.sample_size
+    500000
 
     """
     o = _registered_options[key]
@@ -174,7 +210,29 @@ def reset_option(key: str = "") -> None:
     ----------
 
     key : str, optional
-        The name of the option to reset, if empty or ``all``, resets all options
+        The name of the option to reset, if empty or ``"all"``, resets all options
+
+    Examples
+    --------
+
+    >>> import qexpy as q
+    >>> q.set_option('error.mc.sample_size', 200000)
+    >>> q.set_option('error.method', 'monte-carlo')
+    >>> q.set_option('format.style.value','scientific')
+
+    After changing options, you can reset one of them to their default values:
+
+    >>> q.reset_option('error.mc.sample_size')
+    >>> q.get_option('error.mc.sample_size')
+    100000
+
+    Or reset everything to their default values:
+
+    >>> q.reset_option()
+    >>> q.get_option('error.method')
+    'derivative'
+    >>> q.get_option('format.style.value')
+    "default"
 
     """
 
@@ -195,7 +253,37 @@ def describe_option(key: str = ""):
 
     key: str, optional
         The key of the option, or a path prefix that matches multiple options.
-        If empty, all options will be listed.
+        If not provided or empty, all options will be listed.
+
+    Examples
+    --------
+
+    >>> import qexpy as q
+    >>> q.describe_option()
+    error.mc.sample_size : int
+        The sample size used in Monte Carlo error propagation.
+        [default: 100000] [currently: 100000]
+    error.method : {"derivative", "monte-carlo"}
+        The preferred method of error propagation.
+        [default: derivative] [currently: derivative]
+    format.precision.mode : {"value", "error"}
+        Specifies whether the number of significant figures is imposed on the value
+        or the error.
+        [default: error] [currently: error]
+    format.precision.sig_fig : int
+        The number of significant figures keep when displaying values.
+        [default: 1] [currently: 1]
+    format.style.latex : bool
+        Whether values are formatted with LaTeX grammar.
+        [default: False] [currently: False]
+    format.style.unit : {"fraction", "exponent"}
+        How units are formatted, as a fraction, e.g., "m/s^2", or with exponents,
+        e.g., "m⋅s^-2".
+        [default: fraction] [currently: fraction]
+    format.style.value : {"default", "scientific"}
+        How value strings are formatted, by default, e.g., "2.1 +/- 0.5", or using
+        the scientific notation, e.g., "(1.200 +/- 0.004) * 10^5".
+        [default: default] [currently: default]
 
     """
 
@@ -210,12 +298,35 @@ def describe_option(key: str = ""):
 @contextmanager
 def option_context(*args):
     """
-    Context manager to temporarily set options in a ``with`` statement.
+    Context manager to set options in a ``with`` statement.
 
     Parameters
     ----------
     *args
         An even amount of arguments which will be interpreted as (key, value) pairs.
+
+    Examples
+    --------
+
+    Use this method to temporarily set options in a ``with`` statement:
+
+    >>> import qexpy as q
+    >>> with q.option_context(
+    ...     "format.style.value",
+    ...     "scientific",
+    ...     "format.precision.sig_fig",
+    ...     2,
+    ...     "format.precision.mode",
+    ...     "error",
+    ... ):
+    ...    m = q.Measurement(2123, 13)
+    ...    print(m)
+    (2.123 +/- 0.013) * 10^3
+
+    You can see that outside of the context, the global options have not changed:
+
+    >>> print(m)
+    2120 +/- 10
 
     """
     if len(args) % 2 != 0 or len(args) < 2:

@@ -51,6 +51,14 @@ class TestUnits:
         """Tests parsing a unit string"""
         assert Unit.from_string(string) == expected
 
+    def test_unit_object_immutable(self):
+        """Test that unit objects are immutable"""
+        unit = Unit({"kg": 1, "m": 1, "s": -2})
+        with pytest.raises(TypeError):
+            unit["kg"] = 2
+        with pytest.raises(TypeError):
+            unit.update({"kg": 2})
+
     @pytest.mark.parametrize("unit_dict, exp_str, frac_str", UNITS_TO_STRINGS)
     def test_construct_unit_string(self, unit_dict, exp_str, frac_str):
         """Tests constructing a unit string"""
@@ -58,8 +66,10 @@ class TestUnits:
         units = Unit(unit_dict)
         with q.option_context("format.style.unit", "fraction"):
             assert str(units) == frac_str
+            assert repr(units) == frac_str
         with q.option_context("format.style.unit", "exponent"):
             assert str(units) == exp_str
+            assert repr(units) == exp_str
 
     def test_invalid_string(self):
         """Tests invalid unit strings"""
@@ -96,3 +106,37 @@ class TestUnits:
 
         q.clear_unit_definitions()
         assert q.utils.units._registered_units == {}
+
+
+class TestUnitOperations:
+    """Tests for unit operations"""
+
+    def test_unit_addition_and_subtraction(self):
+        """Tests adding and subtracting two units"""
+
+        unit1 = Unit({"kg": 1, "s": -2})
+        unit2 = Unit({"kg": 2, "s": 2, "m": 1})
+
+        with pytest.warns(UserWarning, match="mismatching units"):
+            assert unit1 + unit2 == Unit({})
+            assert unit2 - unit1 == Unit({})
+
+        unit3 = Unit({"kg": 1, "s": -2})
+        assert unit1 + unit3 == Unit({"kg": 1, "s": -2})
+        assert unit1 - unit3 == Unit({"kg": 1, "s": -2})
+
+    def test_unit_multiplication_and_division(self):
+        """Tests multiplying and dividing two units"""
+
+        unit1 = Unit({"kg": 1, "s": -2})
+        unit2 = Unit({"kg": 2, "s": 2, "m": 1})
+
+        assert unit1 * unit2 == Unit({"kg": 3, "m": 1})
+        assert unit1 / unit2 == Unit({"kg": -1, "s": -4, "m": -1})
+
+    def test_unit_exponentiation(self):
+        """Tests exponents of a unit"""
+
+        unit = Unit({"kg": 1, "m": 2, "s": -2})
+        assert unit**2 == Unit({"kg": 2, "m": 4, "s": -4})
+        assert unit**0.5 == Unit({"kg": 0.5, "m": 1, "s": -1})

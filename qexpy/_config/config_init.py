@@ -52,7 +52,7 @@ precision_mode_doc = """
 """
 
 cf.register_option(
-    "format.precision.mode", "value", precision_mode_doc, cf.is_one_of_factory(["value", "error"])
+    "format.precision.mode", "error", precision_mode_doc, cf.is_one_of_factory(["value", "error"])
 )
 
 error_method_doc = """

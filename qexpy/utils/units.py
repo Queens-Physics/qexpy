@@ -83,19 +83,20 @@ class Unit(dict):
 
         return _unit_to_exponent_string(unit_dict)
 
+    def __repr__(self) -> str:
+        return str(self)
+
     def __setitem__(self, key, value):
-        return TypeError("Unit does not support item assignment.")
+        raise TypeError("Unit does not support item assignment.")
 
     def update(self, __m, **_):
-        return TypeError("Unit does not support item assignment.")
-
-    def __hash__(self):
-        return hash(frozenset(self.items()))
+        raise TypeError("Unit does not support item assignment.")
 
     def __add__(self, other: dict) -> Unit:
         assert isinstance(other, Unit)
         if self and other and self != other:
             warnings.warn("Adding two quantities with mismatching units!")
+            return Unit({})
         return Unit(dict(self.items())) if self else Unit(dict(other.items()))
 
     __radd__ = __add__
@@ -104,6 +105,7 @@ class Unit(dict):
         assert isinstance(other, Unit)
         if self and other and self != other:
             warnings.warn("Subtracting two quantities with mismatching units!")
+            return Unit({})
         return Unit(dict(self.items())) if self else Unit(dict(other.items()))
 
     __rsub__ = __sub__
@@ -115,6 +117,8 @@ class Unit(dict):
             result[unit] = exp
         for unit, exp in other.items():
             result[unit] = result.get(unit, 0) + exp
+
+        result = {name: exp for name, exp in result.items() if exp != 0}
         return Unit(result)
 
     __rmul__ = __mul__
@@ -126,6 +130,8 @@ class Unit(dict):
             result[unit] = exp
         for unit, exp in other.items():
             result[unit] = result.get(unit, 0) - exp
+
+        result = {name: exp for name, exp in result.items() if exp != 0}
         return Unit(result)
 
     def __pow__(self, power):
