@@ -5,6 +5,12 @@ on:
       - master
   pull_request:
 
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
