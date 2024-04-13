@@ -26,4 +26,11 @@ jobs:
           python -m pip install .
       - name: Run unit tests
         run: |
-          python -m pytest
+          python -m pytest --cov-report xml:coverage.xml
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Queens-Physics/coverage@master
+        with:
+          coverageFile: coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
