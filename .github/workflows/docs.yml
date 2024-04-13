@@ -1,12 +1,17 @@
 name: "Sphinx Build Test"
-on: 
+on:
 - pull_request
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
 
 jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: ammaraskar/sphinx-action@master
+    - uses: Queens-Physics/sphinx-action@master
       with:
         docs-folder: "docs/"

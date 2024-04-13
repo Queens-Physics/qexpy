@@ -1,4 +1,5 @@
 sphinx
+numpy
 numpydoc
 nbsphinx
 sphinx_design
