@@ -46,8 +46,9 @@ class _Formula(ABC):
         return np.sqrt(variance)
 
     @property
+    @abstractmethod
     def unit(self) -> Unit:
-        return Unit({})
+        raise NotImplementedError
 
     @abstractmethod
     def _derivative(self, x: _Formula) -> float:
@@ -239,7 +240,7 @@ class _Tan(_UnaryOp):
         return np.tan(self.operand.value)
 
     def _derivative(self, x):
-        return 1 / np.cos(self.operand.value) * self.operand._derivative(x)
+        return 1 / np.cos(self.operand.value) ** 2 * self.operand._derivative(x)
 
 
 class _Asin(_UnaryOp):
@@ -270,6 +271,23 @@ class _Atan(_UnaryOp):
 
     def _derivative(self, x):
         return self.operand._derivative(x) / (self.operand.value**2 + 1)
+
+
+class _Atan2(_BinaryOp):
+
+    @property
+    def value(self):
+        return np.arctan2(self.left.value, self.right.value)
+
+    def _derivative(self, x):
+        return (
+            self.right.value * self.left._derivative(x)
+            - self.left.value * self.right._derivative(x)
+        ) / (self.left.value**2 + self.right.value**2)
+
+    @property
+    def unit(self) -> Unit:
+        return Unit({})
 
 
 class _Sinh(_UnaryOp):
