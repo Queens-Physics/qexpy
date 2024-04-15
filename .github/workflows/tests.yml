@@ -52,4 +52,7 @@ jobs:
       - uses: Queens-Physics/coverage@main
         with:
           coverageFile: ./coverage.xml
+          thresholdAll: 1
+          thresholdNew: 1
+          thresholdModified: 1
           token: ${{ secrets.GITHUB_TOKEN }}
