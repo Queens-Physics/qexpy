@@ -48,10 +48,12 @@ class _Formula(ABC):
     @property
     @abstractmethod
     def unit(self) -> Unit:
+        """The unit of this formula."""
         raise NotImplementedError
 
     @abstractmethod
     def _derivative(self, x: _Formula) -> float:
+        """The derivative with respect to the given variable."""
         raise NotImplementedError
 
 
