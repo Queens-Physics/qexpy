@@ -273,7 +273,7 @@ class TestUnitaryOps:
         assert op.unit == {}
 
 
-class _MockFormula(_Operation):
+class _MockFormula(_Operation):  # pylint: disable=missing-function-docstring
     """A mock formula with a derivative"""
 
     def __init__(self, m, d):
