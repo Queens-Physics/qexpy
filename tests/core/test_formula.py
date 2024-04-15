@@ -273,7 +273,7 @@ class TestUnitaryOps:
         assert op.unit == {}
 
 
-class _MockFormula(_Operation):  # pylint: disable=missing-function-docstring
+class _MockFormula(_Operation):
     """A mock formula with a derivative"""
 
     def __init__(self, m, d):
@@ -282,10 +282,12 @@ class _MockFormula(_Operation):  # pylint: disable=missing-function-docstring
 
     @property
     def value(self) -> float:
+        """The value of the formula"""
         return self.m.value * self.d
 
     @property
     def unit(self) -> Unit:
+        """The unit of the formula"""
         return Unit({})
 
     def _derivative(self, x: _Formula) -> float:
@@ -293,6 +295,7 @@ class _MockFormula(_Operation):  # pylint: disable=missing-function-docstring
 
     @property
     def operands(self) -> Iterable[_Formula]:
+        """The operands of the formula"""
         return [self.m]
 
 
