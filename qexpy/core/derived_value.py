@@ -5,6 +5,7 @@ from functools import cached_property
 import qexpy as q
 from qexpy.core.experimental_value import ExperimentalValue
 from qexpy.core.formula import _Formula
+from qexpy.utils import Unit
 
 
 class DerivedValue(ExperimentalValue):
@@ -13,7 +14,7 @@ class DerivedValue(ExperimentalValue):
     def __init__(self, formula: _Formula):
         self._formula = formula
         self._error_method = "auto"
-        self._name = ""
+        super().__init__()
 
     def __copy__(self):
         obj = object.__new__(DerivedValue)
@@ -43,7 +44,7 @@ class DerivedValue(ExperimentalValue):
         return self._formula.error
 
     @cached_property
-    def _unit(self):
+    def _unit(self):  # pylint: disable=method-hidden
         return self._formula.unit
 
     @property
