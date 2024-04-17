@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from copy import deepcopy
+from copy import copy
 from numbers import Real
 from typing import Callable
 
@@ -72,8 +72,12 @@ class ExperimentalValue(ABC):
     """
 
     def __init__(self, name: str = "", unit: str = ""):
-        self.name = name
-        self.unit = unit
+        if not isinstance(name, str):
+            raise TypeError("The name must be a string!")
+        self._name = name
+        if not isinstance(unit, (Unit, str)):
+            raise TypeError(f"The unit must be a string or a Unit object, got: {type(unit)}")
+        self._unit = unit if isinstance(unit, Unit) else Unit.from_string(unit)
 
     def __str__(self):
         name = f"{self.name} = " if self.name else ""
@@ -124,7 +128,7 @@ class ExperimentalValue(ABC):
     def __abs__(self):
         if self.value < 0:
             return -self
-        return deepcopy(self)
+        return copy(self)
 
     def __neg__(self):
         formula = _NegativeOp(_Formula._wraps(self))
@@ -182,10 +186,11 @@ class ExperimentalValue(ABC):
         formula = _Power(_Formula._wraps(base), _Formula._wraps(self))
         return q.core.DerivedValue(formula)
 
-    def __array_ufunc__(self, ufunc: Callable, _: str, *__, **___):
+    def __array_ufunc__(self, ufunc: Callable, _: str, *inputs, **___):
         if ufunc not in OP_TO_FORMULA:
             return NotImplemented
-        formula = OP_TO_FORMULA[ufunc](_Formula._wraps(self))
+        inputs = (_Formula._wraps(i) for i in inputs)
+        formula = OP_TO_FORMULA[ufunc](*inputs)
         return q.core.DerivedValue(formula)
 
     @property

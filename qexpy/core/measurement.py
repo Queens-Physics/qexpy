@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import uuid
-from copy import deepcopy
+from copy import copy
 from numbers import Real
 from typing import NamedTuple, Dict, Tuple
 
@@ -129,9 +129,16 @@ class Measurement(ExperimentalValue, _Formula):
     def __abs__(self):
         if self.value < 0:
             return -self
-        copy = deepcopy(self)
-        copy._id = uuid.uuid4()  # assign new id
-        return copy
+        return copy(self)
+
+    def __copy__(self):
+        obj = object.__new__(Measurement)
+        obj._value = self._value
+        obj._error = self._error
+        obj._id = uuid.uuid4()
+        obj._name = self._name
+        obj._unit = self._unit
+        return obj
 
     def __hash__(self):
         return self._id.__hash__()
@@ -382,6 +389,22 @@ class RepeatedMeasurement(Measurement):
         self._std = float(np.std(self._data, ddof=1))
         self._std_err = self._std / np.sqrt(len(self._data))
         super().__init__(self._mean, self._std_err, name=name, unit=unit)
+
+    def __copy__(self):
+        obj = object.__new__(RepeatedMeasurement)
+        obj._data = self._data
+        obj._errors = self._errors
+        obj._mean = self._mean
+        obj._err_weighted_mean = self._err_weighted_mean
+        obj._prop_error = self._prop_error
+        obj._std = self._std
+        obj._std_err = self._std_err
+        obj._value = self._value
+        obj._error = self._error
+        obj._name = self._name
+        obj._unit = self._unit
+        obj._id = uuid.uuid4()
+        return obj
 
     @property
     def value(self) -> float:

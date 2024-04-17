@@ -11,9 +11,16 @@ class DerivedValue(ExperimentalValue):
     """A calculated value with a propagated uncertainty"""
 
     def __init__(self, formula: _Formula):
-        super().__init__()
         self._formula = formula
         self._error_method = "auto"
+        self._name = ""
+
+    def __copy__(self):
+        obj = object.__new__(DerivedValue)
+        obj._formula = self._formula
+        obj._error_method = self._error_method
+        obj._name = self._name
+        return obj
 
     @property
     def value(self) -> float:
@@ -23,6 +30,10 @@ class DerivedValue(ExperimentalValue):
     def error(self) -> float:
         return self._error
 
+    @property
+    def unit(self) -> Unit:
+        return self._unit
+
     @cached_property
     def _value(self):
         return self._formula.value
@@ -30,6 +41,10 @@ class DerivedValue(ExperimentalValue):
     @cached_property
     def _error(self):
         return self._formula.error
+
+    @cached_property
+    def _unit(self):
+        return self._formula.unit
 
     @property
     def error_method(self) -> str:
