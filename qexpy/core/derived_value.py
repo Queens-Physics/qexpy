@@ -11,10 +11,10 @@ from qexpy.utils import Unit
 class DerivedValue(ExperimentalValue):
     """A calculated value with a propagated uncertainty"""
 
-    def __init__(self, formula: _Formula):
+    def __init__(self, formula: _Formula):  # pylint: disable=super-init-not-called
         self._formula = formula
         self._error_method = "auto"
-        super().__init__()
+        self._name = ""
 
     def __copy__(self):
         obj = object.__new__(DerivedValue)

@@ -77,8 +77,6 @@ class ExperimentalValue(ABC):
         self._name = name
         if not isinstance(unit, (Unit, str)):
             raise TypeError(f"The unit must be a string or a Unit object, got: {type(unit)}")
-        if isinstance(self, q.core.DerivedValue):
-            return  # avoid trying to set _unit for DerivedValue
         self._unit = unit if isinstance(unit, Unit) else Unit.from_string(unit)
 
     def __str__(self):
