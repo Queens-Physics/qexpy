@@ -343,6 +343,7 @@ class TestOperations:
         "func, val1, val2, formula_type",
         [
             (np.add, 1.23, 4.56, _Add),
+            (np.arctan2, 1.23, 4.56, _Atan2),
             (np.subtract, 1.23, 4.56, _Subtract),
             (np.divide, 1.23, 4.56, _Divide),
             (np.power, 1.23, 4.56, _Power),
@@ -357,11 +358,14 @@ class TestOperations:
         res = func(m1, m2)
         assert isinstance(res, q.core.DerivedValue)
         assert res.value == func(val1, val2)
+        assert isinstance(res._formula, formula_type)
 
         res = func(val1, m2)
         assert isinstance(res, q.core.DerivedValue)
         assert res.value == func(val1, val2)
+        assert isinstance(res._formula, formula_type)
 
         res = func(m1, val2)
         assert isinstance(res, q.core.DerivedValue)
         assert res.value == func(val1, val2)
+        assert isinstance(res._formula, formula_type)
