@@ -13,7 +13,6 @@ class DerivedValue(ExperimentalValue):
 
     def __init__(self, formula: _Formula):
         self._formula = formula
-        self._mc = MonteCarloConfig(self._formula)
         self._error_method = "auto"
         super().__init__("", None)
 
