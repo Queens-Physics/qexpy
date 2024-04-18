@@ -29,20 +29,22 @@ class TestMeasurement:
         assert x.value == 1.23
         assert x.error == 0.0
 
-    def test_invalid_single_measurement(self):
+    @pytest.mark.parametrize(
+        "error, args, kwargs, msg",
+        [
+            (TypeError, ("a",), {}, "The data must be a real number or an array"),
+            (TypeError, (1.23, "a"), {}, "The error must be a real number"),
+            (ValueError, (1.23, -0.1), {}, "The error must be non-negative"),
+            (ValueError, (1.23,), {"relative_error": -0.1}, "The error must be non-negative"),
+            (TypeError, (1.23,), {"name": 1}, "The name must be a string"),
+            (TypeError, (1.23,), {"unit": 1}, "The unit must be a string"),
+        ],
+    )
+    def test_invalid_single_measurement(self, error, args, kwargs, msg):
         """Tests taking a single measurement with invalid arguments"""
 
-        with pytest.raises(TypeError, match="The data must be a real number or an array"):
-            q.Measurement("a")
-
-        with pytest.raises(TypeError, match="The error must be a real number"):
-            q.Measurement(1.23, "a")
-
-        with pytest.raises(ValueError, match="The error must be non-negative"):
-            q.Measurement(1.23, -0.1)
-
-        with pytest.raises(ValueError, match="The error must be non-negative"):
-            q.Measurement(1.23, relative_error=-0.1)
+        with pytest.raises(error, match=msg):
+            q.Measurement(*args, **kwargs)
 
     def test_repeated_measurement_no_error(self):
         """Tests a repeated measurement"""
