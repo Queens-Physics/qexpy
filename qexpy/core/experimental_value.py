@@ -71,10 +71,12 @@ class ExperimentalValue(ABC):
 
     """
 
-    def __init__(self, name: str = "", unit: str = ""):
+    def __init__(self, name: str = "", unit: str | None = ""):
         if not isinstance(name, str):
             raise TypeError("The name must be a string!")
         self._name = name
+        if unit is None:
+            return  # Does not try to set the unit if explicitly set to None
         if not isinstance(unit, (Unit, str)):
             raise TypeError(f"The unit must be a string or a Unit object, got: {type(unit)}")
         self._unit = unit if isinstance(unit, Unit) else Unit.from_string(unit)
