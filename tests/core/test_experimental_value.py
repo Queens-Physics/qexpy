@@ -108,3 +108,24 @@ class TestCompare:
             print(x <= "a")
         with pytest.raises(TypeError):
             print(x >= "a")
+
+    @pytest.mark.parametrize(
+        "constant, value, error",
+        [
+            (q.e, 1.602176634e-19, 0.0),
+            (q.G, 6.6743e-11, 0.00015e-11),
+            (q.me, 9.1093837015e-31, 0.0000000028e-31),
+            (q.c, 299792458, 0.0),
+            (q.eps0, 8.8541878128e-12, 0.0000000013e-12),
+            (q.mu0, 1.25663706212e-6, 0.00000000019e-6),
+            (q.h, 6.62607015e-34, 0.0),
+            (q.hbar, 1.05457181e-34, 0.0),
+            (q.kb, 1.380649e-23, 0.0),
+        ],
+    )
+    def test_constants(self, constant, value, error):
+        """Tests physical constants"""
+
+        assert isinstance(constant, q.core.Constant)
+        assert constant.value == value
+        assert constant.error == error
