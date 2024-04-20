@@ -2,7 +2,6 @@
 
 from functools import cached_property
 
-import qexpy as q
 from qexpy.core.experimental_value import ExperimentalValue
 from qexpy.core.formula import _Formula
 from qexpy.utils import Unit
