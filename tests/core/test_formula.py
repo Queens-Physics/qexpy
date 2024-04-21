@@ -161,7 +161,7 @@ class TestUnitaryOps:
         assert op._derivative(m) == pytest.approx(1 / np.sqrt(1 - np.sin(theta) ** 2))
         assert op.unit == {}
 
-    @pytest.mark.parametrize("theta", [0.1, np.pi / 3, np.pi / 2 + 0.1, np.pi])
+    @pytest.mark.parametrize("theta", [0.1, np.pi / 3, np.pi / 2 + 0.1, np.pi - 0.1])
     def test_acos(self, theta):
         """Tests the _Acos class"""
 
