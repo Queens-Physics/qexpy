@@ -266,6 +266,7 @@ class TestOperations:
         assert isinstance(res._formula, formula_type)
 
 
+# pylint: disable=too-few-public-methods
 class TestErrorPropagation:
     """Tests that the derived values have correctly propagated errors"""
 
