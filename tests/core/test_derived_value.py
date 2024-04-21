@@ -294,3 +294,32 @@ class TestErrorPropagation:
         m = op_func(m1, m2)
         assert m.value == pytest.approx(m_expected.value, rel=0.02)
         assert m.error == pytest.approx(m_expected.error, rel=0.02)
+
+    @pytest.mark.parametrize(
+        "op_func",
+        [
+            lambda x, y, z: x + y + z,
+            lambda x, y, z: x - y - z,
+            lambda x, y, z: x * y - z,
+            lambda x, y, z: x - y / z,
+        ],
+    )
+    def test_multiple_correlated_measurements(self, op_func):
+        """Tests that error propagation works for multiple correlated measurements"""
+
+        arr1 = np.array([399.3, 404.6, 394.6, 396.3, 399.6, 404.9, 387.4, 404.9, 398.2, 407.2])
+        arr2 = np.array([193.2, 205.1, 192.6, 194.2, 196.6, 201.0, 184.7, 215.2, 203.6, 207.8])
+        arr3 = np.array([93.2, 105.1, 92.6, 94.2, 96.6, 101.0, 84.7, 115.2, 103.6, 107.8])
+        arr_expected = op_func(arr1, arr2, arr3)
+
+        m1 = q.Measurement(arr1)
+        m2 = q.Measurement(arr2)
+        m3 = q.Measurement(arr3)
+        m_expected = q.Measurement(arr_expected)
+
+        m1.set_covariance(m2)
+        m1.set_covariance(m3)
+        m2.set_covariance(m3)
+        m = op_func(m1, m2, m3)
+        assert m.value == pytest.approx(m_expected.value, rel=0.02)
+        assert m.error == pytest.approx(m_expected.error, rel=0.02)
