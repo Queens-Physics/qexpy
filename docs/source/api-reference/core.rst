@@ -31,3 +31,28 @@ case, a subclass of :py:class:`Measurement` is created, that is the :py:class:`R
 
    Measurement
    RepeatedMeasurement
+
+.. _api.core.derived_value:
+
+DerivedValue
+------------
+
+The result of all calculations performed with :py:class:`ExperimentalValue` objects are wrapped in
+this class. The DerivedValue supports different methods of error propagation.
+
+.. autosummary::
+   :nosignatures:
+   :toctree: api/
+
+   DerivedValue
+
+.. _api.core.constants:
+
+Constants
+---------
+
+.. autosummary::
+   :nosignatures:
+   :toctree: api/
+
+   Constant

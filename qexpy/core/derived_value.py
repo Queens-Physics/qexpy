@@ -8,7 +8,24 @@ from qexpy.utils import Unit
 
 
 class DerivedValue(ExperimentalValue):
-    """A calculated value with a propagated uncertainty"""
+    """A calculated value with a propagated uncertainty
+
+    When :py:class:`~qexpy.core.ExperimentalValue` objects are used in calculations, the results
+    are wrapped in instances of this class. Internally, the ``DerivedValue`` stores the expression
+    tree for how it was calculated, the leaf nodes of which are the constants and measurements.
+    This allows the value and uncertainty to be calculated more flexibly. Different error methods
+    can be chosen to propagate the uncertainty.
+
+    Attributes
+    ----------
+
+    value
+    error
+    relative_error
+    name
+    unit
+
+    """
 
     def __init__(self, formula: _Formula):
         self._formula = formula

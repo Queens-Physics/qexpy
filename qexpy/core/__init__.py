@@ -21,6 +21,7 @@ from .measurement import Measurement, RepeatedMeasurement
 
 __functions__ = [
     "Measurement",
+    "Constant",
     "correlation",
     "covariance",
 ]
