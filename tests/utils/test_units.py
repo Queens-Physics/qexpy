@@ -15,6 +15,7 @@ PREDEFINED = {
 }
 
 STRINGS_TO_UNITS = [
+    ("", {}),
     ("kg*m^2/s^2", PREDEFINED["joule"]),
     ("kg^1m^2s^-2", PREDEFINED["joule"]),
     ("kg/(m*s^2)", PREDEFINED["pascal"]),
@@ -140,3 +141,35 @@ class TestUnitOperations:
         unit = Unit({"kg": 1, "m": 2, "s": -2})
         assert unit**2 == Unit({"kg": 2, "m": 4, "s": -4})
         assert unit**0.5 == Unit({"kg": 0.5, "m": 1, "s": -1})
+
+    def test_unpack_unit(self):
+        """Tests that pre-defined units are unpacked when possible"""
+
+        q.define_unit("F", "C^2/(N*m)")
+        q.define_unit("N", "kg*m/s^2")
+
+        unit_q = Unit({"C": 1})
+        unit_r = Unit({"m": 1})
+        unit_eps = Unit({"F": 1, "m": -1})
+
+        res = unit_q * unit_q / unit_eps / unit_r**2
+        assert res == Unit({"kg": 1, "m": 1, "s": -2})
+        assert str(res) == "N"
+
+        q.clear_unit_definitions()
+
+    def test_unit_not_unpacked_if_unnecessary(self):
+        """Tests that pre-defined units are not unpacked when not necessary"""
+
+        q.define_unit("N", "kg*m/s^2")
+
+        unit_1 = Unit({"N": 1})
+
+        assert unit_1 + Unit({}) == Unit({"N": 1})
+        assert unit_1 - Unit({}) == Unit({"N": 1})
+        assert unit_1 * Unit({}) == Unit({"N": 1})
+        assert Unit({}) * unit_1 == Unit({"N": 1})
+        assert unit_1 / Unit({}) == Unit({"N": 1})
+        assert Unit({}) / unit_1 == Unit({"N": -1})
+
+        q.clear_unit_definitions()

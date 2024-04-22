@@ -92,9 +92,23 @@ class Unit(dict):
     def update(self, __m, **_):
         raise TypeError("Unit does not support item assignment.")
 
+    def _unpack(self):
+        """Recursively unpacks user-defined aliases for compound units"""
+
+        result = {}
+        for unit, exp in self.items():
+            if unit in _registered_units:
+                unpacked = _registered_units[unit]._unpack()
+                for tok, val in unpacked.items():
+                    result[tok] = result.get(tok, 0) + val * exp
+            else:
+                result[unit] = result.get(unit, 0) + exp
+        return Unit(result)
+
     def __add__(self, other: dict) -> Unit:
         assert isinstance(other, Unit)
-        if self and other and self != other:
+        _self, _other = self._unpack(), other._unpack()
+        if _self and _other and _self != _other:
             warnings.warn("Adding two quantities with mismatching units!")
             return Unit({})
         return Unit(dict(self.items())) if self else Unit(dict(other.items()))
@@ -103,7 +117,8 @@ class Unit(dict):
 
     def __sub__(self, other):
         assert isinstance(other, Unit)
-        if self and other and self != other:
+        _self, _other = self._unpack(), other._unpack()
+        if _self and _other and _self != _other:
             warnings.warn("Subtracting two quantities with mismatching units!")
             return Unit({})
         return Unit(dict(self.items())) if self else Unit(dict(other.items()))
@@ -112,12 +127,16 @@ class Unit(dict):
 
     def __mul__(self, other):
         assert isinstance(other, Unit)
+        if self and not other:
+            return Unit(dict(self.items()))
+        if not self and other:
+            return Unit(dict(other.items()))
         result = {}
-        for unit, exp in self.items():
+        _self, _other = self._unpack(), other._unpack()
+        for unit, exp in _self.items():
             result[unit] = exp
-        for unit, exp in other.items():
+        for unit, exp in _other.items():
             result[unit] = result.get(unit, 0) + exp
-
         result = {name: exp for name, exp in result.items() if exp != 0}
         return Unit(result)
 
@@ -125,12 +144,16 @@ class Unit(dict):
 
     def __truediv__(self, other):
         assert isinstance(other, Unit)
+        if self and not other:
+            return Unit(dict(self.items()))
+        if not self and other:
+            return Unit({k: -v for k, v in other.items()})
         result = {}
-        for unit, exp in self.items():
+        _self, _other = self._unpack(), other._unpack()
+        for unit, exp in _self.items():
             result[unit] = exp
-        for unit, exp in other.items():
+        for unit, exp in _other.items():
             result[unit] = result.get(unit, 0) - exp
-
         result = {name: exp for name, exp in result.items() if exp != 0}
         return Unit(result)
 
