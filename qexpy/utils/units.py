@@ -1,6 +1,6 @@
 """Functions for parsing and constructing unit strings"""
 
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods,protected-access
 
 from __future__ import annotations
 
@@ -92,7 +92,7 @@ class Unit(dict):
     def update(self, __m, **_):
         raise TypeError("Unit does not support item assignment.")
 
-    def _unpack(self):  # pylint: disable=protected-access
+    def _unpack(self):
         """Recursively unpacks user-defined aliases for compound units"""
 
         try:
