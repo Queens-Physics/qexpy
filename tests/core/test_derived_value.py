@@ -266,7 +266,6 @@ class TestOperations:
         assert isinstance(res._formula, formula_type)
 
 
-# pylint: disable=too-few-public-methods
 class TestErrorPropagation:
     """Tests that the derived values have correctly propagated errors"""
 
@@ -323,3 +322,40 @@ class TestErrorPropagation:
         m = op_func(m1, m2, m3)
         assert m.value == pytest.approx(m_expected.value, rel=0.02)
         assert m.error == pytest.approx(m_expected.error, rel=0.02)
+
+    def test_composite_formula(self):
+        """Integration test for error propagation with composite formula"""
+
+        q.define_unit("F", "C^2/(N*m)")
+        q.define_unit("N", "kg*m/s^2")
+
+        q1 = q.Measurement(1.23e-6, relative_error=0.01, unit="C")
+        q2 = q.Measurement(2.34e-5, relative_error=0.01, unit="C")
+        r = q.Measurement(0.12, relative_error=0.01, unit="m")
+
+        force = 1 / (4 * q.pi * q.eps0) * q1 * q2 / r**2
+
+        assert isinstance(force, q.core.DerivedValue)
+        assert force.value == pytest.approx(
+            1 / (4 * np.pi * 8.8541878128e-12) * 1.23e-6 * 2.34e-5 / 0.12**2
+        )
+        assert force.error == pytest.approx(
+            np.sqrt(
+                (0.01 * 1.23e-6 / (4 * np.pi * 8.8541878128e-12) * 2.34e-5 / 0.12**2) ** 2
+                + (0.01 * 2.34e-5 / (4 * np.pi * 8.8541878128e-12) * 1.23e-6 / 0.12**2) ** 2
+                + (0.01 * 0.12 * 2 / (4 * np.pi * 8.8541878128e-12) * 1.23e-6 * 2.34e-5 / 0.12**3)
+                ** 2
+                + (
+                    0.0000000013e-12
+                    / (4 * np.pi * 8.8541878128e-12**2)
+                    * 1.23e-6
+                    * 2.34e-5
+                    / 0.12**2
+                )
+                ** 2
+            )
+        )
+        assert force.unit == {"kg": 1, "m": 1, "s": -2}
+        assert str(force.unit) == "N"
+
+        q.clear_unit_definitions()
