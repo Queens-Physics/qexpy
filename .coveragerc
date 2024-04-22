@@ -5,6 +5,7 @@ exclude_also =
     ; Don't complain if tests don't hit defensive assertion code:
     raise AssertionError
     raise NotImplementedError
+    return NotImplemented
 
     ; Don't complain about abstract methods, they aren't run:
     @(abc\.)?abstractmethod

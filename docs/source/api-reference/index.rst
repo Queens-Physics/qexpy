@@ -13,6 +13,7 @@ plotting: ``qexpy.plotting``, which can be imported separately if needed.
    :caption: General Functions
 
    options
+   constants
 
 .. toctree::
    :maxdepth: 1

@@ -1,12 +1,27 @@
 """Defines the base class for all experimental values."""
 
+# pylint: disable=protected-access
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from copy import copy
 from numbers import Real
+from typing import Callable
 
 import numpy as np
 
+import qexpy as q
+from qexpy.core.formula import (
+    _Formula,
+    _Add,
+    _Subtract,
+    _Multiply,
+    _Divide,
+    _Power,
+    _NegativeOp,
+    OP_TO_FORMULA,
+)
 from qexpy.utils.formatter import format_value_error
 from qexpy.utils.units import Unit
 
@@ -29,7 +44,7 @@ class ExperimentalValue(ABC):
     Examples
     --------
 
-    Values are recorded as a :func:`~qexpy.Measurement`.
+    Values are recorded as a :py:class:`~qexpy.core.Measurement`.
 
     >>> import qexpy as q
     >>> distance = q.Measurement(5, 0.1, name="distance", unit="m")
@@ -46,7 +61,7 @@ class ExperimentalValue(ABC):
     >>> print(distance.error)
     0.1
 
-    When using `ExperimentalValue` objects in calculations, the results will have properly
+    When using ``ExperimentalValue`` objects in calculations, the results will have properly
     propagated uncertainties. The units will also participate in calculations.
 
     >>> time = q.Measurement(10, 0.1, name="time", unit="s")
@@ -56,9 +71,15 @@ class ExperimentalValue(ABC):
 
     """
 
-    def __init__(self, name: str = "", unit: str = ""):
-        self.name = name
-        self.unit = unit
+    def __init__(self, name: str = "", unit: str | None = ""):
+        if not isinstance(name, str):
+            raise TypeError("The name must be a string!")
+        self._name = name
+        if unit is None:
+            return  # Does not try to set the unit if explicitly set to None
+        if not isinstance(unit, (Unit, str)):
+            raise TypeError(f"The unit must be a string or a Unit object, got: {type(unit)}")
+        self._unit = unit if isinstance(unit, Unit) else Unit.from_string(unit)
 
     def __str__(self):
         name = f"{self.name} = " if self.name else ""
@@ -105,6 +126,74 @@ class ExperimentalValue(ABC):
         if isinstance(other, ExperimentalValue):
             return self.value >= other.value
         return NotImplemented
+
+    def __abs__(self):
+        if self.value < 0:
+            return -self
+        return copy(self)
+
+    def __neg__(self):
+        formula = _NegativeOp(_Formula._wraps(self))
+        return q.core.DerivedValue(formula)
+
+    def __add__(self, other: ExperimentalValue | Real) -> ExperimentalValue:
+        if not isinstance(other, (ExperimentalValue, Real)):
+            return NotImplemented
+        formula = _Add(_Formula._wraps(self), _Formula._wraps(other))
+        return q.core.DerivedValue(formula)
+
+    __radd__ = __add__
+
+    def __sub__(self, other: ExperimentalValue | Real) -> ExperimentalValue:
+        if not isinstance(other, (ExperimentalValue, Real)):
+            return NotImplemented
+        formula = _Subtract(_Formula._wraps(self), _Formula._wraps(other))
+        return q.core.DerivedValue(formula)
+
+    def __rsub__(self, other: ExperimentalValue | Real) -> ExperimentalValue:
+        if not isinstance(other, (ExperimentalValue, Real)):
+            return NotImplemented
+        formula = _Subtract(_Formula._wraps(other), _Formula._wraps(self))
+        return q.core.DerivedValue(formula)
+
+    def __mul__(self, other: ExperimentalValue | Real) -> ExperimentalValue:
+        if not isinstance(other, (ExperimentalValue, Real)):
+            return NotImplemented
+        formula = _Multiply(_Formula._wraps(self), _Formula._wraps(other))
+        return q.core.DerivedValue(formula)
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other: ExperimentalValue | Real) -> ExperimentalValue:
+        if not isinstance(other, (ExperimentalValue, Real)):
+            return NotImplemented
+        formula = _Divide(_Formula._wraps(self), _Formula._wraps(other))
+        return q.core.DerivedValue(formula)
+
+    def __rtruediv__(self, other: ExperimentalValue | Real) -> ExperimentalValue:
+        if not isinstance(other, (ExperimentalValue, Real)):
+            return NotImplemented
+        formula = _Divide(_Formula._wraps(other), _Formula._wraps(self))
+        return q.core.DerivedValue(formula)
+
+    def __pow__(self, power: ExperimentalValue | Real) -> ExperimentalValue:
+        if not isinstance(power, (ExperimentalValue, Real)):
+            return NotImplemented
+        formula = _Power(_Formula._wraps(self), _Formula._wraps(power))
+        return q.core.DerivedValue(formula)
+
+    def __rpow__(self, base: ExperimentalValue | Real) -> ExperimentalValue:
+        if not isinstance(base, (ExperimentalValue, Real)):
+            return NotImplemented
+        formula = _Power(_Formula._wraps(base), _Formula._wraps(self))
+        return q.core.DerivedValue(formula)
+
+    def __array_ufunc__(self, ufunc: Callable, _: str, *inputs, **___):
+        if ufunc not in OP_TO_FORMULA:
+            return NotImplemented
+        inputs = (_Formula._wraps(i) for i in inputs)
+        formula = OP_TO_FORMULA[ufunc](*inputs)
+        return q.core.DerivedValue(formula)
 
     @property
     @abstractmethod

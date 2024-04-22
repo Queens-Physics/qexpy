@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import uuid
+from copy import copy
 from numbers import Real
 from typing import NamedTuple, Dict, Tuple
 
@@ -13,6 +14,7 @@ import numpy as np
 import qexpy as q
 from qexpy._typing import ArrayLikeT, ArrayLike
 from .experimental_value import ExperimentalValue
+from .formula import _Formula
 
 
 class _Correlation(NamedTuple):
@@ -25,7 +27,7 @@ class _Correlation(NamedTuple):
 _correlations: Dict[Measurement, Dict[Measurement, _Correlation]] = {}
 
 
-class Measurement(ExperimentalValue):
+class Measurement(ExperimentalValue, _Formula):
     """A measurement recorded with an uncertainty
 
     Stores a measured value and the uncertainty of the measurement. A measurement can be recorded
@@ -124,6 +126,20 @@ class Measurement(ExperimentalValue):
         self._id = uuid.uuid4()
         super().__init__(name=name, unit=unit)
 
+    def __abs__(self):
+        if self.value < 0:
+            return -self
+        return copy(self)
+
+    def __copy__(self):
+        obj = object.__new__(Measurement)
+        obj._value = self._value
+        obj._error = self._error
+        obj._id = uuid.uuid4()
+        obj._name = self._name
+        obj._unit = self._unit
+        return obj
+
     def __hash__(self):
         return self._id.__hash__()
 
@@ -145,6 +161,9 @@ class Measurement(ExperimentalValue):
 
         """
         return self.error
+
+    def _derivative(self, x: _Formula) -> float:
+        return 1 if self is x else 0
 
     def get_covariance(self, other: Measurement):
         """Gets the covariance between two measurements
@@ -370,6 +389,22 @@ class RepeatedMeasurement(Measurement):
         self._std = float(np.std(self._data, ddof=1))
         self._std_err = self._std / np.sqrt(len(self._data))
         super().__init__(self._mean, self._std_err, name=name, unit=unit)
+
+    def __copy__(self):
+        obj = object.__new__(RepeatedMeasurement)
+        obj._data = self._data
+        obj._errors = self._errors
+        obj._mean = self._mean
+        obj._err_weighted_mean = self._err_weighted_mean
+        obj._prop_error = self._prop_error
+        obj._std = self._std
+        obj._std_err = self._std_err
+        obj._value = self._value
+        obj._error = self._error
+        obj._name = self._name
+        obj._unit = self._unit
+        obj._id = uuid.uuid4()
+        return obj
 
     @property
     def value(self) -> float:
