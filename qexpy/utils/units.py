@@ -92,7 +92,7 @@ class Unit(dict):
     def update(self, __m, **_):
         raise TypeError("Unit does not support item assignment.")
 
-    def _unpack(self):
+    def _unpack(self):  # pylint: disable=protected-access
         """Recursively unpacks user-defined aliases for compound units"""
 
         try:
