@@ -118,7 +118,7 @@ class TestUnits:
         unit_2 = Unit({"B": 1})
 
         with pytest.raises(RecursionError, match="Unable to derive units"):
-            unit_1 + unit_2
+            _ = unit_1 + unit_2
 
 
 class TestUnitOperations:
