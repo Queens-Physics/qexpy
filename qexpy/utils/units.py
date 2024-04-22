@@ -95,15 +95,21 @@ class Unit(dict):
     def _unpack(self):
         """Recursively unpacks user-defined aliases for compound units"""
 
-        result = {}
-        for unit, exp in self.items():
-            if unit in _registered_units:
-                unpacked = _registered_units[unit]._unpack()
-                for tok, val in unpacked.items():
-                    result[tok] = result.get(tok, 0) + val * exp
-            else:
-                result[unit] = result.get(unit, 0) + exp
-        return Unit(result)
+        try:
+            result = {}
+            for unit, exp in self.items():
+                if unit in _registered_units:
+                    unpacked = _registered_units[unit]._unpack()
+                    for tok, val in unpacked.items():
+                        result[tok] = result.get(tok, 0) + val * exp
+                else:
+                    result[unit] = result.get(unit, 0) + exp
+            return Unit(result)
+        except RecursionError as e:
+            raise RecursionError(
+                "Unable to derive units for the result of this operation, there is likely "
+                "circular reference in your custom unit definitions."
+            ) from e
 
     def __add__(self, other: dict) -> Unit:
         assert isinstance(other, Unit)

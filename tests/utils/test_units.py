@@ -108,6 +108,18 @@ class TestUnits:
         q.clear_unit_definitions()
         assert q.utils.units._registered_units == {}
 
+    def test_define_unit_circular_reference(self):
+        """Tests that an easy-to-understand error is raised with circular unit definitions"""
+
+        q.define_unit("A", "B*C")
+        q.define_unit("B", "X*V/A")
+
+        unit_1 = Unit({"A": 1})
+        unit_2 = Unit({"B": 1})
+
+        with pytest.raises(RecursionError, match="Unable to derive units"):
+            unit_1 + unit_2
+
 
 class TestUnitOperations:
     """Tests for unit operations"""
