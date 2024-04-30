@@ -18,6 +18,7 @@ from .derived_value import DerivedValue
 from .experimental_value import ExperimentalValue
 from .functions import correlation, covariance
 from .measurement import Measurement, RepeatedMeasurement
+from .monte_carlo import monte_carlo
 
 __functions__ = [
     "Measurement",

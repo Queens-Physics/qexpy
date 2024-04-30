@@ -1,5 +1,7 @@
 """Tests for ExperimentalValue arithmetic"""
 
+# pylint: disable=no-value-for-parameter
+
 import numpy as np
 import pytest
 
@@ -278,7 +280,8 @@ class TestErrorPropagation:
             lambda x, y: x / y,
         ],
     )
-    def test_correlated_measurements(self, op_func):
+    @pytest.mark.parametrize("error_method", ["derivative", "monte-carlo"])
+    def test_correlated_measurements(self, op_func, error_method):
         """Tests that error propagation works correctly for correlated measurements"""
 
         arr1 = np.array([399.3, 404.6, 394.6, 396.3, 399.6, 404.9, 387.4, 404.9, 398.2, 407.2])
@@ -291,6 +294,7 @@ class TestErrorPropagation:
 
         m1.set_covariance(m2)
         m = op_func(m1, m2)
+        m.error_method = error_method
         assert m.value == pytest.approx(m_expected.value, rel=0.02)
         assert m.error == pytest.approx(m_expected.error, rel=0.02)
 
@@ -303,12 +307,13 @@ class TestErrorPropagation:
             lambda x, y, z: x - y / z,
         ],
     )
-    def test_multiple_correlated_measurements(self, op_func):
+    @pytest.mark.parametrize("error_method", ["derivative", "monte-carlo"])
+    def test_multiple_correlated_measurements(self, op_func, error_method):
         """Tests that error propagation works for multiple correlated measurements"""
 
         arr1 = np.array([399.3, 404.6, 394.6, 396.3, 399.6, 404.9, 387.4, 404.9, 398.2, 407.2])
         arr2 = np.array([193.2, 205.1, 192.6, 194.2, 196.6, 201.0, 184.7, 215.2, 203.6, 207.8])
-        arr3 = np.array([93.2, 105.1, 92.6, 94.2, 96.6, 101.0, 84.7, 115.2, 103.6, 107.8])
+        arr3 = np.array([93.1, 105.1, 92.7, 94.2, 96.6, 101.0, 84.6, 115.3, 103.6, 107.7])
         arr_expected = op_func(arr1, arr2, arr3)
 
         m1 = q.Measurement(arr1)
@@ -320,10 +325,12 @@ class TestErrorPropagation:
         m1.set_covariance(m3)
         m2.set_covariance(m3)
         m = op_func(m1, m2, m3)
+        m.error_method = error_method
         assert m.value == pytest.approx(m_expected.value, rel=0.02)
         assert m.error == pytest.approx(m_expected.error, rel=0.02)
 
-    def test_composite_formula(self):
+    @pytest.mark.parametrize("error_method", ["derivative", "monte-carlo"])
+    def test_composite_formula(self, error_method):
         """Integration test for error propagation with composite formula"""
 
         q.define_unit("F", "C^2/(N*m)")
@@ -334,28 +341,26 @@ class TestErrorPropagation:
         r = q.Measurement(0.12, relative_error=0.01, unit="m")
 
         force = 1 / (4 * q.pi * q.eps0) * q1 * q2 / r**2
+        force.error_method = error_method
+
+        eps0 = 8.8541878128e-12
+        expected_value = 1 / (4 * np.pi * eps0) * 1.23e-6 * 2.34e-5 / 0.12**2
+        expected_error = np.sqrt(
+            (0.01 * 1.23e-6 / (4 * np.pi * eps0) * 2.34e-5 / 0.12**2) ** 2
+            + (0.01 * 2.34e-5 / (4 * np.pi * eps0) * 1.23e-6 / 0.12**2) ** 2
+            + (0.01 * 0.12 * 2 / (4 * np.pi * eps0) * 1.23e-6 * 2.34e-5 / 0.12**3) ** 2
+            + (0.0000000013e-12 / (4 * np.pi * eps0**2) * 1.23e-6 * 2.34e-5 / 0.12**2) ** 2
+        )
 
         assert isinstance(force, q.core.DerivedValue)
-        assert force.value == pytest.approx(
-            1 / (4 * np.pi * 8.8541878128e-12) * 1.23e-6 * 2.34e-5 / 0.12**2
-        )
-        assert force.error == pytest.approx(
-            np.sqrt(
-                (0.01 * 1.23e-6 / (4 * np.pi * 8.8541878128e-12) * 2.34e-5 / 0.12**2) ** 2
-                + (0.01 * 2.34e-5 / (4 * np.pi * 8.8541878128e-12) * 1.23e-6 / 0.12**2) ** 2
-                + (0.01 * 0.12 * 2 / (4 * np.pi * 8.8541878128e-12) * 1.23e-6 * 2.34e-5 / 0.12**3)
-                ** 2
-                + (
-                    0.0000000013e-12
-                    / (4 * np.pi * 8.8541878128e-12**2)
-                    * 1.23e-6
-                    * 2.34e-5
-                    / 0.12**2
-                )
-                ** 2
-            )
-        )
         assert force.unit == {"kg": 1, "m": 1, "s": -2}
         assert str(force.unit) == "N"
+
+        if force.error_method == "derivative":
+            assert force.value == pytest.approx(expected_value)
+            assert force.error == pytest.approx(expected_error)
+        else:
+            assert force.value == pytest.approx(expected_value, rel=0.001)
+            assert force.error == pytest.approx(expected_error, rel=0.005)
 
         q.clear_unit_definitions()

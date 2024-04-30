@@ -288,7 +288,7 @@ class _MockFormula(_Operation):
     @property
     def unit(self) -> Unit:
         """The unit of the formula"""
-        return Unit({})
+        return Unit({})  # pragma: no cover
 
     def _derivative(self, x: _Formula) -> float:
         return self.d if x is self.m else 0

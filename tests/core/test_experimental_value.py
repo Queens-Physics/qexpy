@@ -78,7 +78,7 @@ class TestCompare:
         assert x != 1.22
         assert 1.22 != x
 
-        assert not x == "a"
+        assert x != "a"
 
     def test_not_equal(self):
         """Tests the not equal methods of ExperimentalValue"""

@@ -1,6 +1,6 @@
 """Unit tests for measurements"""
 
-# pylint: disable=too-few-public-methods
+# pylint: disable=no-value-for-parameter
 
 import pytest
 

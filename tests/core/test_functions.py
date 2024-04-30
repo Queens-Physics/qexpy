@@ -1,5 +1,7 @@
 """Unit tests for general functions in the core module"""
 
+# pylint: disable=no-value-for-parameter
+
 import pytest
 
 import numpy as np
