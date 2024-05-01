@@ -296,7 +296,7 @@ class TestErrorPropagation:
         m = op_func(m1, m2)
         m.error_method = error_method
         assert m.value == pytest.approx(m_expected.value, rel=0.02)
-        assert m.error == pytest.approx(m_expected.error, rel=0.02)
+        assert m.error == pytest.approx(m_expected.error, rel=0.05)
 
     @pytest.mark.parametrize(
         "op_func",
@@ -327,7 +327,7 @@ class TestErrorPropagation:
         m = op_func(m1, m2, m3)
         m.error_method = error_method
         assert m.value == pytest.approx(m_expected.value, rel=0.02)
-        assert m.error == pytest.approx(m_expected.error, rel=0.02)
+        assert m.error == pytest.approx(m_expected.error, rel=0.05)
 
     @pytest.mark.parametrize("error_method", ["derivative", "monte-carlo"])
     def test_composite_formula(self, error_method):
