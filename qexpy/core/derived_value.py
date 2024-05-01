@@ -111,10 +111,12 @@ class MonteCarloConfig:
 
     @property
     def value(self):
+        """The value computed from the simulated samples"""
         return self.samples.mean()
 
     @property
     def error(self):
+        """The error computed from the simulated samples"""
         return self.samples.std()
 
     @property
@@ -133,6 +135,7 @@ class MonteCarloConfig:
 
     @property
     def samples(self):
+        """The array of simulated samples"""
         if self._samples is None:
             self._samples = q.core.monte_carlo(self._formula, self.sample_size)
         return self._samples
