@@ -271,6 +271,36 @@ class TestOperations:
 class TestErrorPropagation:
     """Tests that the derived values have correctly propagated errors"""
 
+    @pytest.fixture(autouse=True)
+    def cleanup(self):
+        """Cleans up global configurations"""
+        yield
+        q.reset_option()
+        q.clear_unit_definitions()
+
+    def test_error_method(self):
+        """Tests updating the error method"""
+
+        m1 = q.Measurement(1.23, 0.02)
+        m2 = q.Measurement(4.56, 0.03)
+        res = m1 + m2
+
+        assert isinstance(res, q.core.DerivedValue)
+        assert res.error_method == "derivative"
+        assert res.value == pytest.approx(5.79)
+
+        q.options.error.method = "monte-carlo"
+        assert res.error_method == "monte-carlo"
+        assert res.value == res.mc.samples.mean()
+
+        q.options.error.method = "derivative"
+        assert res.error_method == "derivative"
+        assert res.value == pytest.approx(5.79)
+
+        res.error_method = "monte-carlo"
+        assert res.error_method == "monte-carlo"
+        assert res.value == res.mc.samples.mean()
+
     @pytest.mark.parametrize(
         "op_func",
         [
@@ -362,5 +392,3 @@ class TestErrorPropagation:
         else:
             assert force.value == pytest.approx(expected_value, rel=0.001)
             assert force.error == pytest.approx(expected_error, rel=0.005)
-
-        q.clear_unit_definitions()
