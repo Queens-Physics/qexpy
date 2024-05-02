@@ -100,6 +100,11 @@ class DerivedValue(ExperimentalValue):
             raise ValueError("The error method can only be 'derivative', 'monte-carlo', or 'auto'")
         self._error_method = method
 
+    @property
+    def mc(self):
+        """The MonteCarloConfig object for this value"""
+        return self._mc
+
 
 class MonteCarloConfig:
     """Stores all data and configurations of a Monte Carlo simulation."""
@@ -136,6 +141,6 @@ class MonteCarloConfig:
     @property
     def samples(self):
         """The array of simulated samples"""
-        if self._samples is None:
+        if self._samples is None or len(self._samples) != self.sample_size:
             self._samples = q.core.monte_carlo(self._formula, self.sample_size)
         return self._samples
