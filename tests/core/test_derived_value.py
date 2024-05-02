@@ -285,6 +285,8 @@ class TestErrorPropagation:
         m2 = q.Measurement(4.56, 0.03)
         res = m1 + m2
 
+        q.options.error.mc.sample_size = 100
+
         assert isinstance(res, q.core.DerivedValue)
         assert res.error_method == "derivative"
         assert res.value == pytest.approx(5.79)
@@ -300,6 +302,20 @@ class TestErrorPropagation:
         res.error_method = "monte-carlo"
         assert res.error_method == "monte-carlo"
         assert res.value == res.mc.samples.mean()
+
+        res.error_method = "auto"
+        assert res.error_method == "derivative"
+        assert res.value == pytest.approx(5.79)
+
+    def test_invalid_error_method(self):
+        """Tests setting an invalid error method"""
+
+        m1 = q.Measurement(1.23, 0.02)
+        m2 = q.Measurement(4.56, 0.03)
+        res = m1 + m2
+
+        with pytest.raises(ValueError, match="The error method can only be"):
+            res.error_method = "invalid"
 
     @pytest.mark.parametrize(
         "op_func",
