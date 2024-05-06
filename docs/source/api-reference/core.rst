@@ -45,6 +45,7 @@ this class. The DerivedValue supports different methods of error propagation.
    :toctree: api/
 
    DerivedValue
+   MonteCarloConfig
 
 .. _api.core.constants:
 

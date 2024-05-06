@@ -25,6 +25,8 @@ class DerivedValue(ExperimentalValue):
     relative_error
     name
     unit
+    error_method
+    mc
 
     """
 
@@ -73,10 +75,10 @@ class DerivedValue(ExperimentalValue):
     def error_method(self) -> str:
         """The method of error propagation used for this value
 
-        QExPy supports error propagation with partial derivatives (`"derivative"`) and by using
-        a Monte Carlo simulation (`"monte-carlo"`). By default, the global preference for the
-        error method will be used, but it is also possible to configure the error method for a
-        single derived value. To simply use the global option, set this to `"auto"`.
+        QExPy supports error propagation with partial derivatives (``"derivative"``) and by using
+        a Monte Carlo simulation (``"monte-carlo"``). By default, the global preference for the
+        error method will be used, but it is also possible to change the error method for a
+        single derived value. To use the global setting, set this to ``"auto"``.
 
         Examples
         --------
@@ -101,13 +103,53 @@ class DerivedValue(ExperimentalValue):
         self._error_method = method
 
     @property
-    def mc(self):
-        """The MonteCarloConfig object for this value"""
+    def mc(self) -> "MonteCarloConfig":
+        """The MonteCarloConfig object for this value
+
+        QExPy allows for more fine-grained control over the Monte Carlo error method, including
+        the sample size for the simulation, and the strategy for estimating the value and error
+        from the simulation results.
+
+        :type: MonteCarloConfig
+
+        Examples
+        --------
+
+        >>> import qexpy as q
+        >>> q.options.error.method = "monte-carlo"
+        >>> m1 = q.Measurement(1.23, 0.02)
+        >>> m2 = q.Measurement(4.56, 0.03)
+        >>> res = m1 + m2
+        >>> res
+        5.79 +/- 0.04
+
+        The default sample size is 100000, which should be sufficient in most cases:
+
+        >>> res.value
+        5.790030129557303
+
+        You can change the sample size for a single derived value:
+
+        >>> res.mc.sample_size = 100
+        >>> res.value
+        5.793466017492643
+
+        """
         return self._mc
 
 
 class MonteCarloConfig:
-    """Stores all data and configurations of a Monte Carlo simulation."""
+    """Stores all data and configurations of a Monte Carlo simulation.
+
+    Attributes
+    ----------
+
+    value
+    error
+    sample_size
+    samples
+
+    """
 
     def __init__(self, formula: _Formula):
         self._formula = formula
@@ -141,6 +183,6 @@ class MonteCarloConfig:
     @property
     def samples(self):
         """The array of simulated samples"""
-        if self._samples is None or len(self._samples) != self.sample_size:
+        if self._samples is None or self._samples.size != self.sample_size:
             self._samples = q.core.monte_carlo(self._formula, self.sample_size)
         return self._samples
