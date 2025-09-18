@@ -1,0 +1,70 @@
+[project]
+name = "qexpy"
+description = "A package for experimental data analysis with built-in error propagation."
+readme = "README.md"
+requires-python = ">=3.11"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Astral Cai", email = "astralcai@gmail.com" },
+  { name = "Dr. Ryan Martin", email = "ryan.martin@queensu.ca" },
+]
+keywords = ["data analysis", "error propagation", "physics", "uncertainty"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = ["numpy", "scipy"]
+dynamic = ["version"]
+
+[project.urls]
+Changelog = "https://github.com/Queens-Physics/qexpy/blob/master/CHANGELOG.md"
+Documentation = "https://qexpy.readthedocs.io/en/stable/index.html"
+Homepage = "https://github.com/Queens-Physics/qexpy"
+Issues = "https://github.com/Queens-Physics/qexpy/issues"
+Repository = "https://github.com/Queens-Physics/qexpy.git"
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "qexpy/__version__.py"
+
+[tool.hatch.build]
+packages = ["qexpy"]
+
+[tool.ruff]
+fix = true
+line-length = 80
+
+[tool.ruff.lint]
+select = [
+  "E",  # pycodestyle
+  "F",  # pyflakes
+  "I",  # isort
+  "D",  # pydocstyle
+  "B",  # bugbear
+  "SIM",  # simplify
+  "UP",  # pyupgrade
+]
+ignore = [
+  "F401",  # unused import
+]
+exclude = ["__version__.py"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.format]
+docstring-code-format = true
