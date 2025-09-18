@@ -1,0 +1,20 @@
+name: Formatting Check
+
+on: [push, pull_request]
+
+jobs:
+  check-format:
+    name: Check Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Python
+        run: uv python install
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+      - name: Check code style
+        run: uv run ruff check
+      - name: Check code format
+        run: uv run ruff format --check
