@@ -32,7 +32,13 @@ Issues = "https://github.com/Queens-Physics/qexpy/issues"
 Repository = "https://github.com/Queens-Physics/qexpy.git"
 
 [dependency-groups]
-dev = ["pytest", "ruff"]
+dev = [
+  "debugpy",
+  "pytest",
+  "pytest-cov",
+  "ruff",
+  "tombi",
+]
 
 [build-system]
 requires = ["hatchling"]

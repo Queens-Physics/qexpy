@@ -42,9 +42,13 @@ def test_option_accessors():
     assert cf.get_option("bar.foo.abc") == 3
     assert cf.options.bar.foo.abc == 3
 
-    assert cf.set_option("bar.test", 8, "foo", 9)
+    cf.set_option("bar.test", 8, "foo", 9)
     assert cf.options.bar.test == 8
     assert cf.options.foo == 9
+
+    cf.set_option({"foo": 10, "abc.efg": 20})
+    assert cf.options.foo == 10
+    assert cf.options.abc.efg == 20
 
     cf.options.abc.efg = 10
     assert cf.get_option("abc.efg") == 10
