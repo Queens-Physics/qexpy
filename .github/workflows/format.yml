@@ -1,6 +1,12 @@
 name: Formatting Check
 
-on: [push, pull_request]
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
 
 jobs:
   check-format:
@@ -9,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: Queens-Physics/setup-uv@main
       - name: Set up Python
         run: uv python install
       - name: Install the project
