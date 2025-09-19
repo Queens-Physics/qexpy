@@ -288,11 +288,11 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "debugpy", specifier = ">=1.8.17" },
+    { name = "debugpy" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
-    { name = "tombi", specifier = ">=0.6.10" },
+    { name = "tombi" },
 ]
 
 [[package]]
