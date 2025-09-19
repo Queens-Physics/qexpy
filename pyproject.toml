@@ -59,6 +59,7 @@ select = [
 ]
 ignore = [
   "D205",  # blank line after summary
+  "D202",  # blank line after docstring
 ]
 
 [tool.ruff.lint.pydocstyle]

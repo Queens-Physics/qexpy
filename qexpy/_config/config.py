@@ -106,6 +106,7 @@ def set_option(*args) -> _OptionsContext:
         If the requested option does not exist
 
     """
+
     if len(args) == 1 and isinstance(args[0], dict):
         args = tuple(kv for item in args[0].items() for kv in item)
 
@@ -119,8 +120,9 @@ def set_option(*args) -> _OptionsContext:
         o = _registered_options[k]
         if o and o.validator:
             o.validator(v)
+        full_path = k
         root, k = _get_root(k)
-        originals[k] = root[k]
+        originals[full_path] = root[k]
         root[k] = v
 
     return _OptionsContext(originals)
@@ -205,6 +207,7 @@ def register_option(
     validator: Callable[[object], Any] | None = None,
 ) -> None:
     """Register a configurable option."""
+
     key = key.lower()
 
     if key in _registered_options:
