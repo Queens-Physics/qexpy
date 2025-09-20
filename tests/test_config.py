@@ -106,3 +106,19 @@ def test_reset_options():
         "abc": {"efg": 2},
         "bar": {"foo": {"abc": 3}, "test": 4},
     }
+
+
+def test_validator():
+    """Tests that the validator works."""
+
+    def validator(x):
+        if not isinstance(x, int):
+            raise TypeError("x is not an integer.")
+        if x < 0:
+            raise ValueError("x must be positive.")
+
+    cf.register_option("foo", 1, validator=validator)
+    with pytest.raises(TypeError, match="not an integer"):
+        cf.options.foo = "x"
+    with pytest.raises(ValueError, match="must be positive"):
+        cf.options.foo = -1
