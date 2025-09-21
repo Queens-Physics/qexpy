@@ -26,4 +26,8 @@
 #               佛祖保佑         永无BUG
 #
 
+# This script is imported at the top level to initialize all global options.
+import qexpy._config.config_init
+
 from .__version__ import __version__
+from ._config import *

@@ -55,14 +55,14 @@ def test_option_accessors():
 
 
 def test_set_option_context():
-    """Test using `set_option` as a context manager."""
+    """Test using `set_option_context` as a context manager."""
 
     cf.register_option("foo", 1)
     cf.register_option("abc.efg", 2)
     cf.register_option("bar.foo.abc", 3)
     cf.register_option("bar.test", 4)
 
-    with cf.set_option("bar.test", 8, "foo", 9):
+    with cf.set_option_context("bar.test", 8, "foo", 9):
         assert cf.options.bar.test == 8
         assert cf.options.foo == 9
 
