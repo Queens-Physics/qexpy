@@ -215,6 +215,28 @@ def reset_option(key: str = "") -> None:
     KeyError
         If the requested option does not exist
 
+    Examples
+    --------
+    >>> import qexpy as q
+    >>> q.set_option(
+    ...     {
+    ...         "format.unit": "product",
+    ...         "format.value": "scientific",
+    ...         "format.precision.sigfigs": 3,
+    ...     }
+    ... )
+    >>> q.reset_option("format.value")
+    >>> q.options.format.value
+    'simple'
+
+    Or reset all options at once.
+
+    >>> q.reset_option()
+    >>> q.options.format.value
+    'simple'
+    >>> q.options.format.precision.sigfigs
+    1
+
     """
     keys = _select_keys(key)
 
@@ -233,6 +255,28 @@ def describe_option(key: str = ""):
     key : str, optional
         The key of the option, or a path prefix that matches multiple options.
         If not provided or empty, all options will be listed.
+
+    Examples
+    --------
+    >>> import qexpy as q
+    >>> q.describe_option()
+    format.unit : {"fraction", "product"}
+        How units are displayed, specifically how division in a compound unit is
+        represented, as a fraction, e.g., "m/s^2", or as a product with negative
+        exponents, e.g., "m⋅s^-2".
+        [default: fraction] [currently: fraction]
+    format.value : {"simple", "scientific"}
+        How values are displayed, in the simple form, e.g., "123.4 +/- 0.5", or
+        using the scientific notation, e.g., "(1.234 +/- 0.005) * 10^2"
+        [default: simple] [currently: simple]
+    format.precision.sigfigs : int
+        The number of significant figures to display for numerical values.
+        [default: 1] [currently: 1]
+    format.precision.mode : {"value", "error"}
+        Controls whether to fix the number of significant figures for the value
+        or the error. The other quantity will automatically have the same number
+        of decimal places for consistency.
+        [default: error] [currently: error]
 
     """
     keys = _select_keys(key)

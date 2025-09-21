@@ -40,7 +40,7 @@ cf.register_option(
 
 precision_mode_doc = """
 : {"value", "error"}
-    Controls whether the number of significant figures is fixed for the value
+    Controls whether to fix the number of significant figures for the value
     or the error. The other quantity will automatically have the same number
     of decimal places for consistency.
 """
