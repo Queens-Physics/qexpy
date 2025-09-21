@@ -108,8 +108,8 @@ def test_reset_options():
     }
 
 
-def test_validator():
-    """Tests that the validator works."""
+def test_validation():
+    """Test that the validator works."""
 
     def validator(x):
         if not isinstance(x, int):
@@ -122,3 +122,67 @@ def test_validator():
         cf.options.foo = "x"
     with pytest.raises(ValueError, match="must be positive"):
         cf.options.foo = -1
+
+
+@pytest.mark.parametrize(
+    "default, validator, value, error, message",
+    [
+        (
+            "foo",
+            cf.is_one_of_factory(["foo", "bar"]),
+            "a",
+            ValueError,
+            "Value must be one of",
+        ),
+        (
+            1,
+            cf.is_positive_integer,
+            -1,
+            ValueError,
+            "Value must be a positive integer",
+        ),
+        (True, cf.is_boolean, "hello", TypeError, "Value must be a boolean"),
+        (
+            (1.0, 2.0),
+            cf.is_tuple_of_numbers,
+            1,
+            TypeError,
+            "Value must be a tuple of length 2",
+        ),
+        (
+            (1.0, 2.0),
+            cf.is_tuple_of_numbers,
+            (1, "a"),
+            TypeError,
+            "Value must be a tuple of numbers",
+        ),
+        (
+            (1.0, 2.0),
+            cf.is_tuple_of_numbers,
+            (1, 2, 3),
+            TypeError,
+            "Value must be a tuple of length 2",
+        ),
+        (
+            0.68,
+            cf.is_number_in_range(0.0, 1.0),
+            2.0,
+            ValueError,
+            "Value must be in range",
+        ),
+        (
+            0.68,
+            cf.is_number_in_range(0.0, 1.0),
+            "1.5",
+            TypeError,
+            "The value must be a number",
+        ),
+    ],
+)
+def test_validators(default, validator, value, error, message):
+    """Test the predefined validators."""
+
+    cf.register_option("a", default, "", validator)
+
+    with pytest.raises(error, match=message):
+        cf.set_option("a", value)
