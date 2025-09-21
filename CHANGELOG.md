@@ -4,6 +4,8 @@
 
 ### New Features
 
+* QExPy now adopts a pandas-style options API for working with configurations.
+
 ### Breaking Changes
 
 ### Deprecations and Removals
