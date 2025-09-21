@@ -11,4 +11,5 @@ from .config import (
     options,
     reset_option,
     set_option,
+    set_option_context,
 )

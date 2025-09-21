@@ -17,9 +17,12 @@ Copyright (c) 2011-2025, Open source contributors.
 """
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from contextlib import contextmanager
 from functools import wraps
 from typing import Any, NamedTuple
+
+from qexpy.typing import Number
 
 
 class Option(NamedTuple):
@@ -70,28 +73,24 @@ def get_option(key: str) -> Any:
     KeyError
         If the requested option does not exist.
 
+    Examples
+    --------
+    >>> import qexpy as q
+    >>> q.get_option("format.unit")
+    'fraction'
+
+    Options can also be accessed like an attribute of the ``options`` object:
+
+    >>> q.options.format.value
+    'simple'
+
     """
     root, k = _get_root(key)
     return root[k]
 
 
-class _OptionsContext:
-    """A context manager that restores updated options upon exit."""
-
-    def __init__(self, originals: dict[str, Any]):
-        self.originals = originals
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_, **__):
-        for k, v in self.originals.items():
-            root, k = _get_root(k)
-            root[k] = v
-
-
 @validate_key
-def set_option(*args) -> _OptionsContext:
+def set_option(*args) -> None:
     """Set the value(s) of the specified option(s).
 
     Parameters
@@ -105,6 +104,35 @@ def set_option(*args) -> _OptionsContext:
     KeyError
         If the requested option does not exist
 
+    Examples
+    --------
+    >>> import qexpy as q
+    >>> q.set_option("format.unit", "product")
+    >>> q.options.format.unit
+    'product'
+
+    Multiple options can be modified at once.
+
+    >>> q.set_option("format.unit", "fraction", "format.value", "scientific")
+    >>> q.options.format.unit
+    'fraction'
+    >>> q.options.format.value
+    'scientific'
+
+    Or with a dictionary
+
+    >>> q.set_option({"format.unit": "product", "format.value": "simple"})
+    >>> q.options.format.unit
+    'product'
+    >>> q.options.format.value
+    'simple'
+
+    Options can be accessed as an attribute
+
+    >>> q.options.format.unit = "fraction"
+    >>> q.options.format.unit
+    'fraction'
+
     """
 
     if len(args) == 1 and isinstance(args[0], dict):
@@ -114,18 +142,64 @@ def set_option(*args) -> _OptionsContext:
     if not nargs or nargs % 2 != 0:
         raise ValueError("Must provide an even number of non-keyword arguments")
 
-    originals = {}
-
     for k, v in zip(args[::2], args[1::2], strict=False):
         o = _registered_options[k]
         if o and o.validator:
             o.validator(v)
-        full_path = k
         root, k = _get_root(k)
-        originals[full_path] = root[k]
         root[k] = v
 
-    return _OptionsContext(originals)
+
+@contextmanager
+def set_option_context(*args):
+    """Temporarily set the value(s) of the specified options.
+
+    Parameters
+    ----------
+    key1, value1, key2, value2, ...
+        An even number of arguments to represent (key, value) pairs, or a
+        single dictionary with all the option values to be updated.
+
+    Raises
+    ------
+    KeyError
+        If the requested option does not exist
+
+    Examples
+    --------
+    >>> import qexpy as q
+    >>> q.options.format.unit
+    'fraction'
+    >>> with q.set_option_context("format.unit", "product"):
+    ...     print(q.options.format.unit)
+    product
+
+    The updated options are restored upon exiting the context.
+
+    >>> q.options.format.unit
+    'fraction'
+
+    """
+
+    if len(args) == 1 and isinstance(args[0], dict):
+        args = tuple(kv for item in args[0].items() for kv in item)
+
+    nargs = len(args)
+    if not nargs or nargs % 2 != 0:
+        raise ValueError("Must provide an even number of non-keyword arguments")
+
+    originals = {}  # saves the current values of the specified options
+    try:
+        for k, v in zip(args[::2], args[1::2], strict=False):
+            o = _registered_options[k]
+            if o and o.validator:
+                o.validator(v)
+            root, short_k = _get_root(k)
+            originals[k] = root[short_k]
+            root[short_k] = v
+        yield
+    finally:
+        set_option(originals)
 
 
 def reset_option(key: str = "") -> None:
@@ -140,6 +214,28 @@ def reset_option(key: str = "") -> None:
     ------
     KeyError
         If the requested option does not exist
+
+    Examples
+    --------
+    >>> import qexpy as q
+    >>> q.set_option(
+    ...     {
+    ...         "format.unit": "product",
+    ...         "format.value": "scientific",
+    ...         "format.precision.sigfigs": 3,
+    ...     }
+    ... )
+    >>> q.reset_option("format.value")
+    >>> q.options.format.value
+    'simple'
+
+    Or reset all options at once.
+
+    >>> q.reset_option()
+    >>> q.options.format.value
+    'simple'
+    >>> q.options.format.precision.sigfigs
+    1
 
     """
     keys = _select_keys(key)
@@ -159,6 +255,28 @@ def describe_option(key: str = ""):
     key : str, optional
         The key of the option, or a path prefix that matches multiple options.
         If not provided or empty, all options will be listed.
+
+    Examples
+    --------
+    >>> import qexpy as q
+    >>> q.describe_option()
+    format.unit : {"fraction", "product"}
+        How units are displayed, specifically how division in a compound unit is
+        represented, as a fraction, e.g., "m/s^2", or as a product with negative
+        exponents, e.g., "m⋅s^-2".
+        [default: fraction] [currently: fraction]
+    format.value : {"simple", "scientific"}
+        How values are displayed, in the simple form, e.g., "123.4 +/- 0.5", or
+        using the scientific notation, e.g., "(1.234 +/- 0.005) * 10^2"
+        [default: simple] [currently: simple]
+    format.precision.sigfigs : int
+        The number of significant figures to display for numerical values.
+        [default: 1] [currently: 1]
+    format.precision.mode : {"value", "error"}
+        Controls whether to fix the number of significant figures for the value
+        or the error. The other quantity will automatically have the same number
+        of decimal places for consistency.
+        [default: error] [currently: error]
 
     """
     keys = _select_keys(key)
@@ -191,7 +309,7 @@ class DictWrapper:
         try:
             v = object.__getattribute__(self, "d")[key]
         except KeyError as err:
-            raise KeyError("No such option") from err
+            raise AttributeError("No such option") from err
         if isinstance(v, dict):
             return DictWrapper(v, prefix)
         return get_option(prefix)
@@ -262,3 +380,50 @@ def _build_option_description(k: str) -> str:
     s += "\n".join(option.doc.strip().split("\n"))
     s += f"\n    [default: {option.default}] [currently: {get_option(k)}]"
     return s
+
+
+def is_one_of_factory(valid_values: Iterable) -> Callable[[Any], None]:
+    """Produce a function that checks if a value is one of the valid values."""
+
+    def inner(x) -> None:
+        if x not in valid_values:
+            vals = [str(val) for val in valid_values]
+            raise ValueError(f"Value must be one of {'|'.join(vals)}")
+
+    return inner
+
+
+def is_positive_integer(x) -> None:
+    """Check if a value is a positive integer."""
+
+    if not isinstance(x, int) or x <= 0:
+        raise ValueError(f"Value must be a positive integer: {x}")
+
+
+def is_boolean(x) -> None:
+    """Check if a value is a boolean."""
+
+    if not isinstance(x, bool):
+        raise TypeError(f"Value must be a boolean: {x}")
+
+
+def is_tuple_of_numbers(x) -> None:
+    """Check if a value is a tuple of numerical values."""
+
+    if not isinstance(x, (tuple, list)) or len(x) != 2:
+        raise TypeError(f"Value must be a tuple of length 2: {x}")
+
+    if not all(isinstance(v, Number) for v in x):
+        raise TypeError(f"Value must be a tuple of numbers: {x}")
+
+
+def is_number_in_range(min_v, max_v) -> Callable:
+    """Produce a function that checks if a value is in a range."""
+
+    def inner(x) -> None:
+        if not isinstance(x, Number):
+            raise TypeError("The value must be a number.")
+        if x < min_v or x > max_v:
+            raise ValueError(f"Value must be in range [{min_v}, {max_v}]: {x}")
+
+    return inner
