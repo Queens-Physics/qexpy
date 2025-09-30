@@ -6,6 +6,11 @@
 
 * QExPy now adopts a pandas-style options API for working with configurations.
 
+### Bug Fixes
+
+* Fixes a bug where unit expressions containing nested brackets are not parsed
+  correctly, allowing for more flexibility in how a unit can be specified.
+
 ### Breaking Changes
 
 ### Deprecations and Removals

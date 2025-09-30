@@ -33,11 +33,9 @@ Repository = "https://github.com/Queens-Physics/qexpy.git"
 
 [dependency-groups]
 dev = [
-  "debugpy",
   "pytest",
   "pytest-cov",
   "ruff",
-  "tombi",
 ]
 
 [build-system]
@@ -66,6 +64,7 @@ select = [
 ignore = [
   "D205",  # blank line after summary
   "D202",  # blank line after docstring
+  "D105",  # no docstring for magic method
 ]
 
 [tool.ruff.lint.pydocstyle]
