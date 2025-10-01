@@ -1,16 +1,32 @@
 """Package containing utility functions mostly for internal use"""
 
-from .utils import load_data_from_file
-from .utils import vectorize, check_operand_type, validate_xrange
-from .utils import numerical_derivative, calculate_covariance, cov2corr, \
-    find_mode_and_uncertainty
-from .exceptions import IllegalArgumentError, UndefinedActionError, UndefinedOperationError
-from .units import parse_unit_string, construct_unit_string, operate_with_units, \
-    define_unit, clear_unit_definitions
-from .printing import get_printer
-
 import sys
-import IPython
+
+from IPython import get_ipython
+
+from .exceptions import (
+    IllegalArgumentError,
+    UndefinedActionError,
+    UndefinedOperationError,
+)
+from .printing import get_printer
+from .units import (
+    clear_unit_definitions,
+    construct_unit_string,
+    define_unit,
+    operate_with_units,
+    parse_unit_string,
+)
+from .utils import (
+    calculate_covariance,
+    check_operand_type,
+    cov2corr,
+    find_mode_and_uncertainty,
+    load_data_from_file,
+    numerical_derivative,
+    validate_xrange,
+    vectorize,
+)
 
 if "ipykernel" in sys.modules:  # pragma: no cover
-    IPython.get_ipython().magic("matplotlib inline")
+    IPython.get_ipython().run_line_magic("matplotlib", "inline")
