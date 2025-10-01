@@ -56,35 +56,36 @@ def test_unit_from_string(unit_str: str, name: str):
     assert_unit_equal(actual, PREDEFINED[name])
 
 
-def test_unit_addition_and_subtraction():
-    """Tests adding and subtracting two units."""
+class TestUnitOperations:
+    """Tests performing operations with units."""
 
-    unit1 = Unit({"kg": 1, "s": -2})
-    unit2 = Unit({"kg": 2, "s": 2, "m": 1})
+    def test_unit_addition_and_subtraction(self):
+        """Tests adding and subtracting two units."""
 
-    with pytest.warns(UserWarning, match="mismatching units"):
-        assert unit1 + unit2 == Unit({})
-        assert unit2 - unit1 == Unit({})
+        unit1 = Unit({"kg": 1, "s": -2})
+        unit2 = Unit({"kg": 2, "s": 2, "m": 1})
 
-    unit3 = Unit({"kg": 1, "s": -2})
-    assert unit1 + unit3 == Unit({"kg": 1, "s": -2})
-    assert unit1 - unit3 == Unit({"kg": 1, "s": -2})
+        with pytest.warns(UserWarning, match="mismatching units"):
+            assert unit1 + unit2 == Unit({})
+            assert unit2 - unit1 == Unit({})
 
+        unit3 = Unit({"kg": 1, "s": -2})
+        assert unit1 + unit3 == Unit({"kg": 1, "s": -2})
+        assert unit1 - unit3 == Unit({"kg": 1, "s": -2})
 
-def test_unit_multiplication_and_division():
-    """Tests multiplying and dividing two units."""
+    def test_unit_multiplication_and_division(self):
+        """Tests multiplying and dividing two units."""
 
-    unit1 = Unit({"kg": 1, "s": -2})
-    unit2 = Unit({"kg": 2, "s": 2, "m": 1})
+        unit1 = Unit({"kg": 1, "s": -2})
+        unit2 = Unit({"kg": 2, "s": 2, "m": 1})
 
-    assert unit1 * unit2 == Unit({"kg": 3, "m": 1})
-    assert unit1 / unit2 == Unit({"kg": -1, "s": -4, "m": -1})
-    assert 1 / unit2 == Unit({"kg": -2, "s": -2, "m": -1})
+        assert unit1 * unit2 == Unit({"kg": 3, "m": 1})
+        assert unit1 / unit2 == Unit({"kg": -1, "s": -4, "m": -1})
+        assert 1 / unit2 == Unit({"kg": -2, "s": -2, "m": -1})
 
+    def test_unit_exponentiation(self):
+        """Tests exponents of a unit."""
 
-def test_unit_exponentiation():
-    """Tests exponents of a unit."""
-
-    unit = Unit({"kg": 1, "m": 2, "s": -2})
-    assert_unit_equal((unit**2)._unit, {"kg": 2, "m": 4, "s": -4})
-    assert_unit_equal((unit**0.5)._unit, {"kg": 0.5, "m": 1, "s": -1})
+        unit = Unit({"kg": 1, "m": 2, "s": -2})
+        assert_unit_equal((unit**2)._unit, {"kg": 2, "m": 4, "s": -4})
+        assert_unit_equal((unit**0.5)._unit, {"kg": 0.5, "m": 1, "s": -1})
