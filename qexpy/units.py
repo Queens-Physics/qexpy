@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from fractions import Fraction
 from warnings import warn
 
-from qexpy.typing import Number
+from qexpy.format import unit_to_fraction_string, unit_to_product_string
+
+from ._config import options
+from .typing import Number
 
 _DOT_STRING = "\N{DOT OPERATOR}"
 _LEFT_BRACKET = "("
@@ -22,6 +25,8 @@ _CARET = "^"
 class Unit:
     """A data structure that represents a unit."""
 
+    _unit: dict[str, Number]
+
     def __new__(cls, unit):  # noqa: D102
         if isinstance(unit, Unit):
             return unit
@@ -31,11 +36,19 @@ class Unit:
 
     def __init__(self, unit: str | dict[str, Number] | Unit):
         if isinstance(unit, dict):
-            _unit = {k: Fraction(v) for k, v in unit.items()}
-            self._unit = _unit
-        else:  # the unit should either be a dict or a string.
+            self._unit = unit
+        else:  # safe to assume that the unit is a string at this point.
             assert isinstance(unit, str)
             self._unit = _parse_unit_str(unit)
+
+    def __str__(self) -> str:
+        if not self:
+            return ""
+        if options.format.unit == "fraction":
+            return unit_to_fraction_string(self._unit)
+        return unit_to_product_string(self._unit)
+
+    __repr__ = __str__
 
     def __getitem__(self, key) -> Number:
         return self._unit[key]
@@ -113,7 +126,7 @@ class Unit:
 UnitLike = str | dict | Unit
 
 
-def _parse_unit_str(unit_str: str) -> dict[str, Fraction]:
+def _parse_unit_str(unit_str: str) -> dict[str, Number]:
     """Parse the string representation of a unit to a dictionary.
 
     Parameters
