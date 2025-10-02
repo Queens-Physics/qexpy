@@ -48,6 +48,8 @@ class Unit:
             return unit_to_fraction_string(self._unit)
         return unit_to_product_string(self._unit)
 
+    __repr__ = __str__
+
     def __getitem__(self, key) -> Number:
         return self._unit[key]
 

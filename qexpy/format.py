@@ -10,15 +10,15 @@ _DOT_STRING = "\N{DOT OPERATOR}"
 
 
 def _number_of_decimals(value: float) -> int:
-    """Returns the number of decimal places for two significant figures."""
+    """Return the number of decimal places for two significant figures."""
 
-    order = np.floor(np.log10(abs(value) % 1))
+    order = int(np.floor(np.log10(abs(value) % 1)))
     number_of_decimals = -order + 2 - 1
     return number_of_decimals if number_of_decimals > 0 else 0
 
 
 def _exponent_to_str(exponent: Number) -> str:
-    """Returns the exponent part of a unit."""
+    """Return the exponent part of a unit."""
 
     # The exponent should be represented as a fraction if possible
     # to avoid running into the machine epsilon error.
@@ -39,7 +39,7 @@ def _exponent_to_str(exponent: Number) -> str:
 
 
 def unit_to_fraction_string(units: dict[str, Number]) -> str:
-    """Formats a unit dictionary to a string in the fraction form."""
+    """Format a unit dictionary to a string in the fraction form."""
 
     numerator = _DOT_STRING.join(
         f"{unit}{_exponent_to_str(exp)}"
@@ -47,7 +47,7 @@ def unit_to_fraction_string(units: dict[str, Number]) -> str:
         if exp > 0
     )
     denomiator = _DOT_STRING.join(
-        f"{unit}{_exponent_to_str(exp)}"
+        f"{unit}{_exponent_to_str(-exp)}"
         for unit, exp in units.items()
         if exp < 0
     )
@@ -59,14 +59,14 @@ def unit_to_fraction_string(units: dict[str, Number]) -> str:
 
     # If the denominator has multiplication, use brackets to avoid ambiguity
     if _DOT_STRING in denomiator:
-        denomiator = f"{denomiator}"
+        denomiator = f"({denomiator})"
 
     # Combine the numerator and the denominator
     return f"{numerator}/{denomiator}"
 
 
 def unit_to_product_string(units: dict[str, Number]) -> str:
-    """Formats a unit dictioanry to a string in the product form."""
+    """Format a unit dictioanry to a string in the product form."""
 
     return _DOT_STRING.join(
         f"{unit}{_exponent_to_str(exp)}" for unit, exp in units.items()

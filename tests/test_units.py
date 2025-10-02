@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 
+import qexpy as q
 from qexpy.units import Unit
 
 PREDEFINED = {
@@ -44,6 +45,7 @@ def assert_unit_equal(actual, expected):
         ("s^-1A^-1", "inv-coloumb"),
         ("kg*m^2/s^3A^1", "volt"),
         ("s^4A^2kg^-1m^-2", "farad"),
+        ("(s^2A^1)^2/(kg*m^2)", "farad"),
         ("kg^4m^2Pa^1L^-3s^-2A^-2", "foo"),
         ("kg^4m^2Pa/L^3s^2A^2", "foo"),
         ("(kg^4*m^2*Pa)/(L^3*s^2*A^2)", "foo"),
@@ -54,6 +56,52 @@ def test_unit_from_string(unit_str: str, name: str):
     """Tests constructing a unit expression from a string."""
     actual = Unit(unit_str)._unit
     assert_unit_equal(actual, PREDEFINED[name])
+
+
+@pytest.mark.parametrize(
+    "name, expected",
+    [
+        ("empty", ""),
+        ("hertz", "1/s"),
+        ("newton", "kg⋅m/s^2"),
+        ("pascal", "kg/(m⋅s^2)"),
+        ("joule", "kg⋅m^2/s^2"),
+        ("coloumb", "s⋅A"),
+        ("inv-coloumb", "1/(s⋅A)"),
+        ("volt", "kg⋅m^2/(s^3⋅A)"),
+        ("farad", "s^4⋅A^2/(kg⋅m^2)"),
+        ("foo", "kg^4⋅m^2⋅Pa/(L^3⋅s^2⋅A^2)"),
+        ("bar", "kg^(1/2)⋅m^(1/3)/(s^1.23⋅A^2.35)"),
+    ],
+)
+def test_unit_to_fraction(name: str, expected: str):
+    """Tests formatting a unit to a string in the fraction form."""
+    unit = Unit(PREDEFINED[name])
+    with q.set_option_context("format.unit", "fraction"):
+        assert str(unit) == expected
+
+
+@pytest.mark.parametrize(
+    "name, expected",
+    [
+        ("empty", ""),
+        ("hertz", "s^-1"),
+        ("newton", "kg⋅m⋅s^-2"),
+        ("pascal", "kg⋅m^-1⋅s^-2"),
+        ("joule", "kg⋅m^2⋅s^-2"),
+        ("coloumb", "s⋅A"),
+        ("inv-coloumb", "s^-1⋅A^-1"),
+        ("volt", "kg⋅m^2⋅s^-3⋅A^-1"),
+        ("farad", "kg^-1⋅m^-2⋅s^4⋅A^2"),
+        ("foo", "kg^4⋅m^2⋅Pa⋅L^-3⋅s^-2⋅A^-2"),
+        ("bar", "kg^(1/2)⋅m^(1/3)⋅s^-1.23⋅A^-2.35"),
+    ],
+)
+def test_unit_to_product(name: str, expected: str):
+    """Tests formatting a unit to a string in the product form."""
+    unit = Unit(PREDEFINED[name])
+    with q.set_option_context("format.unit", "product"):
+        assert str(unit) == expected
 
 
 class TestUnitOperations:
