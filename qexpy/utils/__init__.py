@@ -29,4 +29,4 @@ from .utils import (
 )
 
 if "ipykernel" in sys.modules:  # pragma: no cover
-    IPython.get_ipython().run_line_magic("matplotlib", "inline")
+    get_ipython().run_line_magic("matplotlib", "inline")
