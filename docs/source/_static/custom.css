@@ -1,0 +1,29 @@
+/* Page Layout */
+
+.navbar-brand img {
+    height: 70%;
+}
+
+.navbar-nav {
+    margin-left: 10px;
+}
+
+/* Landing Page Overview Cards */
+
+.sd-card {
+    padding-left: 3%;
+    padding-right: 3%;
+}
+
+.sd-card .sd-card-img-top {
+    width: 20%;
+    height: 20%;
+    margin: 10% auto 3%;
+    display: block;
+}
+
+.sd-card .sd-card-header {
+    text-align: center;
+    font-size: var(--pst-font-size-h4);
+}
+

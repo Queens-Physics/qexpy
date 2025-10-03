@@ -31,11 +31,20 @@ Homepage = "https://github.com/Queens-Physics/qexpy"
 Issues = "https://github.com/Queens-Physics/qexpy/issues"
 Repository = "https://github.com/Queens-Physics/qexpy.git"
 
+[project.optional-dependencies]
+plot = ["matplotlib"]
+
 [dependency-groups]
 dev = [
   "pytest",
   "pytest-cov",
   "ruff",
+]
+docs = [
+  "numpydoc",
+  "pydata-sphinx-theme",
+  "sphinx",
+  "sphinx_design",
 ]
 
 [build-system]
@@ -76,3 +85,6 @@ convention = "numpy"
 
 [tool.ruff.format]
 docstring-code-format = true
+
+[tool.uv]
+default-groups = "all"
