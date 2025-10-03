@@ -3,11 +3,11 @@
 
 # QExPy: data analysis with error propagation
 
-QExPy is a Python package designed to facilitate data analysis in physics
-laboratories. It provides an intuitive interface to record measurements with
-uncertainties and perform calculations with automatic error propagation.
-Additionally, QExPy contains plotting and curve-fitting modules, providing
-researchers with a comprehensive toolkit for data analysis.
+QExPy is a Python package designed to facilitate experimental data analysis in
+physics laboratories. It provides an intuitive interface to record measurements
+with uncertainties and perform calculations with automatic error propagation. 
+QExPy also offers modules for plotting and curve fitting, providing researchers
+with a comprehensive toolkit for data analysis.
 
 ## License
 
