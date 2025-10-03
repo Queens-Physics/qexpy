@@ -15,5 +15,5 @@ build:
          - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --group docs --extra plot
 
 sphinx:
-  configuration: docs/conf.py
+  configuration: docs/source/conf.py
 
