@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
     name="qexpy",
     packages=find_packages(),
-    version="2.0.3",
+    version="2.0.4",
     description="""Package to handle error analysis and data plotting aimed at undergraduate physics.""",
     long_description="""QExPy (Queen’s Experimental Physics) is a Python 3 package designed to facilitate data analysis in undergraduate physics laboratories. The package contains a module to easily propagate errors in uncertainty calculations, and a module that provides an intuitive interface to plot and fit data. The package is designed to be efficient, correct, and to allow for a pedagogic introduction to error analysis. The package is extensively tested in the Jupyter Notebook environment to allow high quality reports to be generated directly from a browser.""",
     author="Astral Cai, Connor Kapahi, Prof. Ryan Martin",
