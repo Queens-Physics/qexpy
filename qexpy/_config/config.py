@@ -248,7 +248,7 @@ def reset_option(key: str = "") -> None:
 
 
 def describe_option(key: str = ""):
-    """Display the description of one or more options in the command line.
+    """Print the description of one or more options.
 
     Parameters
     ----------

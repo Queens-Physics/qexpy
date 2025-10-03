@@ -8,8 +8,7 @@
 
 ### Bug Fixes
 
-* Fixes a bug where unit expressions containing nested brackets are not parsed
-  correctly, allowing for more flexibility in how a unit can be specified.
+* Fixes a bug where unit strings with nested brackets are not parsed correctly.
 
 ### Breaking Changes
 
