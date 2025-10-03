@@ -59,6 +59,7 @@ packages = ["qexpy"]
 
 [tool.ruff]
 line-length = 80
+exclude = ["docs/source/conf.py"]
 
 [tool.ruff.lint]
 select = [
