@@ -9,8 +9,8 @@ import qexpy
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "qexpy"
-copyright = "2025, Astral Cai"
-author = "Astral Cai"
+copyright = "2025, Astral Cai, Ryan Martin, Connor Kapahi"
+author = "Astral Cai, Ryan Martin, Connor Kapahi"
 release = qexpy.__version__
 
 # -- General configuration ---------------------------------------------------

@@ -59,6 +59,25 @@ def test_unit_from_string(unit_str: str, name: str):
 
 
 @pytest.mark.parametrize(
+    "unit_str",
+    [
+        "k2m^2",
+        "m^2*/kg^3",
+        "m^2/^3",
+        "(kg*)m",
+        "m*1/kg",
+        "m*kg)",
+        "(m^2kg^3",
+        "m^2*",
+    ],
+)
+def test_invalid_unit_expression(unit_str: str):
+    """Tests that an error is raised when the unit is invalid."""
+    with pytest.raises(ValueError):
+        Unit(unit_str)
+
+
+@pytest.mark.parametrize(
     "name, expected",
     [
         ("empty", ""),
@@ -137,3 +156,61 @@ class TestUnitOperations:
         unit = Unit({"kg": 1, "m": 2, "s": -2})
         assert_unit_equal((unit**2)._unit, {"kg": 2, "m": 4, "s": -4})
         assert_unit_equal((unit**0.5)._unit, {"kg": 0.5, "m": 1, "s": -1})
+
+
+class TestUnitAliases:
+    """Tests defining aliases for compound units."""
+
+    @pytest.fixture(autouse=True)
+    def teardown(self):
+        """Reset everything."""
+        q.clear_unit_aliases()
+
+    def test_define_unit(self):
+        """Tests defining a unit alias."""
+
+        q.define_unit("N", "kg^1m^1s^-2")
+        assert str(Unit("kg*m/s^2")) == "N"
+        assert str(Unit("kg^2m^2s^-4")) == "N^2"
+        assert str(Unit("kg^(-1/2)m^(-1/2)s^1")) == "1/N^(1/2)"
+        assert str(Unit("kg^3m^2s^-4")) == "kg^3⋅m^2/s^4"
+
+    def test_unit_operations(self):
+        """Tests unit operations with unit aliases."""
+
+        q.define_unit("F", "C^2/(N*m)")
+        q.define_unit("N", "kg*m/s^2")
+
+        unit_q = Unit({"C": 1})
+        unit_r = Unit({"m": 1})
+        unit_eps = Unit({"F": 1, "m": -1})
+
+        res = unit_q * unit_q / unit_eps / unit_r**2
+        assert res == Unit({"kg": 1, "m": 1, "s": -2})
+        assert str(res) == "N"
+
+    def test_unit_not_unpacked_if_unnecessary(self):
+        """Tests that pre-defined units are not unpacked when not necessary."""
+
+        q.define_unit("N", "kg*m/s^2")
+
+        unit_1 = Unit({"N": 1})
+
+        assert unit_1 + Unit({}) == Unit({"N": 1})
+        assert unit_1 - Unit({}) == Unit({"N": 1})
+        assert unit_1 * Unit({}) == Unit({"N": 1})
+        assert Unit({}) * unit_1 == Unit({"N": 1})
+        assert unit_1 / Unit({}) == Unit({"N": 1})
+        assert Unit({}) / unit_1 == Unit({"N": -1})
+
+    def test_define_unit_circular_reference(self):
+        """Tests that an error is raised with circular unit definitions."""
+
+        q.define_unit("A", "B*C")
+        q.define_unit("B", "X*V/A")
+
+        unit_1 = Unit({"A": 1})
+        unit_2 = Unit({"B": 1})
+
+        with pytest.raises(RecursionError, match="circular reference"):
+            _ = unit_1 + unit_2
