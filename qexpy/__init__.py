@@ -29,5 +29,7 @@
 # This script is imported at the top level to initialize all global options.
 import qexpy._config.config_init
 
+from . import typing
 from .__version__ import __version__
 from ._config import *
+from .units import clear_unit_aliases, define_unit

@@ -16,4 +16,6 @@ Options and Settings
    reset_option
    set_option
    set_option_context
+   define_unit
+   clear_unit_aliases
 

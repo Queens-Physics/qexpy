@@ -22,6 +22,10 @@ _DIVISOR = "/"
 _CARET = "^"
 
 
+# Keeps track of user-defined aliases for compound units.
+_unit_aliases: dict[str, Unit] = {}
+
+
 class Unit:
     """A data structure that represents a unit."""
 
@@ -44,9 +48,17 @@ class Unit:
     def __str__(self) -> str:
         if not self:
             return ""
+
+        _unit = self._unit
+        for name, unit in _unit_aliases.items():
+            if exp := _unit_log(unit._unit, self._unit):
+                _unit = {name: exp}
+                break
+
         if options.format.unit == "fraction":
-            return unit_to_fraction_string(self._unit)
-        return unit_to_product_string(self._unit)
+            return unit_to_fraction_string(_unit)
+
+        return unit_to_product_string(_unit)
 
     __repr__ = __str__
 
@@ -58,7 +70,7 @@ class Unit:
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Unit):
-            return self._unit == other._unit
+            return self._resolve()._unit == other._resolve()._unit
         if isinstance(other, dict):
             return self._unit == other
         return False
@@ -90,10 +102,14 @@ class Unit:
     def __mul__(self, other) -> Unit:
         if not isinstance(other, Unit):
             return NotImplemented
+        if not self:
+            return other
+        if not other:
+            return self
         result = defaultdict(Fraction)
-        for u, p in self.items():
+        for u, p in self._resolve().items():
             result[u] += Fraction(p)
-        for u, p in other.items():
+        for u, p in other._resolve().items():
             result[u] += Fraction(p)
         return Unit({k: v for k, v in result.items() if v != 0})
 
@@ -102,10 +118,14 @@ class Unit:
     def __truediv__(self, other) -> Unit:
         if not isinstance(other, Unit):
             return NotImplemented
+        if not self:
+            return Unit({k: -v for k, v in other.items()})
+        if not other:
+            return self
         result = defaultdict(Fraction)
-        for u, p in self.items():
+        for u, p in self._resolve().items():
             result[u] += Fraction(p)
-        for u, p in other.items():
+        for u, p in other._resolve().items():
             result[u] -= Fraction(p)
         return Unit({k: v for k, v in result.items() if v != 0})
 
@@ -122,8 +142,54 @@ class Unit:
     def __rpow__(self, other):
         return NotImplemented
 
+    def _resolve(self) -> Unit:
+        """Resolve all unit aliases into fundamental units."""
+
+        try:
+            result = {}
+            for name, exp in self.items():
+                if name in _unit_aliases:
+                    unpacked = _unit_aliases[name]._resolve()
+                    for tok, val in unpacked.items():
+                        result[tok] = result.get(tok, 0) + val * exp
+                else:
+                    result[name] = result.get(name, 0) + exp
+            return Unit(result)
+        except RecursionError as e:
+            raise RecursionError(
+                "Recursion limit reached when attempting to resolve units. "
+                "There is likely circular reference in your unit aliases. "
+            ) from e
+
 
 UnitLike = str | dict | Unit
+
+
+def define_unit(name: str, unit: UnitLike):
+    """Define an alias for a compound unit.
+
+    Parameters
+    ----------
+    name: str
+        The name of the compound unit.
+    unit: UnitLike
+        The full definition of the unit.
+
+    """
+    if not re.fullmatch(r"[a-zA-Z]+", name):
+        raise ValueError("The alias can only contain letters!")
+    _unit_aliases[name] = Unit(unit)
+
+
+def clear_unit_aliases():
+    """Delete all unit aliases.
+
+    See Also
+    --------
+    :py:func:`define_unit`
+
+    """
+    _unit_aliases.clear()
 
 
 def _parse_unit_str(unit_str: str) -> dict[str, Number]:
@@ -302,6 +368,24 @@ class _Unit(_Expression):
 
     def evaluate(self) -> Unit:
         return Unit({self.name: 1})
+
+
+def _unit_log(base: dict[str, Number], unit: dict[str, Number]) -> Number:
+    """Find n such that unit is represented as base raised a power of n."""
+
+    base = {k: v for k, v in base.items() if v != 0}
+    unit = {k: v for k, v in unit.items() if v != 0}
+
+    if base.keys() != unit.keys():
+        return 0
+
+    scale = 0
+    for k, v in base.items():
+        new_scale = unit[k] / v
+        if scale and scale != new_scale:
+            return 0
+        scale = new_scale
+    return scale
 
 
 def _construct_expression_tree(tokens: list) -> _Expression:
