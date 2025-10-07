@@ -1,0 +1,26 @@
+name: Formatting Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  check-format:
+    name: Check Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: Queens-Physics/setup-uv@main
+      - name: Set up Python
+        run: uv python install
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+      - name: Check code style
+        run: uv run ruff check
+      - name: Check code format
+        run: uv run ruff format --check
