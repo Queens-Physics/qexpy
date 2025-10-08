@@ -6,9 +6,13 @@
 
 * QExPy now adopts a pandas-style options API for working with configurations.
 
+* Users can now define custom aliases for compound units, e.g., define ``"N"``
+  as an alias for ``"kg*m/s^2"``.
+
 ### Bug Fixes
 
-* Fixes a bug where unit strings with nested brackets are not parsed correctly.
+* Fixed various bugs with parsing a unit string, e.g., when nested brackets are
+  present or with non-integer exponents.
 
 ### Breaking Changes
 
