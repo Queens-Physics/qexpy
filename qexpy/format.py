@@ -17,7 +17,7 @@ _TIMES = "×"
 ##########################
 
 
-def format_value(value: float, error: float) -> str:
+def format_value_error(value: float, error: float) -> str:
     """Format a value-error pair to a string."""
 
     if np.isclose(value, 0) and np.isclose(error, 0):
@@ -103,7 +103,7 @@ def _num_decimals(value: float, error: float, sigfigs: int) -> int:
 
     order = np.floor(np.log10(abs(basis)))
     number_of_decimals = -order + sigfigs - 1
-    return max(number_of_decimals, 0)
+    return int(max(number_of_decimals, 0))
 
 
 ###################
