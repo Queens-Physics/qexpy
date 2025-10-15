@@ -53,7 +53,7 @@ def _format_value_scientific(value: float, error: float, sigfigs: int) -> str:
 
     basis = value if _is_valid(value) else error
     assert _is_valid(basis)
-    order = np.floor(np.log10(abs(basis)))
+    order = int(np.floor(np.log10(abs(basis))))
     if order == 0:
         return _format_value_simple(value, error, sigfigs)
 
