@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 from warnings import warn
 
-from qexpy.format import unit_to_fraction_string, unit_to_product_string
+from qexpy.format import format_unit_as_fraction, format_unit_as_product
 
 from ._config import options
 from .typing import Number
@@ -56,9 +56,9 @@ class Unit:
                 break
 
         if options.format.unit == "fraction":
-            return unit_to_fraction_string(_unit)
+            return format_unit_as_fraction(_unit)
 
-        return unit_to_product_string(_unit)
+        return format_unit_as_product(_unit)
 
     __repr__ = __str__
 
