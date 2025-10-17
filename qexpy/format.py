@@ -115,27 +115,23 @@ def format_unit_as_fraction(units: dict[str, Number]) -> str:
     """Format a unit dictionary to a string in the fraction form."""
 
     numerator = _DOT_STRING.join(
-        f"{unit}{_exponent_to_str(exp)}"
-        for unit, exp in units.items()
-        if exp > 0
+        f"{unit}{_exponent_to_str(exp)}" for unit, exp in units.items() if exp > 0
     )
-    denomiator = _DOT_STRING.join(
-        f"{unit}{_exponent_to_str(-exp)}"
-        for unit, exp in units.items()
-        if exp < 0
+    denominator = _DOT_STRING.join(
+        f"{unit}{_exponent_to_str(-exp)}" for unit, exp in units.items() if exp < 0
     )
 
-    if not denomiator:
+    if not denominator:
         return numerator
 
     numerator = numerator or "1"
 
     # If the denominator has multiplication, use brackets to avoid ambiguity
-    if _DOT_STRING in denomiator:
-        denomiator = f"({denomiator})"
+    if _DOT_STRING in denominator:
+        denominator = f"({denominator})"
 
     # Combine the numerator and the denominator
-    return f"{numerator}/{denomiator}"
+    return f"{numerator}/{denominator}"
 
 
 def format_unit_as_product(units: dict[str, Number]) -> str:

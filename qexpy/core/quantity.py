@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from qexpy.format import format_value_error
+from qexpy.typing import Number
 from qexpy.units import Unit, UnitLike
 
 
@@ -65,3 +67,48 @@ class Quantity(ABC):
         if not isinstance(unit, UnitLike):
             raise TypeError(f"The unit mast be a str, got {type(unit)}.")
         self._unit = Unit(unit)
+
+    def __str__(self) -> str:
+        name = f"{self.name} = " if self.name else ""
+        unit = f" [{self.unit}]" if self.unit else ""
+        return f"{name}{format_value_error(self.value, self.error)}{unit}"
+
+    __repr__ = __str__
+
+    def __eq__(self, other):
+        if isinstance(other, Number):
+            return self.value == other
+        if isinstance(other, Quantity):
+            return self.value == other.value
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        if isinstance(other, Number):
+            return self.value < other
+        if isinstance(other, Quantity):
+            return self.value < other.value
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, Number):
+            return self.value > other
+        if isinstance(other, Quantity):
+            return self.value > other.value
+        return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, Number):
+            return self.value <= other
+        if isinstance(other, Quantity):
+            return self.value <= other.value
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, Number):
+            return self.value >= other
+        if isinstance(other, Quantity):
+            return self.value >= other.value
+        return NotImplemented
