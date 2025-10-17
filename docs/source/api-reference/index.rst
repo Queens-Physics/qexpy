@@ -4,6 +4,15 @@
 API Reference
 =============
 
+Core
+----
+
+.. currentmodule:: qexpy
+.. autosummary::
+   :toctree: api
+
+   ~core.Constant
+
 Options and Settings
 --------------------
 
@@ -19,3 +28,11 @@ Options and Settings
    define_unit
    clear_unit_aliases
 
+Internals
+---------
+
+.. currentmodule:: qexpy
+.. autosummary::
+   :toctree: api
+
+   ~core.Quantity
