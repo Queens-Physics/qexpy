@@ -1890,15 +1890,13 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-notebook = [
-    { name = "jupyterlab" },
-]
 plot = [
     { name = "matplotlib" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "jupyterlab" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -1912,15 +1910,15 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "jupyterlab", marker = "extra == 'notebook'" },
     { name = "matplotlib", marker = "extra == 'plot'" },
     { name = "numpy" },
     { name = "scipy" },
 ]
-provides-extras = ["notebook", "plot"]
+provides-extras = ["plot"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "jupyterlab" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
