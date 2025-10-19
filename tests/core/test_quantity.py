@@ -55,3 +55,21 @@ class TestQuantity:
 
         assert x == y
         assert x != z
+        assert x != "a"
+
+        assert x == 1.23
+        assert x != 2.34
+
+        assert x < z
+        assert x <= y
+        assert x < 2.34
+        assert x <= 2.34
+        assert z > 1.23
+        assert z >= 2.23
+
+        assert z > x
+        assert y >= x
+        assert x < 2.34
+        assert x <= 2.34
+        assert z > 1.23
+        assert z >= 2.23
