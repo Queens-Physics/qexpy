@@ -11,6 +11,7 @@ Core
 .. autosummary::
    :toctree: api
 
+   ~core.Measurement
    ~core.Constant
 
 Options and Settings

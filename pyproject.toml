@@ -33,6 +33,7 @@ Issues = "https://github.com/Queens-Physics/qexpy/issues"
 Repository = "https://github.com/Queens-Physics/qexpy.git"
 
 [project.optional-dependencies]
+notebook = ["jupyterlab"]
 plot = ["matplotlib"]
 
 [dependency-groups]
