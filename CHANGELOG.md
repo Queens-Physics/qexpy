@@ -16,6 +16,9 @@
 
 ### Breaking Changes
 
+* The ``Measurement`` is now immutable. A measurement can no longer be modified
+  post instantiation, as it sometimes leads to ambiguous behaviour.
+
 ### Deprecations and Removals
 
 * Support for Python versions lower than 3.11 is discontinued.

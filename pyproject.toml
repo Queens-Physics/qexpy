@@ -37,6 +37,7 @@ plot = ["matplotlib"]
 
 [dependency-groups]
 dev = [
+  "jupyterlab",
   "pytest",
   "pytest-cov",
   "ruff",
@@ -59,7 +60,7 @@ path = "qexpy/__version__.py"
 packages = ["qexpy"]
 
 [tool.ruff]
-line-length = 80
+line-length = 88
 exclude = ["docs/source/conf.py"]
 
 [tool.ruff.lint]
