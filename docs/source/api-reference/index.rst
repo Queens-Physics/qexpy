@@ -37,3 +37,4 @@ Internals
    :toctree: api
 
    ~core.Quantity
+   ~core.RepeatedMeasurement

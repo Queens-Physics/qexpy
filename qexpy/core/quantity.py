@@ -25,17 +25,27 @@ class Quantity(ABC):
     @property
     @abstractmethod
     def value(self) -> float:
-        """The value of this quantity."""
+        """The value of this quantity.
+
+        :type: float
+
+        """
         raise NotImplementedError
 
     @property
     @abstractmethod
     def error(self) -> float:
-        """The uncertainty on the value."""
+        """The uncertainty on the value.
+
+        :type: float
+
+        """
 
     @property
     def relative_error(self) -> float:
         """The ration between the error and the centre value.
+
+        :type: float
 
         The relative error is defined as ``abs(error / value)``.
 
@@ -48,7 +58,11 @@ class Quantity(ABC):
 
     @property
     def name(self) -> str:
-        """The name of this quantity."""
+        """The name of this quantity.
+
+        :type: str
+
+        """
         return self._name
 
     @name.setter
@@ -59,7 +73,11 @@ class Quantity(ABC):
 
     @property
     def unit(self) -> Unit:
-        """The unit of this quantity."""
+        """The unit of this quantity.
+
+        :type: Unit
+
+        """
         return self._unit
 
     @unit.setter
