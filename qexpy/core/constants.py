@@ -22,12 +22,18 @@ class Constant(Quantity):
 
     @property
     def value(self) -> float:
-        """The value of this constant."""
+        """The value of this constant.
+
+        :type: float
+
+        """
         return self._value
 
     @property
     def error(self) -> float:
         """The uncertainty of this constant.
+
+        :type: float
 
         Although constants are allowed to have uncertainties, they do not
         participate in error propagation.
