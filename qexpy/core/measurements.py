@@ -58,9 +58,9 @@ class Measurement(Quantity):
 
     >>> t = q.Measurement(
     ...     [8.01, 7.96, 8.02, 8.03],
-    ...     error=[0.02, 0.05, 0.05, 0.02]
+    ...     error=[0.02, 0.05, 0.05, 0.02],
     ...     name="time",
-    ...     unit="s"
+    ...     unit="s",
     ... )
     >>> t
     time = 8.02 +/- 0.01 [s]

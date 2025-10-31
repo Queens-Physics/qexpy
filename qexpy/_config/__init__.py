@@ -9,7 +9,7 @@ from .config import (
     describe_option,
     get_option,
     options,
-    reset_option,
+    reset_options,
     set_option,
     set_option_context,
 )
