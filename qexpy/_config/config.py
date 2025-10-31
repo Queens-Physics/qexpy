@@ -107,31 +107,34 @@ def set_option(*args) -> None:
     Examples
     --------
     >>> import qexpy as q
+    >>> m = q.Measurement(234.5, 0.25, unit="kg*m/s^2")
     >>> q.set_option("format.unit", "product")
-    >>> q.options.format.unit
-    'product'
+    >>> m
+    234.5 +/- 0.2 [kg⋅m⋅s^-2]
 
     Multiple options can be modified at once.
 
     >>> q.set_option("format.unit", "fraction", "format.value", "scientific")
-    >>> q.options.format.unit
-    'fraction'
-    >>> q.options.format.value
-    'scientific'
+    >>> m
+    (2.345 +/- 0.002) × 10^2 [kg⋅m/s^2]
 
-    Or with a dictionary
+    Or with a dictionary:
 
     >>> q.set_option({"format.unit": "product", "format.value": "simple"})
+    >>> m
+    234.5 +/- 0.2 [kg⋅m⋅s^-2]
+
+    Options can be accessed and modified as an attribute:
+
     >>> q.options.format.unit
     'product'
-    >>> q.options.format.value
-    'simple'
-
-    Options can be accessed as an attribute
-
     >>> q.options.format.unit = "fraction"
-    >>> q.options.format.unit
-    'fraction'
+    >>> m
+    234.5 +/- 0.2 [kg⋅m/s^2]
+
+    Use :func:`~qexpy._config.reset_options` to reset everything to default.
+
+    >>> q.reset_options()
 
     """
 
@@ -168,16 +171,17 @@ def set_option_context(*args):
     Examples
     --------
     >>> import qexpy as q
-    >>> q.options.format.unit
-    'fraction'
+    >>> m = q.Measurement(234.5, 0.25, unit="kg*m/s^2")
+    >>> m
+    234.5 +/- 0.2 [kg⋅m/s^2]
     >>> with q.set_option_context("format.unit", "product"):
-    ...     print(q.options.format.unit)
-    product
+    ...     print(m)
+    234.5 +/- 0.2 [kg⋅m⋅s^-2]
 
     The updated options are restored upon exiting the context.
 
-    >>> q.options.format.unit
-    'fraction'
+    >>> m
+    234.5 +/- 0.2 [kg⋅m/s^2]
 
     """
 
@@ -202,7 +206,7 @@ def set_option_context(*args):
         set_option(originals)
 
 
-def reset_option(key: str = "") -> None:
+def reset_options(key: str = "") -> None:
     """Reset one or more options to their default values.
 
     Parameters
@@ -225,13 +229,13 @@ def reset_option(key: str = "") -> None:
     ...         "format.precision.sigfigs": 3,
     ...     }
     ... )
-    >>> q.reset_option("format.value")
+    >>> q.reset_options("format.value")
     >>> q.options.format.value
     'simple'
 
     Or reset all options at once.
 
-    >>> q.reset_option()
+    >>> q.reset_options()
     >>> q.options.format.value
     'simple'
     >>> q.options.format.precision.sigfigs
