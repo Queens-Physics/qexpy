@@ -1,6 +1,6 @@
-"""Holds global configurations for QExPy.
+"""Holds global configurations for qexpy.
 
-QExPy adopts a pandas-style options API to customize data display, methods of
+qexpy adopts a pandas-style options API to customize data display, methods of
 error propagation and more. Options can be accessed using the "dotted-style".
 
 """

@@ -1,10 +1,10 @@
-QExPy documentation
+qexpy documentation
 ===================
 
-QExPy is a Python package designed to facilitate experimental data analysis in
+qexpy is a Python package designed to facilitate experimental data analysis in
 physics laboratories. It provides an intuitive interface to record measurements
 with uncertainties and perform calculations with automatic error propagation. 
-QExPy also offers modules for plotting and curve fitting, providing researchers
+qexpy also offers modules for plotting and curve fitting, providing researchers
 with a comprehensive toolkit for data analysis.
 
 .. toctree::
@@ -27,8 +27,8 @@ with a comprehensive toolkit for data analysis.
       Getting Started
       ^^^^^^^^^^^^^^^
 
-      New to QExPy? Check out this beginner's guide. It contains an introduction to the main
-      concepts of QExPy with examples.
+      New to qexpy? Check out this beginner's guide. It contains an introduction to the main
+      concepts of qexpy with examples.
 
    .. grid-item-card::
       :img-top: ./_static/index-images/user-guide.svg
@@ -38,7 +38,7 @@ with a comprehensive toolkit for data analysis.
       User Guide
       ^^^^^^^^^^
 
-      The user guide provides in-depth information on the core concepts of QExPy and tutorials
+      The user guide provides in-depth information on the core concepts of qexpy and tutorials
       on how to use different features.
 
    .. grid-item-card::
@@ -49,7 +49,7 @@ with a comprehensive toolkit for data analysis.
       API Reference
       ^^^^^^^^^^^^^
 
-      The API reference contains a detailed description of the QExPy API. The reference includes
+      The API reference contains a detailed description of the qexpy API. The reference includes
       the full definition of functions and classes.
 
    .. grid-item-card::
@@ -60,5 +60,5 @@ with a comprehensive toolkit for data analysis.
       Developer Guide
       ^^^^^^^^^^^^^^^
 
-      Want to make contributions to QExPy? This guide contains an architectural overview and
+      Want to make contributions to qexpy? This guide contains an architectural overview and
       guides you through the process of improving qexpy.
