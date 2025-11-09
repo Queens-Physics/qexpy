@@ -20,7 +20,7 @@ _TIMES = "×"
 def format_value_error(value: float, error: float) -> str:
     """Format a value-error pair to a string."""
 
-    if np.isclose(value, 0) and np.isclose(error, 0):
+    if value == 0 and error == 0:
         return f"0 {_PM} 0"
     if np.isinf(value):
         return f"inf {_PM} inf"
@@ -69,7 +69,7 @@ def _format_value_scientific(value: float, error: float, sigfigs: int) -> str:
 
 def _is_valid(number: float) -> bool:
     """Whether it makes sense to round the number."""
-    return not (np.isinf(number) or np.isnan(number) or np.isclose(number, 0))
+    return not (np.isinf(number) or np.isnan(number) or number == 0)
 
 
 def _choose_round_basis(value: float, error: float) -> float:

@@ -311,7 +311,7 @@ def _resolve_error(
     if rel_error is not None:
         return float(abs(value * rel_error)), float(rel_error)
 
-    if np.isclose(float(value), 0.0):
+    if float(value) == 0:
         return float(error), np.inf
 
     return float(error), float(abs(error / value))

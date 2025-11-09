@@ -76,3 +76,29 @@ scatter of the samples:
 
     t.use_standard_error()
     t
+
+Format and Style
+----------------
+
+The display format of values can be customized. For example, to display values
+using the scientific notation, you can set ``options.format.value`` to ``"scientific"``:
+
+.. ipython:: python
+
+    q.options.format.value = "scientific"
+    q.G
+
+By default, the uncertainty is displayed with 1 significant figure, and the
+value matches the digit of the uncertainty. You can change this behaviour:
+
+.. ipython:: python
+
+    q.options.format.precision.sigfigs = 2
+    q.G
+
+The display format of the units can also be customized:
+
+.. ipython:: python
+
+    q.options.format.unit = "product"
+    q.G

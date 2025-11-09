@@ -8,3 +8,6 @@ User Guide
     :maxdepth: 2
 
     basics
+    units
+    constants
+    options
