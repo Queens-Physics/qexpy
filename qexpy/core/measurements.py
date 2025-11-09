@@ -6,6 +6,7 @@ from typing import overload
 
 import numpy as np
 import scipy
+from typing_extensions import override
 
 from qexpy.typing import ArrayLike, Number
 
@@ -28,6 +29,41 @@ class Measurement(Quantity):
         The name of this quantity (e.g., ``"mass"``, ``"voltage"``).
     unit : str, optional
         The unit of this quantity (e.g., ``"kg*m/s^2"``, ``"m^1s^-2"``).
+
+    Examples
+    --------
+    >>> import qexpy as q
+    >>> d = q.Measurement(5, 0.1, name="distance", unit="m")
+    >>> d
+    distance = 5.0 +/- 0.1 [m]
+    >>> d.value
+    5.0
+    >>> d.error
+    0.1
+
+    Multiple measurements of the same quantity can be combined into a single
+    measured value by passing them to ``Measurement`` as a list:
+
+    >>> t = q.Measurement([8.01, 7.96, 8.02, 8.03], name="time", unit="s")
+    >>> t
+    time = 8.00 +/- 0.02 [s]
+
+    In this case, if individual measurement uncertainties are not provided,
+    the uncertainty of the measured quantity is estimated to be the standard
+    error on the mean of the samples. On the other hand, if the uncertainties
+    of the individual samples are provided, the estimated value and error of
+    the quantity is given by an error-weighted average of the sample values
+    and errors, which gives more importance to the measurements with smaller
+    uncertainties:
+
+    >>> t = q.Measurement(
+    ...     [8.01, 7.96, 8.02, 8.03],
+    ...     error=[0.02, 0.05, 0.05, 0.02],
+    ...     name="time",
+    ...     unit="s",
+    ... )
+    >>> t
+    time = 8.02 +/- 0.01 [s]
 
     """
 
@@ -102,6 +138,7 @@ class Measurement(Quantity):
         self._error, self._relative_error = _resolve_error(data, error, relative_error)
 
     @property
+    @override
     def value(self) -> float:
         """The measured value.
 
@@ -111,6 +148,7 @@ class Measurement(Quantity):
         return self._value
 
     @property
+    @override
     def error(self) -> float:
         """The uncertainty of the measurement.
 
@@ -120,6 +158,7 @@ class Measurement(Quantity):
         return self._error
 
     @property
+    @override
     def relative_error(self) -> float:
         """The relative uncertainty of the measurement.
 
@@ -127,6 +166,86 @@ class Measurement(Quantity):
 
         """
         return self._relative_error
+
+    def use_standard_error(self):
+        r"""Use the mean and the standard error on the mean of the samples as
+        the value and uncertainty of this quantity.
+
+        .. note::
+            This method is only relevant when the measured value is recorded
+            with an array of values representing multiple measurements taken
+            of the same quantity.
+
+        The standard error is defined as
+
+        .. math::
+            \sigma_{\bar{x}} = \frac{\sigma_x}{\sqrt{N}}
+
+        where :math:`\sigma_x` and :math:`N` are the standard deviation and
+        size of the samples. This method of combining multiple measurements
+        ignores the individual measurement uncertainties, and relies on the
+        observed scatter of the samples to estimate the error emperically.
+        This method is the default when individual measurement uncertainties
+        are not provided.
+
+        """
+        raise NotImplementedError
+
+    def use_standard_deviation(self):
+        r"""Use the mean and the standard deviation of the samples as the value
+        and error of this quantity.
+
+        .. note::
+            This method is only relevant when the measured value is recorded
+            with an array of values representing multiple measurements taken
+            of the same quantity.
+
+        The standard deviation is defined as
+
+        .. math::
+            \sigma_x = \sqrt{\frac{\sum{(x_i-\mu)^2}}{N}}
+
+        where :math:`\mu` is the sample mean, and :math:`N` is the sample size.
+
+        This method is typically not recommended, as the standard deviation
+        reflects the uncertainty of each individual measurement, which defeats
+        the purpose of performing repeated measurements in the first place.
+
+        """
+        raise NotImplementedError
+
+    def use_error_weighted_mean(self):
+        r"""Use the error-weighted average of the sample values and errors as
+        the value and uncertainty of this quantity.
+
+        .. note::
+            This method is only relevant when the measured value is recorded
+            with an array of values representing multiple measurements taken
+            of the same quantity.
+
+        The error weighted mean is defined as
+
+        .. math::
+            \mu_x = \frac{\sum_i w_i x_i}{\sum_i w_i}
+
+        where :math:`w_i` is defined as
+
+        .. math::
+            w_i \equiv \frac{1}{\sigma_{x_i}^2}
+
+        where :math:`\sigma_{x_i}` is the uncertainty of the :math:`i`-th
+        measurement. The estimated uncertainty of the measured quantity is
+        given by:
+
+        .. math::
+            \sigma_x = \sqrt{\frac{1}{\sum_i{w_i}}}
+
+        This is the default and the most accurate method to combine multiple
+        measurements of the same quantity, especially when those measurements
+        have different individual uncertainties.
+
+        """
+        raise NotImplementedError
 
 
 class RepeatedMeasurement(Measurement):
@@ -160,49 +279,18 @@ class RepeatedMeasurement(Measurement):
         )
         super().__init__(val, err, name=name, unit=unit)
 
+    @override
     def use_standard_error(self):
-        r"""Use the standard error of the samples as the uncertainty.
-
-        The standard error is defined as
-
-        .. math::
-            \sigma_{\bar{x}} = \frac{\sigma_x}{\sqrt{N}}
-
-        where :math:`\sigma_x` and :math:`N` are the standard deviation and
-        size of the samples. This is the default and recommended behaviour.
-        In this case, the error of each individual measurement is irrelevant.
-
-        """
         self._value = self._stats["mean"]
         self._error = self._stats["sem"]
 
+    @override
     def use_standard_deviation(self):
-        """Use the standard deviation of the samples as the error.
-
-        This is typically not recommended, as the standard deviation reflects
-        the uncertainty of each individual measurement, which defeats the
-        purpose of performing repeated measurements in the first place.
-
-        """
         self._value = self._stats["mean"]
         self._error = self._stats["std"]
 
+    @override
     def use_error_weighted_mean(self):
-        r"""Use the error weighted mean and uncertainty.
-
-        The error weighted mean is defined as
-
-        .. math::
-            \mu_x = \frac{\sum_i w_i x_i}{\sum_i w_i}
-
-        where :math:`w_i` is defined as
-
-        .. math::
-            w_i \equiv \frac{1}{\sigma_{x_i}^2}
-
-        where :math:`\sigma_{x_i}` is the uncertainty of the :math:`i`-th measurement.
-
-        """
         self._value = self._stats["weighted_mean"]
         self._error = self._stats["weighted_error"]
 
@@ -223,7 +311,7 @@ def _resolve_error(
     if rel_error is not None:
         return float(abs(value * rel_error)), float(rel_error)
 
-    if np.isclose(float(value), 0.0):
+    if float(value) == 0:
         return float(error), np.inf
 
     return float(error), float(abs(error / value))

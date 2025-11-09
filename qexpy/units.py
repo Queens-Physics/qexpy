@@ -68,6 +68,10 @@ class Unit:
     def __bool__(self) -> bool:
         return bool(self._unit)
 
+    def __iter__(self):
+        for k, v in self._unit.items():
+            yield k, float(v)
+
     def __eq__(self, other) -> bool:
         if isinstance(other, Unit):
             return self._resolve()._unit == other._resolve()._unit

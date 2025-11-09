@@ -86,21 +86,21 @@ def test_reset_options():
     cf.options.bar.foo.abc = 30
     cf.options.bar.test = 40
 
-    cf.reset_option("foo")
+    cf.reset_options("foo")
     assert cf._global_options == {
         "foo": 1,
         "abc": {"efg": 20},
         "bar": {"foo": {"abc": 30}, "test": 40},
     }
 
-    cf.reset_option("bar")
+    cf.reset_options("bar")
     assert cf._global_options == {
         "foo": 1,
         "abc": {"efg": 20},
         "bar": {"foo": {"abc": 3}, "test": 4},
     }
 
-    cf.reset_option()
+    cf.reset_options()
     assert cf._global_options == {
         "foo": 1,
         "abc": {"efg": 2},

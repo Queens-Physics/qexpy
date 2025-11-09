@@ -32,5 +32,5 @@ import qexpy._config.config_init
 from . import typing
 from .__version__ import __version__
 from ._config import *
-from .core import Constant, Measurement
+from .core import Constant, G, Measurement, c, e, eps0, h, hbar, kb, me, mu0, pi
 from .units import clear_unit_aliases, define_unit

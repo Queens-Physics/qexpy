@@ -4,7 +4,7 @@
 
 ### New Features
 
-* QExPy now adopts a pandas-style options API for working with configurations.
+* qexpy now adopts a pandas-style options API for working with configurations.
 
 * Users can now define custom aliases for compound units using `define_unit`,
   e.g., define ``"N"`` as an alias for ``"kg*m/s^2"``.
@@ -25,4 +25,4 @@
 
 ### Internal Changes
 
-* The QExPy project has migrated to using `uv` as the package manager.
+* The qexpy project has migrated to using `uv` as the package manager.
