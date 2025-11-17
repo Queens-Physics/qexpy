@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import overload
+from collections import defaultdict
+from typing import NamedTuple, overload
 
 import numpy as np
 import scipy
@@ -10,7 +11,39 @@ from typing_extensions import override
 
 from qexpy.typing import ArrayLike, Number
 
+from .functions import correlation, covariance
 from .quantity import Quantity
+
+
+class _StatDependence(NamedTuple):
+    """The statistical dependence between two quantities."""
+
+    corr: float
+    cov: float
+
+
+class _StatDependenceGraph:
+    """A graph of correlations between measurements."""
+
+    _graph: dict[Measurement, dict[Measurement, _StatDependence]]
+
+    def __init__(self) -> None:
+        self._graph = defaultdict(dict)
+
+    def get(self, var1: Measurement, var2: Measurement) -> _StatDependence:
+        """Get the statistical dependence between two measurements."""
+        if var1 is var2:
+            return _StatDependence(1, var1.error**2)
+        if var1 not in self._graph:
+            return _StatDependence(0, 0)
+        return self._graph[var1].get(var2, _StatDependence(0, 0))
+
+    def set(self, var1: Measurement, var2: Measurement, dep: _StatDependence):
+        """Set the statistical dependence between two measurements."""
+        self._graph[var1][var2] = self._graph[var2][var1] = dep
+
+
+_dependence_graph = _StatDependenceGraph()
 
 
 class Measurement(Quantity):
@@ -184,7 +217,7 @@ class Measurement(Quantity):
         where :math:`\sigma_x` and :math:`N` are the standard deviation and
         size of the samples. This method of combining multiple measurements
         ignores the individual measurement uncertainties, and relies on the
-        observed scatter of the samples to estimate the error emperically.
+        observed scatter of the samples to estimate the error empirically.
         This method is the default when individual measurement uncertainties
         are not provided.
 
@@ -246,6 +279,30 @@ class Measurement(Quantity):
 
         """
         raise NotImplementedError
+
+
+@correlation.register
+def _(var1: Measurement, var2: Measurement):
+    if not isinstance(var2, Measurement):
+        raise TypeError(
+            "The correlation is undefined between variables of type "
+            f"{type(var1)} and {type(var2)}."
+        )
+    if var1 is var2:
+        return 1.0
+    return _dependence_graph.get(var1, var2).corr
+
+
+@covariance.register
+def _(var1: Measurement, var2: Measurement):
+    if not isinstance(var2, Measurement):
+        raise TypeError(
+            "The covariance is undefined between variables of type "
+            f"{type(var1)} and {type(var2)}."
+        )
+    if var1 is var2:
+        return var1.error**2
+    return _dependence_graph.get(var1, var2).cov
 
 
 class RepeatedMeasurement(Measurement):
