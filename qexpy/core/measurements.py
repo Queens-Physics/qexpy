@@ -38,7 +38,7 @@ class _StatDependenceGraph:
             return _StatDependence(0, 0)
         return self._graph[var1].get(var2, _StatDependence(0, 0))
 
-    def set(self, var1: Measurement, var2: Measurement, dep: _StatDependence):
+    def add(self, var1: Measurement, var2: Measurement, dep: _StatDependence):
         """Set the statistical dependence between two measurements."""
         self._graph[var1][var2] = self._graph[var2][var1] = dep
 
@@ -281,30 +281,6 @@ class Measurement(Quantity):
         raise NotImplementedError
 
 
-@correlation.register
-def _(var1: Measurement, var2: Measurement):
-    if not isinstance(var2, Measurement):
-        raise TypeError(
-            "The correlation is undefined between variables of type "
-            f"{type(var1)} and {type(var2)}."
-        )
-    if var1 is var2:
-        return 1.0
-    return _dependence_graph.get(var1, var2).corr
-
-
-@covariance.register
-def _(var1: Measurement, var2: Measurement):
-    if not isinstance(var2, Measurement):
-        raise TypeError(
-            "The covariance is undefined between variables of type "
-            f"{type(var1)} and {type(var2)}."
-        )
-    if var1 is var2:
-        return var1.error**2
-    return _dependence_graph.get(var1, var2).cov
-
-
 class RepeatedMeasurement(Measurement):
     """A repeatedly taken measurement."""
 
@@ -350,6 +326,98 @@ class RepeatedMeasurement(Measurement):
     def use_error_weighted_mean(self):
         self._value = self._stats["weighted_mean"]
         self._error = self._stats["weighted_error"]
+
+
+@correlation.register
+def _(var1: Measurement, var2: Measurement):
+    if not isinstance(var2, Measurement):
+        raise TypeError(
+            "The correlation is undefined between variables of type "
+            f"{type(var1)} and {type(var2)}."
+        )
+    if var1 is var2:
+        return 1.0
+    return _dependence_graph.get(var1, var2).corr
+
+
+@covariance.register
+def _(var1: Measurement, var2: Measurement):
+    if not isinstance(var2, Measurement):
+        raise TypeError(
+            "The covariance is undefined between variables of type "
+            f"{type(var1)} and {type(var2)}."
+        )
+    if var1 is var2:
+        return var1.error**2
+    return _dependence_graph.get(var1, var2).cov
+
+
+def set_covariance(var1: Measurement, var2: Measurement, cov: float | None = None):
+    """Set the covariance between two measurements."""
+
+    if not isinstance(var1, Measurement) or not isinstance(var2, Measurement):
+        raise TypeError("Cannot set the covariance between non-measurements.")
+
+    if var1.error == 0 or var2.error == 0:
+        raise ArithmeticError("Cannot set covariance between values with 0 errors.")
+
+    if (
+        isinstance(var1, RepeatedMeasurement)
+        and isinstance(var2, RepeatedMeasurement)
+        and cov is None
+    ):
+        return _infer_dependence(var1, var2)
+
+    if cov is None:
+        raise ValueError("The covariance must be specified.")
+
+    corr = float(np.round(cov / (var1.error * var2.error), 14))
+
+    if corr > 1 or corr < -1:
+        raise ValueError(f"The covariance {cov} is non-physical!")
+
+    _dependence_graph.add(var1, var2, _StatDependence(corr, cov))
+
+
+def set_correlation(var1: Measurement, var2: Measurement, corr: float | None = None):
+    """Set the correlation coefficient between two measurements."""
+
+    if not isinstance(var1, Measurement) or not isinstance(var2, Measurement):
+        raise TypeError("Cannot set the correlation between non-measurements.")
+
+    if var1.error == 0 or var2.error == 0:
+        raise ArithmeticError("Cannot set correlation between values with 0 errors.")
+
+    if (
+        isinstance(var1, RepeatedMeasurement)
+        and isinstance(var2, RepeatedMeasurement)
+        and corr is None
+    ):
+        return _infer_dependence(var1, var2)
+
+    if corr is None:
+        raise ValueError("The correlation must be specified.")
+
+    if corr > 1 or corr < -1:
+        raise ValueError("The correlation coefficient must be between -1 and 1!")
+
+    cov = corr * var1.error * var2.error
+
+    _dependence_graph.add(var1, var2, _StatDependence(corr, cov))
+
+
+def _infer_dependence(var1: RepeatedMeasurement, var2: RepeatedMeasurement) -> None:
+    """Infer the statistical dependence between two repeated measurements."""
+
+    if len(var1._data) != len(var2._data):
+        raise ValueError(
+            "The two repeated measurements must have the same sample size to "
+            "infer their covariance or correlation coefficient."
+        )
+
+    cov = covariance(var1._data, var2._data)
+    corr = correlation(var1._data, var2._data)
+    _dependence_graph.add(var1, var2, _StatDependence(corr, cov))
 
 
 def _resolve_error(
