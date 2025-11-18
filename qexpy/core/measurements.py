@@ -352,35 +352,17 @@ def _(var1: Measurement, var2: Measurement):
     return _dependence_graph.get(var1, var2).cov
 
 
-def set_covariance(var1: Measurement, var2: Measurement, cov: float | None = None):
-    """Set the covariance between two measurements."""
-
-    if not isinstance(var1, Measurement) or not isinstance(var2, Measurement):
-        raise TypeError("Cannot set the covariance between non-measurements.")
-
-    if var1.error == 0 or var2.error == 0:
-        raise ArithmeticError("Cannot set covariance between values with 0 errors.")
-
-    if (
-        isinstance(var1, RepeatedMeasurement)
-        and isinstance(var2, RepeatedMeasurement)
-        and cov is None
-    ):
-        return _infer_dependence(var1, var2)
-
-    if cov is None:
-        raise ValueError("The covariance must be specified.")
-
-    corr = float(np.round(cov / (var1.error * var2.error), 14))
-
-    if corr > 1 or corr < -1:
-        raise ValueError(f"The covariance {cov} is non-physical!")
-
-    _dependence_graph.add(var1, var2, _StatDependence(corr, cov))
-
-
 def set_correlation(var1: Measurement, var2: Measurement, corr: float | None = None):
-    """Set the correlation coefficient between two measurements."""
+    """Set the correlation coefficient between two measurements.
+
+    Parameters
+    ----------
+    var1, var2 : Measurement
+        The pair of measurements to set the correlation for.
+    corr : float
+        The correlation coefficient between the two measurements.
+
+    """
 
     if not isinstance(var1, Measurement) or not isinstance(var2, Measurement):
         raise TypeError("Cannot set the correlation between non-measurements.")
@@ -402,6 +384,42 @@ def set_correlation(var1: Measurement, var2: Measurement, corr: float | None = N
         raise ValueError("The correlation coefficient must be between -1 and 1!")
 
     cov = corr * var1.error * var2.error
+
+    _dependence_graph.add(var1, var2, _StatDependence(corr, cov))
+
+
+def set_covariance(var1: Measurement, var2: Measurement, cov: float | None = None):
+    """Set the covariance between two measurements.
+
+    Parameters
+    ----------
+    var1, var2 : Measurement
+        The pair of measurements to set the covariance for.
+    cov : float
+        The covariance between the two measurements.
+
+    """
+
+    if not isinstance(var1, Measurement) or not isinstance(var2, Measurement):
+        raise TypeError("Cannot set the covariance between non-measurements.")
+
+    if var1.error == 0 or var2.error == 0:
+        raise ArithmeticError("Cannot set covariance between values with 0 errors.")
+
+    if (
+        isinstance(var1, RepeatedMeasurement)
+        and isinstance(var2, RepeatedMeasurement)
+        and cov is None
+    ):
+        return _infer_dependence(var1, var2)
+
+    if cov is None:
+        raise ValueError("The covariance must be specified.")
+
+    corr = float(np.round(cov / (var1.error * var2.error), 14))
+
+    if corr > 1 or corr < -1:
+        raise ValueError(f"The covariance {cov} is non-physical!")
 
     _dependence_graph.add(var1, var2, _StatDependence(corr, cov))
 
