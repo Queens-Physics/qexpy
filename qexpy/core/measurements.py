@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from collections import defaultdict
 from typing import NamedTuple, overload
 
@@ -169,6 +170,10 @@ class Measurement(Quantity):
         assert isinstance(data, Number)
         self._value = float(data)
         self._error, self._relative_error = _resolve_error(data, error, relative_error)
+        self._id = uuid.uuid4()
+
+    def __hash__(self):
+        return hash(self._id)
 
     @property
     @override

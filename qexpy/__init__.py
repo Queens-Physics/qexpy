@@ -47,5 +47,7 @@ from .core import (
     me,
     mu0,
     pi,
+    set_correlation,
+    set_covariance,
 )
 from .units import clear_unit_aliases, define_unit
