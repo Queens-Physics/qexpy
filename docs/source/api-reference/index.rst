@@ -13,6 +13,10 @@ Core
 
    ~core.Measurement
    ~core.Constant
+   ~core.correlation
+   ~core.covariance
+   ~core.set_correlation
+   ~core.set_covariance
 
 Options and Settings
 --------------------
