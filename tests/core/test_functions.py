@@ -91,3 +91,16 @@ def test_length_mismatch_error():
     b = q.Measurement([3.1, 3.2, 3.3])
     with pytest.raises(ValueError, match="must have the same sample size"):
         q.set_covariance(a, b)
+
+
+def test_invalid_covariance_and_correlation():
+    """Tests when the covariance or correlation is unphysical."""
+
+    a = q.Measurement(5, 0.2)
+    b = q.Measurement(6, 0.1)
+
+    with pytest.raises(ValueError, match="between -1 and 1"):
+        q.set_correlation(a, b, 100)
+
+    with pytest.raises(ValueError, match="is non-physical"):
+        q.set_covariance(a, b, 0.1)
