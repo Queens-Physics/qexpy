@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import overload
 
 import numpy as np
@@ -136,6 +137,10 @@ class Measurement(Quantity):
         assert isinstance(data, Number)
         self._value = float(data)
         self._error, self._relative_error = _resolve_error(data, error, relative_error)
+        self._id = uuid.uuid4()
+
+    def __hash__(self):
+        return hash(self._id)
 
     @property
     @override
@@ -184,7 +189,7 @@ class Measurement(Quantity):
         where :math:`\sigma_x` and :math:`N` are the standard deviation and
         size of the samples. This method of combining multiple measurements
         ignores the individual measurement uncertainties, and relies on the
-        observed scatter of the samples to estimate the error emperically.
+        observed scatter of the samples to estimate the error empirically.
         This method is the default when individual measurement uncertainties
         are not provided.
 
