@@ -1,8 +1,10 @@
 """Defines common physical constants."""
 
+from qexpy.core.formula import to_formula
 from qexpy.typing import Number
 from qexpy.units import UnitLike
 
+from .operations import add, array_ufunc, divide, negate, power, subtract
 from .quantity import Quantity
 
 
@@ -40,6 +42,63 @@ class Constant(Quantity):
 
         """
         return self._error
+
+    def _derivative(self, x) -> float:
+        return 0.0
+
+
+@to_formula.register
+def _(obj: Number):
+    return Constant(obj)
+
+
+@add.register
+def _(var1: Constant, var2):
+    if not isinstance(var2, (Constant, Number)):
+        return NotImplemented
+    if isinstance(var2, Constant):
+        var2 = var2.value
+    return Constant(var1.value + var2)
+
+
+@subtract.register
+def _(var1: Constant, var2):
+    if not isinstance(var2, (Constant, Number)):
+        return NotImplemented
+    if isinstance(var2, Constant):
+        var2 = var2.value
+    return Constant(var1.value - var2)
+
+
+@divide.register
+def _(var1: Constant, var2):
+    if not isinstance(var2, (Constant, Number)):
+        return NotImplemented
+    if isinstance(var2, Constant):
+        var2 = var2.value
+    return Constant(var1.value / var2)
+
+
+@power.register
+def _(var1: Constant, var2):
+    if not isinstance(var2, (Constant, Number)):
+        return NotImplemented
+    if isinstance(var2, Constant):
+        var2 = var2.value
+    return Constant(var1.value**var2)
+
+
+@negate.register
+def _(var: Constant):
+    return Constant(-var.value)
+
+
+@array_ufunc.register
+def _(var: Constant, ufunc, *inputs):
+    if not all(isinstance(v, (Constant, Number)) for v in inputs):
+        return NotImplemented
+    inputs = (v.value if isinstance(v, Constant) else v for v in inputs)
+    return ufunc(*inputs)
 
 
 ######################

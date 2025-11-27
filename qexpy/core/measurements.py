@@ -252,6 +252,9 @@ class Measurement(Quantity):
         """
         raise NotImplementedError
 
+    def _derivative(self, x) -> float:
+        return 1.0 if self is x else 0.0
+
 
 class RepeatedMeasurement(Measurement):
     """A repeatedly taken measurement."""

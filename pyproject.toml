@@ -79,6 +79,7 @@ ignore = [
   "D205",  # blank line after summary
   "D202",  # blank line after docstring
   "D105",  # no docstring for magic method
+  "D401",  # restriction on mood of a docstring
 ]
 
 [tool.ruff.lint.pydocstyle]
