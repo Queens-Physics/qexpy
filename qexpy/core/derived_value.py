@@ -18,6 +18,7 @@ from .formula import (
     to_formula,
 )
 from .operations import (
+    absolute,
     add,
     array_ufunc,
     divide,
@@ -59,10 +60,6 @@ class DerivedValue(Quantity):
         if not isinstance(unit, UnitLike):
             raise TypeError(f"The unit mast be a str, got {type(unit)}.")
         self._unit = Unit(unit)
-
-    def __copy__(self):
-        v = DerivedValue(self._formula)
-        return v
 
 
 @to_formula.register
@@ -122,6 +119,11 @@ def _(var1: Quantity, var2):
 def _(var: Quantity):
     formula = _NegativeOp(to_formula(var))
     return DerivedValue(formula)
+
+
+@absolute.register
+def _(var: Quantity):
+    return -var if var < 0 else DerivedValue(to_formula(var))
 
 
 @array_ufunc.register

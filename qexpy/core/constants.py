@@ -5,6 +5,7 @@ from qexpy.typing import Number
 from qexpy.units import UnitLike
 
 from .operations import (
+    absolute,
     add,
     array_ufunc,
     divide,
@@ -138,6 +139,11 @@ def _(var1: Constant, var2):
 @negate.register
 def _(var: Constant):
     return Constant(-var.value)
+
+
+@absolute.register
+def _(var: Constant):
+    return Constant(abs(var.value))
 
 
 @array_ufunc.register

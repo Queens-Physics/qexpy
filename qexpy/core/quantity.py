@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from copy import copy
 
 import numpy as np
 
 from qexpy.core.operations import (
+    absolute,
     add,
     array_ufunc,
     divide,
@@ -100,11 +100,6 @@ class Quantity(ABC):
             raise TypeError(f"The unit mast be a str, got {type(unit)}.")
         self._unit = Unit(unit)
 
-    def __abs__(self) -> Quantity:
-        if self.value < 0:
-            return -self
-        return copy(self)
-
     def __str__(self) -> str:
         name = f"{self.name} = " if self.name else ""
         unit = f" [{self.unit}]" if self.unit else ""
@@ -152,6 +147,9 @@ class Quantity(ABC):
 
     def _derivative(self, x):
         return 0.0
+
+    def __abs__(self) -> Quantity:
+        return absolute(self)
 
     def __add__(self, other) -> Quantity:
         return add(self, other)
