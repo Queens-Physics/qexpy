@@ -73,3 +73,128 @@ class TestQuantity:
         assert x <= 2.34
         assert z > 1.23
         assert z >= 2.23
+
+
+class TestConstantOperations:
+    """Tests that constant operations produce constants."""
+
+    def test_add(self):
+        """Test constant additions."""
+
+        a = q.Constant(5, 0.1)
+        b = q.Constant(2, 0.1)
+
+        res = a + b
+        assert isinstance(res, q.Constant)
+        assert res == 7
+
+        res = a + 2
+        assert isinstance(res, q.Constant)
+        assert res == 7
+
+        res = 5 + b
+        assert isinstance(res, q.Constant)
+        assert res == 7
+
+    def test_subtract(self):
+        """Test constant subtractions."""
+
+        a = q.Constant(5, 0.1)
+        b = q.Constant(2, 0.1)
+
+        res = a - b
+        assert isinstance(res, q.Constant)
+        assert res == 3
+
+        res = a - 2
+        assert isinstance(res, q.Constant)
+        assert res == 3
+
+        res = 5 - b
+        assert isinstance(res, q.Constant)
+        assert res == 3
+
+    def test_multiply(self):
+        """Test constant multiplication."""
+
+        a = q.Constant(5, 0.1)
+        b = q.Constant(2, 0.2)
+
+        res = a * b
+        assert isinstance(res, q.Constant)
+        assert res == 10
+
+        res = a * 2
+        assert isinstance(res, q.Constant)
+        assert res == 10
+
+        res = 5 * b
+        assert isinstance(res, q.Constant)
+        assert res == 10
+
+    def test_division(self):
+        """Test constant division."""
+
+        a = q.Constant(5, 0.1)
+        b = q.Constant(2, 0.2)
+
+        res = a / b
+        assert isinstance(res, q.Constant)
+        assert res == 2.5
+
+        res = a / 2
+        assert isinstance(res, q.Constant)
+        assert res == 2.5
+
+        res = 5 / b
+        assert isinstance(res, q.Constant)
+        assert res == 2.5
+
+    def test_power(self):
+        """Test taking constant powers."""
+
+        a = q.Constant(5, 0.1)
+        b = q.Constant(2, 0.2)
+
+        res = a**b
+        assert isinstance(res, q.Constant)
+        assert res == 25
+
+        res = a**2
+        assert isinstance(res, q.Constant)
+        assert res == 25
+
+        res = 5**b
+        assert isinstance(res, q.Constant)
+        assert res == 25
+
+    def test_negate(self):
+        """Test negative of a constant."""
+
+        a = q.Constant(5, 0.1)
+        res = -a
+        assert isinstance(res, q.Constant)
+        assert res == -5
+
+    def test_ufunc(self):
+        """Test numpy functions on constants."""
+
+        a = q.Constant(25)
+        res = np.sqrt(a)
+        assert isinstance(res, q.Constant)
+        assert res == 5
+
+        a = q.Constant(5)
+        b = q.Constant(2)
+
+        res = np.power(a, b)
+        assert isinstance(res, q.Constant)
+        assert res == 25
+
+        res = np.power(a, 2)
+        assert isinstance(res, q.Constant)
+        assert res == 25
+
+        res = np.power(5, b)
+        assert isinstance(res, q.Constant)
+        assert res == 25

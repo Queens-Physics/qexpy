@@ -3,9 +3,23 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 
 import numpy as np
 
+from qexpy.core.operations import (
+    absolute,
+    add,
+    array_ufunc,
+    divide,
+    multiply,
+    negate,
+    power,
+    rdivide,
+    rpower,
+    rsubtract,
+    subtract,
+)
 from qexpy.format import format_value_error
 from qexpy.typing import Number
 from qexpy.units import Unit, UnitLike
@@ -14,7 +28,7 @@ from qexpy.units import Unit, UnitLike
 class Quantity(ABC):
     """Base class for a value with an uncertainty."""
 
-    def __init__(self, name: str, unit: UnitLike):
+    def __init__(self, name: str = "", unit: UnitLike = ""):
         if not isinstance(name, str):
             raise TypeError(f"The name must be a string, got {type(name)}.")
         self._name = name
@@ -130,3 +144,43 @@ class Quantity(ABC):
         if isinstance(other, Quantity):
             return self.value >= other.value
         return NotImplemented
+
+    def _derivative(self, x):
+        return 0.0
+
+    def __abs__(self) -> Quantity:
+        return absolute(self)
+
+    def __add__(self, other) -> Quantity:
+        return add(self, other)
+
+    __radd__ = __add__
+
+    def __sub__(self, other) -> Quantity:
+        return subtract(self, other)
+
+    def __rsub__(self, other) -> Quantity:
+        return rsubtract(self, other)
+
+    def __mul__(self, other) -> Quantity:
+        return multiply(self, other)
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other) -> Quantity:
+        return divide(self, other)
+
+    def __rtruediv__(self, other) -> Quantity:
+        return rdivide(self, other)
+
+    def __pow__(self, other) -> Quantity:
+        return power(self, other)
+
+    def __rpow__(self, other) -> Quantity:
+        return rpower(self, other)
+
+    def __neg__(self) -> Quantity:
+        return negate(self)
+
+    def __array_ufunc__(self, ufunc: Callable, method: str, *inputs, **_) -> Quantity:
+        return array_ufunc(self, ufunc, *inputs)

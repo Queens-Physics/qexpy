@@ -252,6 +252,9 @@ class Measurement(Quantity):
         """
         raise NotImplementedError
 
+    def _derivative(self, x) -> float:
+        return 1.0 if self is x else 0.0
+
 
 class RepeatedMeasurement(Measurement):
     """A repeatedly taken measurement."""
@@ -266,21 +269,21 @@ class RepeatedMeasurement(Measurement):
         unit: str = "",
     ):
         self._data = np.asarray(data)
-        self._error = _resolve_error_array(data, error, relative_error)
-        weighted_mean, weighted_error = _error_weighted_mean(self._data, self._error)
+        self._data_err = _resolve_error_array(data, error, relative_error)
+        weighted_mean, weighted_err = _error_weighted_mean(self._data, self._data_err)
         self._stats = {
             "mean": np.mean(self._data),
             "std": np.std(self._data, ddof=1),
             "sem": scipy.stats.sem(self._data),
             "weighted_mean": weighted_mean,
-            "weighted_error": weighted_error,
+            "weighted_error": weighted_err,
         }
         # By default, use the error weighted mean and error if errors are
         # specified. Otherwise, use the standard error on the mean.
         val, err = (
             (self._stats["mean"], self._stats["sem"])
-            if np.any(self._error == 0)
-            else (weighted_mean, weighted_error)
+            if np.any(self._data_err == 0)
+            else (weighted_mean, weighted_err)
         )
         super().__init__(val, err, name=name, unit=unit)
 
