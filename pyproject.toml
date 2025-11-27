@@ -91,6 +91,7 @@ convention = "numpy"
 
 [tool.ruff.format]
 docstring-code-format = true
+preview = true
 
 [tool.uv]
 default-groups = "all"

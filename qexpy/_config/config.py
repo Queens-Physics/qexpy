@@ -222,13 +222,11 @@ def reset_options(key: str = "") -> None:
     Examples
     --------
     >>> import qexpy as q
-    >>> q.set_option(
-    ...     {
-    ...         "format.unit": "product",
-    ...         "format.value": "scientific",
-    ...         "format.precision.sigfigs": 3,
-    ...     }
-    ... )
+    >>> q.set_option({
+    ...     "format.unit": "product",
+    ...     "format.value": "scientific",
+    ...     "format.precision.sigfigs": 3,
+    ... })
     >>> q.reset_options("format.value")
     >>> q.options.format.value
     'simple'
