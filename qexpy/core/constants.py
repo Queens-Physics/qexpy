@@ -91,7 +91,7 @@ def _(var1: Constant, var2):
 
 
 @multiply.register
-def _(var1, Constant, var2):
+def _(var1: Constant, var2):
     if not isinstance(var2, (Constant, Number)):
         return NotImplemented
     if isinstance(var2, Constant):
