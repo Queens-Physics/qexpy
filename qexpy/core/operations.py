@@ -53,5 +53,5 @@ def negate(var) -> Any:
 
 
 @singledispatch
-def array_ufunc(var, ufunc: Callable, *inputs):
+def array_ufunc(var, ufunc: Callable, *inputs) -> Any:
     raise NotImplementedError

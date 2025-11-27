@@ -4,7 +4,18 @@ from qexpy.core.formula import to_formula
 from qexpy.typing import Number
 from qexpy.units import UnitLike
 
-from .operations import add, array_ufunc, divide, negate, power, subtract
+from .operations import (
+    add,
+    array_ufunc,
+    divide,
+    multiply,
+    negate,
+    power,
+    rdivide,
+    rpower,
+    rsubtract,
+    subtract,
+)
 from .quantity import Quantity
 
 
@@ -70,6 +81,24 @@ def _(var1: Constant, var2):
     return Constant(var1.value - var2)
 
 
+@rsubtract.register
+def _(var1: Constant, var2):
+    if not isinstance(var2, (Constant, Number)):
+        return NotImplemented
+    if isinstance(var2, Constant):
+        var2 = var2.value
+    return Constant(var2 - var1.value)
+
+
+@multiply.register
+def _(var1, Constant, var2):
+    if not isinstance(var2, (Constant, Number)):
+        return NotImplemented
+    if isinstance(var2, Constant):
+        var2 = var2.value
+    return Constant(var2 * var1.value)
+
+
 @divide.register
 def _(var1: Constant, var2):
     if not isinstance(var2, (Constant, Number)):
@@ -79,6 +108,15 @@ def _(var1: Constant, var2):
     return Constant(var1.value / var2)
 
 
+@rdivide.register
+def _(var1: Constant, var2):
+    if not isinstance(var2, (Constant, Number)):
+        return NotImplemented
+    if isinstance(var2, Constant):
+        var2 = var2.value
+    return Constant(var2 / var1.value)
+
+
 @power.register
 def _(var1: Constant, var2):
     if not isinstance(var2, (Constant, Number)):
@@ -86,6 +124,15 @@ def _(var1: Constant, var2):
     if isinstance(var2, Constant):
         var2 = var2.value
     return Constant(var1.value**var2)
+
+
+@rpower.register
+def _(var1: Constant, var2):
+    if not isinstance(var2, (Constant, Number)):
+        return NotImplemented
+    if isinstance(var2, Constant):
+        var2 = var2.value
+    return Constant(var2**var1.value)
 
 
 @negate.register
@@ -98,7 +145,7 @@ def _(var: Constant, ufunc, *inputs):
     if not all(isinstance(v, (Constant, Number)) for v in inputs):
         return NotImplemented
     inputs = (v.value if isinstance(v, Constant) else v for v in inputs)
-    return ufunc(*inputs)
+    return Constant(ufunc(*inputs))
 
 
 ######################

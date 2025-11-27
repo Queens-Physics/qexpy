@@ -9,12 +9,24 @@ from .formula import (
     Formula,
     _Add,
     _Divide,
+    _Multiply,
     _NegativeOp,
     _Power,
     _Subtract,
     to_formula,
 )
-from .operations import add, array_ufunc, divide, negate, power, subtract
+from .operations import (
+    add,
+    array_ufunc,
+    divide,
+    multiply,
+    negate,
+    power,
+    rdivide,
+    rpower,
+    rsubtract,
+    subtract,
+)
 from .quantity import Quantity
 
 
@@ -53,15 +65,39 @@ def _(var1: Quantity, var2):
     return DerivedValue(formula)
 
 
+@rsubtract.register
+def _(var1: Quantity, var2):
+    formula = _Subtract(to_formula(var2), to_formula(var1))
+    return DerivedValue(formula)
+
+
+@multiply.register
+def _(var1: Quantity, var2):
+    formula = _Multiply(to_formula(var1), to_formula(var2))
+    return DerivedValue(formula)
+
+
 @divide.register
 def _(var1: Quantity, var2):
     formula = _Divide(to_formula(var1), to_formula(var2))
     return DerivedValue(formula)
 
 
+@rdivide.register
+def _(var1: Quantity, var2):
+    formula = _Divide(to_formula(var2), to_formula(var1))
+    return DerivedValue(formula)
+
+
 @power.register
 def _(var1: Quantity, var2):
     formula = _Power(to_formula(var1), to_formula(var2))
+    return DerivedValue(formula)
+
+
+@rpower.register
+def _(var1: Quantity, var2):
+    formula = _Power(to_formula(var2), to_formula(var1))
     return DerivedValue(formula)
 
 
