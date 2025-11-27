@@ -182,5 +182,5 @@ class Quantity(ABC):
     def __neg__(self) -> Quantity:
         return negate(self)
 
-    def __array_ufunc__(self, ufunc: Callable, _: str, *inputs, **__) -> Quantity:
+    def __array_ufunc__(self, ufunc: Callable, method: str, *inputs, **_) -> Quantity:
         return array_ufunc(self, ufunc, *inputs)

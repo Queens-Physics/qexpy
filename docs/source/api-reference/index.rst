@@ -42,3 +42,4 @@ Internals
 
    ~core.Quantity
    ~core.RepeatedMeasurement
+   ~core.DerivedValue
