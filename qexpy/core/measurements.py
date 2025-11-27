@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from copy import copy
 from typing import overload
 
 import numpy as np
@@ -142,6 +143,13 @@ class Measurement(Quantity):
     def __hash__(self):
         return hash(self._id)
 
+    def __copy__(self):
+        obj = object.__new__(Measurement)
+        obj._value, obj._error = self._value, self._error
+        obj._name, obj._unit = self._name, self._unit
+        obj._id = uuid.uuid4()
+        return obj
+
     @property
     @override
     def value(self) -> float:
@@ -269,23 +277,33 @@ class RepeatedMeasurement(Measurement):
         unit: str = "",
     ):
         self._data = np.asarray(data)
-        self._error = _resolve_error_array(data, error, relative_error)
-        weighted_mean, weighted_error = _error_weighted_mean(self._data, self._error)
+        self._data_err = _resolve_error_array(data, error, relative_error)
+        weighted_mean, weighted_err = _error_weighted_mean(self._data, self._data_err)
         self._stats = {
             "mean": np.mean(self._data),
             "std": np.std(self._data, ddof=1),
             "sem": scipy.stats.sem(self._data),
             "weighted_mean": weighted_mean,
-            "weighted_error": weighted_error,
+            "weighted_error": weighted_err,
         }
         # By default, use the error weighted mean and error if errors are
         # specified. Otherwise, use the standard error on the mean.
         val, err = (
             (self._stats["mean"], self._stats["sem"])
-            if np.any(self._error == 0)
-            else (weighted_mean, weighted_error)
+            if np.any(self._data_err == 0)
+            else (weighted_mean, weighted_err)
         )
         super().__init__(val, err, name=name, unit=unit)
+
+    def __copy__(self):
+        obj = object.__new__(RepeatedMeasurement)
+        obj._value, obj._error = self._value, self._error
+        obj._name, obj._unit = self._name, self._unit
+        obj._data = copy(self._data)
+        obj._data_err = copy(self._data_err)
+        obj._stats = copy(self._stats)
+        obj._id = uuid.uuid4()
+        return obj
 
     @override
     def use_standard_error(self):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from copy import copy
 
 import numpy as np
 
@@ -98,6 +99,11 @@ class Quantity(ABC):
         if not isinstance(unit, UnitLike):
             raise TypeError(f"The unit mast be a str, got {type(unit)}.")
         self._unit = Unit(unit)
+
+    def __abs__(self) -> Quantity:
+        if self.value < 0:
+            return -self
+        return copy(self)
 
     def __str__(self) -> str:
         name = f"{self.name} = " if self.name else ""

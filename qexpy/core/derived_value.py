@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing_extensions import override
 
+from qexpy.units import Unit, UnitLike
+
 from .formula import (
     OP_TO_FORMULA,
     Formula,
@@ -40,12 +42,27 @@ class DerivedValue(Quantity):
     @property
     @override
     def value(self) -> float:
-        raise NotImplementedError
+        return float(self._formula.value)
 
     @property
     @override
     def error(self) -> float:
-        raise NotImplementedError
+        return float(self._formula.error)
+
+    @property
+    @override
+    def unit(self) -> Unit:
+        return self._formula.unit
+
+    @unit.setter
+    def unit(self, unit: UnitLike):
+        if not isinstance(unit, UnitLike):
+            raise TypeError(f"The unit mast be a str, got {type(unit)}.")
+        self._unit = Unit(unit)
+
+    def __copy__(self):
+        v = DerivedValue(self._formula)
+        return v
 
 
 @to_formula.register
