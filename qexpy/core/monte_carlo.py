@@ -95,6 +95,7 @@ class SampleStats:
 
     @classmethod
     def from_sample(cls, sample: np.ndarray, config: MonteCarloConfig) -> SampleStats:
+        """Gather statistics from an array of samples."""
         mean, std = sample.mean(), sample.std(ddof=1)
         n, bins = np.histogram(sample, bins=config.hist_resolution)
         mode, mode_error = _find_mode_and_error(sample, n, bins, config.confidence)
