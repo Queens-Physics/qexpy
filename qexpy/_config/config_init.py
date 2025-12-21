@@ -51,3 +51,44 @@ cf.register_option(
     precision_mode_doc,
     cf.is_one_of_factory(("value", "error")),
 )
+
+error_method_doc = """
+: {"derivative", "monte-carlo"}
+    The preferred method of error propagation.
+"""
+
+cf.register_option(
+    "error.method",
+    "derivative",
+    error_method_doc,
+    cf.is_one_of_factory(["derivative", "monte-carlo"]),
+)
+
+mc_sample_size_doc = """
+: int
+    The sample size used in the Monte Carlo simulation for error propagation.
+"""
+
+cf.register_option(
+    "error.mc.sample_size", 100000, mc_sample_size_doc, cf.is_positive_integer
+)
+
+mc_hist_resolution_doc = """
+: int
+    The number of bins in the histogram used to analyze the distribution and
+    statistical properties of the samples in a Monte Carlo simulation.
+"""
+
+cf.register_option(
+    "error.mc.hist_resolution", 100, mc_hist_resolution_doc, cf.is_positive_integer
+)
+
+mc_confidence_doc = """
+: float
+    The confidence interval used to estimate the error from the histogram
+    analysis of a Monte Carlo simulation.
+"""
+
+cf.register_option(
+    "error.mc.confidence", 0.68, mc_confidence_doc, cf.is_number_in_range(0.0, 1.0)
+)
