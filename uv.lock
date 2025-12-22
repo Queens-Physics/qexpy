@@ -1892,18 +1892,14 @@ wheels = [
 name = "qexpy"
 source = { editable = "." }
 dependencies = [
+    { name = "matplotlib" },
     { name = "numpy" },
     { name = "scipy" },
-]
-
-[package.optional-dependencies]
-plot = [
-    { name = "matplotlib" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "jupyterlab" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -1914,19 +1910,21 @@ docs = [
     { name = "pydata-sphinx-theme" },
     { name = "sphinx" },
     { name = "sphinx-design" },
+]
+jupyter = [
+    { name = "jupyterlab" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "matplotlib", marker = "extra == 'plot'" },
+    { name = "matplotlib" },
     { name = "numpy" },
     { name = "scipy" },
+    { name = "typing-extensions" },
 ]
-provides-extras = ["plot"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "jupyterlab" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -1938,6 +1936,7 @@ docs = [
     { name = "sphinx" },
     { name = "sphinx-design" },
 ]
+jupyter = [{ name = "jupyterlab" }]
 
 [[package]]
 name = "referencing"
