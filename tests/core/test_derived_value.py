@@ -60,19 +60,19 @@ class TestOperations:
         m2 = q.Measurement(4.56, 0.03)
         res = m1 + m2
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 + 4.56)
-        assert res.error == pytest.approx(np.sqrt(0.02**2 + 0.03**2))
+        assert np.isclose(res.value, 1.23 + 4.56)
+        assert np.isclose(res.error, np.sqrt(0.02**2 + 0.03**2))
         assert res.unit == {"kg": 1, "m": 1, "s": -2}
 
         res = m2 + 1.23
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 + 4.56)
+        assert np.isclose(res.value, 1.23 + 4.56)
         assert res.error == 0.03
         assert res.unit == {}
 
         res = 4.56 + m1
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 + 4.56)
+        assert np.isclose(res.value, 1.23 + 4.56)
         assert res.error == 0.02
         assert res.unit == {"kg": 1, "m": 1, "s": -2}
 
@@ -84,19 +84,19 @@ class TestOperations:
 
         res = m2 - m1
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(4.56 - 1.23)
-        assert res.error == pytest.approx(np.sqrt(0.02**2 + 0.03**2))
+        assert np.isclose(res.value, 4.56 - 1.23)
+        assert np.isclose(res.error, np.sqrt(0.02**2 + 0.03**2))
         assert res.unit == {"kg": 1, "m": 1, "s": -2}
 
         res = m2 - 1.23
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(4.56 - 1.23)
+        assert np.isclose(res.value, 4.56 - 1.23)
         assert res.error == 0.03
         assert res.unit == {}
 
         res = 4.56 - m1
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(4.56 - 1.23)
+        assert np.isclose(res.value, 4.56 - 1.23)
         assert res.error == 0.02
         assert res.unit == {"kg": 1, "m": 1, "s": -2}
 
@@ -108,21 +108,19 @@ class TestOperations:
 
         res = m1 * m2
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 * 4.56)
-        assert res.error == pytest.approx(
-            np.sqrt((4.56 * 0.02) ** 2 + (1.23 * 0.03) ** 2)
-        )
+        assert np.isclose(res.value, 1.23 * 4.56)
+        assert np.isclose(res.error, np.sqrt((4.56 * 0.02) ** 2 + (1.23 * 0.03) ** 2))
         assert res.unit == {"kg": 1, "m": 1, "s": -2}
 
         res = m1 * 4.56
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 * 4.56)
+        assert np.isclose(res.value, 1.23 * 4.56)
         assert res.error == 0.02 * 4.56
         assert res.unit == {"m": 1, "s": -2}
 
         res = 1.23 * m2
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 * 4.56)
+        assert np.isclose(res.value, 1.23 * 4.56)
         assert res.error == 0.03 * 1.23
         assert res.unit == {"kg": 1}
 
@@ -134,21 +132,21 @@ class TestOperations:
 
         res = m1 / m2
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 / 4.56)
-        assert res.error == pytest.approx(
-            np.sqrt((0.02 / 4.56) ** 2 + (1.23 * 0.03 / 4.56**2) ** 2)
+        assert np.isclose(res.value, 1.23 / 4.56)
+        assert np.isclose(
+            res.error, np.sqrt((0.02 / 4.56) ** 2 + (1.23 * 0.03 / 4.56**2) ** 2)
         )
         assert res.unit == {"m": 1, "s": -2}
 
         res = m1 / 4.56
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 / 4.56)
+        assert np.isclose(res.value, 1.23 / 4.56)
         assert res.error == 0.02 / 4.56
         assert res.unit == {"m": 1, "s": -1}
 
         res = 1.23 / m2
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.23 / 4.56)
+        assert np.isclose(res.value, 1.23 / 4.56)
         assert res.error == 1.23 * 0.03 / 4.56**2
         assert res.unit == {"s": -1}
 
@@ -160,25 +158,26 @@ class TestOperations:
 
         res = m1**m2
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.2**4.5)
-        assert res.error == pytest.approx(
+        assert np.isclose(res.value, 1.2**4.5)
+        assert np.isclose(
+            res.error,
             np.sqrt(
                 (4.5 * 1.2 ** (4.5 - 1) * 0.02) ** 2
                 + (1.2**4.5 * np.log(1.2) * 0.03) ** 2
-            )
+            ),
         )
         assert res.unit == {"kg": 4.5, "m": 4.5, "s": -9}
 
         res = m1**4.5
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.2**4.5)
-        assert res.error == pytest.approx(4.5 * 1.2 ** (4.5 - 1) * 0.02)
+        assert np.isclose(res.value, 1.2**4.5)
+        assert np.isclose(res.error, 4.5 * 1.2 ** (4.5 - 1) * 0.02)
         assert res.unit == {"kg": 4.5, "m": 4.5, "s": -9}
 
         res = 1.2**m2
         assert isinstance(res, DerivedValue)
-        assert res.value == pytest.approx(1.2**4.5)
-        assert res.error == pytest.approx(1.2**4.5 * np.log(1.2) * 0.03)
+        assert np.isclose(res.value, 1.2**4.5)
+        assert np.isclose(res.error, 1.2**4.5 * np.log(1.2) * 0.03)
         assert res.unit == {}
 
     @pytest.mark.parametrize(
@@ -243,3 +242,60 @@ class TestOperations:
         assert isinstance(res, DerivedValue)
         assert res.value == func(val1, val2)
         assert isinstance(res._formula, formula_type)
+
+    def test_composite_formula(self):
+        """Tests a derived value constructed with a composite formula."""
+
+        a = q.Measurement(5, 0.1)
+        b = q.Measurement(20, 0.5)
+        c = q.Measurement(8, 0.5)
+
+        res = b / a + c
+        assert res.value == 20 / 5 + 8
+        assert np.isclose(
+            res.error, np.sqrt((1 / 5 * 0.5) ** 2 + (20 / (5**2) * 0.1) ** 2 + 0.5**2)
+        )
+
+    def test_correlated_measurements(self):
+        """Tests a derived value with correlated measurements."""
+
+        m1 = q.Measurement([
+            399.3,
+            404.6,
+            394.6,
+            396.3,
+            399.6,
+            404.9,
+            387.4,
+            404.9,
+            398.2,
+            407.2,
+        ])
+        m2 = q.Measurement([
+            193.2,
+            205.1,
+            192.6,
+            194.2,
+            196.6,
+            201.0,
+            184.7,
+            215.2,
+            203.6,
+            207.8,
+        ])
+        m3 = np.array([
+            399.3 + 193.2,
+            404.6 + 205.1,
+            394.6 + 192.6,
+            396.3 + 194.2,
+            399.6 + 196.6,
+            404.9 + 201.0,
+            387.4 + 184.7,
+            404.9 + 215.2,
+            398.2 + 203.6,
+            407.2 + 207.8,
+        ])
+        q.set_correlation(m1, m2)
+        res = m1 + m2
+        assert np.isclose(res.value, np.mean(m3))
+        assert np.isclose(res.error, np.std(m3, ddof=1) / np.sqrt(len(m3)))
