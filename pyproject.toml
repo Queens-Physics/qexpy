@@ -42,6 +42,7 @@ Repository = "https://github.com/Queens-Physics/qexpy.git"
 dev = [
   "pytest",
   "pytest-cov",
+  "pytest-rerunfailures",
   "ruff",
 ]
 docs = [
