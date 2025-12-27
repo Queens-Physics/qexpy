@@ -84,10 +84,8 @@ def _(var1: Constant, var2):
 
 @rsubtract.register
 def _(var1: Constant, var2):
-    if not isinstance(var2, (Constant, Number)):
+    if not isinstance(var2, Number):
         return NotImplemented
-    if isinstance(var2, Constant):
-        var2 = var2.value
     return Constant(var2 - var1.value)
 
 
@@ -111,10 +109,8 @@ def _(var1: Constant, var2):
 
 @rdivide.register
 def _(var1: Constant, var2):
-    if not isinstance(var2, (Constant, Number)):
+    if not isinstance(var2, Number):
         return NotImplemented
-    if isinstance(var2, Constant):
-        var2 = var2.value
     return Constant(var2 / var1.value)
 
 
@@ -129,10 +125,8 @@ def _(var1: Constant, var2):
 
 @rpower.register
 def _(var1: Constant, var2):
-    if not isinstance(var2, (Constant, Number)):
+    if not isinstance(var2, Number):
         return NotImplemented
-    if isinstance(var2, Constant):
-        var2 = var2.value
     return Constant(var2**var1.value)
 
 
