@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
+
 from typing_extensions import override
 
+from qexpy._config.config import options
+from qexpy.core.monte_carlo import MonteCarloController
 from qexpy.units import Unit, UnitLike
 
 from .formula import (
@@ -33,27 +37,64 @@ from .operations import (
 from .quantity import Quantity
 
 
+class ErrorMethod(StrEnum):
+    """The method of error propagation."""
+
+    DERIVATIVE = "derivative"
+    MONTE_CARLO = "monte-carlo"
+    AUTO = "auto"
+
+
 class DerivedValue(Quantity):
     """A value derived from other quantities."""
 
     def __init__(self, formula: Formula):
         self._formula = formula
+        self._error_method = ErrorMethod.AUTO
+        self._mc = MonteCarloController(formula)
         super().__init__()
 
     @property
     @override
     def value(self) -> float:
+        if self.error_method == ErrorMethod.MONTE_CARLO:
+            return self.mc.value
         return float(self._formula.value)
 
     @property
     @override
     def error(self) -> float:
+        if self.error_method == ErrorMethod.MONTE_CARLO:
+            return self.mc.error
         return float(self._formula.error)
 
     @property
     @override
     def unit(self) -> Unit:
         return self._formula.unit
+
+    @property
+    def mc(self) -> MonteCarloController:
+        """The controller for the Monte Carlo error method."""
+        return self._mc
+
+    @property
+    def error_method(self) -> ErrorMethod:
+        """The method of error propagation used for this value."""
+        if self._error_method == ErrorMethod.AUTO:
+            return options.error.method
+        return self._error_method
+
+    @error_method.setter
+    def error_method(self, method: str):
+        """Sets the method of error propagation for this value."""
+        try:
+            self._error_method = ErrorMethod(method)
+        except ValueError as e:
+            raise ValueError(
+                f"{method} is not a valid error method. Accepted values are: "
+                "'derivative', 'monte-carlo', or 'auto'."
+            ) from e
 
     @unit.setter
     def unit(self, unit: UnitLike):

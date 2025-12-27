@@ -23,7 +23,12 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
   "Topic :: Scientific/Engineering :: Physics",
 ]
-dependencies = ["numpy", "scipy"]
+dependencies = [
+  "matplotlib",
+  "numpy",
+  "scipy",
+  "typing-extensions",
+]
 dynamic = ["version"]
 
 [project.urls]
@@ -33,14 +38,11 @@ Homepage = "https://github.com/Queens-Physics/qexpy"
 Issues = "https://github.com/Queens-Physics/qexpy/issues"
 Repository = "https://github.com/Queens-Physics/qexpy.git"
 
-[project.optional-dependencies]
-plot = ["matplotlib"]
-
 [dependency-groups]
 dev = [
-  "jupyterlab",
   "pytest",
   "pytest-cov",
+  "pytest-rerunfailures",
   "ruff",
 ]
 docs = [
@@ -49,6 +51,9 @@ docs = [
   "pydata-sphinx-theme",
   "sphinx",
   "sphinx_design",
+]
+jupyter = [
+  "jupyterlab",
 ]
 
 [build-system]
@@ -92,6 +97,3 @@ convention = "numpy"
 [tool.ruff.format]
 docstring-code-format = true
 preview = true
-
-[tool.uv]
-default-groups = "all"

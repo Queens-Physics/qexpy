@@ -279,6 +279,20 @@ def describe_option(key: str = ""):
         or the error. The other quantity will automatically have the same number
         of decimal places for consistency.
         [default: error] [currently: error]
+    error.method : {"derivative", "monte-carlo"}
+        The preferred method of error propagation.
+        [default: derivative] [currently: derivative]
+    error.mc.sample_size : int
+        The sample size used in the Monte Carlo simulation for error propagation.
+        [default: 100000] [currently: 100000]
+    error.mc.hist_resolution : int
+        The number of bins in the histogram used to analyze the distribution and
+        statistical properties of the samples in a Monte Carlo simulation.
+        [default: 100] [currently: 100]
+    error.mc.confidence : float
+        The confidence interval used to estimate the error from the histogram
+        analysis of a Monte Carlo simulation.
+        [default: 0.68] [currently: 0.68]
 
     """
     keys = _select_keys(key)
